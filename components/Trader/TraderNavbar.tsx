@@ -1,0 +1,419 @@
+"use client";
+
+import { useState, useRef, useEffect } from "react";
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  Mail,
+  Briefcase,
+  Star,
+  User,
+  CreditCard,
+  Bell,
+  ChevronDown,
+  User2,
+  Settings,
+  FileText,
+  LogOut,
+  Menu,
+  X,
+} from "lucide-react";
+import { authApi } from "@/app/api/authApi";
+import TraderQuotesComponent from "@/components/Trader/TraderQuotesComponent";
+
+
+// Updated navLinks (keep as is, we'll handle click in render)
+const navLinks = [
+  { label: "Inbox", href: "/trader/inbox", icon: Mail },
+  { label: "Jobs & Leads", href: "/trader/jobs", icon: Briefcase },
+  { label: "Reviews", href: "/trader/reviews", icon: Star },
+  { label: "Profile", href: "/trader/profile", icon: User },
+  // Quotes tab will be a button, not a link
+  { label: "Quotes", href: "/trader/quote", icon: FileText },
+  { label: "Subscription & Billing", href: "/trader/billing", icon: CreditCard },
+];
+
+export default function TraderNavbar() {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const notifDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Profile state from API
+  const [userName, setUserName] = useState("Loading...");
+  const [userRole, setUserRole] = useState("");
+  const [userAvatar, setUserAvatar] = useState<string | undefined>(undefined);
+
+  // Notification state
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await authApi.getMyNotifications();
+      const notifList = res?.data || res || [];
+      if (Array.isArray(notifList)) {
+        setNotifications(notifList);
+        const unread = notifList.filter((n: any) => !n.isRead && !n.read).length;
+        setUnreadCount(unread);
+      }
+    } catch (error) {
+      console.error("Failed to load notifications", error);
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await authApi.markNotificationsReadAll();
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true, read: true })));
+      setUnreadCount(0);
+    } catch (error) {
+      console.error("Failed to mark all as read", error);
+    }
+  };
+
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("user");
+    router.push("/auth/login");
+  };
+
+  // Fetch profile & notifications on mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await authApi.getMyProfile();
+        const profile = res?.data || res;
+
+        console.log("Full Profile Response:", profile);
+        console.log("Trader Logo:", profile?.traderProfile?.logo);
+        console.log("Logo:", profile?.logo);
+        console.log("Avatar:", profile?.avatar);
+        console.log("Profile Image:", profile?.profileImage);
+
+        setUserName(profile?.fullName || profile?.name || "Trader");
+
+        // Show subscription tier as role badge
+        const tier =
+          profile?.traderProfile?.subscriptionTier ||
+          profile?.subscriptionTier;
+
+        setUserRole(
+          tier
+            ? `${tier.charAt(0)}${tier.slice(1).toLowerCase()} Member`
+            : "Member"
+        );
+
+        // Avatar – use trader logo or profile image
+        const avatar =
+          profile?.traderProfile?.logo ||
+          profile?.logo ||
+          profile?.avatar ||
+          profile?.profileImage;
+
+        if (avatar) {
+          const getImageUrl = (path: string) => {
+            if (path.startsWith("http")) return path;
+
+            const base = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
+            const cleanPath = path.replace(/^\/+/, "");
+
+            return `${base}/${cleanPath}`;
+          };
+
+          const imageUrl = getImageUrl(avatar);
+
+          console.log("Final Avatar URL:", imageUrl);
+
+          setUserAvatar(imageUrl);
+        }
+      } catch (err) {
+        console.error("Failed to fetch profile", err);
+        setUserName("Trader");
+      }
+    };
+
+    fetchProfile();
+    fetchNotifications();
+
+    const interval = setInterval(fetchNotifications, 60000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setDropdownOpen(false);
+      }
+      if (notifDropdownRef.current && !notifDropdownRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
+
+  const isActive = (href: string) => {
+    if (href === "/trader") return pathname === "/trader";
+    return pathname.startsWith(href);
+  };
+
+
+
+  return (
+    <header className="fixed top-0 left-0 right-0 z-50 font-sans">
+      {/* ── Top utility bar ─────────────────────────────── */}
+      <div className="bg-[#1C2C1C] text-white text-[12px]">
+        <div className="max-w-[1280px] mx-auto px-4 h-9 flex items-center justify-end gap-6">
+          <Link
+            href="/trader/account"
+            className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors"
+          >
+            <User2 size={12} />
+            Account
+          </Link>
+          <Link
+            href="/trader/settings"
+            className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors"
+          >
+            <Settings size={12} />
+            Settings
+          </Link>
+          <Link
+            href="/trader/report"
+            className="text-white/70 hover:text-white transition-colors"
+          >
+            Report
+          </Link>
+        </div>
+      </div>
+
+      {/* ── Main navbar ─────────────────────────────────── */}
+      <div className="bg-white border-b border-[#E5E5E5] shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+        <div className="max-w-[1280px] mx-auto px-4 h-[60px] flex items-center gap-6">
+
+          {/* Logo */}
+          <Link href="/trader" className="flex items-center gap-2.5 flex-shrink-0 mr-4">
+            <div className="relative h-8 w-[140px] sm:h-9 sm:w-[177px] overflow-hidden rounded-xl">
+              <Image
+                src="/logo.png"
+                alt="TugaTrades Logo"
+                fill
+                className="object-contain object-left"
+                priority
+              />
+            </div>
+          </Link>
+
+          {/* Desktop nav links */}
+          <nav className="hidden md:flex items-stretch h-full flex-1 gap-1">
+            {navLinks.map(({ label, href, icon: Icon }) => {
+              const active = isActive(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={`
+                      relative flex items-center gap-1.5 px-3 text-[13px] font-semibold
+                      transition-colors whitespace-nowrap h-full
+                      ${active ? "text-[#1C2C1C]" : "text-[#1C2C1C]/55 hover:text-[#1C2C1C]"}
+                    `}
+                >
+                  <Icon size={14} className={active ? "text-[#6E9625]" : "text-current"} />
+                  {label}
+                  {/* Active underline */}
+                  {active && (
+                    <span className="absolute bottom-0 left-2 right-2 h-[3px] rounded-t-full bg-[#6E9625]" />
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+
+          {/* Right side */}
+          <div className="ml-auto flex items-center gap-3 flex-shrink-0">
+            {/* Notification bell */}
+            <div className="relative" ref={notifDropdownRef}>
+              <button
+                onClick={() => setNotifOpen(!notifOpen)}
+                className="relative w-8 h-8 rounded-full flex items-center justify-center text-[#1C2C1C]/60 hover:bg-[#F5F5F5] hover:text-[#1C2C1C] transition-all"
+                aria-label="Notifications"
+              >
+                <Bell size={18} />
+                {/* Unread dot */}
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 w-4 h-4 bg-[#6E9625] rounded-full border-2 border-white flex items-center justify-center text-[8px] text-white font-bold">
+                    {unreadCount}
+                  </span>
+                )}
+              </button>
+
+              {notifOpen && (
+                <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white border border-[#E5E5E5] rounded-2xl shadow-xl py-3 z-50 overflow-hidden">
+                  <div className="flex items-center justify-between px-4 pb-2 border-b border-gray-100">
+                    <span className="font-bold text-[14px] text-[#1C2C1C]">Notifications</span>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={handleMarkAllRead}
+                        className="text-[12px] font-semibold text-[#6E9625] hover:underline"
+                      >
+                        Mark all as read
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="max-h-[300px] overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="py-8 text-center text-gray-400 text-[13px]">
+                        No notifications yet.
+                      </div>
+                    ) : (
+                      notifications.map((n) => (
+                        <div
+                          key={n.id}
+                          className={`px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-[#F5F5F5] transition-colors text-left ${!n.isRead && !n.read ? "bg-[#6E9625]/5" : ""
+                            }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="font-bold text-[13px] text-[#1C2C1C] break-words">
+                              {n.title || "Notification"}
+                            </span>
+                            <span className="text-[10px] text-gray-400 whitespace-nowrap">
+                              {new Date(n.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                            </span>
+                          </div>
+                          <p className="text-[12px] text-gray-600 mt-1 leading-relaxed break-words">
+                            {n.message || n.content || n.body}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* User info + avatar dropdown */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="flex items-center gap-2.5 py-1 px-2 rounded-lg hover:bg-[#F5F5F5] transition-all"
+              >
+                <div className="text-right hidden sm:block">
+                  <p className="text-[12px] font-bold text-[#1C2C1C] leading-tight tracking-wide uppercase">
+                    {userName}
+                  </p>
+                  <p className="text-[11px] text-[#6E9625] font-semibold leading-tight">
+                    {userRole}
+                  </p>
+                </div>
+
+                {/* Avatar */}
+                <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#6E9625] flex-shrink-0 bg-[#1C2C1C] flex items-center justify-center">
+                  {userAvatar ? (
+                    <Image
+                      src={userAvatar}
+                      alt={userName}
+                      width={36}
+                      height={36}
+                      className="object-cover w-full h-full"
+                    />
+                  ) : (
+                    <span className="text-white font-bold text-[14px]">
+                      {userName.charAt(0)}
+                    </span>
+                  )}
+                </div>
+                <ChevronDown
+                  size={14}
+                  className={`text-[#1C2C1C]/50 transition-transform ${dropdownOpen ? "rotate-180" : ""}`}
+                />
+              </button>
+
+              {/* Dropdown menu */}
+              {dropdownOpen && (
+                <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-[#E5E5E5] overflow-hidden z-50 py-1">
+                  <Link
+                    href="/trader/profile"
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-[#1C2C1C] hover:bg-[#F5F5F5] transition-colors"
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    <User size={14} className="text-[#6E9625]" />
+                    My Profile
+                  </Link>
+                  <Link
+                    href="/trader/settings"
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-[#1C2C1C] hover:bg-[#F5F5F5] transition-colors"
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    <Settings size={14} className="text-[#6E9625]" />
+                    Settings
+                  </Link>
+                  <Link
+                    href="/trader/billing"
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-[#1C2C1C] hover:bg-[#F5F5F5] transition-colors"
+                    onClick={() => setDropdownOpen(false)}
+                  >
+                    <CreditCard size={14} className="text-[#6E9625]" />
+                    Subscription & Billing
+                  </Link>
+                  <div className="border-t border-[#E5E5E5] my-1" />
+                  <button
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-red-500 hover:bg-red-50 transition-colors"
+                    onClick={() => {
+                      setDropdownOpen(false);
+                      handleLogout();
+                    }}
+                  >
+                    <LogOut size={14} />
+                    Log out
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Mobile hamburger */}
+            <button
+              className="md:hidden w-8 h-8 flex items-center justify-center text-[#1C2C1C] rounded-lg hover:bg-[#F5F5F5]"
+              onClick={() => setMobileOpen(!mobileOpen)}
+            >
+              {mobileOpen ? <X size={18} /> : <Menu size={18} />}
+            </button>
+          </div>
+        </div>
+
+        {/* Mobile nav */}
+        {mobileOpen && (
+          <div className="md:hidden border-t border-[#E5E5E5] bg-white">
+            {navLinks.map(({ label, href, icon: Icon }) => {
+              const active = isActive(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  onClick={() => setMobileOpen(false)}
+                  className={`flex items-center gap-3 px-5 py-3 text-[14px] font-semibold border-l-4 transition-colors ${active
+                    ? "border-[#6E9625] text-[#1C2C1C] bg-[#6E9625]/5"
+                    : "border-transparent text-[#1C2C1C]/60 hover:text-[#1C2C1C] hover:bg-[#F5F5F5]"
+                    }`}
+                >
+                  <Icon size={16} className={active ? "text-[#6E9625]" : "text-current"} />
+                  {label}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </header>
+
+
+  );
+}

@@ -1,0 +1,921 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import { authApi } from "@/app/api/authApi";
+import {
+  User,
+  Briefcase,
+  Wrench,
+  ImageIcon,
+  Camera,
+  Upload,
+  CheckCircle,
+  FileText,
+  X,
+  Plus,
+} from "lucide-react";
+import toast from "react-hot-toast";
+
+/* ─────────────────────────────────── types ─────────────────────────────────── */
+interface PersonalForm {
+  fullName: string;
+  email: string;
+  phone: string;
+  professionalTitle: string;
+  workLocation: string;
+  bio: string;
+  profileImage: string | null;
+}
+
+interface BusinessForm {
+  companyName: string;
+  companyType: string;
+  niNumber: string;
+  primarySkills: string;
+}
+
+const COMPANY_TYPES = [
+  "Sole Trader",
+  "Limited Company",
+  "Partnership",
+  "LLP",
+  "Other",
+];
+
+const TABS = [
+  { id: "personal", label: "Personal Info", icon: User },
+  { id: "business", label: "Business Details", icon: Briefcase },
+  { id: "skills", label: "Services & Skills", icon: Wrench },
+  { id: "portfolio", label: "Portfolio", icon: ImageIcon },
+] as const;
+
+type TabId = (typeof TABS)[number]["id"];
+
+/* ─────────────────────────────────── component ─────────────────────────────── */
+export default function TraderProfilePage() {
+  const profileInputRef = useRef<HTMLInputElement>(null);
+  const idInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
+  const portfolioInputRef = useRef<HTMLInputElement>(null);
+
+  const [activeTab, setActiveTab] = useState<TabId>("personal");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  /* profile photo */
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [selectedProfileFile, setSelectedProfileFile] = useState<File | null>(null);
+
+  /* proof of identity */
+  const [idFile, setIdFile] = useState<File | null>(null);
+  const [idFileName, setIdFileName] = useState<string | null>(null);
+
+  /* logo */
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+  /* portfolio */
+  const [portfolioFiles, setPortfolioFiles] = useState<File[]>([]);
+  const [portfolioPreviews, setPortfolioPreviews] = useState<string[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+
+  /* forms */
+  const [personalForm, setPersonalForm] = useState<PersonalForm>({
+    fullName: "",
+    email: "",
+    phone: "",
+    professionalTitle: "",
+    workLocation: "",
+    bio: "",
+    profileImage: null,
+  });
+
+  const [businessForm, setBusinessForm] = useState<BusinessForm>({
+    companyName: "",
+    companyType: "",
+    niNumber: "",
+    primarySkills: "",
+  });
+
+
+  const [tradeCategories, setTradeCategories] = useState<
+    Array<{ id: string; name: string }>
+  >([]);
+
+  const [skillServices, setSkillServices] = useState<
+    Array<{ id: string; name: string }>
+  >([]);
+
+  const [subCategories, setSubCategories] = useState<
+    Array<{ id: string; name: string }>
+  >([]);
+
+  const [selectedTradeCategory, setSelectedTradeCategory] = useState("");
+  const [selectedSkillService, setSelectedSkillService] = useState("");
+  const [selectedSubCategory, setSelectedSubCategory] = useState("");
+  /* ── load profile ── */
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await authApi.getMyProfile();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const p = (res?.data || res) as any;
+        const tp = p?.traderProfile || {};
+
+        setPersonalForm({
+          fullName: p?.fullName || "",
+          email: p?.email || "",
+          phone: p?.phone || tp?.phone || "",
+          professionalTitle: tp?.professionalTitle || tp?.title || "",
+          workLocation: tp?.workLocation || tp?.location || p?.city || "",
+          bio: tp?.bio || tp?.description || "",
+          profileImage: p?.profileImage || p?.avatar || tp?.logo || null,
+        });
+
+        setBusinessForm({
+          companyName: tp?.companyName || tp?.businessName || "",
+          companyType: tp?.companyType || "",
+          niNumber: tp?.niNumber || tp?.registrationNumber || "",
+          primarySkills: tp?.primarySkills || tp?.skills || "",
+        });
+
+        const categories = await authApi.getCategories();
+
+        setTradeCategories(
+          Array.isArray(categories)
+            ? categories
+            : categories?.data || []
+        );
+
+
+
+        // Helper to build absolute URLs, avoiding duplicate slashes
+        const getFullUrl = (url: string) => {
+          if (/^https?:\/\//i.test(url)) return url;
+          const base = (process.env.NEXT_PUBLIC_API_URL ?? "").replace(/\/+$/, "");
+          const path = url.replace(/^\/+/, "");
+          return `${base}/${path}`;
+        };
+
+        const avatar = p?.profileImage || p?.avatar || tp?.logo;
+        if (avatar) setPreviewUrl(getFullUrl(avatar));
+
+        const logo = tp?.logo || tp?.profileImage;
+        if (logo) setLogoPreview(getFullUrl(logo));
+      } catch (e) {
+        console.error("Failed to load profile", e);
+      } finally {
+        setLoading(false);
+      }
+    }
+    load();
+  }, []);
+
+
+  /* ── handlers: personal ── */
+  const handlePersonalChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setPersonalForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  const handleProfileFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setSelectedProfileFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const handleRemovePhoto = () => {
+    setSelectedProfileFile(null);
+    setPreviewUrl(null);
+    setPersonalForm((prev) => ({ ...prev, profileImage: null }));
+    if (profileInputRef.current) profileInputRef.current.value = "";
+  };
+
+  /* ── handlers: proof of identity ── */
+  const handleIdFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIdFile(file);
+    setIdFileName(file.name);
+  };
+
+  /* ── handlers: logo ── */
+  const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
+  };
+
+  /* ── handlers: portfolio ── */
+  const addPortfolioFiles = (files: FileList | File[]) => {
+    const arr = Array.from(files).filter((f) => f.type.startsWith("image/"));
+    setPortfolioFiles((prev) => [...prev, ...arr]);
+    setPortfolioPreviews((prev) => [
+      ...prev,
+      ...arr.map((f) => URL.createObjectURL(f)),
+    ]);
+  };
+
+  const handlePortfolioSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) addPortfolioFiles(e.target.files);
+  };
+
+  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files) addPortfolioFiles(e.dataTransfer.files);
+  }, []);
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+  const handleDragLeave = () => setIsDragging(false);
+
+  const removePortfolioItem = (index: number) => {
+    setPortfolioFiles((prev) => prev.filter((_, i) => i !== index));
+    setPortfolioPreviews((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  /* ── handlers: business ── */
+  const handleBusinessChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    setBusinessForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  };
+
+  useEffect(() => {
+    if (!selectedTradeCategory) return;
+
+    authApi.getSkillServices(selectedTradeCategory).then((res) => {
+      setSkillServices(Array.isArray(res) ? res : res?.data || []);
+    });
+
+    setSelectedSkillService("");
+    setSelectedSubCategory("");
+  }, [selectedTradeCategory]);
+
+  useEffect(() => {
+    if (!selectedSkillService) return;
+
+    authApi.getSubCategories(selectedSkillService).then((res) => {
+      setSubCategories(Array.isArray(res) ? res : res?.data || []);
+    });
+
+    setSelectedSubCategory("");
+  }, [selectedSkillService]);
+
+  /* ── submit ── */
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSaving(true);
+    try {
+      const fd = new FormData();
+      fd.append("fullName", personalForm.fullName);
+      fd.append("email", personalForm.email);
+      fd.append("phone", personalForm.phone);
+      // professionalTitle, workLocation, and bio are mapped to location and about fields
+      // optional geographic fields – send empty if not applicable
+      fd.append("latitude", "");
+      fd.append("longitude", "");
+      fd.append("companyName", businessForm.companyName);
+      fd.append("companyType", businessForm.companyType);
+      fd.append("registrationNumber", businessForm.niNumber);
+      if (selectedTradeCategory) {
+        fd.append("tradeCategories", selectedTradeCategory);
+      }
+
+      if (selectedSkillService) {
+        fd.append("skillsServices", selectedSkillService);
+      }
+
+      if (selectedSubCategory) {
+        fd.append("subCategories", selectedSubCategory);
+      }
+      fd.append("workRadius", "");
+      fd.append("location", personalForm.workLocation);
+      fd.append("about", personalForm.bio);
+
+      if (selectedProfileFile) fd.append("profileImage", selectedProfileFile);
+      if (idFile) fd.append("document", idFile);
+      if (logoFile) fd.append("logo", logoFile);
+      // portfolio files not sent per API spec
+
+      await authApi.updateProfile(fd);
+      toast.success("Profile updated successfully!");
+    } catch (err: any) {
+      console.error("Update profile error", err);
+      toast.error(err?.response?.data?.message || "Failed to update profile");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  /* ── loading skeleton ── */
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F0EDE8] p-8">
+        <div className="max-w-5xl mx-auto space-y-4">
+          {[1, 2, 3, 4].map((i) => (
+            <div
+              key={i}
+              className="h-24 rounded-2xl bg-white animate-pulse border border-gray-100"
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  /* ─────────────────────────────── render ───────────────────────────────── */
+  return (
+    <div className="min-h-screen bg-[#F0EDE8]">
+      <div className="max-w-5xl mx-auto px-6 py-10">
+
+        {/* Page title */}
+        <div className="mb-8">
+          <h1 className="text-[1.75rem] font-bold text-[#1C2C1C] leading-tight">
+            Profile Management
+          </h1>
+          <p className="text-[13px] text-gray-500 mt-1">
+            Manage how your professional identity appears to clients.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div className="flex gap-6 items-start">
+
+            {/* ── Left sidebar ── */}
+            <div className="w-48 flex-shrink-0 space-y-1">
+              {TABS.map(({ id, label, icon: Icon }) => (
+                <button
+                  key={id}
+                  type="button"
+                  onClick={() => setActiveTab(id)}
+                  className={`w-full flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-[13px] font-semibold transition-colors ${activeTab === id
+                    ? "bg-[#1C2C1C] text-white shadow-sm"
+                    : "text-[#1C2C1C]/60 hover:bg-white hover:text-[#1C2C1C]"
+                    }`}
+                >
+                  <Icon size={15} />
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* ── Right content ── */}
+            <div className="flex-1 space-y-5">
+
+              {/* ════ PERSONAL INFO ════ */}
+              {activeTab === "personal" && (
+                <>
+                  {/* Profile photo card */}
+                  <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm px-6 py-5">
+                    <div className="flex items-center gap-5">
+                      {/* Avatar */}
+                      <div className="relative flex-shrink-0">
+                        <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-200 border-2 border-[#E8E8E8]">
+                          {previewUrl ? (
+                            <img
+                              src={previewUrl}
+                              alt="Profile"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                              <User size={32} className="text-gray-400" />
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => profileInputRef.current?.click()}
+                          className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-[#1C2C1C] flex items-center justify-center border-2 border-white hover:bg-[#2c3e2c] transition-colors"
+                        >
+                          <Camera size={11} className="text-white" />
+                        </button>
+                      </div>
+
+                      {/* Buttons */}
+                      <div>
+                        <p className="text-[14px] font-bold text-[#1C2C1C] mb-0.5">
+                          Profile Photo
+                        </p>
+                        <p className="text-[12px] text-gray-400 mb-3">
+                          Upload a professional photo for better visibility.
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => profileInputRef.current?.click()}
+                            className="flex items-center gap-1.5 px-4 py-1.5 bg-[#1C2C1C] text-white rounded-lg text-[12px] font-semibold hover:bg-[#2c3e2c] transition-colors"
+                          >
+                            <Upload size={12} />
+                            Upload New
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleRemovePhoto}
+                            className="px-4 py-1.5 border border-gray-200 text-gray-600 rounded-lg text-[12px] font-semibold hover:bg-gray-50 transition-colors"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      </div>
+
+                      <input
+                        ref={profileInputRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleProfileFileSelect}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Personal details card */}
+                  <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm px-6 py-6">
+                    <h2 className="text-[14px] font-bold text-[#1C2C1C] mb-5">
+                      Personal Details
+                    </h2>
+                    <div className="grid grid-cols-2 gap-x-5 gap-y-4">
+                      {/* Full Name */}
+                      <div>
+                        <label className="block text-[12px] font-medium text-gray-500 mb-1">
+                          Full Name
+                        </label>
+                        <input
+                          id="tp-fullName"
+                          type="text"
+                          name="fullName"
+                          value={personalForm.fullName}
+                          onChange={handlePersonalChange}
+                          placeholder="Ricardo Santos"
+                          className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
+                        />
+                      </div>
+
+                      {/* Professional Title */}
+                      <div>
+                        <label className="block text-[12px] font-medium text-gray-500 mb-1">
+                          Professional Title
+                        </label>
+                        <input
+                          id="tp-professionalTitle"
+                          type="text"
+                          name="professionalTitle"
+                          value={personalForm.professionalTitle}
+                          onChange={handlePersonalChange}
+                          placeholder="Senior Electrical Engineer"
+                          className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
+                        />
+                      </div>
+
+                      {/* Phone */}
+                      <div>
+                        <label className="block text-[12px] font-medium text-gray-500 mb-1">
+                          Phone Number
+                        </label>
+                        <input
+                          id="tp-phone"
+                          type="text"
+                          name="phone"
+                          value={personalForm.phone}
+                          onChange={handlePersonalChange}
+                          placeholder="+351 912 345 678"
+                          className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
+                        />
+                      </div>
+
+                      {/* Work Location */}
+                      <div>
+                        <label className="block text-[12px] font-medium text-gray-500 mb-1">
+                          Work Location
+                        </label>
+                        <input
+                          id="tp-workLocation"
+                          type="text"
+                          name="workLocation"
+                          value={personalForm.workLocation}
+                          onChange={handlePersonalChange}
+                          placeholder="Cascais, Portugal"
+                          className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
+                        />
+                      </div>
+
+                      {/* Email (read-only) */}
+                      <div className="col-span-2">
+                        <label className="block text-[12px] font-medium text-gray-500 mb-1">
+                          Email
+                        </label>
+                        <input
+                          id="tp-email"
+                          type="email"
+                          value={personalForm.email}
+                          readOnly
+                          className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] bg-gray-50 text-[13px] text-gray-400 cursor-not-allowed"
+                        />
+                      </div>
+
+                      {/* Bio */}
+                      <div className="col-span-2">
+                        <label className="block text-[12px] font-medium text-gray-500 mb-1">
+                          Bio
+                        </label>
+                        <textarea
+                          id="tp-bio"
+                          name="bio"
+                          value={personalForm.bio}
+                          onChange={handlePersonalChange}
+                          rows={3}
+                          placeholder="Over 10 years of experience in residential and commercial systems..."
+                          className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all resize-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Identity & Logo uploads */}
+                  <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm px-6 py-6">
+                    <div className="grid grid-cols-2 gap-5">
+
+                      {/* Proof of Identity */}
+                      <div className="border border-dashed border-[#C8D8B0] rounded-xl p-5 flex flex-col items-center text-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-[#6E9625]/10 flex items-center justify-center">
+                          <FileText size={18} className="text-[#6E9625]" />
+                        </div>
+                        <div>
+                          <p className="text-[13px] font-bold text-[#1C2C1C]">
+                            Proof of Identity
+                          </p>
+                          <p className="text-[11px] text-gray-400 mt-0.5">
+                            Upload a valid National ID or Driving Licence PDF / JPG
+                          </p>
+                          {idFileName && (
+                            <p className="text-[11px] text-[#6E9625] mt-1 truncate max-w-[180px]">
+                              {idFileName}
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => idInputRef.current?.click()}
+                          className="px-4 py-1.5 bg-[#1C2C1C] text-white rounded-lg text-[12px] font-semibold hover:bg-[#2c3e2c] transition-colors"
+                        >
+                          Browse Files
+                        </button>
+                        <input
+                          ref={idInputRef}
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          className="hidden"
+                          onChange={handleIdFileSelect}
+                        />
+                      </div>
+
+                      {/* Profile / Logo */}
+                      <div className="border border-dashed border-[#C8D8B0] rounded-xl p-5 flex flex-col items-center text-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-[#6E9625]/10 flex items-center justify-center overflow-hidden">
+                          {logoPreview ? (
+                            <img
+                              src={logoPreview}
+                              alt="Logo"
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <ImageIcon size={18} className="text-[#6E9625]" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="text-[13px] font-bold text-[#1C2C1C]">
+                            Profile / Logo
+                          </p>
+                          <p className="text-[11px] text-gray-400 mt-0.5">
+                            A high-quality square image for your profile.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => logoInputRef.current?.click()}
+                          className="px-4 py-1.5 bg-[#6E9625] text-white rounded-lg text-[12px] font-semibold hover:bg-[#5a7c1e] transition-colors"
+                        >
+                          Upload Media
+                        </button>
+                        <input
+                          ref={logoInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleLogoSelect}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* ════ BUSINESS DETAILS ════ */}
+              {activeTab === "business" && (
+                <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm px-6 py-6">
+                  <h2 className="text-[14px] font-bold text-[#1C2C1C] mb-1">
+                    Business Details
+                  </h2>
+                  <p className="text-[12px] text-gray-400 mb-5">
+                    These details help clients verify your professional credentials.
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-x-5 gap-y-4">
+                    {/* Company Name */}
+                    <div>
+                      <label className="block text-[12px] font-medium text-gray-500 mb-1">
+                        Registered Company Name
+                      </label>
+                      <input
+                        id="tp-companyName"
+                        type="text"
+                        name="companyName"
+                        value={businessForm.companyName}
+                        onChange={handleBusinessChange}
+                        placeholder="e.g. Santos Electrical Ltd"
+                        className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
+                      />
+                    </div>
+
+                    {/* Company Type */}
+                    <div>
+                      <label className="block text-[12px] font-medium text-gray-500 mb-1">
+                        Company Type
+                      </label>
+                      <select
+                        id="tp-companyType"
+                        name="companyType"
+                        value={businessForm.companyType}
+                        onChange={handleBusinessChange}
+                        className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all bg-white"
+                      >
+                        <option value="">Select type</option>
+                        {COMPANY_TYPES.map((t) => (
+                          <option key={t} value={t}>
+                            {t}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* NI / Registration Number */}
+                    <div>
+                      <label className="block text-[12px] font-medium text-gray-500 mb-1">
+                        NI / Registration Number
+                      </label>
+                      <input
+                        id="tp-niNumber"
+                        type="text"
+                        name="niNumber"
+                        value={businessForm.niNumber}
+                        onChange={handleBusinessChange}
+                        placeholder="e.g. AB 12 34 56 C"
+                        className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
+                      />
+                    </div>
+
+                    {/* Primary Skills */}
+                    <div>
+                      <label className="block text-[12px] font-medium text-gray-500 mb-1">
+                        Primary Skills &amp; Services
+                      </label>
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+                        <select
+                          value={selectedTradeCategory}
+                          onChange={(e) => setSelectedTradeCategory(e.target.value)}
+                          className="w-full px-3 py-2 rounded-lg border"
+                        >
+                          <option value="">Select Trade Category</option>
+
+                          {tradeCategories.map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.name}
+                            </option>
+                          ))}
+                        </select>
+
+                        <select
+                          value={selectedSkillService}
+                          onChange={(e) => setSelectedSkillService(e.target.value)}
+                          disabled={!selectedTradeCategory}
+                          className="w-full px-3 py-2 rounded-lg border"
+                        >
+                          <option value="">Select Skill Service</option>
+
+                          {skillServices.map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.name}
+                            </option>
+                          ))}
+                        </select>
+
+                        <select
+                          value={selectedSubCategory}
+                          onChange={(e) => setSelectedSubCategory(e.target.value)}
+                          disabled={!selectedSkillService}
+                          className="w-full px-3 py-2 rounded-lg border"
+                        >
+                          <option value="">Select Sub Category</option>
+
+                          {subCategories.map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.name}
+                            </option>
+                          ))}
+                        </select>
+
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ════ SERVICES & SKILLS ════ */}
+              {activeTab === "skills" && (
+                <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm px-6 py-6">
+                  <h2 className="text-[14px] font-bold text-[#1C2C1C] mb-1">
+                    Services &amp; Skills
+                  </h2>
+                  <p className="text-[12px] text-gray-400 mb-5">
+                    List the trades and specialisations you offer.
+                  </p>
+                  <div className="space-y-5">
+
+                    <div>
+                      <label className="block text-[12px] font-medium text-gray-500 mb-2">
+                        Trade Category
+                      </label>
+
+                      <select
+                        value={selectedTradeCategory}
+                        onChange={(e) => setSelectedTradeCategory(e.target.value)}
+                        className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40"
+                      >
+                        <option value="">Select Trade Category</option>
+
+                        {tradeCategories.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[12px] font-medium text-gray-500 mb-2">
+                        Skill Service
+                      </label>
+
+                      <select
+                        value={selectedSkillService}
+                        onChange={(e) => setSelectedSkillService(e.target.value)}
+                        disabled={!selectedTradeCategory}
+                        className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 disabled:bg-gray-100"
+                      >
+                        <option value="">Select Skill Service</option>
+
+                        {skillServices.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[12px] font-medium text-gray-500 mb-2">
+                        Sub Category
+                      </label>
+
+                      <select
+                        value={selectedSubCategory}
+                        onChange={(e) => setSelectedSubCategory(e.target.value)}
+                        disabled={!selectedSkillService}
+                        className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 disabled:bg-gray-100"
+                      >
+                        <option value="">Select Sub Category</option>
+
+                        {subCategories.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                  </div>
+                </div>
+              )}
+
+              {/* ════ PORTFOLIO ════ */}
+              {activeTab === "portfolio" && (
+                <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm px-6 py-6">
+                  <h2 className="text-[14px] font-bold text-[#1C2C1C] mb-1">
+                    Portfolio
+                  </h2>
+                  <p className="text-[12px] text-gray-400 mb-5">
+                    Showcase your best work to attract more clients.
+                  </p>
+
+                  {/* Drop zone */}
+                  <div
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onClick={() => portfolioInputRef.current?.click()}
+                    className={`border-2 border-dashed rounded-xl flex flex-col items-center justify-center py-12 cursor-pointer transition-colors ${isDragging
+                      ? "border-[#6E9625] bg-[#6E9625]/5"
+                      : "border-[#C8D8B0] hover:border-[#6E9625] hover:bg-[#6E9625]/5"
+                      }`}
+                  >
+                    <div className="w-12 h-12 rounded-full bg-[#6E9625]/10 flex items-center justify-center mb-3">
+                      <Upload size={20} className="text-[#6E9625]" />
+                    </div>
+                    <p className="text-[13px] font-semibold text-[#1C2C1C]">
+                      Click to upload or drag and drop
+                    </p>
+                    <p className="text-[12px] text-gray-400 mt-1">
+                      PNG, JPG up to 10 MB each
+                    </p>
+                    <input
+                      ref={portfolioInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={handlePortfolioSelect}
+                    />
+                  </div>
+
+                  {/* Preview grid */}
+                  {portfolioPreviews.length > 0 && (
+                    <div className="grid grid-cols-3 gap-3 mt-5">
+                      {portfolioPreviews.map((src, i) => (
+                        <div
+                          key={i}
+                          className="relative group rounded-xl overflow-hidden aspect-square bg-gray-100"
+                        >
+                          <img
+                            src={src}
+                            alt={`Portfolio ${i + 1}`}
+                            className="w-full h-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removePortfolioItem(i);
+                            }}
+                            className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X size={12} className="text-white" />
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => portfolioInputRef.current?.click()}
+                        className="aspect-square rounded-xl border-2 border-dashed border-[#C8D8B0] flex items-center justify-center hover:border-[#6E9625] hover:bg-[#6E9625]/5 transition-colors"
+                      >
+                        <Plus size={20} className="text-[#6E9625]" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* ── Submit button ── */}
+              <button
+                id="trader-update-profile-btn"
+                type="submit"
+                disabled={saving}
+                className="w-full py-3 rounded-xl bg-[#1C2C1C] hover:bg-[#2c3e2c] text-white text-[14px] font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {saving ? (
+                  <>
+                    <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    Updating...
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle size={15} />
+                    Update Profile
+                  </>
+                )}
+              </button>
+
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

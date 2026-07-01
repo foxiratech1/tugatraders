@@ -1,0 +1,405 @@
+"use client";
+
+import React, { useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Star, ThumbsUp, ThumbsDown, ChevronDown, CheckCircle } from 'lucide-react';
+import { getUserRole } from '@/utils/auth';
+import { authApi } from '@/app/api/authApi';
+import { Role } from '@/utils/role';
+
+export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobId?: string; reviewTypeProp?: string }) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const traderId = searchParams.get('traderId') || '00000000-0000-0000-0000-000000000000';
+  const jobId = searchParams.get('jobId');
+  const editReviewId = searchParams.get('editReviewId');
+
+  const [workCarriedOut, setWorkCarriedOut] = useState<boolean>(searchParams.has('workCarriedOut') ? searchParams.get('workCarriedOut') === 'true' : true);
+  const [rating, setRating] = useState<number>(parseInt(searchParams.get('rating') || '0'));
+  const [hoverRating, setHoverRating] = useState<number>(0);
+  
+  const recommendParam = searchParams.get('recommend');
+  const initialRecommend = recommendParam === 'true' ? true : recommendParam === 'false' ? false : null;
+  const [recommend, setRecommend] = useState<boolean | null>(initialRecommend);
+  
+  const [selectedReason, setSelectedReason] = useState<string>('');
+  const initialReviewType = searchParams.get('reviewType') || reviewTypeProp || (jobId ? 'JOB' : 'DIRECTORY');
+  const [reviewType, setReviewType] = useState<string>(initialReviewType);
+  const [interactionSource, setInteractionSource] = useState<string>(searchParams.get('interactionSource') || '');
+  const [completionDate, setCompletionDate] = useState<string>(searchParams.get('completionDate') || '');
+  const [title, setTitle] = useState<string>(searchParams.get('title') || '');
+  const [review, setReview] = useState<string>(searchParams.get('review') || '');
+  const [files, setFiles] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isSuccess, setIsSuccess] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
+  
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      setFiles(prev => [...prev, ...Array.from(e.target.files as FileList)]);
+    }
+  };
+  
+  const reasons = [
+    { id: 'no_response', label: "Trader didn't respond", desc: "I reached out but never heard back from them." },
+    { id: 'declined', label: "Trader declined the job", desc: "They responded but were unavailable." },
+    { id: 'missed_appt', label: "Missed appointment", desc: "Professional failed to show up for the visit." },
+    { id: 'over_budget', label: "Quote over budget", desc: "The pricing was higher than anticipated." },
+    { id: 'wanted_quote', label: "Wanted a quote", desc: "Just getting rough prices." },
+    { id: 'changed_mind', label: "No longer needed/changed my mind", desc: "Plans have changed." },
+    { id: 'hired_elsewhere', label: "Hired elsewhere", desc: "Found another professional for the work." },
+    { id: 'other', label: "Other reason", desc: "None of the above apply." }
+  ];
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    
+    if (workCarriedOut && rating === 0) {
+      setError('Please provide a rating.');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      const payload: any = {
+        traderId,
+        reviewType,
+        wasWorkCompleted: workCarriedOut,
+        rating: workCarriedOut ? rating : 0,
+        ...(propJobId ? { jobId: propJobId } : {}),
+      };
+
+      if (reviewType === 'JOB') {
+        payload.jobId = jobId || '00000000-0000-0000-0000-000000000000';
+      } else if (jobId) {
+        payload.jobId = jobId;
+      }
+
+      if (interactionSource) payload.interactionSource = interactionSource;
+      if (workCarriedOut) {
+        if (completionDate) {
+          payload.workCompletedDate = new Date(completionDate).toISOString();
+        }
+        if (recommend !== null) payload.wouldRecommendTrader = recommend;
+        if (title) payload.title = title;
+        if (review) payload.review = review;
+        // Sending file names as placeholders since S3 upload is not defined
+        if (files.length > 0) payload.proofs = files.map(f => f.name);
+      } else {
+        if (selectedReason) payload.noWorkReason = selectedReason;
+      }
+
+      if (editReviewId) {
+        await authApi.updateReview(editReviewId, payload);
+      } else {
+        await authApi.postReview(payload);
+      }
+      
+      setIsSuccess(true);
+    } catch (err: any) {
+      console.error(err);
+      const msg: string = err?.message || '';
+      if (msg.includes('401') || msg.toLowerCase().includes('unauthorized')) {
+        setError('Your session has expired. Please log in again and retry.');
+      } else {
+        setError(msg || 'Failed to submit review. Please try again.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleReturn = () => {
+    const role = getUserRole()?.toLowerCase();
+    if (role === Role.Customer.toLowerCase()) {
+      router.push('/customer-dashboard');
+    } else {
+      router.push('/directory-listing/search');
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto p-8 bg-white rounded-2xl shadow-sm border border-gray-100 my-10 relative">
+      <h2 className="text-[24px] font-bold text-[#1C2C1C] mb-2">
+        {editReviewId ? "Edit Your Review" : workCarriedOut ? "Share Your Experience" : "Why Was the Job Closed?"}
+      </h2>
+      <p className="text-gray-500 text-[14px] mb-8">
+        {workCarriedOut 
+          ? "Your feedback helps maintain our high standards of quality."
+          : "This helps us improve our matchmaking and professional network."}
+      </p>
+
+      {error && (
+        <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-xl text-sm font-medium">
+          {error}
+        </div>
+      )}
+
+      <form onSubmit={handleSubmit}>
+        <div className="mb-6">
+          <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Interaction Source</label>
+          <div className="relative">
+            <select
+              value={interactionSource}
+              onChange={(e) => setInteractionSource(e.target.value)}
+              className="w-full border border-gray-200 rounded-xl py-3 px-4 text-[14px] text-gray-700 outline-none focus:border-[#4CAF50] appearance-none"
+            >
+              <option value="">Select source</option>
+              <option value="JOB_CHAT">Job Chat</option>
+              <option value="DIRECTORY_CHAT">Directory Chat</option>
+              <option value="WHATSAPP">WhatsApp</option>
+              <option value="PHONE">Phone</option>
+              <option value="MANUAL">Manual</option>
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+              <ChevronDown size={16} />
+            </div>
+          </div>
+        </div>
+
+
+        <div className="mb-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-[#1C2C1C] text-[15px]">Was the work carried out? <span className="text-red-500">*</span></h3>
+              <p className="text-[13px] text-gray-500 mt-1">Confirm if any work was started or completed.</p>
+            </div>
+            <div className="flex bg-gray-50 p-1 rounded-full border border-gray-200">
+              <button
+                type="button"
+                onClick={() => setWorkCarriedOut(true)}
+                className={`px-5 py-2 text-[14px] font-semibold rounded-full transition-colors ${
+                  workCarriedOut ? 'bg-white text-[#1C2C1C] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                Yes
+              </button>
+              <button
+                type="button"
+                onClick={() => setWorkCarriedOut(false)}
+                className={`px-5 py-2 text-[14px] font-semibold rounded-full transition-colors ${
+                  !workCarriedOut ? 'bg-white text-[#1C2C1C] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <hr className="border-gray-100 mb-8" />
+
+        {workCarriedOut ? (
+          <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-5">
+            <div>
+              <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Completion Date</label>
+              <div className="relative">
+                <input 
+                  type="date" 
+                  value={completionDate}
+                  onChange={(e) => setCompletionDate(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl py-3 px-4 text-[14px] text-gray-700 outline-none focus:border-[#4CAF50]" 
+                />
+              </div>
+            </div>
+            <div>
+              <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Services Used</label>
+              <input 
+                type="text" 
+                placeholder="Interior Architecture, Bespoke Kitchen"
+                className="w-full border border-gray-200 rounded-xl py-3 px-4 text-[14px] text-gray-700 outline-none focus:border-[#4CAF50]"
+              />
+            </div>
+          </div>
+
+          <div className="bg-gray-50/50 rounded-xl p-8 text-center border border-gray-100">
+            <h3 className="text-[15px] font-semibold text-[#1C2C1C] mb-4">How would you rate the professional?</h3>
+            <div className="flex justify-center gap-2 mb-3">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onMouseEnter={() => setHoverRating(star)}
+                  onMouseLeave={() => setHoverRating(0)}
+                  onClick={() => setRating(star)}
+                  className="focus:outline-none"
+                >
+                  <Star 
+                    size={32} 
+                    className={`${
+                      star <= (hoverRating || rating) 
+                        ? 'text-[#6E9625] fill-[#6E9625]' 
+                        : 'text-[#E5E7EB] fill-[#E5E7EB]'
+                    } transition-colors`} 
+                  />
+                </button>
+              ))}
+            </div>
+            {rating > 0 && (
+              <p className="text-[13px] font-bold text-[#6E9625]">
+                {rating.toFixed(1)} {rating >= 4 ? 'Excellent Quality' : rating >= 3 ? 'Good Quality' : 'Poor Quality'}
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Review Title</label>
+            <input 
+              type="text" 
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="e.g. Exceptional craftsmanship and attention to detail"
+              className="w-full border border-gray-200 rounded-xl py-3 px-4 text-[14px] text-gray-700 outline-none focus:border-[#4CAF50]"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Tell us more about your experience</label>
+            <textarea 
+              rows={4}
+              value={review}
+              onChange={(e) => setReview(e.target.value)}
+              placeholder="How was the communication? Was the workspace kept clear?"
+              className="w-full border border-gray-200 rounded-xl py-3 px-4 text-[14px] text-gray-700 outline-none focus:border-[#4CAF50] resize-none"
+            ></textarea>
+          </div>
+
+          <div>
+            <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Upload Files</label>
+            <label className="block border-2 border-dashed border-[#E5E7EB] hover:border-[#6E9625] bg-gray-50/50 rounded-xl p-8 text-center cursor-pointer transition-colors w-1/2">
+              <input 
+                type="file" 
+                multiple 
+                accept=".pdf,.docx,.doc"
+                className="hidden" 
+                onChange={handleFileChange}
+              />
+              <p className="text-[14px] font-semibold text-[#1C2C1C] mb-1">Drop file or Browse</p>
+              <p className="text-[12px] text-gray-500">Format: pdf, docx, doc &<br/>Max file size: 25 MB</p>
+            </label>
+            {files.length > 0 && (
+              <div className="mt-3 space-y-2 w-1/2">
+                {files.map((file, idx) => (
+                  <div key={idx} className="flex justify-between items-center text-[12px] text-[#1C2C1C] bg-white px-3 py-2 rounded-lg border border-gray-200 shadow-sm">
+                    <span className="truncate mr-2 font-medium">{file.name}</span>
+                    <button 
+                      type="button" 
+                      onClick={() => setFiles(files.filter((_, i) => i !== idx))}
+                      className="text-red-500 hover:text-red-700 flex-shrink-0 font-bold"
+                    >
+                      X
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between pt-2">
+            <span className="text-[14px] font-semibold text-[#1C2C1C]">Recommend this Tradesperson?</span>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setRecommend(true)}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-full border text-[13px] font-bold transition-colors ${
+                  recommend === true 
+                    ? 'border-[#6E9625] text-[#6E9625] bg-[#F8F9F5]' 
+                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <ThumbsUp size={16} className={recommend === true ? 'text-[#6E9625]' : 'text-gray-400'} />
+                Recommended
+              </button>
+              <button
+                type="button"
+                onClick={() => setRecommend(false)}
+                className={`flex items-center gap-2 px-5 py-2.5 rounded-full border text-[13px] font-bold transition-colors ${
+                  recommend === false 
+                    ? 'border-red-500 text-red-600 bg-red-50' 
+                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <ThumbsDown size={16} className={recommend === false ? 'text-red-500' : 'text-gray-400'} />
+                Don't Recommend
+              </button>
+            </div>
+          </div>
+
+            <div className="pt-4">
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-8 py-3.5 bg-[#1C2C1C] text-white rounded-xl text-[14px] font-bold flex items-center gap-2 hover:bg-[#2c3e2c] transition-colors disabled:opacity-50"
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit \u2192'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-6">
+          <div className="grid grid-cols-2 gap-4">
+            {reasons.map((reason) => (
+              <button
+                key={reason.id}
+                type="button"
+                onClick={() => setSelectedReason(reason.id)}
+                className={`text-left p-5 rounded-xl border transition-all ${
+                  selectedReason === reason.id 
+                    ? 'border-[#6E9625] bg-[#F8F9F5]' 
+                    : 'border-gray-200 hover:border-gray-300 bg-white'
+                }`}
+              >
+                <div className="flex items-start gap-3">
+                  <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+                    selectedReason === reason.id ? 'border-[#6E9625]' : 'border-gray-300'
+                  }`}>
+                    {selectedReason === reason.id && (
+                      <div className="w-2.5 h-2.5 rounded-full bg-[#6E9625]" />
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="text-[14px] font-semibold text-[#1C2C1C] mb-1">{reason.label}</h4>
+                    <p className="text-[12px] text-gray-500">{reason.desc}</p>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+
+            <div className="pt-4">
+              <button
+                type="submit"
+                disabled={!selectedReason || isSubmitting}
+                className="px-8 py-3.5 bg-[#1C2C1C] text-white rounded-xl text-[14px] font-bold flex items-center gap-2 hover:bg-[#2c3e2c] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? 'Submitting...' : 'Submit \u2192'}
+              </button>
+            </div>
+          </div>
+        )}
+      </form>
+
+      {isSuccess && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+          <div className="bg-white rounded-[24px] p-10 max-w-md w-full mx-auto shadow-xl text-center">
+            <div className="w-20 h-20 bg-[#F0F9F1] rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle size={40} className="text-[#6E9625]" />
+            </div>
+            <h2 className="text-[28px] font-bold text-[#1C2C1C] mb-3">Review Submitted!</h2>
+            <p className="text-gray-600 mb-8 text-[15px]">
+              Your review has been submitted successfully. Thank you for your valuable feedback!
+            </p>
+            <button 
+              onClick={handleReturn}
+              className="w-full px-8 py-3.5 bg-[#1C2C1C] text-white rounded-xl text-[14px] font-bold hover:bg-[#2c3e2c] transition-colors"
+            >
+              Return to Dashboard
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
