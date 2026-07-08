@@ -33,8 +33,9 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${bricolage.variable} ${wix.variable} h-full antialiased `}
+      suppressHydrationWarning
     >
-      <body className={`${wix.className} min-h-full flex flex-col`}>
+      <body className={`${wix.className} min-h-full flex flex-col`} suppressHydrationWarning>
         <StoreProvider>
           <Toaster position="top-right" />
           <NavbarWrapper />

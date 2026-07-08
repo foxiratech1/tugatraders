@@ -106,6 +106,15 @@ export default function CustomerNavbar() {
     };
   }, []);
 
+  const imageUrl = profile?.profileImage
+    ? new URL(
+      profile.profileImage,
+      process.env.NEXT_PUBLIC_API_URL
+    ).toString()
+    : "/customerNavLogo.png";
+
+  console.log("Image URL:", imageUrl);
+
   return (
     <header className="sticky top-0 z-50 w-full bg-white border-b border-[#F0EDE8] py-4 px-6 md:px-10 flex items-center justify-between">
 
@@ -216,13 +225,13 @@ export default function CustomerNavbar() {
           >
             <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
               <img
-                src={
-                  profile?.profileImage ||
-                  profile?.avatar ||
-                  "/default-avatar.png"
-                }
+                key={imageUrl}
+                src={imageUrl}
+                crossOrigin="anonymous"
+                loading="eager"
+                referrerPolicy="no-referrer"
                 alt={profile?.fullName || "User"}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover rounded-full"
               />
             </div>
 

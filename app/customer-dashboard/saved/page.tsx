@@ -69,7 +69,7 @@ function TraderCard({ trader }: { trader: SavedTrader }) {
           <h3 className="text-[15px] font-bold text-[#1C2C1C] truncate">{trader.companyName || trader.fullName}</h3>
           {trader.isVerified && (
             <svg className="w-4 h-4 text-[#6E9625] flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
           )}
         </div>
@@ -122,7 +122,25 @@ export default function SavedTradersPage() {
     const fetchSaved = async () => {
       try {
         const res = await authApi.getSavedTraders();
-        const list = Array.isArray(res) ? res : res?.data || [];
+        const rawList = Array.isArray(res) ? res : res?.data || [];
+
+        const list: SavedTrader[] = rawList.map((item: any) => {
+          const t = item.trader || item;
+          return {
+            id: t.id,
+            fullName: t.fullName || "",
+            companyName: t.companyName || "",
+            profileImage: t.profileImage || null,
+            logo: t.logo || null,
+            ratingAvg: t.traderMetrics?.averageRating ?? t.ratingAvg ?? 0,
+            reviewCount: t.traderMetrics?.totalReviews ?? t.reviewCount ?? 0,
+            workRadius: t.workRadius ?? 0,
+            isVerified: t.isVerified ?? false,
+            subscriptionTier: t.subscriptionTier ?? "",
+            location: t.traderProfile?.location ?? t.location ?? "",
+            skills: t.skills ?? [],
+          };
+        });
         setTraders(list);
       } catch (err) {
         console.error("Failed to fetch saved traders", err);

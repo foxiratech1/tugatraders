@@ -4,6 +4,7 @@ import React, { useEffect, useState } from "react";
 import { authApi } from "@/app/api/authApi";
 import { Star, MessageSquare, Award, CornerUpLeft } from "lucide-react";
 import Image from "next/image";
+import toast from "react-hot-toast";
 
 interface Review {
   id: string;
@@ -59,7 +60,7 @@ function timeAgo(dateString: string) {
   const date = new Date(dateString);
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-  
+
   if (diffInSeconds < 60) return "Just now";
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   if (diffInMinutes < 60) return `${diffInMinutes} mins ago`;
@@ -92,6 +93,43 @@ export default function TraderReviews() {
   const [submittingReply, setSubmittingReply] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  const [showReportModal, setShowReportModal] = useState(false);
+
+  const [selectedReviewId, setSelectedReviewId] = useState("");
+  const [reportedReviews, setReportedReviews] = useState<string[]>([]);
+
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedDeleteReviewId, setSelectedDeleteReviewId] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+
+
+  const [reportData, setReportData] = useState({
+    reportType: "",
+    reason: "",
+    customReason: "",
+  });
+
+  const reportReasons = [
+    { value: "SPAM", label: "Spam" },
+    { value: "FAKE", label: "Fake" },
+    { value: "ABUSIVE", label: "Abusive" },
+    { value: "HARASSMENT", label: "Harassment" },
+    { value: "INAPPROPRIATE_CONTENT", label: "Inappropriate Content" },
+    { value: "SCAM", label: "Scam" },
+    { value: "OTHER", label: "Other" },
+  ];
+
+  const reportTypes = [
+    { value: "USER", label: "User" },
+    { value: "REVIEW", label: "Review" },
+    { value: "JOB", label: "Job" },
+    { value: "MESSAGE", label: "Message" },
+    { value: "TRADER_PROFILE", label: "Trader Profile" },
+  ];
+
+
+
   const handleReplySubmit = async (reviewId: string) => {
     if (!replyText.trim()) return;
     try {
@@ -105,6 +143,33 @@ export default function TraderReviews() {
       alert(err?.response?.data?.message || "Failed to submit reply.");
     } finally {
       setSubmittingReply(false);
+    }
+  };
+
+  const handleDeleteReview = async () => {
+    if (!selectedDeleteReviewId) return;
+
+    try {
+      setDeleting(true);
+
+      await authApi.deleteReview(selectedDeleteReviewId);
+
+      toast.success("Review deleted successfully.");
+
+      setReviews((prev) =>
+        prev.filter((item) => item.id !== selectedDeleteReviewId)
+      );
+
+      setRefreshTrigger((prev) => prev + 1);
+
+      setShowDeleteModal(false);
+      setSelectedDeleteReviewId("");
+    } catch (err: any) {
+      toast.error(
+        err?.response?.data?.message || "Failed to delete review."
+      );
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -169,10 +234,69 @@ export default function TraderReviews() {
     fetchReviewsAndSummary();
   }, [page, refreshTrigger]);
 
+  const handleReportSubmit = async () => {
+
+    if (!reportData.reportType) {
+      return alert("Please select a report type.");
+    }
+
+    if (!reportData.reason) {
+      return alert("Please select a reason.");
+    }
+
+    if (
+      reportData.reason === "OTHER" &&
+      !reportData.customReason.trim()
+    ) {
+      return alert("Please enter a custom reason.");
+    }
+
+    try {
+
+      await authApi.report({
+        reportType: reportData.reportType,
+        targetId: selectedReviewId,
+        reason: reportData.reason,
+        customReason:
+          reportData.reason === "OTHER"
+            ? reportData.customReason
+            : "",
+      });
+
+      setReportedReviews((prev) => [...prev, selectedReviewId]);
+
+      toast.success("Report submitted successfully.");
+
+      setShowReportModal(false);
+
+      setReportData({
+        reportType: "",
+        reason: "",
+        customReason: "",
+      });
+
+    } catch (err: any) {
+      console.error(err);
+
+      if (err?.response?.status === 404) {
+        toast.error("You already reported this item.");
+      } else {
+        toast.error(
+          err?.response?.data?.message || "Failed to submit report."
+        );
+      }
+    }
+
+  };
+
+  // if (!reportData.reportType) {
+  //   return alert("Please select a report type.");
+  // }
+
   return (
     <div className="min-h-screen bg-[#F8F9F5] p-6 md:p-10 font-sans mt-[60px]">
       <div className="max-w-[1100px] mx-auto">
-        
+
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-8">
           <div>
@@ -185,7 +309,7 @@ export default function TraderReviews() {
         </div>
 
         <div className="flex flex-col md:flex-row gap-6 items-start">
-          
+
           {/* LEFT COLUMN: Summary Cards */}
           <div className="w-full md:w-[320px] flex flex-col gap-6 flex-shrink-0">
             {/* Average Rating Card */}
@@ -208,10 +332,10 @@ export default function TraderReviews() {
                   const count = summary?.breakdown?.[star] || 0;
                   const total = summary?.totalReviews || reviews.length || 1;
                   const percentage = Math.round((count / total) * 100) || 0;
-                  
+
                   // Visual fallback for 0 total reviews
-                  const width = summary?.totalReviews === 0 && reviews.length === 0 
-                    ? '0%' 
+                  const width = summary?.totalReviews === 0 && reviews.length === 0
+                    ? '0%'
                     : (count > 0 ? `${percentage}%` : `${[80, 60, 40, 20, 10][5 - star]}%`); // mock pattern if no data
 
                   return (
@@ -303,8 +427,28 @@ export default function TraderReviews() {
                     >
                       <CornerUpLeft size={14} /> Reply
                     </button>
-                    <button className="text-[12px] text-gray-400 font-medium hover:text-gray-600 transition-colors">
-                      Report
+                    <button
+                      disabled={reportedReviews.includes(r.id)}
+                      onClick={() => {
+                        setSelectedReviewId(r.id);
+                        setShowReportModal(true);
+                      }}
+                      className={`text-[12px] font-medium transition-colors ${reportedReviews.includes(r.id)
+                        ? "text-gray-400 cursor-not-allowed"
+                        : "text-gray-400 hover:text-red-600"
+                        }`}
+                    >
+                      {reportedReviews.includes(r.id) ? "Reported" : "Report"}
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        setSelectedDeleteReviewId(r.id);
+                        setShowDeleteModal(true);
+                      }}
+                      className="text-[12px] font-medium text-red-600 hover:text-red-700"
+                    >
+                      Delete
                     </button>
                   </div>
 
@@ -390,6 +534,148 @@ export default function TraderReviews() {
           </div>
         </div>
       </div>
+      {showReportModal && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
+
+          <div className="bg-white rounded-xl p-6 w-full max-w-md">
+
+            <h2 className="text-lg font-semibold mb-5">
+              Report Review
+            </h2>
+
+            <label className="block mb-2">
+              Reason
+            </label>
+
+            <select
+              value={reportData.reason}
+              onChange={(e) =>
+                setReportData(prev => ({
+                  ...prev,
+                  reason: e.target.value,
+                  customReason: ""
+                }))
+              }
+              className="w-full border rounded-lg p-2"
+            >
+              <option value="">Select reason</option>
+
+              {reportReasons.map(item => (
+                <option
+                  key={item.value}
+                  value={item.value}
+                >
+                  {item.label}
+                </option>
+              ))}
+            </select>
+
+            {reportData.reason === "OTHER" && (
+
+              <textarea
+                placeholder="Enter reason..."
+                className="w-full mt-4 border rounded-lg p-3"
+                value={reportData.customReason}
+                onChange={(e) =>
+                  setReportData(prev => ({
+                    ...prev,
+                    customReason: e.target.value
+                  }))
+                }
+              />
+
+            )}
+
+            <div className="mb-4">
+              <label className="block mb-2 font-medium">
+                Report Type
+              </label>
+
+              <select
+                value={reportData.reportType}
+                onChange={(e) =>
+                  setReportData((prev) => ({
+                    ...prev,
+                    reportType: e.target.value,
+                  }))
+                }
+                className="w-full border rounded-lg p-2"
+              >
+                <option value="">Select Report Type</option>
+
+                {reportTypes.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-5">
+
+              <button
+                onClick={() => setShowReportModal(false)}
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleReportSubmit}
+                className="bg-red-600 text-white px-5 py-2 rounded-lg"
+              >
+                Submit
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
+
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50">
+
+          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+
+            <h2 className="text-xl font-semibold text-gray-900">
+              Delete Review
+            </h2>
+
+            <p className="mt-3 text-sm text-gray-500">
+              Are you sure you want to delete this review?
+              <br />
+              This action cannot be undone.
+            </p>
+
+            <div className="mt-8 flex justify-end gap-3">
+
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setSelectedDeleteReviewId("");
+                }}
+                className="rounded-lg border border-gray-300 px-5 py-2 font-medium hover:bg-gray-100"
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleDeleteReview}
+                disabled={deleting}
+                className="rounded-lg bg-red-600 px-5 py-2 font-medium text-white hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleting ? "Deleting..." : "Delete"}
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
     </div>
+
   );
 }

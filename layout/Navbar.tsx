@@ -21,14 +21,8 @@ export default function Navbar() {
   const [loginOpen, setLoginOpen] = useState(false);
   const [signupOpen, setSignupOpen] = useState(false);
 
-  // Hide navbar on auth screens EXCEPT trader signup step 2 and step 3
-  if (
-    pathname?.startsWith("/auth") &&
-    ![
-      "/auth/trader-signup/step-2",
-      "/auth/trader-signup/step-3",
-    ].includes(pathname)
-  ) {
+  // Hide navbar on auth screens
+  if (pathname?.startsWith("/auth")) {
     return null;
   }
 

@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import { MapPin, CloudUpload, Zap, ArrowRight } from 'lucide-react';
+import { MapPin, CloudUpload, Zap, ArrowRight, Trash2 } from 'lucide-react';
 import { authApi } from '@/app/api/authApi';
 import api from '@/utils/api';
 import { getAccessToken } from '@/utils/auth';
@@ -77,7 +77,20 @@ export default function PostJobPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const selectedFiles = Array.from(e.target.files);
-      setFiles(prev => [...prev, ...selectedFiles]);
+      const validFiles: File[] = [];
+      const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+
+      selectedFiles.forEach(file => {
+        if (file.size >= MAX_SIZE) {
+          toast.error(`${file.name} is 5MB or larger. Please upload a smaller file.`);
+        } else {
+          validFiles.push(file);
+        }
+      });
+
+      if (validFiles.length > 0) {
+        setFiles(prev => [...prev, ...validFiles]);
+      }
     }
   };
 
@@ -353,12 +366,33 @@ export default function PostJobPage() {
                 Click to browse files
               </p>
               <p className="text-[10px] text-[#555555]/60 font-bold tracking-wider uppercase mb-2">
-                MAX FILE SIZE 25MB • JPEG, PNG, PDF
+                MAX FILE SIZE 5MB • JPEG, PNG, PDF
               </p>
               {files.length > 0 && (
-                <div className="text-[12px] text-[#6E9625] font-bold flex flex-col gap-1">
+                <div 
+                  className="mt-4 flex flex-wrap gap-3 justify-center w-full"
+                  onClick={(e) => e.stopPropagation()} 
+                >
                   {files.map((f, i) => (
-                    <span key={i}>{f.name}</span>
+                    <div key={i} className="relative group w-16 h-16 rounded-md overflow-hidden border border-[#E5E7EB] bg-white shadow-sm flex-shrink-0">
+                      {f.type.startsWith('image/') ? (
+                        <img src={URL.createObjectURL(f)} alt={f.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-[#555555] bg-gray-50">
+                          <span className="text-[10px] font-bold uppercase truncate px-1 max-w-full">{f.name.split('.').pop()}</span>
+                        </div>
+                      )}
+                      <div
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setFiles(prev => prev.filter((_, idx) => idx !== i));
+                        }}
+                        className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                        title="Remove file"
+                      >
+                        <Trash2 size={20} className="text-white hover:text-red-400 transition-colors" />
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}

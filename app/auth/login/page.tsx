@@ -160,67 +160,98 @@ function LoginContent() {
         const roleStr = (tokenRole || data?.user?.role || data?.role || "").toString().toLowerCase();
         console.log("Detected user role:", roleStr);
 
+        let targetPath = "/";
+        let forceSkipOtp = false;
+
         if (redirectParam) {
           if (redirectParam === "leave-review" && traderIdParam) {
             if (roleStr === Role.Customer.toLowerCase()) {
-              router.push(`/customer-dashboard/leave-review?traderId=${traderIdParam}&reviewType=DIRECTORY`);
+              targetPath = `/customer-dashboard/leave-review?traderId=${traderIdParam}&reviewType=DIRECTORY`;
             } else {
-              router.push(`/common/leave-review?traderId=${traderIdParam}&reviewType=DIRECTORY`);
+              targetPath = `/common/leave-review?traderId=${traderIdParam}&reviewType=DIRECTORY`;
             }
           } else {
-            router.push(redirectParam);
+            targetPath = redirectParam;
           }
-          return;
-        }
-
-        if (roleStr === Role.Admin.toLowerCase()) {
-          router.push("/admin");
+        } else if (roleStr === Role.Admin.toLowerCase()) {
+          targetPath = "/admin";
         } else if (roleStr === Role.Trader.toLowerCase()) {
           try {
             // Check their registration status before letting them in
             const statusResponse = await getRegistrationStatus();
 
             // Extract data assuming it could be in statusResponse.data or just statusResponse
-            const data = statusResponse?.data || statusResponse;
+            const traderData = statusResponse?.data || statusResponse;
 
-            const isCompleted = data?.isRegistrationCompleted;
+            const isCompleted = traderData?.isRegistrationCompleted;
+
+            // If the trader has completed registration or is past step 1, we skip the OTP page
+            if (isCompleted || traderData?.step1Completed || traderData?.currentStep > 1) {
+              forceSkipOtp = true;
+            }
 
             if (isCompleted) {
-              router.push("/trader"); // Dashboard
-            } else if (data?.step2Completed === false || data?.currentStep === 2) {
+              targetPath = "/trader"; // Dashboard
+            } else if (traderData?.step2Completed === false || traderData?.currentStep === 2) {
               // Pass the categoryId to step 2 so it can load the skills
-              const catId = data?.selectedCategories?.[0]?.id;
-              router.push(catId ? `/auth/trader-signup/step-2?categoryId=${catId}` : "/auth/trader-signup/step-2");
-            } else if (data?.step3Completed === false || data?.currentStep === 3) {
-              router.push("/auth/trader-signup/step-3");
+              const catId = traderData?.selectedCategories?.[0]?.id;
+              targetPath = catId ? `/auth/trader-signup/step-2?categoryId=${catId}` : "/auth/trader-signup/step-2";
+            } else if (traderData?.step3Completed === false || traderData?.currentStep === 3) {
+              targetPath = "/auth/trader-signup/step-3";
             } else {
               // Fallback just in case
-              router.push("/trader");
+              targetPath = "/trader";
             }
           } catch (statusErr) {
             console.error("Failed to fetch registration status", statusErr);
-            router.push("/auth/trader-signup/step-2"); // Safe fallback if they haven't finished
+            targetPath = "/auth/trader-signup/step-2"; // Safe fallback if they haven't finished
           }
         } else if (roleStr === Role.Customer.toLowerCase()) {
           // Direct customers to their dashboard
-          router.push("/customer-dashboard");
+          targetPath = "/customer-dashboard";
+          forceSkipOtp = true; // Customers don't need OTP verification
+        }
+
+        // Check if email is already verified
+        const isEmailVerified = data?.user?.isEmailVerified ?? data?.data?.user?.isEmailVerified ?? data?.user?.emailVerified ?? data?.data?.user?.emailVerified;
+
+        // If explicitly false, redirect to OTP verification. Otherwise (true or undefined), proceed.
+        if (isEmailVerified === false && !forceSkipOtp) {
+          router.push(`/auth/trader-signup/verify-otp?email=${encodeURIComponent(email)}&redirectTo=${encodeURIComponent(targetPath)}`);
         } else {
-          router.push("/");
+          router.push(targetPath);
         }
       } else {
         router.push("/");
       }
     } catch (err: any) {
-      const msg = err.response?.data?.message?.[0] || err.response?.data?.error || "Login failed";
+      const dataMsg = err.response?.data?.message;
+      let msg = Array.isArray(dataMsg) ? dataMsg[0] : dataMsg;
+      if (!msg) {
+        msg = err.response?.data?.error || "Login failed";
+      }
+      if (typeof msg !== "string") {
+        msg = "Login failed";
+      }
+
       toast.error(msg);
+
+      const lowerMsg = msg.toLowerCase();
+      if (lowerMsg.includes("password") || lowerMsg.includes("credential")) {
+        setErrors({ password: "Password is incorrect" });
+      } else if (lowerMsg.includes("email") || lowerMsg.includes("user") || lowerMsg.includes("exist") || lowerMsg.includes("found")) {
+        setErrors({ email: msg });
+      } else {
+        setErrors({ password: "Password is incorrect" });
+      }
     }
   };
 
   return (
     <main className="flex min-h-screen w-full items-center justify-center bg-[#F8F9F5] font-sans antialiased">
-      <div className="flex w-full max-w-[1440px] min-h-screen lg:min-h-screen xl:min-h-[1004px] overflow-hidden bg-[#F8F9F5] relative flex-col lg:flex-row">
+      <div className="flex w-full min-h-screen lg:min-h-screen overflow-hidden bg-[#F8F9F5] relative flex-col lg:flex-row">
         {/* LEFT SECTION */}
-        <div className="flex flex-1 flex-col justify-between px-4 py-8 sm:px-6 sm:py-12 lg:px-8 xl:px-12 relative overflow-y-auto z-10 bg-[#F8F9F5]">
+        <div className="flex flex-1 flex-col justify-center px-4 py-8 sm:px-6 sm:py-12 lg:px-8 xl:px-12 relative overflow-y-auto z-10 bg-[#F8F9F5]">
           <div className="mx-auto w-full max-w-[450px] bg-white rounded-[28px] p-6 sm:p-8 md:p-10 shadow-[0_8px_40px_rgba(36,58,36,0.03)] border border-[#243A240A] flex flex-col gap-[20px]">
             {/* LOGO */}
             <Link href="/">
@@ -280,8 +311,8 @@ function LoginContent() {
                 </div>
                 <div className="flex justify-end text-[11.5px] mt-1">
                   {/* <Link href="/auth/change-password" className="font-bold text-[#1C2C1C]/40 hover:text-[#6E9625] transition-colors">
-                    Change password?
-                  </Link> */}
+ Change password?
+ </Link> */}
                   <Link href="/auth/forgot-password" className="font-bold text-[#1C2C1C]/40 hover:text-[#6E9625] transition-colors">
                     Forgot password?
                   </Link>
@@ -336,7 +367,7 @@ function LoginContent() {
           </div>
         </div>
         {/* RIGHT SECTION (Hero) */}
-        <div className="relative hidden w-full lg:w-[45%] xl:w-[739px] lg:h-auto lg:self-stretch xl:h-[1004px] overflow-hidden lg:block flex-shrink-0 z-0">
+        <div className="relative hidden w-full lg:w-[50%] lg:h-auto lg:self-stretch overflow-hidden lg:block flex-shrink-0 z-0">
           <Image src="/log in.png" alt="Find trusted professionals for every job" fill className="object-cover object-center" priority unoptimized style={{ opacity: 1 }} />
           <div className="absolute inset-0 bg-[#162716]/65 mix-blend-multiply z-10" />
           <div className="absolute inset-0 flex flex-col justify-end p-8 sm:p-12 xl:p-20 text-white z-20" style={{ background: 'linear-gradient(to top, rgba(22, 39, 22, 0.95) 0%, rgba(22, 39, 22, 0.4) 60%, transparent 100%)' }}>

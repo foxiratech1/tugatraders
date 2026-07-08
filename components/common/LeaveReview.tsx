@@ -13,15 +13,16 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
   const traderId = searchParams.get('traderId') || '00000000-0000-0000-0000-000000000000';
   const jobId = searchParams.get('jobId');
   const editReviewId = searchParams.get('editReviewId');
+  const reviewCreatedAt = searchParams.get("createdAt");
 
   const [workCarriedOut, setWorkCarriedOut] = useState<boolean>(searchParams.has('workCarriedOut') ? searchParams.get('workCarriedOut') === 'true' : true);
   const [rating, setRating] = useState<number>(parseInt(searchParams.get('rating') || '0'));
   const [hoverRating, setHoverRating] = useState<number>(0);
-  
+
   const recommendParam = searchParams.get('recommend');
   const initialRecommend = recommendParam === 'true' ? true : recommendParam === 'false' ? false : null;
   const [recommend, setRecommend] = useState<boolean | null>(initialRecommend);
-  
+
   const [selectedReason, setSelectedReason] = useState<string>('');
   const initialReviewType = searchParams.get('reviewType') || reviewTypeProp || (jobId ? 'JOB' : 'DIRECTORY');
   const [reviewType, setReviewType] = useState<string>(initialReviewType);
@@ -33,13 +34,13 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
-  
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       setFiles(prev => [...prev, ...Array.from(e.target.files as FileList)]);
     }
   };
-  
+
   const reasons = [
     { id: 'no_response', label: "Trader didn't respond", desc: "I reached out but never heard back from them." },
     { id: 'declined', label: "Trader declined the job", desc: "They responded but were unavailable." },
@@ -51,15 +52,31 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
     { id: 'other', label: "Other reason", desc: "None of the above apply." }
   ];
 
+  const canEditReview = React.useMemo(() => {
+    if (!editReviewId || !reviewCreatedAt) return true;
+
+    const created = new Date(reviewCreatedAt).getTime();
+    const now = Date.now();
+
+    const diffHours = (now - created) / (1000 * 60 * 60);
+
+    return diffHours <= 48;
+  }, [editReviewId, reviewCreatedAt]);
+
+  if (editReviewId && !canEditReview) {
+    setError("Reviews can only be edited within 48 hours of submission.");
+    return;
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
+
     if (workCarriedOut && rating === 0) {
       setError('Please provide a rating.');
       return;
     }
-    
+
     setIsSubmitting(true);
     try {
       const payload: any = {
@@ -95,7 +112,7 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
       } else {
         await authApi.postReview(payload);
       }
-      
+
       setIsSuccess(true);
     } catch (err: any) {
       console.error(err);
@@ -125,7 +142,7 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
         {editReviewId ? "Edit Your Review" : workCarriedOut ? "Share Your Experience" : "Why Was the Job Closed?"}
       </h2>
       <p className="text-gray-500 text-[14px] mb-8">
-        {workCarriedOut 
+        {workCarriedOut
           ? "Your feedback helps maintain our high standards of quality."
           : "This helps us improve our matchmaking and professional network."}
       </p>
@@ -136,6 +153,11 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
         </div>
       )}
 
+      {!!editReviewId && !canEditReview && (
+        <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+          This review can no longer be edited. Reviews can only be edited within 48 hours of submission.
+        </div>
+      )}
       <form onSubmit={handleSubmit}>
         <div className="mb-6">
           <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Interaction Source</label>
@@ -169,18 +191,16 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
               <button
                 type="button"
                 onClick={() => setWorkCarriedOut(true)}
-                className={`px-5 py-2 text-[14px] font-semibold rounded-full transition-colors ${
-                  workCarriedOut ? 'bg-white text-[#1C2C1C] shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                }`}
+                className={`px-5 py-2 text-[14px] font-semibold rounded-full transition-colors ${workCarriedOut ? 'bg-white text-[#1C2C1C] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  }`}
               >
                 Yes
               </button>
               <button
                 type="button"
                 onClick={() => setWorkCarriedOut(false)}
-                className={`px-5 py-2 text-[14px] font-semibold rounded-full transition-colors ${
-                  !workCarriedOut ? 'bg-white text-[#1C2C1C] shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                }`}
+                className={`px-5 py-2 text-[14px] font-semibold rounded-full transition-colors ${!workCarriedOut ? 'bg-white text-[#1C2C1C] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                  }`}
               >
                 No
               </button>
@@ -192,181 +212,182 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
 
         {workCarriedOut ? (
           <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-5">
-            <div>
-              <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Completion Date</label>
-              <div className="relative">
-                <input 
-                  type="date" 
-                  value={completionDate}
-                  onChange={(e) => setCompletionDate(e.target.value)}
-                  className="w-full border border-gray-200 rounded-xl py-3 px-4 text-[14px] text-gray-700 outline-none focus:border-[#4CAF50]" 
+            <div className="grid grid-cols-2 gap-5">
+              <div>
+                <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Completion Date</label>
+                <div className="relative">
+                  <input
+                    type="date"
+                    value={completionDate}
+                    onChange={(e) => setCompletionDate(e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl py-3 px-4 text-[14px] text-gray-700 outline-none focus:border-[#4CAF50]"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Services Used</label>
+                <input
+                  type="text"
+                  placeholder="Interior Architecture, Bespoke Kitchen"
+                  className="w-full border border-gray-200 rounded-xl py-3 px-4 text-[14px] text-gray-700 outline-none focus:border-[#4CAF50]"
                 />
               </div>
             </div>
+
+            <div className="bg-gray-50/50 rounded-xl p-8 text-center border border-gray-100">
+              <h3 className="text-[15px] font-semibold text-[#1C2C1C] mb-4">How would you rate the professional?</h3>
+              <div className="flex justify-center gap-2 mb-3">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    onClick={() => setRating(star)}
+                    className="focus:outline-none"
+                  >
+                    <Star
+                      size={32}
+                      className={`${star <= (hoverRating || rating)
+                        ? 'text-[#6E9625] fill-[#6E9625]'
+                        : 'text-[#E5E7EB] fill-[#E5E7EB]'
+                        } transition-colors`}
+                    />
+                  </button>
+                ))}
+              </div>
+              {rating > 0 && (
+                <p className="text-[13px] font-bold text-[#6E9625]">
+                  {rating.toFixed(1)} {rating >= 4 ? 'Excellent Quality' : rating >= 3 ? 'Good Quality' : 'Poor Quality'}
+                </p>
+              )}
+            </div>
+
             <div>
-              <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Services Used</label>
-              <input 
-                type="text" 
-                placeholder="Interior Architecture, Bespoke Kitchen"
+              <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Review Title</label>
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="e.g. Exceptional craftsmanship and attention to detail"
                 className="w-full border border-gray-200 rounded-xl py-3 px-4 text-[14px] text-gray-700 outline-none focus:border-[#4CAF50]"
               />
             </div>
-          </div>
 
-          <div className="bg-gray-50/50 rounded-xl p-8 text-center border border-gray-100">
-            <h3 className="text-[15px] font-semibold text-[#1C2C1C] mb-4">How would you rate the professional?</h3>
-            <div className="flex justify-center gap-2 mb-3">
-              {[1, 2, 3, 4, 5].map((star) => (
+            <div>
+              <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Tell us more about your experience</label>
+              <textarea
+                rows={4}
+                value={review}
+                onChange={(e) => setReview(e.target.value)}
+                placeholder="How was the communication? Was the workspace kept clear?"
+                className="w-full border border-gray-200 rounded-xl py-3 px-4 text-[14px] text-gray-700 outline-none focus:border-[#4CAF50] resize-none"
+              ></textarea>
+            </div>
+
+            <div>
+              <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Upload Files</label>
+              <label className="block border-2 border-dashed border-[#E5E7EB] hover:border-[#6E9625] bg-gray-50/50 rounded-xl p-8 text-center cursor-pointer transition-colors w-1/2">
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,.docx,.doc"
+                  className="hidden"
+                  onChange={handleFileChange}
+                />
+                <p className="text-[14px] font-semibold text-[#1C2C1C] mb-1">Drop file or Browse</p>
+                <p className="text-[12px] text-gray-500">Format: pdf, docx, doc &<br />Max file size: 25 MB</p>
+              </label>
+              {files.length > 0 && (
+                <div className="mt-3 space-y-2 w-1/2">
+                  {files.map((file, idx) => (
+                    <div key={idx} className="flex justify-between items-center text-[12px] text-[#1C2C1C] bg-white px-3 py-2 rounded-lg border border-gray-200 shadow-sm">
+                      <span className="truncate mr-2 font-medium">{file.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => setFiles(files.filter((_, i) => i !== idx))}
+                        className="text-red-500 hover:text-red-700 flex-shrink-0 font-bold"
+                      >
+                        X
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between pt-2">
+              <span className="text-[14px] font-semibold text-[#1C2C1C]">Recommend this Tradesperson?</span>
+              <div className="flex gap-3">
                 <button
-                  key={star}
                   type="button"
-                  onMouseEnter={() => setHoverRating(star)}
-                  onMouseLeave={() => setHoverRating(0)}
-                  onClick={() => setRating(star)}
-                  className="focus:outline-none"
+                  onClick={() => setRecommend(true)}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full border text-[13px] font-bold transition-colors ${recommend === true
+                    ? 'border-[#6E9625] text-[#6E9625] bg-[#F8F9F5]'
+                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                    }`}
                 >
-                  <Star 
-                    size={32} 
-                    className={`${
-                      star <= (hoverRating || rating) 
-                        ? 'text-[#6E9625] fill-[#6E9625]' 
-                        : 'text-[#E5E7EB] fill-[#E5E7EB]'
-                    } transition-colors`} 
-                  />
+                  <ThumbsUp size={16} className={recommend === true ? 'text-[#6E9625]' : 'text-gray-400'} />
+                  Recommended
                 </button>
-              ))}
-            </div>
-            {rating > 0 && (
-              <p className="text-[13px] font-bold text-[#6E9625]">
-                {rating.toFixed(1)} {rating >= 4 ? 'Excellent Quality' : rating >= 3 ? 'Good Quality' : 'Poor Quality'}
-              </p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Review Title</label>
-            <input 
-              type="text" 
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="e.g. Exceptional craftsmanship and attention to detail"
-              className="w-full border border-gray-200 rounded-xl py-3 px-4 text-[14px] text-gray-700 outline-none focus:border-[#4CAF50]"
-            />
-          </div>
-
-          <div>
-            <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Tell us more about your experience</label>
-            <textarea 
-              rows={4}
-              value={review}
-              onChange={(e) => setReview(e.target.value)}
-              placeholder="How was the communication? Was the workspace kept clear?"
-              className="w-full border border-gray-200 rounded-xl py-3 px-4 text-[14px] text-gray-700 outline-none focus:border-[#4CAF50] resize-none"
-            ></textarea>
-          </div>
-
-          <div>
-            <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Upload Files</label>
-            <label className="block border-2 border-dashed border-[#E5E7EB] hover:border-[#6E9625] bg-gray-50/50 rounded-xl p-8 text-center cursor-pointer transition-colors w-1/2">
-              <input 
-                type="file" 
-                multiple 
-                accept=".pdf,.docx,.doc"
-                className="hidden" 
-                onChange={handleFileChange}
-              />
-              <p className="text-[14px] font-semibold text-[#1C2C1C] mb-1">Drop file or Browse</p>
-              <p className="text-[12px] text-gray-500">Format: pdf, docx, doc &<br/>Max file size: 25 MB</p>
-            </label>
-            {files.length > 0 && (
-              <div className="mt-3 space-y-2 w-1/2">
-                {files.map((file, idx) => (
-                  <div key={idx} className="flex justify-between items-center text-[12px] text-[#1C2C1C] bg-white px-3 py-2 rounded-lg border border-gray-200 shadow-sm">
-                    <span className="truncate mr-2 font-medium">{file.name}</span>
-                    <button 
-                      type="button" 
-                      onClick={() => setFiles(files.filter((_, i) => i !== idx))}
-                      className="text-red-500 hover:text-red-700 flex-shrink-0 font-bold"
-                    >
-                      X
-                    </button>
-                  </div>
-                ))}
+                <button
+                  type="button"
+                  onClick={() => setRecommend(false)}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full border text-[13px] font-bold transition-colors ${recommend === false
+                    ? 'border-red-500 text-red-600 bg-red-50'
+                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                    }`}
+                >
+                  <ThumbsDown size={16} className={recommend === false ? 'text-red-500' : 'text-gray-400'} />
+                  Don't Recommend
+                </button>
               </div>
-            )}
-          </div>
-
-          <div className="flex items-center justify-between pt-2">
-            <span className="text-[14px] font-semibold text-[#1C2C1C]">Recommend this Tradesperson?</span>
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={() => setRecommend(true)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-full border text-[13px] font-bold transition-colors ${
-                  recommend === true 
-                    ? 'border-[#6E9625] text-[#6E9625] bg-[#F8F9F5]' 
-                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <ThumbsUp size={16} className={recommend === true ? 'text-[#6E9625]' : 'text-gray-400'} />
-                Recommended
-              </button>
-              <button
-                type="button"
-                onClick={() => setRecommend(false)}
-                className={`flex items-center gap-2 px-5 py-2.5 rounded-full border text-[13px] font-bold transition-colors ${
-                  recommend === false 
-                    ? 'border-red-500 text-red-600 bg-red-50' 
-                    : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                }`}
-              >
-                <ThumbsDown size={16} className={recommend === false ? 'text-red-500' : 'text-gray-400'} />
-                Don't Recommend
-              </button>
             </div>
-          </div>
 
             <div className="pt-4">
               <button
                 type="submit"
-                disabled={isSubmitting}
+                disabled={isSubmitting || (!!editReviewId && !canEditReview)}
                 className="px-8 py-3.5 bg-[#1C2C1C] text-white rounded-xl text-[14px] font-bold flex items-center gap-2 hover:bg-[#2c3e2c] transition-colors disabled:opacity-50"
               >
-                {isSubmitting ? 'Submitting...' : 'Submit \u2192'}
+                {editReviewId
+                  ? isSubmitting
+                    ? "Updating..."
+                    : "Update Review"
+                  : isSubmitting
+                    ? "Submitting..."
+                    : "Submit →"}
               </button>
             </div>
           </div>
         ) : (
           <div className="space-y-6">
-          <div className="grid grid-cols-2 gap-4">
-            {reasons.map((reason) => (
-              <button
-                key={reason.id}
-                type="button"
-                onClick={() => setSelectedReason(reason.id)}
-                className={`text-left p-5 rounded-xl border transition-all ${
-                  selectedReason === reason.id 
-                    ? 'border-[#6E9625] bg-[#F8F9F5]' 
+            <div className="grid grid-cols-2 gap-4">
+              {reasons.map((reason) => (
+                <button
+                  key={reason.id}
+                  type="button"
+                  onClick={() => setSelectedReason(reason.id)}
+                  className={`text-left p-5 rounded-xl border transition-all ${selectedReason === reason.id
+                    ? 'border-[#6E9625] bg-[#F8F9F5]'
                     : 'border-gray-200 hover:border-gray-300 bg-white'
-                }`}
-              >
-                <div className="flex items-start gap-3">
-                  <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
-                    selectedReason === reason.id ? 'border-[#6E9625]' : 'border-gray-300'
-                  }`}>
-                    {selectedReason === reason.id && (
-                      <div className="w-2.5 h-2.5 rounded-full bg-[#6E9625]" />
-                    )}
+                    }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`mt-0.5 w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${selectedReason === reason.id ? 'border-[#6E9625]' : 'border-gray-300'
+                      }`}>
+                      {selectedReason === reason.id && (
+                        <div className="w-2.5 h-2.5 rounded-full bg-[#6E9625]" />
+                      )}
+                    </div>
+                    <div>
+                      <h4 className="text-[14px] font-semibold text-[#1C2C1C] mb-1">{reason.label}</h4>
+                      <p className="text-[12px] text-gray-500">{reason.desc}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="text-[14px] font-semibold text-[#1C2C1C] mb-1">{reason.label}</h4>
-                    <p className="text-[12px] text-gray-500">{reason.desc}</p>
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
+                </button>
+              ))}
+            </div>
 
             <div className="pt-4">
               <button
@@ -374,7 +395,13 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
                 disabled={!selectedReason || isSubmitting}
                 className="px-8 py-3.5 bg-[#1C2C1C] text-white rounded-xl text-[14px] font-bold flex items-center gap-2 hover:bg-[#2c3e2c] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? 'Submitting...' : 'Submit \u2192'}
+                {editReviewId
+                  ? isSubmitting
+                    ? "Updating..."
+                    : "Update Review"
+                  : isSubmitting
+                    ? "Submitting..."
+                    : "Submit →"}
               </button>
             </div>
           </div>
@@ -391,7 +418,7 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
             <p className="text-gray-600 mb-8 text-[15px]">
               Your review has been submitted successfully. Thank you for your valuable feedback!
             </p>
-            <button 
+            <button
               onClick={handleReturn}
               className="w-full px-8 py-3.5 bg-[#1C2C1C] text-white rounded-xl text-[14px] font-bold hover:bg-[#2c3e2c] transition-colors"
             >

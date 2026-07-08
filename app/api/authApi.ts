@@ -349,6 +349,11 @@ export const authApi = {
     });
   },
 
+  deleteReview: async (reviewId: string) => {
+    const { data } = await api.delete(`/api/reviews/${reviewId}`);
+    return data;
+  },
+
   // -----------------------------------------------------------------
   // Reviews (Trader & General)
   // -----------------------------------------------------------------
@@ -403,6 +408,45 @@ export const authApi = {
     const { data } = await api.put('/api/auth/updateProfile', payload);
     return data;
   },
+
+  report: async (payload: {
+    reportType: string;
+    targetId: string;
+    reason: string;
+    customReason?: string;
+  }) => {
+    const { data } = await api.post("/api/report", payload);
+    return data;
+  },
+
+  getMyReports: async (page = 1, limit = 10) => {
+    const { data } = await api.get(`/api/report/my?page=${page}&limit=${limit}`);
+    return data;
+  },
+
+  getConversations: async () => {
+    const { data } = await api.get("/api/conversations");
+    return data;
+  },
+
+  getOrCreateConversation: async (traderId: string, jobId?: string) => {
+    const { data } = await api.post(`/api/conversations/${traderId}`, jobId ? { jobId } : undefined);
+    return data;
+  },
+
+  getChatMessages: async (conversationId: string) => {
+    const { data } = await api.get(`/api/chat/${conversationId}/messages`);
+    return data;
+  },
+
+  sendChatMessage: async (formData: FormData) => {
+    const { data } = await api.post("/api/chat/send-message", formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return data;
+  },
 };
 
 // ─── Trader registration API ────────────────────────────────────────────────
@@ -413,17 +457,22 @@ export const traderRegister = async (payload: {
   confirmPassword: string;
   tradeCategories: string[];
   workRadius: number;
-  // addressLine: string;
-  // city: string;
-  // state: string;
-  // country: string;
-  // postalCode: string;
   latitude: number;
   longitude: number;
   isCheckedTermsCondition: boolean;
   contactNumber: string;
 }) => {
   const { data } = await api.post('/api/auth/trader/register-step-1', payload);
+  return data;
+};
+
+export const verifyOtp = async (payload: { otp: string }) => {
+  const { data } = await api.post('/api/auth/verify-otp', payload);
+  return data;
+};
+
+export const resendOtp = async (payload: { email: string }) => {
+  const { data } = await api.post('/api/auth/resend-verification-otp', payload);
   return data;
 };
 

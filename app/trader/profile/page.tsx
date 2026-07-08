@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { authApi } from "@/app/api/authApi";
+import { authApi, getRegistrationStatus } from "@/app/api/authApi";
 import {
   User,
   Briefcase,
@@ -15,6 +15,7 @@ import {
   Plus,
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 /* ─────────────────────────────────── types ─────────────────────────────────── */
 interface PersonalForm {
@@ -53,6 +54,7 @@ type TabId = (typeof TABS)[number]["id"];
 
 /* ─────────────────────────────────── component ─────────────────────────────── */
 export default function TraderProfilePage() {
+  const router = useRouter();
   const profileInputRef = useRef<HTMLInputElement>(null);
   const idInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -61,6 +63,7 @@ export default function TraderProfilePage() {
   const [activeTab, setActiveTab] = useState<TabId>("personal");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [traderStatus, setTraderStatus] = useState("PENDING");
 
   /* profile photo */
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -147,6 +150,10 @@ export default function TraderProfilePage() {
             : categories?.data || []
         );
 
+        const regRes = await getRegistrationStatus();
+        const unwrappedReg = regRes?.data || regRes;
+        setTraderStatus(unwrappedReg?.verificationStatus ?? unwrappedReg?.status ?? "PENDING");
+
 
 
         // Helper to build absolute URLs, avoiding duplicate slashes
@@ -158,7 +165,16 @@ export default function TraderProfilePage() {
         };
 
         const avatar = p?.profileImage || p?.avatar || tp?.logo;
-        if (avatar) setPreviewUrl(getFullUrl(avatar));
+
+        const imageUrl = avatar
+          ? avatar.startsWith("http")
+            ? avatar
+            : `${process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "")}/${avatar.replace(/^\/+/, "")}`
+          : null;
+
+        console.log("Profile Image URL:", imageUrl);
+
+        setPreviewUrl(imageUrl);
 
         const logo = tp?.logo || tp?.profileImage;
         if (logo) setLogoPreview(getFullUrl(logo));
@@ -170,6 +186,8 @@ export default function TraderProfilePage() {
     }
     load();
   }, []);
+
+
 
 
   /* ── handlers: personal ── */
@@ -306,6 +324,11 @@ export default function TraderProfilePage() {
 
       await authApi.updateProfile(fd);
       toast.success("Profile updated successfully!");
+
+      const searchParams = new URLSearchParams(window.location.search);
+      if (searchParams.get("mode") === "update") {
+        router.push("/auth/trader-signup/step-3");
+      }
     } catch (err: any) {
       console.error("Update profile error", err);
       toast.error(err?.response?.data?.message || "Failed to update profile");
@@ -380,9 +403,12 @@ export default function TraderProfilePage() {
                         <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-200 border-2 border-[#E8E8E8]">
                           {previewUrl ? (
                             <img
-                              src={previewUrl}
+                              src={previewUrl || "/customerNavLogo.png"}
                               alt="Profile"
                               className="w-full h-full object-cover"
+                              onError={(e) => {
+                                console.log("Profile image failed:", e.currentTarget.src);
+                              }}
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-gray-100">
@@ -540,9 +566,10 @@ export default function TraderProfilePage() {
 
                   {/* Identity & Logo uploads */}
                   <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm px-6 py-6">
-                    <div className="grid grid-cols-2 gap-5">
+                    <div className={`grid gap-5 ${traderStatus === "APPROVED" ? "grid-cols-1" : "grid-cols-2"}`}>
 
                       {/* Proof of Identity */}
+                      {traderStatus !== "APPROVED" && (
                       <div className="border border-dashed border-[#C8D8B0] rounded-xl p-5 flex flex-col items-center text-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-[#6E9625]/10 flex items-center justify-center">
                           <FileText size={18} className="text-[#6E9625]" />
@@ -575,6 +602,7 @@ export default function TraderProfilePage() {
                           onChange={handleIdFileSelect}
                         />
                       </div>
+                      )}
 
                       {/* Profile / Logo */}
                       <div className="border border-dashed border-[#C8D8B0] rounded-xl p-5 flex flex-col items-center text-center gap-3">

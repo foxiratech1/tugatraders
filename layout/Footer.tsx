@@ -24,8 +24,8 @@ export default function Footer() {
     return null;
   }
 
-  // Hide footer on auth screens EXCEPT trader signup step 2 and step 3
-  if (pathname?.startsWith("/auth") && !["/auth/trader-signup/step-2", "/auth/trader-signup/step-3"].includes(pathname)) {
+  // Hide footer on all auth screens
+  if (pathname?.startsWith("/auth")) {
     return null;
   }
 

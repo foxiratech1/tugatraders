@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { authApi, traderRegister } from "@/app/api/authApi";
+import { authApi, traderRegister, resendOtp } from "@/app/api/authApi";
 import { AnimatedEye } from "@/app/ui/AnimatedEye";
 import { setTokens } from "@/utils/auth";
 
@@ -46,6 +46,7 @@ export default function TraderSignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
   // Fetch trade categories on mount
   const [location, setLocation] = useState({
@@ -228,8 +229,8 @@ export default function TraderSignupPage() {
         // state: formData.state,
         // country: formData.country,
         // postalCode: formData.postalCode,
-        latitude: 23.2599,
-        longitude: 77.4126,
+        latitude: 23.5600000,
+        longitude: 77.6200000,
         isCheckedTermsCondition: formData.agreeTerms,
         contactNumber: formData.contactNumber,
       };
@@ -245,21 +246,38 @@ export default function TraderSignupPage() {
         }
       }
 
-      toast.success("Trader account created successfully!");
-      router.push(`/auth/trader-signup/step-2?categoryId=${formData.tradeCategory}`);
+      toast.success("Trader account created! Please verify your email.");
+      router.push(`/auth/trader-signup/verify-otp?email=${encodeURIComponent(formData.businessEmail)}&categoryId=${encodeURIComponent(formData.tradeCategory)}`);
     } catch (err: any) {
-      const msg =
-        err.response?.data?.message?.[0] ||
-        err.response?.data?.error ||
-        err.message ||
-        "An unexpected error occurred";
-      toast.error(msg);
+      let msg = "An unexpected error occurred";
+
+      if (err.response?.data?.message) {
+        msg = Array.isArray(err.response.data.message)
+          ? err.response.data.message[0]
+          : err.response.data.message;
+      } else if (err.response?.data?.error) {
+        msg = err.response.data.error;
+      } else if (err.message) {
+        msg = err.message;
+      }
+
+      if (msg.toLowerCase().includes("email already exists") || msg.toLowerCase().includes("email is already registered")) {
+        try {
+          await resendOtp({ email: formData.businessEmail });
+          toast.success("Please verify your email to continue.");
+          router.push(`/auth/trader-signup/verify-otp?email=${encodeURIComponent(formData.businessEmail)}&categoryId=${encodeURIComponent(formData.tradeCategory)}`);
+        } catch (err: any) {
+          // If resend fails (e.g. already verified), just show the standard error
+          setErrors((prev) => ({ ...prev, businessEmail: "This email is already registered. Please log in." }));
+          toast.error("This email is already registered. Please log in.");
+        }
+      } else {
+        toast.error(msg);
+      }
     } finally {
       setLoading(false);
     }
   };
-
-
 
   // ── Input class helper ──────────────────────────────────────────────────────
   const inputCls = (err?: string) =>
@@ -270,7 +288,7 @@ export default function TraderSignupPage() {
 
   return (
     <main className="flex min-h-screen w-full items-center justify-center bg-[#F0EDE8] font-sans antialiased">
-      <div className="flex w-full max-w-[1440px] min-h-screen overflow-hidden bg-[#F0EDE8] relative flex-col lg:flex-row">
+      <div className="flex w-full min-h-screen overflow-hidden bg-[#F0EDE8] relative flex-col lg:flex-row">
 
         {/* ══════════════ LEFT — FORM ══════════════ */}
         <div className="flex flex-1 flex-col justify-center items-center px-4 py-10 sm:px-8 xl:px-16 bg-[#F0EDE8] z-10 relative">
@@ -358,17 +376,17 @@ export default function TraderSignupPage() {
                 </div>
               </div>
               {/* <div className="flex flex-col gap-1.5">
-                  <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">
-                    Base Location / Postcode
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="AS2001"
-                    value={formData.postalCode}
-                    onChange={(e) => field("postalCode", e.target.value)}
-                    className={inputCls(errors.postalCode)}
-                  />
-                </div> */}
+ <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">
+ Base Location / Postcode
+ </label>
+ <input
+ type="text"
+ placeholder="AS2001"
+ value={formData.postalCode}
+ onChange={(e) => field("postalCode", e.target.value)}
+ className={inputCls(errors.postalCode)}
+ />
+ </div> */}
 
 
               {/* Full Name */}
@@ -443,70 +461,70 @@ export default function TraderSignupPage() {
               </div>
 
               {/* <div className="grid grid-cols-2 gap-3 mt-3">
-               
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">Address</label>
-                  <input
-                    type="text"
-                    placeholder="Address"
-                    value={formData.address}
-                    onChange={(e) => field("address", e.target.value)}
-                    className={inputCls(errors.address)}
-                  />
-                  {errors.address && (
-                    <p className="text-red-500 text-[11px] font-medium">{errors.address}</p>
-                  )}
-                </div>
-                
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">City</label>
-                  <input
-                    type="text"
-                    placeholder="City"
-                    value={formData.city}
-                    onChange={(e) => field("city", e.target.value)}
-                    className={inputCls(errors.city)}
-                  />
-                  {errors.city && (
-                    <p className="text-red-500 text-[11px] font-medium">{errors.city}</p>
-                  )}
-                </div>
-              </div> */}
+ 
+ <div className="flex flex-col gap-1.5">
+ <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">Address</label>
+ <input
+ type="text"
+ placeholder="Address"
+ value={formData.address}
+ onChange={(e) => field("address", e.target.value)}
+ className={inputCls(errors.address)}
+ />
+ {errors.address && (
+ <p className="text-red-500 text-[11px] font-medium">{errors.address}</p>
+ )}
+ </div>
+ 
+ <div className="flex flex-col gap-1.5">
+ <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">City</label>
+ <input
+ type="text"
+ placeholder="City"
+ value={formData.city}
+ onChange={(e) => field("city", e.target.value)}
+ className={inputCls(errors.city)}
+ />
+ {errors.city && (
+ <p className="text-red-500 text-[11px] font-medium">{errors.city}</p>
+ )}
+ </div>
+ </div> */}
 
               {/* <div className="grid grid-cols-2 gap-3 mt-3">
-               
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">
-                    State
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="State"
-                    value={formData.state}
-                    onChange={(e) => field("state", e.target.value)}
-                    className={inputCls(errors.state)}
-                  />
-                  {errors.state && (
-                    <p className="text-red-500 text-[11px] font-medium">{errors.state}</p>
-                  )}
-                </div>
-               
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">
-                    Country
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="Country"
-                    value={formData.country}
-                    onChange={(e) => field("country", e.target.value)}
-                    className={inputCls(errors.country)}
-                  />
-                  {errors.country && (
-                    <p className="text-red-500 text-[11px] font-medium">{errors.country}</p>
-                  )}
-                </div>
-              </div> */}
+ 
+ <div className="flex flex-col gap-1.5">
+ <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">
+ State
+ </label>
+ <input
+ type="text"
+ placeholder="State"
+ value={formData.state}
+ onChange={(e) => field("state", e.target.value)}
+ className={inputCls(errors.state)}
+ />
+ {errors.state && (
+ <p className="text-red-500 text-[11px] font-medium">{errors.state}</p>
+ )}
+ </div>
+ 
+ <div className="flex flex-col gap-1.5">
+ <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">
+ Country
+ </label>
+ <input
+ type="text"
+ placeholder="Country"
+ value={formData.country}
+ onChange={(e) => field("country", e.target.value)}
+ className={inputCls(errors.country)}
+ />
+ {errors.country && (
+ <p className="text-red-500 text-[11px] font-medium">{errors.country}</p>
+ )}
+ </div>
+ </div> */}
 
               {/* Contact Number */}
               <div className="flex flex-col gap-1.5">
@@ -603,7 +621,7 @@ export default function TraderSignupPage() {
         </div>
 
         {/* ══════════════ RIGHT — HERO ══════════════ */}
-        <div className="relative hidden w-full lg:w-[45%] xl:w-[728px] lg:min-h-screen overflow-hidden lg:flex flex-col flex-shrink-0 z-0">
+        <div className="relative hidden w-full lg:w-[50%] lg:h-auto lg:self-stretch min-h-screen overflow-hidden lg:flex flex-col flex-shrink-0 z-0">
 
           {/* Background photo */}
           <Image

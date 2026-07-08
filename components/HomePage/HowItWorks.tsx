@@ -19,7 +19,7 @@ export default function HowItWorks() {
 
       className="w-full py-10 xl:py-16 bg-[#FDFDF9] px-4 sm:px-8 xl:px-12 overflow-hidden xl:overflow-visible"
     >
-      <div className="max-w-[1200px] mx-auto xl:mx-0 xl:max-w-none w-full xl:w-[1200px]">
+      <div className="max-w-[1240px] mx-auto w-full">
         {/* TITLE */}
         <motion.h2
           initial={{ opacity: 0, y: 30 }}
@@ -34,10 +34,10 @@ export default function HowItWorks() {
           <span className="text-[#6E9625]">Works</span>
         </motion.h2>
 
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-10 xl:gap-16 items-start">
+        <div className="flex flex-col xl:flex-row justify-center gap-10 xl:gap-[40px] items-start w-full">
 
           {/* MAIN CONTENT COLUMN */}
-          <div className="xl:col-span-9 space-y-12 flex flex-col items-center xl:items-start">
+          <div className="w-full xl:w-[760px] max-w-full space-y-12 flex flex-col mx-auto xl:mx-0">
 
             {/* BLOCK 1: Post Job */}
             <motion.div
@@ -47,7 +47,7 @@ export default function HowItWorks() {
               transition={{ duration: 0.6 }}
 
 
-              className="bg-[#D6DED0] border border-[#C4CEBE] rounded-[20px] xl:rounded-[24px] p-4 sm:p-5 xl:p-6 flex flex-col xl:flex-row items-center gap-4 relative overflow-hidden w-full xl:w-[760px] max-w-full xl:max-w-none"
+              className="bg-[#D6DED0] border border-[#C4CEBE] rounded-[20px] xl:rounded-[24px] p-4 sm:p-5 xl:p-6 flex flex-col xl:flex-row items-center gap-4 relative overflow-hidden w-full"
             >
               <div className="flex-1 z-10">
 
@@ -131,7 +131,7 @@ export default function HowItWorks() {
                 transition={{ duration: 0.6 }}
 
 
-                className="bg-[#D6DED0] rounded-[20px] xl:rounded-[24px] border border-[#C4CEBE] p-4 sm:p-5 xl:p-6 flex flex-col xl:flex-row items-center gap-4 mb-8 relative overflow-hidden w-full xl:w-[760px] max-w-full xl:max-w-none"
+                className="bg-[#D6DED0] rounded-[20px] xl:rounded-[24px] border border-[#C4CEBE] p-4 sm:p-5 xl:p-6 flex flex-col xl:flex-row items-center gap-4 mb-8 relative overflow-hidden w-full"
               >
 
                 <div className="flex-1 z-10">
@@ -214,10 +214,10 @@ export default function HowItWorks() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="xl:col-span-3 mt-8 xl:mt-[195px]"
+            className="w-full xl:w-[421px] max-w-[500px] xl:max-w-none mt-8 xl:mt-[195px] mx-auto xl:mx-0"
           >
             <div
-              className="bg-[#D6DED0] rounded-[24px] pt-[32px] xl:pt-[42px] px-[24px] xl:px-[32px] pb-[32px] flex flex-col justify-between border border-[#C4CEBE] w-full xl:w-[421px] max-w-[500px] xl:max-w-none min-h-[auto] xl:min-h-[715px] xl:h-[715px]"
+              className="bg-[#D6DED0] rounded-[24px] pt-[32px] xl:pt-[42px] px-[24px] xl:px-[32px] pb-[32px] flex flex-col justify-between border border-[#C4CEBE] w-full min-h-[auto] xl:min-h-[715px] xl:h-[715px]"
               style={{
                 boxShadow: '0px 4px 6px -2px #0000000A, 0px 10px 30px -5px #00000014'
               }}

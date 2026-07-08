@@ -19,11 +19,13 @@ import {
   Menu,
   X,
 } from "lucide-react";
-import { authApi } from "@/app/api/authApi";
+import { authApi, getRegistrationStatus } from "@/app/api/authApi";
 import TraderQuotesComponent from "@/components/Trader/TraderQuotesComponent";
+import TraderReportTable from "@/components/Trader/TraderReportTable";
+import toast from "react-hot-toast";
 
 
-// Updated navLinks (keep as is, we'll handle click in render)
+// Base navLinks
 const navLinks = [
   { label: "Inbox", href: "/trader/inbox", icon: Mail },
   { label: "Jobs & Leads", href: "/trader/jobs", icon: Briefcase },
@@ -43,10 +45,15 @@ export default function TraderNavbar() {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notifDropdownRef = useRef<HTMLDivElement>(null);
 
+  const [reports, setReports] = useState<any[]>([]);
+  const [reportOpen, setReportOpen] = useState(false);
+  const reportDropdownRef = useRef<HTMLDivElement>(null);
+
   // Profile state from API
   const [userName, setUserName] = useState("Loading...");
   const [userRole, setUserRole] = useState("");
   const [userAvatar, setUserAvatar] = useState<string | undefined>(undefined);
+  const [traderStatus, setTraderStatus] = useState("PENDING");
 
   // Notification state
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -63,6 +70,15 @@ export default function TraderNavbar() {
       }
     } catch (error) {
       console.error("Failed to load notifications", error);
+    }
+  };
+
+  const fetchReports = async () => {
+    try {
+      const res = await authApi.getMyReports();
+      setReports(res?.data || []);
+    } catch (error) {
+      console.error("Failed to load reports", error);
     }
   };
 
@@ -138,7 +154,18 @@ export default function TraderNavbar() {
       }
     };
 
+    const fetchStatus = async () => {
+      try {
+        const res = await getRegistrationStatus();
+        const unwrapped = res?.data || res;
+        setTraderStatus(unwrapped?.verificationStatus ?? unwrapped?.status ?? "PENDING");
+      } catch (e) {
+        console.error("Failed to fetch status", e);
+      }
+    };
+
     fetchProfile();
+    fetchStatus();
     fetchNotifications();
 
     const interval = setInterval(fetchNotifications, 60000);
@@ -165,33 +192,119 @@ export default function TraderNavbar() {
     return pathname.startsWith(href);
   };
 
+  const isApproved = traderStatus === "APPROVED";
+  const displayedNavLinks = navLinks;
 
+  const handleRestrictedNav = (e: React.MouseEvent, label: string) => {
+    if (!isApproved && label !== "Profile") {
+      e.preventDefault();
+      toast.error("Complete your verification to access this feature.");
+    }
+  };
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 font-sans">
       {/* ── Top utility bar ─────────────────────────────── */}
       <div className="bg-[#1C2C1C] text-white text-[12px]">
         <div className="max-w-[1280px] mx-auto px-4 h-9 flex items-center justify-end gap-6">
-          <Link
-            href="/trader/account"
-            className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors"
-          >
-            <User2 size={12} />
-            Account
-          </Link>
-          <Link
-            href="/trader/settings"
-            className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors"
-          >
-            <Settings size={12} />
-            Settings
-          </Link>
-          <Link
-            href="/trader/report"
-            className="text-white/70 hover:text-white transition-colors"
-          >
-            Report
-          </Link>
+          {isApproved && (
+            <>
+              <Link
+                href="/trader/account"
+                className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors"
+              >
+                <User2 size={12} />
+                Account
+              </Link>
+              <Link
+                href="/trader/settings"
+                className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors"
+              >
+                <Settings size={12} />
+                Settings
+              </Link>
+
+              <div className="relative" ref={reportDropdownRef}>
+                <button
+                  onClick={async () => {
+                    if (!reportOpen) {
+                      await fetchReports();
+                    }
+                    setReportOpen(!reportOpen);
+                  }}
+                  className="text-white/70 hover:text-white transition-colors"
+                >
+                  Report
+                </button>
+
+                {reportOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-[420px] bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden z-50">
+                    <div className="px-5 py-4 border-b">
+                      <h3 className="font-bold text-[16px] text-[#1C2C1C]">
+                        My Reports
+                      </h3>
+                    </div>
+
+                    <div className="max-h-[400px] overflow-y-auto">
+                      {reports.length === 0 ? (
+                        <div className="py-10 text-center text-gray-500">
+                          No reports found
+                        </div>
+                      ) : (
+                        reports.map((report) => (
+                          <div
+                            key={report.id}
+                            className="px-5 py-4 border-b hover:bg-gray-50"
+                          >
+                            <div className="flex justify-between items-center mb-2">
+                              <span className="font-semibold text-[#1C2C1C]">
+                                {report.reportType}
+                              </span>
+
+                              <span
+                                className={`text-xs px-2 py-1 rounded-full ${report.status === "PENDING"
+                                  ? "bg-yellow-100 text-yellow-700"
+                                  : report.status === "APPROVED"
+                                    ? "bg-green-100 text-green-700"
+                                    : "bg-red-100 text-red-700"
+                                  }`}
+                              >
+                                {report.status}
+                              </span>
+                            </div>
+
+                            <p className="text-sm text-gray-600">
+                              <strong>Reason:</strong> {report.reason}
+                            </p>
+
+                            {report.customReason && (
+                              <p className="text-sm text-gray-600 mt-1">
+                                <strong>Custom:</strong> {report.customReason}
+                              </p>
+                            )}
+
+                            <p className="text-xs text-gray-400 mt-2">
+                              {new Date(report.createdAt).toLocaleString()}
+                            </p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+              <div className="relative" ref={reportDropdownRef}>
+
+                {/* <Link
+                  href="/trader/reports"
+                  className="text-white/70 hover:text-white transition-colors"
+                >
+                  Report
+                </Link> */}
+
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -214,16 +327,19 @@ export default function TraderNavbar() {
 
           {/* Desktop nav links */}
           <nav className="hidden md:flex items-stretch h-full flex-1 gap-1">
-            {navLinks.map(({ label, href, icon: Icon }) => {
+            {displayedNavLinks.map(({ label, href, icon: Icon }) => {
               const active = isActive(href);
+              const restricted = !isApproved && label !== "Profile";
               return (
                 <Link
                   key={href}
                   href={href}
+                  onClick={(e) => handleRestrictedNav(e, label)}
                   className={`
                       relative flex items-center gap-1.5 px-3 text-[13px] font-semibold
                       transition-colors whitespace-nowrap h-full
                       ${active ? "text-[#1C2C1C]" : "text-[#1C2C1C]/55 hover:text-[#1C2C1C]"}
+                      ${restricted ? "opacity-60 cursor-not-allowed" : ""}
                     `}
                 >
                   <Icon size={14} className={active ? "text-[#6E9625]" : "text-current"} />
@@ -240,65 +356,67 @@ export default function TraderNavbar() {
           {/* Right side */}
           <div className="ml-auto flex items-center gap-3 flex-shrink-0">
             {/* Notification bell */}
-            <div className="relative" ref={notifDropdownRef}>
-              <button
-                onClick={() => setNotifOpen(!notifOpen)}
-                className="relative w-8 h-8 rounded-full flex items-center justify-center text-[#1C2C1C]/60 hover:bg-[#F5F5F5] hover:text-[#1C2C1C] transition-all"
-                aria-label="Notifications"
-              >
-                <Bell size={18} />
-                {/* Unread dot */}
-                {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 w-4 h-4 bg-[#6E9625] rounded-full border-2 border-white flex items-center justify-center text-[8px] text-white font-bold">
-                    {unreadCount}
-                  </span>
-                )}
-              </button>
+            {isApproved && (
+              <div className="relative" ref={notifDropdownRef}>
+                <button
+                  onClick={() => setNotifOpen(!notifOpen)}
+                  className="relative w-8 h-8 rounded-full flex items-center justify-center text-[#1C2C1C]/60 hover:bg-[#F5F5F5] hover:text-[#1C2C1C] transition-all"
+                  aria-label="Notifications"
+                >
+                  <Bell size={18} />
+                  {/* Unread dot */}
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1 right-1 w-4 h-4 bg-[#6E9625] rounded-full border-2 border-white flex items-center justify-center text-[8px] text-white font-bold">
+                      {unreadCount}
+                    </span>
+                  )}
+                </button>
 
-              {notifOpen && (
-                <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white border border-[#E5E5E5] rounded-2xl shadow-xl py-3 z-50 overflow-hidden">
-                  <div className="flex items-center justify-between px-4 pb-2 border-b border-gray-100">
-                    <span className="font-bold text-[14px] text-[#1C2C1C]">Notifications</span>
-                    {unreadCount > 0 && (
-                      <button
-                        onClick={handleMarkAllRead}
-                        className="text-[12px] font-semibold text-[#6E9625] hover:underline"
-                      >
-                        Mark all as read
-                      </button>
-                    )}
-                  </div>
-
-                  <div className="max-h-[300px] overflow-y-auto">
-                    {notifications.length === 0 ? (
-                      <div className="py-8 text-center text-gray-400 text-[13px]">
-                        No notifications yet.
-                      </div>
-                    ) : (
-                      notifications.map((n) => (
-                        <div
-                          key={n.id}
-                          className={`px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-[#F5F5F5] transition-colors text-left ${!n.isRead && !n.read ? "bg-[#6E9625]/5" : ""
-                            }`}
+                {notifOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white border border-[#E5E5E5] rounded-2xl shadow-xl py-3 z-50 overflow-hidden">
+                    <div className="flex items-center justify-between px-4 pb-2 border-b border-gray-100">
+                      <span className="font-bold text-[14px] text-[#1C2C1C]">Notifications</span>
+                      {unreadCount > 0 && (
+                        <button
+                          onClick={handleMarkAllRead}
+                          className="text-[12px] font-semibold text-[#6E9625] hover:underline"
                         >
-                          <div className="flex items-start justify-between gap-2">
-                            <span className="font-bold text-[13px] text-[#1C2C1C] break-words">
-                              {n.title || "Notification"}
-                            </span>
-                            <span className="text-[10px] text-gray-400 whitespace-nowrap">
-                              {new Date(n.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                            </span>
-                          </div>
-                          <p className="text-[12px] text-gray-600 mt-1 leading-relaxed break-words">
-                            {n.message || n.content || n.body}
-                          </p>
+                          Mark all as read
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="max-h-[300px] overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <div className="py-8 text-center text-gray-400 text-[13px]">
+                          No notifications yet.
                         </div>
-                      ))
-                    )}
+                      ) : (
+                        notifications.map((n) => (
+                          <div
+                            key={n.id}
+                            className={`px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-[#F5F5F5] transition-colors text-left ${!n.isRead && !n.read ? "bg-[#6E9625]/5" : ""
+                              }`}
+                          >
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="font-bold text-[13px] text-[#1C2C1C] break-words">
+                                {n.title || "Notification"}
+                              </span>
+                              <span className="text-[10px] text-gray-400 whitespace-nowrap">
+                                {new Date(n.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                              </span>
+                            </div>
+                            <p className="text-[12px] text-gray-600 mt-1 leading-relaxed break-words">
+                              {n.message || n.content || n.body}
+                            </p>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
+            )}
 
             {/* User info + avatar dropdown */}
             <div className="relative" ref={dropdownRef}>
@@ -348,22 +466,26 @@ export default function TraderNavbar() {
                     <User size={14} className="text-[#6E9625]" />
                     My Profile
                   </Link>
-                  <Link
-                    href="/trader/settings"
-                    className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-[#1C2C1C] hover:bg-[#F5F5F5] transition-colors"
-                    onClick={() => setDropdownOpen(false)}
-                  >
-                    <Settings size={14} className="text-[#6E9625]" />
-                    Settings
-                  </Link>
-                  <Link
-                    href="/trader/billing"
-                    className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-[#1C2C1C] hover:bg-[#F5F5F5] transition-colors"
-                    onClick={() => setDropdownOpen(false)}
-                  >
-                    <CreditCard size={14} className="text-[#6E9625]" />
-                    Subscription & Billing
-                  </Link>
+                  {isApproved && (
+                    <>
+                      <Link
+                        href="/trader/settings"
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-[#1C2C1C] hover:bg-[#F5F5F5] transition-colors"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <Settings size={14} className="text-[#6E9625]" />
+                        Settings
+                      </Link>
+                      <Link
+                        href="/trader/billing"
+                        className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-[#1C2C1C] hover:bg-[#F5F5F5] transition-colors"
+                        onClick={() => setDropdownOpen(false)}
+                      >
+                        <CreditCard size={14} className="text-[#6E9625]" />
+                        Subscription & Billing
+                      </Link>
+                    </>
+                  )}
                   <div className="border-t border-[#E5E5E5] my-1" />
                   <button
                     className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-red-500 hover:bg-red-50 transition-colors"
@@ -392,17 +514,23 @@ export default function TraderNavbar() {
         {/* Mobile nav */}
         {mobileOpen && (
           <div className="md:hidden border-t border-[#E5E5E5] bg-white">
-            {navLinks.map(({ label, href, icon: Icon }) => {
+            {displayedNavLinks.map(({ label, href, icon: Icon }) => {
               const active = isActive(href);
+              const restricted = !isApproved && label !== "Profile";
               return (
                 <Link
                   key={href}
                   href={href}
-                  onClick={() => setMobileOpen(false)}
+                  onClick={(e) => {
+                    handleRestrictedNav(e, label);
+                    if (isApproved || label === "Profile") {
+                      setMobileOpen(false);
+                    }
+                  }}
                   className={`flex items-center gap-3 px-5 py-3 text-[14px] font-semibold border-l-4 transition-colors ${active
                     ? "border-[#6E9625] text-[#1C2C1C] bg-[#6E9625]/5"
                     : "border-transparent text-[#1C2C1C]/60 hover:text-[#1C2C1C] hover:bg-[#F5F5F5]"
-                    }`}
+                    } ${restricted ? "opacity-60 cursor-not-allowed" : ""}`}
                 >
                   <Icon size={16} className={active ? "text-[#6E9625]" : "text-current"} />
                   {label}

@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -118,6 +119,19 @@ const formatBudget = (b: string) =>
 // Status badge config
 const statusConfig: Record<string, { label: string; bg: string; text: string; dot: string }> = {
   OPEN: { label: "Open", bg: "bg-[#E8F5E9]", text: "text-[#2E7D32]", dot: "bg-[#2E7D32]" },
+  QUOTE_RECEIVED: {
+    label: "Quote Received",
+    bg: "bg-[#FFF8E1]",
+    text: "text-[#F57C00]",
+    dot: "bg-[#F57C00]",
+  },
+  IN_PROGRESS: {
+    label: "In Progress",
+    bg: "bg-[#E3F2FD]",
+    text: "text-[#1565C0]",
+    dot: "bg-[#1565C0]",
+  },
+
   ASSIGNED: { label: "Contacted", bg: "bg-[#E3F2FD]", text: "text-[#1565C0]", dot: "bg-[#1565C0]" },
   COMPLETED: { label: "Completed", bg: "bg-[#F3E5F5]", text: "text-[#6A1B9A]", dot: "bg-[#6A1B9A]" },
   CANCELLED: { label: "Cancelled", bg: "bg-[#F5F5F5]", text: "text-gray-500", dot: "bg-gray-400" },
@@ -132,6 +146,7 @@ function StatusBadge({ status }: { status: string }) {
     text: "text-gray-600",
     dot: "bg-gray-400",
   };
+
   return (
     <span
       className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${cfg.bg} ${cfg.text}`}
@@ -342,6 +357,7 @@ function TraderQuoteCard({
   onStartJob,
   onCompleteJob,
   onCancelJob,
+  onOpenChat,
 }: {
   trader: SelectedTrader;
   isAssigned: boolean;
@@ -352,6 +368,7 @@ function TraderQuoteCard({
   onStartJob?: () => void;
   onCompleteJob?: () => void;
   onCancelJob?: () => void;
+  onOpenChat?: (traderId: string) => void;
 }) {
 
   return (
@@ -391,13 +408,17 @@ function TraderQuoteCard({
       </div>
 
       <div className="mt-3 flex items-center justify-between">
-        <label className="flex items-center gap-2 text-[12px] text-[#4CAF50] font-medium cursor-pointer">
-          <input type="checkbox" className="accent-[#4CAF50] w-3.5 h-3.5" />
+        <button
+          onClick={() => onOpenChat && onOpenChat(trader.id)}
+          className="flex items-center gap-1.5 text-[12px] text-[#4CAF50] hover:text-[#43A047] font-semibold cursor-pointer border-0 bg-transparent py-1 transition-colors"
+        >
+          <MessageSquare size={14} />
           View your conversation with tradesperson
-        </label>
+        </button>
         {isAssigned && jobStatus === "ASSIGNED" && quoteStatus?.toUpperCase() === "ACCEPTED" ? (
           <div className="flex items-center gap-2">
-            <style dangerouslySetInnerHTML={{__html: `
+            <style dangerouslySetInnerHTML={{
+              __html: `
               @keyframes startWorkPulse {
                 0% {
                   transform: scale(1);
@@ -453,6 +474,7 @@ function TraderQuoteCard({
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function CustomerJobDashboard() {
+  const router = useRouter();
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
@@ -461,6 +483,23 @@ export default function CustomerJobDashboard() {
   const [savedTraders, setSavedTraders] = useState<any[]>([]);
   const [savedTradersLoading, setSavedTradersLoading] = useState(true);
   const [quotesModalOpen, setQuotesModalOpen] = useState(false);
+
+  const handleOpenChat = async (traderId: string, jobId?: string) => {
+    try {
+      const res = await authApi.getOrCreateConversation(traderId, jobId);
+      const conversation = res?.data || res;
+      if (conversation?.id || conversation?._id) {
+        let url = `/customer-dashboard/inbox?conversationId=${conversation.id || conversation._id}`;
+        if (jobId) url += `&jobId=${jobId}`;
+        router.push(url);
+      } else {
+        toast.error("Failed to start conversation");
+      }
+    } catch (error: any) {
+      console.error("Failed to open chat:", error);
+      toast.error(error?.message || "Failed to open conversation");
+    }
+  };
 
   const handleAcceptQuote = async (quoteId: string) => {
     try {
@@ -607,12 +646,11 @@ export default function CustomerJobDashboard() {
               <Users size={14} />
               Find a Trader
             </button>
-            <Link 
-              href={`/customer-dashboard/leave-review${
-                selectedJob 
-                  ? `?jobId=${selectedJob.id}${selectedJob.selectedTrader ? `&traderId=${selectedJob.selectedTrader.id}` : ''}` 
-                  : ''
-              }`}
+            <Link
+              href={`/customer-dashboard/leave-review${selectedJob
+                ? `?jobId=${selectedJob.id}${selectedJob.selectedTrader ? `&traderId=${selectedJob.selectedTrader.id}` : ''}`
+                : ''
+                }`}
             >
               <button className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-200 bg-white text-[13px] font-semibold text-[#1C2C1C] hover:bg-gray-50 transition-colors">
                 <Star size={14} />
@@ -760,6 +798,7 @@ ${isSelected
                           onStartJob={handleStartJob}
                           onCompleteJob={handleCompleteJob}
                           onCancelJob={handleCancelJob}
+                          onOpenChat={(traderId) => handleOpenChat(traderId, selectedJob?.id)}
                         />
                       ))}
                     </div>
@@ -772,6 +811,7 @@ ${isSelected
                         onStartJob={handleStartJob}
                         onCompleteJob={handleCompleteJob}
                         onCancelJob={handleCancelJob}
+                        onOpenChat={(traderId) => handleOpenChat(traderId, selectedJob?.id)}
                       />
 
                       {quotesCount <= 1 && (
