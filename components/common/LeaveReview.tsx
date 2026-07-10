@@ -6,6 +6,7 @@ import { Star, ThumbsUp, ThumbsDown, ChevronDown, CheckCircle } from 'lucide-rea
 import { getUserRole } from '@/utils/auth';
 import { authApi } from '@/app/api/authApi';
 import { Role } from '@/utils/role';
+import toast from 'react-hot-toast';
 
 export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobId?: string; reviewTypeProp?: string }) {
   const router = useRouter();
@@ -77,34 +78,41 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
       return;
     }
 
+    if (workCarriedOut && reviewType === 'DIRECTORY' && files.length === 0) {
+      toast.error('Proof of work (upload files) is required for directory reviews.');
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const payload: any = {
-        traderId,
-        reviewType,
-        wasWorkCompleted: workCarriedOut,
-        rating: workCarriedOut ? rating : 0,
-        ...(propJobId ? { jobId: propJobId } : {}),
-      };
+      const payload = new FormData();
+      payload.append("traderId", traderId);
+      payload.append("reviewType", reviewType);
+      payload.append("wasWorkCompleted", String(workCarriedOut));
+      payload.append("rating", String(workCarriedOut ? rating : 0));
 
-      if (reviewType === 'JOB') {
-        payload.jobId = jobId || '00000000-0000-0000-0000-000000000000';
-      } else if (jobId) {
-        payload.jobId = jobId;
+      const finalJobId = reviewType === 'JOB'
+        ? (jobId || propJobId || '00000000-0000-0000-0000-000000000000')
+        : (jobId || propJobId);
+      if (finalJobId) {
+        payload.append("jobId", finalJobId);
       }
 
-      if (interactionSource) payload.interactionSource = interactionSource;
+      if (interactionSource) payload.append("interactionSource", interactionSource);
+      
       if (workCarriedOut) {
         if (completionDate) {
-          payload.workCompletedDate = new Date(completionDate).toISOString();
+          payload.append("workCompletedDate", new Date(completionDate).toISOString());
         }
-        if (recommend !== null) payload.wouldRecommendTrader = recommend;
-        if (title) payload.title = title;
-        if (review) payload.review = review;
-        // Sending file names as placeholders since S3 upload is not defined
-        if (files.length > 0) payload.proofs = files.map(f => f.name);
+        if (recommend !== null) payload.append("wouldRecommendTrader", String(recommend));
+        if (title) payload.append("title", title);
+        if (review) payload.append("review", review);
+        
+        if (files.length > 0) {
+          files.forEach(f => payload.append("proofs", f));
+        }
       } else {
-        if (selectedReason) payload.noWorkReason = selectedReason;
+        if (selectedReason) payload.append("noWorkReason", selectedReason);
       }
 
       if (editReviewId) {
@@ -286,7 +294,9 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
             </div>
 
             <div>
-              <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Upload Files</label>
+              <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">
+                Upload Files {reviewType === 'DIRECTORY' && <span className="text-red-500 ml-1">*</span>}
+              </label>
               <label className="block border-2 border-dashed border-[#E5E7EB] hover:border-[#6E9625] bg-gray-50/50 rounded-xl p-8 text-center cursor-pointer transition-colors w-1/2">
                 <input
                   type="file"

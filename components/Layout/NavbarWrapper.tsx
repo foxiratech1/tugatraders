@@ -9,7 +9,8 @@ export default function NavbarWrapper() {
   // Hide the generic Navbar on any customer dashboard or trader routes
   if (
     pathname?.startsWith("/customer-dashboard") ||
-    pathname?.startsWith("/trader")
+    pathname === "/trader" ||
+    pathname?.startsWith("/trader/")
   ) {
     return null;
   }

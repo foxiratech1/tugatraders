@@ -117,8 +117,8 @@ export default function PostJobPage() {
       formData.append('title', title);
       formData.append('description', description);
       formData.append('timescale', timescale);
-      formData.append('latitude', 23.2599000.toString());
-      formData.append('longitude', 77.4126000.toString());
+      formData.append('latitude', 51.507351.toString());
+      formData.append('longitude', -0.127758.toString());
       // formData.append('radiusKm', '9');
       if (budgetRange) formData.append('budgetRange', budgetRange);
       formData.append('emergency', String(emergency));
@@ -130,7 +130,7 @@ export default function PostJobPage() {
       await authApi.postJob(formData);
 
       toast.success("Job posted successfully!");
-      router.push('/'); // Update the redirect if needed
+      router.push('/customer-dashboard/jobs');
     } catch (error: any) {
       console.error("Failed to post job", error);
       toast.error(error?.response?.data?.message || "Failed to post job. Please try again.");
@@ -163,7 +163,7 @@ export default function PostJobPage() {
               </button>
               <button
                 type="button"
-                onClick={() => router.push('/auth/login?redirect=/post-job')}
+                onClick={() => router.push('/auth/login?redirect=/customer-dashboard/post-job')}
                 className="flex-1 py-3 px-4 rounded-xl bg-[#6E9625] text-white font-bold hover:bg-[#58791C] transition-all"
               >
                 Login Now
@@ -369,9 +369,9 @@ export default function PostJobPage() {
                 MAX FILE SIZE 5MB • JPEG, PNG, PDF
               </p>
               {files.length > 0 && (
-                <div 
+                <div
                   className="mt-4 flex flex-wrap gap-3 justify-center w-full"
-                  onClick={(e) => e.stopPropagation()} 
+                  onClick={(e) => e.stopPropagation()}
                 >
                   {files.map((f, i) => (
                     <div key={i} className="relative group w-16 h-16 rounded-md overflow-hidden border border-[#E5E7EB] bg-white shadow-sm flex-shrink-0">

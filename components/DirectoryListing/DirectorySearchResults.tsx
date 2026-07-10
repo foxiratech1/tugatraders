@@ -27,6 +27,147 @@ interface Trader {
   subscriptionTier?: string;
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+const getImageUrl = (path?: string | null) => {
+  if (!path) return "/placeholder.png";
+  if (path.startsWith("http")) return path;
+
+  const baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
+  const imagePath = path.startsWith('/') ? path : `/${path}`;
+
+  return `${baseUrl}${imagePath}`;
+};
+
+const LoginModal = ({
+  isOpen,
+  onClose,
+  onSuccess,
+  action
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+  action: "leave-review" | "view-profile";
+}) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [showPw, setShowPw] = useState(false);
+
+  if (!isOpen) return null;
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      const data = await authApi.login({ email, password });
+      const accessToken = data?.accessToken || data?.access_token || data?.token;
+      const refreshToken = data?.refreshToken || data?.refresh_token;
+      if (accessToken) {
+        localStorage.setItem('accessToken', accessToken);
+        if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+        onSuccess();
+      } else {
+        setError('Login failed. Please try again.');
+      }
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Invalid email or password.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const title = action === "leave-review" ? "Login to leave a review" : "Login to view profile";
+  const desc = action === "leave-review"
+    ? "Please log in to share your experience with this trader."
+    : "Please log in to view this trader's full profile.";
+  const btnText = loading ? 'Logging in…' : 'Log In & Continue';
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+      <div className="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-[420px] shadow-2xl relative">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-[#1C2C1C]/40 hover:bg-gray-100 hover:text-[#1C2C1C] transition-colors cursor-pointer text-lg"
+        >
+          ✕
+        </button>
+
+        <div className="w-12 h-12 rounded-full bg-[#F3F8EC] flex items-center justify-center mb-4">
+          <LogIn size={22} className="text-[#6E9625]" />
+        </div>
+
+        <h3 className="text-[22px] font-bold text-[#1C2C1C] mb-1" style={{ fontFamily: 'var(--font-bricolage), sans-serif' }}>
+          {title}
+        </h3>
+        <p className="text-[13px] text-[#1C2C1C]/55 font-medium mb-6">
+          {desc}
+        </p>
+
+        {error && (
+          <div className="mb-4 px-4 py-2.5 bg-red-50 border border-red-200 rounded-xl text-[13px] text-red-600 font-medium">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleLogin} className="flex flex-col gap-3">
+          <div>
+            <label className="block text-[11px] font-extrabold text-[#1C2C1C] uppercase tracking-wider mb-1.5">Email</label>
+            <input
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+              className="w-full px-4 py-3 rounded-xl border border-[#E5E5E5] outline-none text-[14px] font-medium focus:border-[#6E9625] focus:ring-1 focus:ring-[#6E9625] transition-all"
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-extrabold text-[#1C2C1C] uppercase tracking-wider mb-1.5">Password</label>
+            <div className="relative">
+              <input
+                type={showPw ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                className="w-full px-4 py-3 pr-10 rounded-xl border border-[#E5E5E5] outline-none text-[14px] font-medium focus:border-[#6E9625] focus:ring-1 focus:ring-[#6E9625] transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPw(v => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1C2C1C]/40 hover:text-[#1C2C1C] transition-colors cursor-pointer"
+              >
+                {showPw ? (
+                  <svg viewBox="0 0 24 24" width="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" width="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                )}
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full mt-1 py-3 bg-[#1C2C1C] text-white rounded-xl font-bold text-[14px] hover:bg-[#121E12] transition-colors disabled:opacity-60 cursor-pointer shadow-sm"
+          >
+            {btnText}
+          </button>
+        </form>
+
+        <p className="text-center text-[12px] text-[#1C2C1C]/50 mt-4">
+          Don&apos;t have an account?{' '}
+          <Link href="/auth/signup" className="text-[#6E9625] font-bold hover:underline">Sign up</Link>
+        </p>
+      </div>
+    </div>
+  );
+};
+
 const DirectorySearchResults = () => {
   const router = useRouter();
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
@@ -52,12 +193,30 @@ const DirectorySearchResults = () => {
   // Login-prompt modal state
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [pendingTraderId, setPendingTraderId] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<"leave-review" | "view-profile">("leave-review");
+
+  const handleLoginSuccess = () => {
+    setShowLoginModal(false);
+    if (!pendingTraderId) return;
+
+    if (pendingAction === "view-profile") {
+      router.push(`/profile/${pendingTraderId}`);
+    } else {
+      const role = getUserRole();
+      if (role === Role.Customer) {
+        router.push(`/customer-dashboard/leave-review?traderId=${pendingTraderId}&reviewType=DIRECTORY`);
+      } else {
+        router.push(`/common/leave-review?traderId=${pendingTraderId}&reviewType=DIRECTORY`);
+      }
+    }
+    setPendingTraderId(null);
+  };
 
   const handleLoadMore = () => {
     setDisplayCount((prev) => Math.min(prev + 3, traderResults.length));
   };
 
-  const handleLeaveReviewClick = (e: React.MouseEvent, traderId: string) => {
+  const handleProtectedAction = (e: React.MouseEvent, traderId: string, actionType: "leave-review" | "view-profile") => {
     e.preventDefault();
     const token = getAccessToken();
     let isValid = false;
@@ -76,9 +235,16 @@ const DirectorySearchResults = () => {
       clearTokens();
       // Not logged in — show the login prompt modal instead of navigating
       setPendingTraderId(traderId);
+      setPendingAction(actionType);
       setShowLoginModal(true);
       return;
     }
+
+    if (actionType === "view-profile") {
+      router.push(`/profile/${traderId}`);
+      return;
+    }
+
     const role = getUserRole();
     if (role === Role.Customer) {
       router.push(`/customer-dashboard/leave-review?traderId=${traderId}&reviewType=DIRECTORY`);
@@ -174,8 +340,8 @@ const DirectorySearchResults = () => {
     try {
       const params: Record<string, any> = {};
       if (selectedCategory) params.categoryId = selectedCategory;
-      if (selectedSkill) params.skillServiceId = selectedSkill;
-      if (selectedSubCategory) params.subCategoryId = selectedSubCategory;
+      if (selectedSkill) params.skillService = selectedSkill;
+      if (selectedSubCategory) params.subCategory = selectedSubCategory;
 
       const data = await authApi.searchTraders(params);
       console.log("Search Traders API Response:", data);
@@ -327,10 +493,8 @@ const DirectorySearchResults = () => {
                       <Image
                         src={
                           trader.profileImage
-                            ? `${process.env.NEXT_PUBLIC_API_URL}${trader.profileImage}`
-                            : trader.logo
-                              ? `${process.env.NEXT_PUBLIC_API_URL}${trader.logo}`
-                              : '/placeholder.png'
+                            ? getImageUrl(trader.profileImage)
+                            : getImageUrl(trader.logo)
                         }
 
                         alt={trader.fullName || 'Trader'}
@@ -394,7 +558,7 @@ const DirectorySearchResults = () => {
                       <div className="flex flex-col items-start sm:items-end gap-1 mb-3">
                         <a
                           href="#"
-                          onClick={(e) => handleLeaveReviewClick(e, String(trader.id))}
+                          onClick={(e) => handleProtectedAction(e, String(trader.id), "leave-review")}
                           className="text-[#6E9625] text-[12px] font-semibold hover:underline"
                         >
                           Leave a Review
@@ -420,14 +584,15 @@ const DirectorySearchResults = () => {
 
                       {/* Bottom: action buttons */}
                       <div className="flex flex-col gap-2 w-full sm:w-auto">
-                        <button
+                        {/* <button
                           onClick={(e) => { e.preventDefault(); }}
                           className="w-full bg-[#243A24] text-white text-[13px] font-semibold py-2.5 px-5 rounded-[8px] hover:bg-[#1a2c1a] transition-colors cursor-pointer"
                         >
                           Request a Quote
-                        </button>
+                        </button> */}
                         <a
-                          href={`/profile/${trader.id}`}
+                          href="#"
+                          onClick={(e) => handleProtectedAction(e, String(trader.id), "view-profile")}
                           className="w-full text-center border border-[#243A24] text-[#243A24] text-[13px] font-semibold py-2.5 px-5 rounded-[8px] hover:bg-[#f5f7f5] transition-colors"
                         >
                           View Profile
@@ -453,56 +618,12 @@ const DirectorySearchResults = () => {
         </div>
       </section>
 
-      {/* ── Login Prompt Modal ─────────────────────────────────────────── */}
-      {showLoginModal && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ background: 'rgba(0,0,0,0.55)', backdropFilter: 'blur(4px)' }}
-          onClick={() => setShowLoginModal(false)}
-        >
-          <div
-            className="bg-white rounded-[24px] p-8 max-w-sm w-full shadow-2xl relative text-center"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Close button */}
-            <button
-              onClick={() => setShowLoginModal(false)}
-              className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-              aria-label="Close"
-            >
-              <X size={20} />
-            </button>
-
-            {/* Icon */}
-            <div className="w-16 h-16 bg-[#F0F9F1] rounded-full flex items-center justify-center mx-auto mb-5">
-              <LogIn size={28} className="text-[#6E9625]" />
-            </div>
-
-            {/* Heading */}
-            <h2 className="text-[22px] font-bold text-[#1C2C1C] mb-2">Login Required</h2>
-            <p className="text-[14px] text-gray-500 leading-relaxed mb-7">
-              You need to be logged in to leave a review.<br />
-              Please sign in to share your experience with this trader.
-            </p>
-
-            {/* Actions */}
-            <div className="flex flex-col gap-3">
-              <Link
-                href={pendingTraderId ? `/auth/login?redirect=leave-review&traderId=${pendingTraderId}` : "/auth/login"}
-                className="w-full bg-[#243A24] text-white text-[14px] font-bold py-3 rounded-[12px] hover:bg-[#1a2c1a] transition-colors block"
-              >
-                Login to Leave a Review
-              </Link>
-              <button
-                onClick={() => setShowLoginModal(false)}
-                className="w-full border border-gray-200 text-[#4B5563] text-[14px] font-medium py-3 rounded-[12px] hover:bg-gray-50 transition-colors"
-              >
-                Maybe Later
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => { setShowLoginModal(false); setPendingTraderId(null); }}
+        onSuccess={handleLoginSuccess}
+        action={pendingAction}
+      />
     </>
   );
 };

@@ -66,6 +66,19 @@ interface ChatWindowProps {
   fallbackJobId?: string;
 }
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+
+function getImageUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  if (path.startsWith("http")) return path;
+  
+  const baseUrl = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
+  let imagePath = path.startsWith('/') ? path : `/${path}`;
+  imagePath = imagePath.replace(/\/\//g, '/'); // remove any double slashes inside the path
+  
+  return `${baseUrl}${imagePath}`;
+}
+
 export default function ChatWindow({
   conversation,
   currentUserId,
@@ -272,27 +285,31 @@ export default function ChatWindow({
           <div className="flex items-center gap-3">
             {/* Avatar */}
             <div className="relative w-11 h-11 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-800 font-bold overflow-hidden flex-shrink-0">
-              {partner?.profileImage ? (
-                <img
-                  src={partner.profileImage.startsWith("http") ? partner.profileImage : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/${partner.profileImage}`}
-                  alt={partner.fullName}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                partner?.fullName?.charAt(0) || "U"
-              )}
+              {(() => {
+                const imgPath = partner?.profileImage || (partner as any)?.avatar || (partner as any)?.logo || (partner as any)?.traderProfile?.logo || (partner as any)?.traderProfile?.profileImage || (partner as any)?.traderProfile?.document || null;
+                const finalImgUrl = getImageUrl(imgPath);
+                return finalImgUrl ? (
+                  <img
+                    src={finalImgUrl}
+                    alt={partner?.fullName || "User"}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  partner?.fullName?.charAt(0) || "U"
+                );
+              })()}
               {/* Online Dot overlay */}
-              <span
+              {/* <span
                 className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${isPartnerOnline ? "bg-[#4CAF50]" : "bg-gray-300"
                   }`}
-              />
+              /> */}
             </div>
             <div>
               <h3 className="text-[15px] font-bold text-[#1C2C1C]">{partner?.fullName}</h3>
-              <p className="text-[11px] text-gray-400 flex items-center gap-1">
+              {/* <p className="text-[11px] text-gray-400 flex items-center gap-1">
                 <span className={`w-1.5 h-1.5 rounded-full ${isPartnerOnline ? "bg-[#4CAF50]" : "bg-gray-300"}`} />
                 {isPartnerOnline ? "Online" : "Offline"}
-              </p>
+              </p> */}
             </div>
           </div>
 
@@ -403,17 +420,20 @@ export default function ChatWindow({
           <div>
             <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">Your Details</h4>
             <div className="border border-gray-200 rounded-2xl p-4 flex flex-col items-center text-center shadow-sm">
-              {/* Avatar */}
               <div className="w-16 h-16 rounded-full bg-emerald-50 border border-emerald-150 flex items-center justify-center font-bold text-emerald-800 text-[20px] overflow-hidden mb-3">
-                {partner?.profileImage ? (
-                  <img
-                    src={partner.profileImage.startsWith("http") ? partner.profileImage : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/${partner.profileImage}`}
-                    alt={partner.fullName}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  partner?.fullName?.charAt(0) || "U"
-                )}
+                {(() => {
+                  const imgPath = partner?.profileImage || (partner as any)?.avatar || (partner as any)?.logo || (partner as any)?.traderProfile?.logo || (partner as any)?.traderProfile?.profileImage || (partner as any)?.traderProfile?.document || null;
+                  const finalImgUrl = getImageUrl(imgPath);
+                  return finalImgUrl ? (
+                    <img
+                      src={finalImgUrl}
+                      alt={partner?.fullName || "User"}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    partner?.fullName?.charAt(0) || "U"
+                  );
+                })()}
               </div>
 
               <h5 className="text-[14px] font-bold text-[#1C2C1C] mb-1">{partner?.fullName}</h5>

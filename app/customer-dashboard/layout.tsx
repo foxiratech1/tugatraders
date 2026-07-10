@@ -1,10 +1,7 @@
-import type { Metadata } from "next";
-import CustomerNavbar from "@/components/Customer/CustomerNavbar";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Customer Dashboard | TugaTrades",
-  description: "Customer dashboard for managing jobs, profile, and settings.",
-};
+import CustomerNavbar from "@/components/Customer/CustomerNavbar";
+import AuthGuard from "@/components/Guards/AuthGuard";
 
 export default function CustomerLayout({
   children,
@@ -12,12 +9,14 @@ export default function CustomerLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen flex flex-col">
-      <CustomerNavbar />
-      {/* Push content below the fixed navbar (height ~96px) */}
-      <div className=" flex-1 flex flex-col">
-        {children}
+    <AuthGuard>
+      <div className="min-h-screen flex flex-col">
+        <CustomerNavbar />
+        {/* Push content below the fixed navbar (height ~96px) */}
+        <div className=" flex-1 flex flex-col">
+          {children}
+        </div>
       </div>
-    </div>
+    </AuthGuard>
   );
 }

@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { Paperclip, Send, X, File } from "lucide-react";
+import toast from "react-hot-toast";
 
 interface ChatInputProps {
   onSendMessage: (text: string, file: File | null) => Promise<void>;
@@ -46,6 +47,13 @@ export default function ChatInput({
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     if (file) {
+      if (file.size > 3 * 1024 * 1024) {
+        toast.error("File size cannot exceed 3MB");
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+        return;
+      }
       setSelectedFile(file);
       if (file.type.startsWith("image/")) {
         const previewUrl = URL.createObjectURL(file);

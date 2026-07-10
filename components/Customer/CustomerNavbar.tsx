@@ -8,6 +8,7 @@ import { useEffect, useState, useRef } from "react";
 import { authApi } from "@/app/api/authApi";
 import { ChevronDown, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { clearTokens } from "@/utils/auth";
 
 export default function CustomerNavbar() {
   const pathname = usePathname();
@@ -28,17 +29,16 @@ export default function CustomerNavbar() {
     } catch (err) {
       console.error('Logout API error', err);
     }
-    localStorage.removeItem('token');
-    localStorage.removeItem('accessToken');
     localStorage.removeItem('user');
-    router.push('/');
+    clearTokens();
+    router.push('/auth/login');
   };
 
   // Navigation items mapping
   const navLinks = [
     { name: "Inbox", href: "/customer-dashboard/inbox", icon: Inbox },
-    { name: "Jobs", href: "/customer-dashboard/jobs", icon: Briefcase },
-    { name: "Quotes", href: "/customer-dashboard/quotes", icon: FileText },
+    // { name: "Jobs", href: "/customer-dashboard/jobs", icon: Briefcase },
+    // { name: "Quotes", href: "/customer-dashboard/quotes", icon: FileText },
     { name: "Saved", href: "/customer-dashboard/saved", icon: Bookmark },
     { name: "Contact", href: "/customer-dashboard/contact", icon: Mail },
     // { name: "Profile", href: "/customer-dashboard/profile", icon: User },
@@ -119,7 +119,7 @@ export default function CustomerNavbar() {
     <header className="sticky top-0 z-50 w-full bg-white border-b border-[#F0EDE8] py-4 px-6 md:px-10 flex items-center justify-between">
 
       {/* Left: Logo */}
-      <Link href="/customer-dashboard" className="flex items-center flex-shrink-0">
+      <Link href="/customer-dashboard/jobs" className="flex items-center flex-shrink-0">
         <Image
           src="/customerNavLogo.png"
           alt="TugaTrades Customer Logo"

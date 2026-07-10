@@ -33,8 +33,18 @@ api.interceptors.response.use(
   },
   async (error) => {
     const originalRequest = error.config;
-    // Do not attempt token refresh on login request
-    if (originalRequest?.url?.endsWith('/login')) {
+    const url = originalRequest?.url || '';
+    // Do not attempt token refresh on auth endpoints
+    if (
+      url.endsWith('/login') ||
+      url.endsWith('/register') ||
+      url.endsWith('/verify-otp') ||
+      url.endsWith('/resend-verification-otp') ||
+      url.endsWith('/forgot-password') ||
+      url.endsWith('/reset-password') ||
+      url.endsWith('/verify-forgot-otp') ||
+      url.includes('/register-step-')
+    ) {
       return Promise.reject(error);
     }
     // If error is 401 Unauthorized and we haven't retried yet

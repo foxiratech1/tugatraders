@@ -1,5 +1,5 @@
 import api from '@/utils/api';
-import { getAccessToken, getRefreshToken, setTokens } from '@/utils/auth';
+import { getAccessToken, getRefreshToken, setTokens, clearTokens } from '@/utils/auth';
 
 /**
  * Authenticated fetch with automatic token refresh.
@@ -164,9 +164,8 @@ export const authApi = {
       console.error('Logout API error', err);
     }
     // Remove client‑side tokens & redirect
-    localStorage.removeItem('token');
-    localStorage.removeItem('accessToken');
     localStorage.removeItem('user');
+    clearTokens();
     router.push('/auth/login');
   },
 
@@ -208,6 +207,12 @@ export const authApi = {
   // Fetch current trader profile (includes verification status, subscription, etc.)
   getMyProfile: async () => {
     const { data } = await api.get("/api/auth/getMyProfile");
+    return data;
+  },
+
+  // Fetch a specific trader profile by ID (Customer side)
+  getTraderProfileById: async (traderId: string) => {
+    const { data } = await api.get(`/api/customer/traders/${traderId}`);
     return data;
   },
 
@@ -327,12 +332,16 @@ export const authApi = {
     return data;
   },
 
-  // Submit a review – uses fetchWithAuth for automatic token refresh
+  // Submit a review – supports FormData
   postReview: async (payload: any) => {
-    return fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}api/reviews`, {
-      method: 'POST',
-      body: JSON.stringify(payload),
-    });
+    if (payload instanceof FormData) {
+      const { data } = await api.post('/api/reviews', payload, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return data;
+    }
+    const { data } = await api.post('/api/reviews', payload);
+    return data;
   },
 
   // Fetch reviews written by the current customer
@@ -341,12 +350,16 @@ export const authApi = {
     return data;
   },
 
-  // Update a review – uses fetchWithAuth for automatic token refresh
+  // Update a review – supports FormData
   updateReview: async (reviewId: string, payload: any) => {
-    return fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/api/reviews/${reviewId}`, {
-      method: 'PUT',
-      body: JSON.stringify(payload),
-    });
+    if (payload instanceof FormData) {
+      const { data } = await api.put(`/api/reviews/${reviewId}`, payload, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return data;
+    }
+    const { data } = await api.put(`/api/reviews/${reviewId}`, payload);
+    return data;
   },
 
   deleteReview: async (reviewId: string) => {

@@ -29,8 +29,13 @@ export const parseJwt = (token: string): DecodedToken | null => {
 export const setTokens = (accessToken: string, refreshToken?: string) => {
   if (typeof window !== "undefined") {
     localStorage.setItem("accessToken", accessToken);
+    const isSecure = window.location.protocol === 'https:' ? 'secure;' : '';
+    // Sync with cookies for middleware access (Path=/ makes it accessible across the whole app)
+    document.cookie = `accessToken=${accessToken}; path=/; max-age=${60 * 60 * 24 * 7}; ${isSecure} samesite=lax`;
+    
     if (refreshToken) {
       localStorage.setItem("refreshToken", refreshToken);
+      document.cookie = `refreshToken=${refreshToken}; path=/; max-age=${60 * 60 * 24 * 30}; ${isSecure} samesite=lax`;
     }
   }
 };
@@ -53,6 +58,9 @@ export const clearTokens = () => {
   if (typeof window !== "undefined") {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
+    // Clear cookies by setting an expired date
+    document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    document.cookie = "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
   }
 };
 
@@ -60,7 +68,7 @@ export const getUserRole = (): Role | null => {
   const token = getAccessToken();
   if (!token) return null;
   const decoded = parseJwt(token);
-  const role = decoded?.role;
+  const role = decoded?.role || decoded?.user?.role;
   if (!role) return null;
   // Normalize role to lowercase to match Role enum values
   const normalized = typeof role === 'string' ? role.toLowerCase() : role;

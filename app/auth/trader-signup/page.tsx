@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { authApi, traderRegister, resendOtp } from "@/app/api/authApi";
 import { AnimatedEye } from "@/app/ui/AnimatedEye";
 import { setTokens } from "@/utils/auth";
+import PublicGuard from "@/components/Guards/PublicGuard";
 
 // ─── Trade Categories ─────────────────────────────────────────────────────────
 // Trade categories will be loaded from the API
@@ -229,8 +230,8 @@ export default function TraderSignupPage() {
         // state: formData.state,
         // country: formData.country,
         // postalCode: formData.postalCode,
-        latitude: 23.5600000,
-        longitude: 77.6200000,
+        latitude: 51.849400,
+        longitude: -0.127758,
         isCheckedTermsCondition: formData.agreeTerms,
         contactNumber: formData.contactNumber,
       };
@@ -287,6 +288,7 @@ export default function TraderSignupPage() {
     }`;
 
   return (
+    <PublicGuard>
     <main className="flex min-h-screen w-full items-center justify-center bg-[#F0EDE8] font-sans antialiased">
       <div className="flex w-full min-h-screen overflow-hidden bg-[#F0EDE8] relative flex-col lg:flex-row">
 
@@ -687,5 +689,6 @@ export default function TraderSignupPage() {
 
       </div>
     </main>
+    </PublicGuard>
   );
 }

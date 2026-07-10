@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { verifyOtp, resendOtp, getRegistrationStatus } from "@/app/api/authApi";
+import { setTokens } from "@/utils/auth";
 
 function VerifyOtpContent() {
   const router = useRouter();
@@ -49,7 +50,15 @@ function VerifyOtpContent() {
 
     setOtpLoading(true);
     try {
-      await verifyOtp({ otp: otpValue });
+      const response = await verifyOtp({ otp: otpValue });
+
+      const responseData = response?.data || response;
+      const accessToken = responseData?.accessToken || responseData?.access_token || responseData?.token || response?.accessToken;
+      const refreshToken = responseData?.refreshToken || responseData?.refresh_token || response?.refreshToken;
+
+      if (accessToken) {
+        setTokens(accessToken, refreshToken);
+      }
       // Redirect based on provided target or dynamically check registration status
       if (redirectTo) {
         router.push(redirectTo);

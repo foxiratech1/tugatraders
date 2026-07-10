@@ -24,6 +24,7 @@ interface PersonalForm {
   phone: string;
   professionalTitle: string;
   workLocation: string;
+  workRadius: string | number;
   bio: string;
   profileImage: string | null;
 }
@@ -33,6 +34,7 @@ interface BusinessForm {
   companyType: string;
   niNumber: string;
   primarySkills: string;
+  planName: string;
 }
 
 const COMPANY_TYPES = [
@@ -89,6 +91,7 @@ export default function TraderProfilePage() {
     phone: "",
     professionalTitle: "",
     workLocation: "",
+    workRadius: "",
     bio: "",
     profileImage: null,
   });
@@ -98,6 +101,7 @@ export default function TraderProfilePage() {
     companyType: "",
     niNumber: "",
     primarySkills: "",
+    planName: "",
   });
 
 
@@ -114,8 +118,8 @@ export default function TraderProfilePage() {
   >([]);
 
   const [selectedTradeCategory, setSelectedTradeCategory] = useState("");
-  const [selectedSkillService, setSelectedSkillService] = useState("");
-  const [selectedSubCategory, setSelectedSubCategory] = useState("");
+  const [selectedSkillServices, setSelectedSkillServices] = useState<string[]>([]);
+  const [selectedSubCategories, setSelectedSubCategories] = useState<string[]>([]);
   /* ── load profile ── */
   useEffect(() => {
     async function load() {
@@ -130,17 +134,23 @@ export default function TraderProfilePage() {
           email: p?.email || "",
           phone: p?.phone || tp?.phone || "",
           professionalTitle: tp?.professionalTitle || tp?.title || "",
-          workLocation: tp?.workLocation || tp?.location || p?.city || "",
-          bio: tp?.bio || tp?.description || "",
+          workLocation: tp?.location || tp?.workLocation || p?.city || "",
+          workRadius: tp?.workRadius ?? "",
+          bio: tp?.about || tp?.bio || tp?.description || "",
           profileImage: p?.profileImage || p?.avatar || tp?.logo || null,
         });
 
         setBusinessForm({
           companyName: tp?.companyName || tp?.businessName || "",
           companyType: tp?.companyType || "",
-          niNumber: tp?.niNumber || tp?.registrationNumber || "",
+          niNumber: tp?.registrationNumber || tp?.niNumber || "",
           primarySkills: tp?.primarySkills || tp?.skills || "",
+          planName: tp?.subscription?.plan?.name || tp?.subscriptionTier || "Free",
         });
+
+        if (tp?.tradeCategories?.length > 0) setSelectedTradeCategory(tp.tradeCategories[0]);
+        if (tp?.skillsServices?.length > 0) setSelectedSkillServices(tp.skillsServices);
+        if (tp?.subCategories?.length > 0) setSelectedSubCategories(tp.subCategories);
 
         const categories = await authApi.getCategories();
 
@@ -194,7 +204,12 @@ export default function TraderProfilePage() {
   const handlePersonalChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
-    setPersonalForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    let { name, value } = e.target;
+    if (name === "phone") {
+      value = value.replace(/\D/g, "");
+      if (value.length > 10) return;
+    }
+    setPersonalForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleProfileFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -272,23 +287,51 @@ export default function TraderProfilePage() {
       setSkillServices(Array.isArray(res) ? res : res?.data || []);
     });
 
-    setSelectedSkillService("");
-    setSelectedSubCategory("");
+    setSelectedSkillServices([]);
+    setSelectedSubCategories([]);
   }, [selectedTradeCategory]);
 
   useEffect(() => {
-    if (!selectedSkillService) return;
+    if (selectedSkillServices.length === 0) {
+      setSubCategories([]);
+      return;
+    }
 
-    authApi.getSubCategories(selectedSkillService).then((res) => {
-      setSubCategories(Array.isArray(res) ? res : res?.data || []);
+    Promise.all(
+      selectedSkillServices.map(id => authApi.getSubCategories(id))
+    ).then((results) => {
+      const allSubs = results.flatMap((res: any) => Array.isArray(res) ? res : res?.data || []);
+      const uniqueSubs = Array.from(new Map(allSubs.map((s: any) => [s.id, s])).values()) as Array<{ id: string; name: string }>;
+      setSubCategories(uniqueSubs);
     });
 
-    setSelectedSubCategory("");
-  }, [selectedSkillService]);
+  }, [selectedSkillServices]);
 
   /* ── submit ── */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!personalForm.fullName.trim()) return toast.error("Full Name is required.");
+
+    if (!personalForm.email.trim()) return toast.error("Email is required.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(personalForm.email.trim())) {
+      return toast.error("Please enter a valid email address.");
+    }
+
+    if (!personalForm.phone || !personalForm.phone.trim()) {
+      return toast.error("Phone number is required.");
+    }
+    const phoneRegex = /^[0-9]{10}$/;
+    if (!phoneRegex.test(personalForm.phone)) {
+      return toast.error("Phone number must be exactly 10 digits.");
+    }
+
+    if (!businessForm.companyName.trim()) return toast.error("Company Name is required.");
+    if (!businessForm.companyType.trim()) return toast.error("Company Type is required.");
+
+    if (!selectedTradeCategory) return toast.error("Trade Category is required.");
+    if (selectedSkillServices.length === 0) return toast.error("At least one Skill Service is required.");
+
     setSaving(true);
     try {
       const fd = new FormData();
@@ -306,14 +349,9 @@ export default function TraderProfilePage() {
         fd.append("tradeCategories", selectedTradeCategory);
       }
 
-      if (selectedSkillService) {
-        fd.append("skillsServices", selectedSkillService);
-      }
-
-      if (selectedSubCategory) {
-        fd.append("subCategories", selectedSubCategory);
-      }
-      fd.append("workRadius", "");
+      selectedSkillServices.forEach(id => fd.append("skillsServices", id));
+      selectedSubCategories.forEach(id => fd.append("subCategories", id));
+      fd.append("workRadius", personalForm.workRadius !== "" ? String(personalForm.workRadius) : "");
       fd.append("location", personalForm.workLocation);
       fd.append("about", personalForm.bio);
 
@@ -532,6 +570,23 @@ export default function TraderProfilePage() {
                         />
                       </div>
 
+                      {/* Work Radius */}
+                      <div>
+                        <label className="block text-[12px] font-medium text-gray-500 mb-1">
+                          Work Radius (miles)
+                        </label>
+                        <input
+                          id="tp-workRadius"
+                          type="number"
+                          name="workRadius"
+                          value={personalForm.workRadius}
+                          onChange={handlePersonalChange}
+                          placeholder="e.g. 50"
+                          min="0"
+                          className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
+                        />
+                      </div>
+
                       {/* Email (read-only) */}
                       <div className="col-span-2">
                         <label className="block text-[12px] font-medium text-gray-500 mb-1">
@@ -540,9 +595,11 @@ export default function TraderProfilePage() {
                         <input
                           id="tp-email"
                           type="email"
+                          name="email"
                           value={personalForm.email}
-                          readOnly
-                          className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] bg-gray-50 text-[13px] text-gray-400 cursor-not-allowed"
+                          onChange={handlePersonalChange}
+                          placeholder="your.email@example.com"
+                          className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
                         />
                       </div>
 
@@ -570,38 +627,38 @@ export default function TraderProfilePage() {
 
                       {/* Proof of Identity */}
                       {traderStatus !== "APPROVED" && (
-                      <div className="border border-dashed border-[#C8D8B0] rounded-xl p-5 flex flex-col items-center text-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[#6E9625]/10 flex items-center justify-center">
-                          <FileText size={18} className="text-[#6E9625]" />
-                        </div>
-                        <div>
-                          <p className="text-[13px] font-bold text-[#1C2C1C]">
-                            Proof of Identity
-                          </p>
-                          <p className="text-[11px] text-gray-400 mt-0.5">
-                            Upload a valid National ID or Driving Licence PDF / JPG
-                          </p>
-                          {idFileName && (
-                            <p className="text-[11px] text-[#6E9625] mt-1 truncate max-w-[180px]">
-                              {idFileName}
+                        <div className="border border-dashed border-[#C8D8B0] rounded-xl p-5 flex flex-col items-center text-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-[#6E9625]/10 flex items-center justify-center">
+                            <FileText size={18} className="text-[#6E9625]" />
+                          </div>
+                          <div>
+                            <p className="text-[13px] font-bold text-[#1C2C1C]">
+                              Proof of Identity
                             </p>
-                          )}
+                            <p className="text-[11px] text-gray-400 mt-0.5">
+                              Upload a valid National ID or Driving Licence PDF / JPG
+                            </p>
+                            {idFileName && (
+                              <p className="text-[11px] text-[#6E9625] mt-1 truncate max-w-[180px]">
+                                {idFileName}
+                              </p>
+                            )}
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => idInputRef.current?.click()}
+                            className="px-4 py-1.5 bg-[#1C2C1C] text-white rounded-lg text-[12px] font-semibold hover:bg-[#2c3e2c] transition-colors"
+                          >
+                            Browse Files
+                          </button>
+                          <input
+                            ref={idInputRef}
+                            type="file"
+                            accept=".pdf,.jpg,.jpeg,.png"
+                            className="hidden"
+                            onChange={handleIdFileSelect}
+                          />
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => idInputRef.current?.click()}
-                          className="px-4 py-1.5 bg-[#1C2C1C] text-white rounded-lg text-[12px] font-semibold hover:bg-[#2c3e2c] transition-colors"
-                        >
-                          Browse Files
-                        </button>
-                        <input
-                          ref={idInputRef}
-                          type="file"
-                          accept=".pdf,.jpg,.jpeg,.png"
-                          className="hidden"
-                          onChange={handleIdFileSelect}
-                        />
-                      </div>
                       )}
 
                       {/* Profile / Logo */}
@@ -709,59 +766,21 @@ export default function TraderProfilePage() {
                       />
                     </div>
 
-                    {/* Primary Skills */}
+                    {/* Subscription Plan */}
                     <div>
                       <label className="block text-[12px] font-medium text-gray-500 mb-1">
-                        Primary Skills &amp; Services
+                        Subscription Plan
                       </label>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-
-                        <select
-                          value={selectedTradeCategory}
-                          onChange={(e) => setSelectedTradeCategory(e.target.value)}
-                          className="w-full px-3 py-2 rounded-lg border"
-                        >
-                          <option value="">Select Trade Category</option>
-
-                          {tradeCategories.map((item) => (
-                            <option key={item.id} value={item.id}>
-                              {item.name}
-                            </option>
-                          ))}
-                        </select>
-
-                        <select
-                          value={selectedSkillService}
-                          onChange={(e) => setSelectedSkillService(e.target.value)}
-                          disabled={!selectedTradeCategory}
-                          className="w-full px-3 py-2 rounded-lg border"
-                        >
-                          <option value="">Select Skill Service</option>
-
-                          {skillServices.map((item) => (
-                            <option key={item.id} value={item.id}>
-                              {item.name}
-                            </option>
-                          ))}
-                        </select>
-
-                        <select
-                          value={selectedSubCategory}
-                          onChange={(e) => setSelectedSubCategory(e.target.value)}
-                          disabled={!selectedSkillService}
-                          className="w-full px-3 py-2 rounded-lg border"
-                        >
-                          <option value="">Select Sub Category</option>
-
-                          {subCategories.map((item) => (
-                            <option key={item.id} value={item.id}>
-                              {item.name}
-                            </option>
-                          ))}
-                        </select>
-
-                      </div>
+                      <input
+                        id="tp-planName"
+                        type="text"
+                        name="planName"
+                        value={businessForm.planName}
+                        readOnly
+                        className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] bg-gray-50 text-[13px] text-gray-400 font-bold uppercase cursor-not-allowed"
+                      />
                     </div>
+
                   </div>
                 </div>
               )}
@@ -799,44 +818,84 @@ export default function TraderProfilePage() {
 
                     <div>
                       <label className="block text-[12px] font-medium text-gray-500 mb-2">
-                        Skill Service
+                        Skill Services
                       </label>
 
                       <select
-                        value={selectedSkillService}
-                        onChange={(e) => setSelectedSkillService(e.target.value)}
+                        value=""
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val && !selectedSkillServices.includes(val)) {
+                            setSelectedSkillServices(prev => [...prev, val]);
+                          }
+                        }}
                         disabled={!selectedTradeCategory}
                         className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 disabled:bg-gray-100"
                       >
-                        <option value="">Select Skill Service</option>
-
+                        <option value="">Add Skill Service...</option>
                         {skillServices.map((item) => (
-                          <option key={item.id} value={item.id}>
+                          <option key={item.id} value={item.id} disabled={selectedSkillServices.includes(item.id)}>
                             {item.name}
                           </option>
                         ))}
                       </select>
+
+                      {selectedSkillServices.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          {selectedSkillServices.map(id => {
+                            const service = skillServices.find(s => s.id === id);
+                            return (
+                              <span key={id} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#6E9625]/10 text-[#6E9625] text-[12px] font-medium">
+                                {service ? service.name : id}
+                                <button type="button" onClick={() => setSelectedSkillServices(prev => prev.filter(s => s !== id))} className="hover:text-red-500 transition-colors">
+                                  <X size={14} />
+                                </button>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
 
                     <div>
                       <label className="block text-[12px] font-medium text-gray-500 mb-2">
-                        Sub Category
+                        Sub Categories
                       </label>
 
                       <select
-                        value={selectedSubCategory}
-                        onChange={(e) => setSelectedSubCategory(e.target.value)}
-                        disabled={!selectedSkillService}
+                        value=""
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val && !selectedSubCategories.includes(val)) {
+                            setSelectedSubCategories(prev => [...prev, val]);
+                          }
+                        }}
+                        disabled={selectedSkillServices.length === 0}
                         className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 disabled:bg-gray-100"
                       >
-                        <option value="">Select Sub Category</option>
-
+                        <option value="">Add Sub Category...</option>
                         {subCategories.map((item) => (
-                          <option key={item.id} value={item.id}>
+                          <option key={item.id} value={item.id} disabled={selectedSubCategories.includes(item.id)}>
                             {item.name}
                           </option>
                         ))}
                       </select>
+
+                      {selectedSubCategories.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-3">
+                          {selectedSubCategories.map(id => {
+                            const subCat = subCategories.find(s => s.id === id);
+                            return (
+                              <span key={id} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1C2C1C]/5 text-[#1C2C1C] text-[12px] font-medium border border-[#1C2C1C]/10">
+                                {subCat ? subCat.name : id}
+                                <button type="button" onClick={() => setSelectedSubCategories(prev => prev.filter(s => s !== id))} className="hover:text-red-500 transition-colors text-gray-400">
+                                  <X size={14} />
+                                </button>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
 
                   </div>

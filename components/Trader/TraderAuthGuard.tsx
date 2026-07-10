@@ -34,6 +34,18 @@ export default function TraderAuthGuard({ children }: { children: React.ReactNod
     checkAuth();
   }, [pathname, router]);
 
+  // Trap the back button when authorized
+  useEffect(() => {
+    if (isAllowed) {
+      window.history.pushState(null, "", window.location.href);
+      const handlePopState = () => {
+        window.history.pushState(null, "", window.location.href);
+      };
+      window.addEventListener("popstate", handlePopState);
+      return () => window.removeEventListener("popstate", handlePopState);
+    }
+  }, [isAllowed]);
+
   if (!isAllowed) {
     return <div className="min-h-screen flex items-center justify-center bg-[#F0EDE8]"><p className="text-[#1C2C1C]">Loading...</p></div>;
   }

@@ -23,6 +23,7 @@ import { authApi, getRegistrationStatus } from "@/app/api/authApi";
 import TraderQuotesComponent from "@/components/Trader/TraderQuotesComponent";
 import TraderReportTable from "@/components/Trader/TraderReportTable";
 import toast from "react-hot-toast";
+import { clearTokens } from "@/utils/auth";
 
 
 // Base navLinks
@@ -93,9 +94,8 @@ export default function TraderNavbar() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("accessToken");
     localStorage.removeItem("user");
+    clearTokens();
     router.push("/auth/login");
   };
 

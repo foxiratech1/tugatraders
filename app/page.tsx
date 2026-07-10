@@ -7,19 +7,22 @@ import SafetySection from "@/components/HomePage/SafetySection";
 import ReviewSection from "@/components/HomePage/ReviewSection";
 import PlatformRoleSection from "@/components/HomePage/PlatformRoleSection";
 import FinalCTASection from "@/components/HomePage/FinalCTASection";
+import PublicGuard from "@/components/Guards/PublicGuard";
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-white">
-      <Hero />
-      <TrustSection />
-      <CategorySection />
-      <HowItWorks />
-      <SafetySection />
-      <PlatformRoleSection />
-      <MapSearchSection />
-      <ReviewSection />
-      <FinalCTASection />
-    </main>
+    <PublicGuard>
+      <main className="min-h-screen bg-white">
+        <Hero />
+        <TrustSection />
+        <CategorySection />
+        <HowItWorks />
+        <SafetySection />
+        <PlatformRoleSection />
+        <MapSearchSection />
+        <ReviewSection />
+        <FinalCTASection />
+      </main>
+    </PublicGuard>
   );
 }

@@ -39,6 +39,9 @@ interface ReviewSummary {
   breakdown?: {
     [key: number]: number;
   };
+  ratingBreakdown?: {
+    [key: number]: number;
+  };
 }
 
 function StarRating({ rating }: { rating: number }) {
@@ -195,18 +198,10 @@ export default function TraderReviews() {
           throw new Error('Could not identify trader account from profile response.');
         }
 
-        const [reviewsRes, summaryRes] = await Promise.all([
-          authApi.getOwnReviews(page, 10).catch((e: any) => {
-            console.error('[TraderReviews] getOwnReviews error:', e?.response?.data || e.message);
-            return { data: [] };
-          }),
-          authApi.getTraderReviewSummary(traderId).catch((e: any) => {
-            console.error('[TraderReviews] getTraderReviewSummary error:', e?.response?.data || e.message);
-            return null;
-          })
-        ]);
+        let finalSummary = null;
 
-        // Handle different response shapes
+        // 1. Fetch own reviews
+        const reviewsRes = await authApi.getOwnReviews(page, 10).catch(() => ({ data: { data: [], pagination: {} } }));
         const reviewsData = reviewsRes?.data || reviewsRes;
         const reviewsList = Array.isArray(reviewsData)
           ? reviewsData
@@ -219,9 +214,24 @@ export default function TraderReviews() {
           setTotalPages(reviewsData.totalPages);
         }
 
-        const sumData = summaryRes?.data || summaryRes;
-        if (sumData) {
-          setSummary(sumData);
+        // 2. Identify the correct traderId for the summary API
+        // Prioritize the traderId from the reviews response since we know it's accurate
+        const correctTraderId = (reviewsList.length > 0 && reviewsList[0].traderId) ? reviewsList[0].traderId : traderId;
+
+        // 3. Fetch summary using the verified traderId
+        if (correctTraderId) {
+          try {
+            const sumRes = await authApi.getTraderReviewSummary(correctTraderId);
+            const sumData = sumRes?.data || sumRes;
+            finalSummary = sumData?.summary || sumData?.data || sumData;
+          } catch (e) {
+            console.error('[TraderReviews] Failed to fetch summary:', e);
+          }
+        }
+
+        // 4. Set the summary state
+        if (finalSummary) {
+          setSummary(finalSummary);
         }
 
       } catch (err: any) {
@@ -329,7 +339,8 @@ export default function TraderReviews() {
               <h2 className="text-[12px] font-medium text-gray-500 text-center mb-6">Rating Breakdown</h2>
               <div className="flex flex-col gap-4">
                 {[5, 4, 3, 2, 1].map((star) => {
-                  const count = summary?.breakdown?.[star] || 0;
+                  const breakdownObj = summary?.ratingBreakdown || summary?.breakdown || {};
+                  const count = breakdownObj[star] || 0;
                   const total = summary?.totalReviews || reviews.length || 1;
                   const percentage = Math.round((count / total) * 100) || 0;
 
@@ -441,7 +452,7 @@ export default function TraderReviews() {
                       {reportedReviews.includes(r.id) ? "Reported" : "Report"}
                     </button>
 
-                    <button
+                    {/* <button
                       onClick={() => {
                         setSelectedDeleteReviewId(r.id);
                         setShowDeleteModal(true);
@@ -449,7 +460,7 @@ export default function TraderReviews() {
                       className="text-[12px] font-medium text-red-600 hover:text-red-700"
                     >
                       Delete
-                    </button>
+                    </button> */}
                   </div>
 
                   {/* Reply Input Area */}

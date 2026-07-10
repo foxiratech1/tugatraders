@@ -3,14 +3,19 @@
 import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Star, MapPin, Bookmark, List, Map as MapIcon } from 'lucide-react';
 import { authApi } from '@/app/api/authApi';
 
 const getImageUrl = (path: string | null | undefined) => {
   if (!path) return '/logo.png';
   if (path.startsWith('http')) return path;
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || '';
-  return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+
+  const rawBase = process.env.NEXT_PUBLIC_API_URL || '';
+  const baseUrl = rawBase.endsWith('/') ? rawBase.slice(0, -1) : rawBase;
+  const imagePath = path.startsWith('/') ? path : `/${path}`;
+
+  return `${baseUrl}${imagePath}`;
 };
 
 const ListingImage = ({ pro }: { pro: any }) => {
@@ -31,7 +36,21 @@ const ListingImage = ({ pro }: { pro: any }) => {
   );
 };
 
-const LoginModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; onClose: () => void; onSuccess: () => void }) => {
+const LoginModal = ({ 
+  isOpen, 
+  onClose, 
+  onSuccess,
+  title = "Login to save",
+  subtitle = "Please log in to save this professional to your list.",
+  icon
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  onSuccess: () => void;
+  title?: string;
+  subtitle?: string;
+  icon?: React.ReactNode;
+}) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -73,16 +92,16 @@ const LoginModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; onClose: 
           ✕
         </button>
 
-        {/* Bookmark icon */}
+        {/* Dynamic icon */}
         <div className="w-12 h-12 rounded-full bg-[#F3F8EC] flex items-center justify-center mb-4">
-          <Bookmark size={22} className="text-[#6E9625]" fill="#6E9625" />
+          {icon || <Bookmark size={22} className="text-[#6E9625]" fill="#6E9625" />}
         </div>
 
         <h3 className="text-[22px] font-bold text-[#1C2C1C] mb-1" style={{ fontFamily: 'var(--font-bricolage), sans-serif' }}>
-          Login to save
+          {title}
         </h3>
         <p className="text-[13px] text-[#1C2C1C]/55 font-medium mb-6">
-          Please log in to save this professional to your list.
+          {subtitle}
         </p>
 
         {error && (
@@ -120,9 +139,9 @@ const LoginModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; onClose: 
                 className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1C2C1C]/40 hover:text-[#1C2C1C] transition-colors cursor-pointer"
               >
                 {showPw ? (
-                  <svg viewBox="0 0 24 24" width="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                  <svg viewBox="0 0 24 24" width="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
                 ) : (
-                  <svg viewBox="0 0 24 24" width="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  <svg viewBox="0 0 24 24" width="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
                 )}
               </button>
             </div>
@@ -148,10 +167,12 @@ const LoginModal = ({ isOpen, onClose, onSuccess }: { isOpen: boolean; onClose: 
 
 
 const DirectoryListings = () => {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'list' | 'map'>('list');
   const [professionals, setProfessionals] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [modalAction, setModalAction] = useState<'SAVE' | 'VIEW_PROFILE'>('SAVE');
   // pending trader ID is persisted in localStorage across navigation
   // we keep a state for UI consistency (optional)
   const [pendingTraderId, setPendingTraderId] = useState<string | null>(null);
@@ -175,6 +196,7 @@ const DirectoryListings = () => {
     if (!token) {
       // Store pending ID in state; modal will call handleLoginSuccess
       setPendingTraderId(traderId);
+      setModalAction('SAVE');
       setShowLoginModal(true);
       return;
     }
@@ -195,7 +217,10 @@ const DirectoryListings = () => {
 
   const handleLoginSuccess = async () => {
     setShowLoginModal(false);
-    if (pendingTraderId) {
+    
+    if (!pendingTraderId) return;
+
+    if (modalAction === 'SAVE') {
       // Optimistically update
       setProfessionals((prev) =>
         prev.map((pro) =>
@@ -213,6 +238,23 @@ const DirectoryListings = () => {
         );
       }
       setPendingTraderId(null);
+      // Redirect to the customer dashboard saved tab after login
+      router.push("/customer-dashboard/saved");
+    } else if (modalAction === 'VIEW_PROFILE') {
+      const id = pendingTraderId;
+      setPendingTraderId(null);
+      router.push(`/profile/${id}`);
+    }
+  };
+
+  const handleViewProfile = (traderId: string) => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) {
+      setPendingTraderId(traderId);
+      setModalAction('VIEW_PROFILE');
+      setShowLoginModal(true);
+    } else {
+      router.push(`/profile/${traderId}`);
     }
   };
 
@@ -222,6 +264,9 @@ const DirectoryListings = () => {
         isOpen={showLoginModal}
         onClose={() => { setShowLoginModal(false); setPendingTraderId(null); }}
         onSuccess={handleLoginSuccess}
+        title={modalAction === 'VIEW_PROFILE' ? 'Login to view profile' : 'Login to save'}
+        subtitle={modalAction === 'VIEW_PROFILE' ? "Please log in to view this trader's full profile." : 'Please log in to save this professional to your list.'}
+        icon={modalAction === 'VIEW_PROFILE' ? <span className="text-[#6E9625] font-black text-xl">→]</span> : undefined}
       />
       <div className="max-w-[1440px] mx-auto">
         {/* Header Section */}
@@ -297,10 +342,10 @@ const DirectoryListings = () => {
                     onClick={() => handleToggleSave(pro.id)}
                     className="absolute top-4 right-4 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/40 transition-colors cursor-pointer"
                   >
-                    <Bookmark 
-                      size={16} 
-                      fill={pro.isSaved ? "currentColor" : "none"} 
-                      className={pro.isSaved ? "text-[#6E9625]" : "text-white"} 
+                    <Bookmark
+                      size={16}
+                      fill={pro.isSaved ? "currentColor" : "none"}
+                      className={pro.isSaved ? "text-[#6E9625]" : "text-white"}
                     />
                   </button>
                 </div>
@@ -321,7 +366,11 @@ const DirectoryListings = () => {
 
                   <div className="flex items-center gap-1.5 text-[#6B7280] text-sm mb-4">
                     <MapPin size={14} className="flex-shrink-0" />
-                    <span className="truncate">{pro.location || pro.city || 'Location unavailable'} {pro.distance ? `• ${pro.distance}` : ''}</span>
+                    <span className="truncate">
+                      {pro.location || pro.city || 'Location unavailable'}
+                      {pro.distance ? ` • ${pro.distance}` : ''}
+                      {pro.workRadius ? ` • ${pro.workRadius} miles radius` : ''}
+                    </span>
                   </div>
 
                   <p className="text-[#4B5563] text-sm leading-relaxed mb-6 line-clamp-2">
@@ -329,12 +378,14 @@ const DirectoryListings = () => {
                   </p>
 
                   <div className="flex gap-3">
-                    <button className="flex-1 py-3 px-4 rounded-xl border border-[#E5E7EB] text-[#243A24] font-bold text-sm hover:bg-gray-50 transition-colors cursor-pointer">
+                    <button 
+                      onClick={() => handleViewProfile(pro.id)}
+                      className="flex-1 py-3 px-4 rounded-xl border border-[#E5E7EB] text-[#243A24] font-bold text-sm hover:bg-gray-50 transition-colors cursor-pointer">
                       View Profile
                     </button>
-                    <button className="flex-1 py-3 px-4 rounded-xl bg-[#243A24] text-white font-bold text-sm hover:bg-[#1a2b1a] transition-colors cursor-pointer">
+                    {/* <button className="flex-1 py-3 px-4 rounded-xl bg-[#243A24] text-white font-bold text-sm hover:bg-[#1a2b1a] transition-colors cursor-pointer">
                       Get Quote
-                    </button>
+                    </button> */}
                   </div>
                 </div>
               </div>

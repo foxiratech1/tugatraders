@@ -8,6 +8,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { setTokens, getUserRole } from "@/utils/auth";
 import { Role } from "@/utils/role";
 import { authApi, getRegistrationStatus } from "@/app/api/authApi";
+import PublicGuard from "@/components/Guards/PublicGuard";
 
 // ─── Animated Eye ──────────────────────────────────────────────────────────────
 const AnimatedEye = ({
@@ -160,8 +161,17 @@ function LoginContent() {
         const roleStr = (tokenRole || data?.user?.role || data?.role || "").toString().toLowerCase();
         console.log("Detected user role:", roleStr);
 
+        if (roleStr === Role.Trader.toLowerCase()) {
+          toast.success("Trader login successfully");
+        } else if (roleStr === Role.Customer.toLowerCase()) {
+          toast.success("Customer Login successfully");
+        } else if (roleStr === Role.Admin.toLowerCase()) {
+          toast.success("Admin login successfully");
+        } else {
+          toast.success("Login successfully");
+        }
+
         let targetPath = "/";
-        let forceSkipOtp = false;
 
         if (redirectParam) {
           if (redirectParam === "leave-review" && traderIdParam) {
@@ -185,11 +195,6 @@ function LoginContent() {
 
             const isCompleted = traderData?.isRegistrationCompleted;
 
-            // If the trader has completed registration or is past step 1, we skip the OTP page
-            if (isCompleted || traderData?.step1Completed || traderData?.currentStep > 1) {
-              forceSkipOtp = true;
-            }
-
             if (isCompleted) {
               targetPath = "/trader"; // Dashboard
             } else if (traderData?.step2Completed === false || traderData?.currentStep === 2) {
@@ -208,21 +213,12 @@ function LoginContent() {
           }
         } else if (roleStr === Role.Customer.toLowerCase()) {
           // Direct customers to their dashboard
-          targetPath = "/customer-dashboard";
-          forceSkipOtp = true; // Customers don't need OTP verification
+          targetPath = "/customer-dashboard/jobs";
         }
 
-        // Check if email is already verified
-        const isEmailVerified = data?.user?.isEmailVerified ?? data?.data?.user?.isEmailVerified ?? data?.user?.emailVerified ?? data?.data?.user?.emailVerified;
-
-        // If explicitly false, redirect to OTP verification. Otherwise (true or undefined), proceed.
-        if (isEmailVerified === false && !forceSkipOtp) {
-          router.push(`/auth/trader-signup/verify-otp?email=${encodeURIComponent(email)}&redirectTo=${encodeURIComponent(targetPath)}`);
-        } else {
-          router.push(targetPath);
-        }
+        router.replace(targetPath);
       } else {
-        router.push("/");
+        router.replace("/");
       }
     } catch (err: any) {
       const dataMsg = err.response?.data?.message;
@@ -403,8 +399,10 @@ function LoginContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#F8F9F5]">Loading...</div>}>
-      <LoginContent />
-    </Suspense>
+    <PublicGuard>
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#F8F9F5]">Loading...</div>}>
+        <LoginContent />
+      </Suspense>
+    </PublicGuard>
   );
 }

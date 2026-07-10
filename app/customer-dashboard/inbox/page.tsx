@@ -7,6 +7,19 @@ import { authApi } from "@/app/api/authApi";
 import ChatWindow from "@/components/Chat/ChatWindow";
 import { useSocket } from "@/hooks/useSocket";
 
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+
+function getImageUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  if (path.startsWith("http")) return path;
+  
+  const baseUrl = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
+  let imagePath = path.startsWith('/') ? path : `/${path}`;
+  imagePath = imagePath.replace(/\/\//g, '/'); // remove any double slashes inside the path
+  
+  return `${baseUrl}${imagePath}`;
+}
+
 interface Conversation {
   id: string;
   _id?: string;
@@ -223,15 +236,19 @@ function ChatDashboardContent() {
                     >
                       {/* Avatar */}
                       <div className="relative w-11 h-11 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center font-bold text-emerald-800 text-[14px] overflow-hidden flex-shrink-0">
-                        {c.trader?.profileImage ? (
-                          <img
-                            src={c.trader.profileImage.startsWith("http") ? c.trader.profileImage : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/${c.trader.profileImage}`}
-                            alt={c.trader.fullName}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          c.trader?.fullName?.charAt(0) || "T"
-                        )}
+                        {(() => {
+                          const imgPath = c.trader?.profileImage || (c.trader as any)?.avatar || (c.trader as any)?.logo || (c.trader as any)?.traderProfile?.logo || (c.trader as any)?.traderProfile?.profileImage || (c.trader as any)?.traderProfile?.document || null;
+                          const finalImgUrl = getImageUrl(imgPath);
+                          return finalImgUrl ? (
+                            <img
+                              src={finalImgUrl}
+                              alt={c.trader?.fullName || "User"}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            c.trader?.fullName?.charAt(0) || "U"
+                          );
+                        })()}
                         {/* Online Indicator */}
                         {isOnline && (
                           <span className="absolute bottom-0 right-0 w-3 h-3 bg-[#4CAF50] border-2 border-white rounded-full" />

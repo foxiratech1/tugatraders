@@ -7,6 +7,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { authApi } from "@/app/api/authApi";
+import PublicGuard from "@/components/Guards/PublicGuard";
 
 export default function ForgotPasswordPage() {
  const router = useRouter();
@@ -39,6 +40,7 @@ export default function ForgotPasswordPage() {
  };
 
  return (
+ <PublicGuard>
  <main className="flex min-h-screen w-full items-center justify-center bg-[#F8F9F5] font-sans antialiased">
  <div className="flex w-full min-h-screen lg:min-h-screen overflow-hidden bg-[#F8F9F5] relative flex-col lg:flex-row">
  {/* LEFT SECTION */}
@@ -110,5 +112,6 @@ export default function ForgotPasswordPage() {
  </div>
  </div>
  </main>
+ </PublicGuard>
  );
 }

@@ -1,7 +1,7 @@
 "use client";
 
-import React from "react";
-import { Download, FileText, Check, CheckCheck } from "lucide-react";
+import React, { useState } from "react";
+import { Download, FileText, Check, CheckCheck, X } from "lucide-react";
 
 interface Attachment {
   path: string;
@@ -30,6 +30,7 @@ interface MessageItemProps {
 
 export default function MessageItem({ message, currentUserId }: MessageItemProps) {
   const isSender = message.senderId === currentUserId;
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
 
   // Determine attachments
   const allAttachments: string[] = [];
@@ -101,7 +102,8 @@ export default function MessageItem({ message, currentUserId }: MessageItemProps
                     <img
                       src={fileUrl}
                       alt="Uploaded image"
-                      className="max-w-full max-h-60 object-contain rounded-lg"
+                      onClick={() => setFullscreenImage(fileUrl)}
+                      className="max-w-full max-h-60 object-contain rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                       onError={(e) => {
                         // fallback or hide image if error
                         (e.target as HTMLElement).style.display = "none";
@@ -150,6 +152,30 @@ export default function MessageItem({ message, currentUserId }: MessageItemProps
           </span>
         )}
       </div>
+      
+      {/* Fullscreen Image Modal */}
+      {fullscreenImage && (
+        <div 
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          onClick={() => setFullscreenImage(null)}
+        >
+          <button 
+            className="absolute top-6 right-6 p-2 text-white bg-black/50 hover:bg-black/70 rounded-full transition-colors"
+            onClick={(e) => {
+              e.stopPropagation();
+              setFullscreenImage(null);
+            }}
+          >
+            <X size={24} />
+          </button>
+          <img
+            src={fullscreenImage}
+            alt="Fullscreen"
+            className="max-w-[90vw] max-h-[90vh] object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -78,9 +78,16 @@ const DirectoryHero = () => {
             </div>
 
             {/* Search Button */}
-            <button className="bg-[#243A24] hover:bg-[#1A301A] text-white px-6 py-4 md:px-3 lg:px-10 lg:py-5 rounded-[18px] flex items-center justify-center gap-2 lg:gap-3 font-bold text-[15px] md:text-[13px] lg:text-[16px] transition-all min-w-full md:min-w-[120px] lg:min-w-[200px] cursor-pointer flex-shrink-0">
+            <button 
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSearch();
+              }}
+              className="bg-[#243A24] hover:bg-[#1A301A] text-white px-6 py-4 md:px-3 lg:px-10 lg:py-5 rounded-[18px] flex items-center justify-center gap-2 lg:gap-3 font-bold text-[15px] md:text-[13px] lg:text-[16px] transition-all min-w-full md:min-w-[120px] lg:min-w-[200px] cursor-pointer flex-shrink-0"
+            >
               <Search className="flex-shrink-0 w-5 h-5 lg:w-6 lg:h-6" />
-              <span className="truncate">Search Trades</span>
+              <span className="truncate">Search Trader</span>
             </button>
 
           </div>

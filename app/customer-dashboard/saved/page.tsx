@@ -6,12 +6,17 @@ import Link from "next/link";
 import { authApi } from "@/app/api/authApi";
 import { Star, MapPin, Wrench, Search, ChevronDown, BookmarkX } from "lucide-react";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://api.tugatraders.server24.in";
 
 function getImageUrl(path: string | null | undefined): string {
   if (!path) return "/logo.png";
   if (path.startsWith("http")) return path;
-  return `${API_BASE}${path.startsWith("/") ? "" : "/"}${path}`;
+  
+  const baseUrl = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
+  let imagePath = path.startsWith('/') ? path : `/${path}`;
+  imagePath = imagePath.replace(/\/\//g, '/'); // remove any double slashes inside the path
+  
+  return `${baseUrl}${imagePath}`;
 }
 
 type SavedTrader = {
@@ -48,6 +53,7 @@ function StarRating({ rating }: { rating: number }) {
 function TraderCard({ trader }: { trader: SavedTrader }) {
   const [imgError, setImgError] = useState(false);
   const src = imgError ? "/logo.png" : getImageUrl(trader.profileImage || trader.logo);
+  console.log(`[SSR Debug] Trader: ${trader.fullName}, Raw Profile: ${trader.profileImage}, Raw Logo: ${trader.logo}, Generated Src: ${src}`);
 
   return (
     <div className="bg-white rounded-2xl border border-[#F0EDE8] shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col">
@@ -129,9 +135,9 @@ export default function SavedTradersPage() {
           return {
             id: t.id,
             fullName: t.fullName || "",
-            companyName: t.companyName || "",
-            profileImage: t.profileImage || null,
-            logo: t.logo || null,
+            companyName: t.companyName || t.traderProfile?.companyName || item.traderProfile?.companyName || "",
+            profileImage: t.profileImage || t.traderProfile?.profileImage || t.user?.profileImage || item.traderProfile?.profileImage || t.image || null,
+            logo: t.logo || t.traderProfile?.logo || t.user?.logo || item.traderProfile?.logo || t.image || null,
             ratingAvg: t.traderMetrics?.averageRating ?? t.ratingAvg ?? 0,
             reviewCount: t.traderMetrics?.totalReviews ?? t.reviewCount ?? 0,
             workRadius: t.workRadius ?? 0,

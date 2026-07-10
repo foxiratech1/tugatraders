@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useRef, useState } from "react";
 import { authApi } from "@/app/api/authApi";
@@ -34,17 +34,22 @@ export default function CustomerProfilePage() {
     async function load() {
       try {
         const res = await authApi.getMyProfile();
-        const p = res?.data || res;
+        const p = res?.data?.user || res?.data || res?.user || res;
         setForm({
           fullName: p?.fullName || "",
           email: p?.email || "",
-          phone: p?.phone || p?.phone || "",
+          phone: p?.phone || "",
           // publicProfileName: p?.publicProfileName || p?.username || "",
           // address: p?.address || p?.addressLine || "",
           profileImage: p?.profileImage || p?.avatar || null,
         });
-        if (p?.profileImage || p?.avatar) {
-          setPreviewUrl(p.profileImage || p.avatar);
+
+        const imgUrl = p?.profileImage || p?.avatar;
+        if (imgUrl) {
+          const isAbsolute = imgUrl.startsWith('http') || imgUrl.startsWith('data:');
+          const baseUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/+$/, '');
+          const cleanPath = imgUrl.replace(/^\/+/, '');
+          setPreviewUrl(isAbsolute ? imgUrl : `${baseUrl}/${cleanPath}`);
         }
       } catch (e) {
         console.error("Failed to load profile", e);
@@ -56,7 +61,12 @@ export default function CustomerProfilePage() {
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    let { name, value } = e.target;
+    if (name === "phone") {
+      value = value.replace(/\D/g, "");
+      if (value.length > 10) value = value.slice(0, 10);
+    }
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -75,11 +85,31 @@ export default function CustomerProfilePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!form.fullName.trim()) return toast.error("Full Name is required.");
+    if (!form.email.trim()) return toast.error("Email is required.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return toast.error("Please enter a valid email address.");
+
+    if (!form.phone || form.phone.trim() === "") {
+      return toast.error("Phone number is required.");
+    }
+    const phoneRegex = /^\d{10}$/;
+    if (!phoneRegex.test(form.phone.trim())) {
+      return toast.error("Phone number must be exactly 10 digits.");
+    }
+
+    if (!selectedFile && !previewUrl) {
+      return toast.error("Profile image is required.");
+    }
+
     setSaving(true);
     try {
       const fd = new FormData();
-      fd.append("fullName", form.fullName);
-      fd.append("phone", form.phone);
+      if (form.fullName) fd.append("fullName", form.fullName);
+      if (form.email) fd.append("email", form.email);
+      if (form.phone && form.phone.trim() !== "") {
+        fd.append("phone", form.phone.trim());
+      }
       // fd.append("publicProfileName", form.publicProfileName);
       // fd.append("address", form.address);
       if (selectedFile) fd.append("profileImage", selectedFile);
@@ -143,7 +173,7 @@ export default function CustomerProfilePage() {
                 <div className="relative flex-shrink-0">
                   <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-200 border-2 border-[#E8E8E8]">
                     {previewUrl ? (
-                      <img src={previewUrl} alt="Profile" className="w-full h-full object-cover" />
+                      <img src={previewUrl} alt="Profile" className="w-full h-full object-cover" crossOrigin="anonymous" referrerPolicy="no-referrer" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center bg-gray-100">
                         <User size={32} className="text-gray-400" />
@@ -223,12 +253,13 @@ export default function CustomerProfilePage() {
                     name="phone"
                     value={form.phone}
                     onChange={handleChange}
-                    placeholder="+44 000 000 0000"
+                    placeholder="Enter Your Phone No."
+                    maxLength={10}
                     className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
                   />
                 </div>
 
-                {/* Email (read-only) */}
+                {/* Email */}
                 <div>
                   <label className="block text-[12px] font-medium text-gray-500 mb-1">Email</label>
                   <input
@@ -236,8 +267,9 @@ export default function CustomerProfilePage() {
                     type="email"
                     name="email"
                     value={form.email}
-                    readOnly
-                    className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] bg-gray-50 text-[13px] text-gray-400 cursor-not-allowed"
+                    onChange={handleChange}
+                    placeholder="your@email.com"
+                    className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
                   />
                 </div>
 

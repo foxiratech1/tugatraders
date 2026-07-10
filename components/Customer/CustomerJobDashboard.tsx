@@ -272,7 +272,9 @@ function QuotesModal({
                       {quote.trader?.fullName?.[0]?.toUpperCase() ?? "T"}
                     </div>
                     <div>
-                      <p className="text-[13px] font-bold text-[#1C2C1C]">{quote.trader?.fullName ?? "Unknown"}</p>
+                      <Link href={`/customer-dashboard/trader-profile/${quote.trader?.id}`}>
+                        <p className="text-[13px] font-bold text-[#1C2C1C] hover:underline cursor-pointer">{quote.trader?.fullName ?? "Unknown"}</p>
+                      </Link>
                       <p className="text-[11px] text-gray-400">{quote.trader?.email}</p>
                     </div>
                   </div>
@@ -375,7 +377,7 @@ function TraderQuoteCard({
     <div className="border border-gray-200 rounded-xl p-4 mb-3 last:mb-0">
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-3">
-          {/* Avatar */}
+
           <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="1.5">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
@@ -383,8 +385,10 @@ function TraderQuoteCard({
             </svg>
           </div>
           <div>
-            <p className="text-[13px] font-bold text-[#1C2C1C]">{trader.fullName}</p>
-            <div className="flex items-center gap-3 mt-0.5">
+            <Link href={`/customer-dashboard/trader-profile/${trader.id}`}>
+              <p className="text-[13px] font-bold text-[#1C2C1C] hover:underline cursor-pointer">{trader.fullName}</p>
+            </Link>
+            {/* <div className="flex items-center gap-3 mt-0.5">
               <span className="flex items-center gap-0.5 text-[11px] text-gray-500">
                 <Star size={10} fill="#F59E0B" className="text-[#F59E0B]" />
                 <span className="font-semibold text-[#1C2C1C]">10.0</span>
@@ -394,7 +398,7 @@ function TraderQuoteCard({
                 <MapPin size={10} />
                 2.4 miles away
               </span>
-            </div>
+            </div> */}
           </div>
         </div>
 
@@ -657,7 +661,7 @@ export default function CustomerJobDashboard() {
                 Leave a Review
               </button>
             </Link>
-            <Link href="/post-job">
+            <Link href="/customer-dashboard/post-job">
               <button className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#6E9625] text-white text-[13px] font-bold hover:bg-[#58791C] transition-colors">
                 + Post a Job
               </button>
