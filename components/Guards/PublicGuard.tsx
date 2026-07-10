@@ -31,7 +31,13 @@ export default function PublicGuard({ children }: { children: React.ReactNode })
       return;
     }
 
-    // Token is valid — redirect to dashboard based on role
+    // Token is valid — allow logged-in users to view the home page
+    if (window.location.pathname === "/") {
+      setChecked(true);
+      return;
+    }
+
+    // For other public pages (like auth pages), redirect to dashboard based on role
     const role = getUserRole();
     const roleStr = (role || "").toString().toLowerCase();
 
@@ -41,11 +47,7 @@ export default function PublicGuard({ children }: { children: React.ReactNode })
     else if (roleStr === Role.Customer.toLowerCase()) {
       router.replace("/customer-dashboard/jobs");
     } else {
-      if (window.location.pathname === "/") {
-        setChecked(true);
-      } else {
-        router.replace("/");
-      }
+      router.replace("/");
     }
     // Don't set checked=true here — we're redirecting away so we don't render children
   }, [router]);

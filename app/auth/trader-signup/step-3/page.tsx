@@ -160,10 +160,10 @@ export default function Step3Page() {
                                     Your profile is currently under review by our team. This usually takes 24-48 hours. We'll notify you once approved.
                                 </p>
                                 <button
-                                    onClick={() => router.push("/")}
+                                    onClick={() => authApi.handleLogout(router)}
                                     className="w-full bg-[#1C2C1C] text-white font-bold py-3.5 px-6 rounded-xl hover:bg-[#2C4A2C] transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5"
                                 >
-                                    Back to Home Page
+                                    Log out
                                 </button>
                             </div>
                         )}

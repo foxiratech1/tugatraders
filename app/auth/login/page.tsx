@@ -87,6 +87,7 @@ function LoginContent() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [isLoading, setIsLoading] = useState(false);
 
   const [isBlinking, setIsBlinking] = useState(false);
   const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
@@ -137,7 +138,11 @@ function LoginContent() {
       setErrors(newErrors);
       return;
     }
+    
+    if (isLoading) return;
+    
     setErrors({});
+    setIsLoading(true);
     try {
       const data = await authApi.login({
         email, password
@@ -230,7 +235,7 @@ function LoginContent() {
         msg = "Login failed";
       }
 
-      toast.error(msg);
+      toast.error(msg, { id: 'login-error' });
 
       const lowerMsg = msg.toLowerCase();
       if (lowerMsg.includes("password") || lowerMsg.includes("credential")) {
@@ -240,6 +245,8 @@ function LoginContent() {
       } else {
         setErrors({ password: "Password is incorrect" });
       }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -305,19 +312,18 @@ function LoginContent() {
                     <AnimatedEye show={showPassword} isBlinking={isBlinking} mouseOffset={mouseOffset} />
                   </button>
                 </div>
-                <div className="flex justify-end text-[11.5px] mt-1">
-                  {/* <Link href="/auth/change-password" className="font-bold text-[#1C2C1C]/40 hover:text-[#6E9625] transition-colors">
- Change password?
- </Link> */}
-                  <Link href="/auth/forgot-password" className="font-bold text-[#1C2C1C]/40 hover:text-[#6E9625] transition-colors">
+                <div className="flex items-center justify-between mt-1">
+                  <div className="flex-1">
+                    {errors.password && (
+                      <p className="text-red-500 text-[11.5px] font-medium">
+                        {errors.password}
+                      </p>
+                    )}
+                  </div>
+                  <Link href="/auth/forgot-password" className="font-bold text-[11.5px] text-[#1C2C1C]/40 hover:text-[#6E9625] transition-colors">
                     Forgot password?
                   </Link>
                 </div>
-                {errors.password && (
-                  <p className="text-red-500 text-[11.5px] font-medium mt-0.5">
-                    {errors.password}
-                  </p>
-                )}
               </div>
               {/* REMEMBER */}
               <div className="flex items-center gap-2.5 cursor-pointer select-none group mt-1" onClick={() => setRememberMe(!rememberMe)}>
@@ -331,8 +337,12 @@ function LoginContent() {
                 <span className="text-[12px] text-[#1C2C1C]/70 font-extrabold">Remember me</span>
               </div>
               {/* SUBMIT */}
-              <button type="submit" className="h-[48px] w-full rounded-[12px] bg-[#1C2C1C] text-[15px] font-bold text-white shadow-sm transition-all hover:bg-[#121E12] hover:shadow-md cursor-pointer mt-1">
-                Sign In
+              <button 
+                type="submit" 
+                disabled={isLoading}
+                className="h-[48px] w-full rounded-[12px] bg-[#1C2C1C] text-[15px] font-bold text-white shadow-sm transition-all hover:bg-[#121E12] hover:shadow-md cursor-pointer mt-1 disabled:opacity-70 disabled:cursor-not-allowed"
+              >
+                {isLoading ? "Signing In..." : "Sign In"}
               </button>
             </form>
             {/* DIVIDER */}

@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getAccessToken, parseJwt } from "@/utils/auth";
-
+import { getAccessToken, parseJwt, getUserRole } from "@/utils/auth";
+import { Role } from "@/utils/role";
 /**
  * AuthGuard — wraps protected pages (customer-dashboard, profile, etc.).
  * If the user does NOT have a valid token,
@@ -29,21 +29,25 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    // Token is valid
+    // Token is valid - check role
+
+    const role = getUserRole();
+    const roleStr = (role || "").toString().toLowerCase();
+
+    if (roleStr === Role.Trader.toLowerCase()) {
+      router.replace("/trader");
+      return;
+    }
+
+    if (roleStr !== Role.Customer.toLowerCase()) {
+      router.replace("/");
+      return;
+    }
+
     setAuthorized(true);
   }, [router]);
 
-  // Trap the back button when authorized
-  useEffect(() => {
-    if (authorized) {
-      window.history.pushState(null, "", window.location.href);
-      const handlePopState = () => {
-        window.history.pushState(null, "", window.location.href);
-      };
-      window.addEventListener("popstate", handlePopState);
-      return () => window.removeEventListener("popstate", handlePopState);
-    }
-  }, [authorized]);
+  // Back button trap removed to allow normal navigation
 
   if (!authorized) {
     return (
