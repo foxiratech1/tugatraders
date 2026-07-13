@@ -58,6 +58,7 @@ export const clearTokens = () => {
   if (typeof window !== "undefined") {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
+    localStorage.removeItem("user");
     // Clear cookies by setting an expired date
     document.cookie = "accessToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
     document.cookie = "refreshToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
@@ -73,4 +74,24 @@ export const getUserRole = (): Role | null => {
   // Normalize role to lowercase to match Role enum values
   const normalized = typeof role === 'string' ? role.toLowerCase() : role;
   return (Object.values(Role) as string[]).includes(normalized) ? (normalized as Role) : null;
+};
+
+export const setUser = (user: any) => {
+  if (typeof window !== "undefined" && user) {
+    localStorage.setItem("user", JSON.stringify(user));
+  }
+};
+
+export const getUser = () => {
+  if (typeof window !== "undefined") {
+    const userStr = localStorage.getItem("user");
+    if (userStr) {
+      try {
+        return JSON.parse(userStr);
+      } catch (e) {
+        return null;
+      }
+    }
+  }
+  return null;
 };

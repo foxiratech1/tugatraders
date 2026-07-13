@@ -52,6 +52,31 @@ const Checkbox = ({
 export default function Step2Page() {
  const router = useRouter();
  const [loading, setLoading] = useState(false);
+ const [selectedCategory, setSelectedCategory] = useState<string>("");
+
+ // Guard to prevent non-traders or unverified users from accessing step-2
+ useEffect(() => {
+     import("@/utils/auth").then(({ getUserRole, getAccessToken, parseJwt }) => {
+         const role = getUserRole();
+         if (role === "customer") {
+             router.replace("/customer-dashboard/jobs");
+             return;
+         } else if (!role) {
+             router.replace("/");
+             return;
+         }
+
+         const token = getAccessToken();
+         if (token) {
+             const decoded = parseJwt(token);
+             const isEmailVerified = decoded?.isEmailVerified ?? decoded?.user?.isEmailVerified;
+             if (isEmailVerified === false) {
+                 router.replace("/auth/verify-otp");
+             }
+         }
+     });
+ }, [router]);
+
  const [formData, setFormData] = useState({
  companyName: "",
  companyType: "",

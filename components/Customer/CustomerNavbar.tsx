@@ -31,7 +31,7 @@ export default function CustomerNavbar() {
     }
     localStorage.removeItem('user');
     clearTokens();
-    router.push('/auth/login');
+    window.location.replace('/auth/login');
   };
 
   // Navigation items mapping

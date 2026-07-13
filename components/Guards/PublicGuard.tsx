@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getAccessToken, getUserRole, parseJwt } from "@/utils/auth";
+import { getAccessToken, getUserRole, parseJwt, getUser } from "@/utils/auth";
 import { Role } from "@/utils/role";
 
 /**
@@ -31,24 +31,56 @@ export default function PublicGuard({ children }: { children: React.ReactNode })
       return;
     }
 
-    // Token is valid — allow logged-in users to view the home page
-    if (window.location.pathname === "/") {
-      setChecked(true);
-      return;
-    }
+
 
     // For other public pages (like auth pages), redirect to dashboard based on role
     const role = getUserRole();
     const roleStr = (role || "").toString().toLowerCase();
 
-    if (roleStr === Role.Trader.toLowerCase()) {
-      router.replace("/trader");
+    const redirectBasedOnRole = () => {
+      if (roleStr === Role.Trader.toLowerCase()) {
+        router.replace("/trader");
+      }
+      else if (roleStr === Role.Customer.toLowerCase()) {
+        router.replace("/customer-dashboard/jobs");
+      } else {
+        router.replace("/");
+      }
+    };
+
+    // Only check isEmailVerified (email OTP verification)
+    // isVerified is a separate field for admin/profile verification — do NOT use it here
+    let isEmailVerified = decoded?.isEmailVerified ?? decoded?.user?.isEmailVerified;
+
+    if (isEmailVerified === undefined) {
+      const localUser = getUser();
+      if (localUser && localUser.isEmailVerified !== undefined) {
+        isEmailVerified = localUser.isEmailVerified;
+      }
     }
-    else if (roleStr === Role.Customer.toLowerCase()) {
-      router.replace("/customer-dashboard/jobs");
-    } else {
-      router.replace("/");
+
+    if (isEmailVerified === false) {
+      router.replace("/auth/verify-otp");
+      return;
+    } else if (isEmailVerified === true) {
+      redirectBasedOnRole();
+      return;
     }
+
+    // If undefined in token, fetch from API
+    import("@/app/api/authApi").then(({ authApi }) => {
+      authApi.getMyProfile().then((res: any) => {
+        const user = res?.data || res;
+        if (user?.isEmailVerified === false) {
+          router.replace("/auth/verify-otp");
+        } else {
+          redirectBasedOnRole();
+        }
+      }).catch(() => {
+        router.replace("/auth/verify-otp");
+      });
+    });
+
     // Don't set checked=true here — we're redirecting away so we don't render children
   }, [router]);
 

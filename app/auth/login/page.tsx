@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { useRouter, useSearchParams } from "next/navigation";
-import { setTokens, getUserRole } from "@/utils/auth";
+import { setTokens, getUserRole, setUser } from "@/utils/auth";
 import { Role } from "@/utils/role";
 import { authApi, getRegistrationStatus } from "@/app/api/authApi";
 import PublicGuard from "@/components/Guards/PublicGuard";
@@ -138,9 +138,9 @@ function LoginContent() {
       setErrors(newErrors);
       return;
     }
-    
+
     if (isLoading) return;
-    
+
     setErrors({});
     setIsLoading(true);
     try {
@@ -149,12 +149,14 @@ function LoginContent() {
       });
       console.log("LOGIN RESPONSE:", data);
 
-      toast.success("Successfully logged in!");
       const accessToken = data?.accessToken || data?.access_token || data?.token;
       const refreshToken = data?.refreshToken || data?.refresh_token;
 
       if (accessToken) {
         setTokens(accessToken, refreshToken);
+        // Save the user data to localStorage so we know isEmailVerified instantly on other pages
+        const userObj = data?.user || data?.data?.user || data?.data || data;
+        setUser(userObj);
         console.log("ACCESS TOKEN:", accessToken);
         console.log(
           "LOCAL STORAGE TOKEN:",
@@ -165,6 +167,26 @@ function LoginContent() {
         // Fallback to checking the data object directly if the token doesn't have it, and make it case-insensitive
         const roleStr = (tokenRole || data?.user?.role || data?.role || "").toString().toLowerCase();
         console.log("Detected user role:", roleStr);
+
+        // Check EMAIL verification status (isEmailVerified)
+        // Note: isVerified is a separate field for admin/profile verification — do NOT use it here
+        let isEmailVerified = userObj?.isEmailVerified;
+
+        if (isEmailVerified === undefined) {
+          try {
+            const profileRes = await authApi.getMyProfile();
+            const pData = profileRes?.data || profileRes;
+            isEmailVerified = pData?.isEmailVerified ?? true;
+          } catch (e) {
+            isEmailVerified = false; // If API fails, assume unverified
+          }
+        }
+
+        if (isEmailVerified === false) {
+          toast.error("Please verify your email to continue.");
+          router.replace(`/auth/verify-otp?email=${encodeURIComponent(email)}&redirectTo=${encodeURIComponent(roleStr === Role.Customer.toLowerCase() ? "/customer-dashboard/jobs" : "/trader")}`);
+          return;
+        }
 
         if (roleStr === Role.Trader.toLowerCase()) {
           toast.success("Trader login successfully");
@@ -337,8 +359,8 @@ function LoginContent() {
                 <span className="text-[12px] text-[#1C2C1C]/70 font-extrabold">Remember me</span>
               </div>
               {/* SUBMIT */}
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={isLoading}
                 className="h-[48px] w-full rounded-[12px] bg-[#1C2C1C] text-[15px] font-bold text-white shadow-sm transition-all hover:bg-[#121E12] hover:shadow-md cursor-pointer mt-1 disabled:opacity-70 disabled:cursor-not-allowed"
               >

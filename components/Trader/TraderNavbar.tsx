@@ -96,7 +96,7 @@ export default function TraderNavbar() {
   const handleLogout = () => {
     localStorage.removeItem("user");
     clearTokens();
-    router.push("/auth/login");
+    window.location.replace("/auth/login");
   };
 
   // Fetch profile & notifications on mount
