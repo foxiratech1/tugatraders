@@ -221,8 +221,8 @@ export default function RegisterPage() {
                 // phoneNumber: formData.phoneNumber,
                 confirmPassword: formData.confirmPassword,
                 isCheckedTermsCondition: formData.agreeTerms,
-                latitude: 23.4399,
-                longitude: 77.4126,
+                latitude: 22.5530,
+                longitude: 75.7569,
             });
 
             const resultData = result?.data || result;

@@ -36,16 +36,16 @@ const ListingImage = ({ pro }: { pro: any }) => {
   );
 };
 
-const LoginModal = ({ 
-  isOpen, 
-  onClose, 
+const LoginModal = ({
+  isOpen,
+  onClose,
   onSuccess,
   title = "Login to save",
   subtitle = "Please log in to save this professional to your list.",
   icon
-}: { 
-  isOpen: boolean; 
-  onClose: () => void; 
+}: {
+  isOpen: boolean;
+  onClose: () => void;
   onSuccess: () => void;
   title?: string;
   subtitle?: string;
@@ -191,6 +191,9 @@ const DirectoryListings = () => {
     fetchProfessionals();
   }, []);
 
+  const [visibleCount, setVisibleCount] = useState(3);
+  const displayedProfessionals = professionals.slice(0, visibleCount);
+
   const handleToggleSave = async (traderId: string) => {
     const token = localStorage.getItem('accessToken');
     if (!token) {
@@ -217,7 +220,7 @@ const DirectoryListings = () => {
 
   const handleLoginSuccess = async () => {
     setShowLoginModal(false);
-    
+
     if (!pendingTraderId) return;
 
     if (modalAction === 'SAVE') {
@@ -273,7 +276,7 @@ const DirectoryListings = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
           <div>
             <h2 className="text-[24px] font-bold text-[#064E3B] mb-2" style={{ fontFamily: 'var(--font-bricolage)' }}>
-              42 Electricians in London
+              {loading ? "..." : professionals.length} Professionals in Indore
             </h2>
             <p className="text-[#6B7280] text-[14px]">Verified professionals matching your search.</p>
           </div>
@@ -318,7 +321,7 @@ const DirectoryListings = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {professionals.map((pro) => (
+            {displayedProfessionals.map((pro) => (
               <div key={pro.id} className="bg-white rounded-[32px] overflow-hidden shadow-sm border border-[#F3F4F6] hover:shadow-md transition-shadow">
                 {/* Image Section */}
                 <div className="relative h-[200px] sm:h-[240px] w-full">
@@ -378,7 +381,7 @@ const DirectoryListings = () => {
                   </p>
 
                   <div className="flex gap-3">
-                    <button 
+                    <button
                       onClick={() => handleViewProfile(pro.id)}
                       className="flex-1 py-3 px-4 rounded-xl border border-[#E5E7EB] text-[#243A24] font-bold text-sm hover:bg-gray-50 transition-colors cursor-pointer">
                       View Profile
@@ -393,12 +396,27 @@ const DirectoryListings = () => {
           </div>
         )}
 
-        {/* Load More Section */}
-        <div className="flex justify-center mt-12">
-          <button className="w-full sm:w-auto px-6 sm:px-10 py-3 sm:py-4 border border-[#D1D5DB] rounded-xl text-[#4B5563] font-bold hover:bg-gray-50 transition-colors text-sm sm:text-base text-center cursor-pointer">
-            Load More Professionals
-          </button>
-        </div>
+        {/* Load More / Load Less Section */}
+        {professionals.length > 3 && (
+          <div className="flex flex-wrap justify-center items-center gap-4 mt-12">
+            {visibleCount < professionals.length && (
+              <button
+                onClick={() => setVisibleCount((prev) => prev + 3)}
+                className="w-full sm:w-auto px-6 sm:px-10 py-3 sm:py-4 border border-[#D1D5DB] rounded-xl text-[#4B5563] font-bold hover:bg-gray-50 transition-colors text-sm sm:text-base text-center cursor-pointer shadow-sm"
+              >
+                Load More Professionals
+              </button>
+            )}
+            {visibleCount > 3 && (
+              <button
+                onClick={() => setVisibleCount((prev) => Math.max(3, prev - 3))}
+                className="w-full sm:w-auto px-6 sm:px-10 py-3 sm:py-4 border border-[#D1D5DB] rounded-xl text-[#4B5563] font-bold hover:bg-gray-50 transition-colors text-sm sm:text-base text-center cursor-pointer shadow-sm"
+              >
+                Load Less Professionals
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );

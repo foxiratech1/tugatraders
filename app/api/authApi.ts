@@ -216,6 +216,12 @@ export const authApi = {
     return data;
   },
 
+  // Fetch public trader profile by ID (Public API with latitude and longitude)
+  getPublicTraderProfileById: async (traderId: string, latitude: number = 22.5530, longitude: number = 75.7569) => {
+    const { data } = await api.get(`/api/customer/public/traders/${traderId}?latitude=${latitude}&longitude=${longitude}`);
+    return data;
+  },
+
   // Fetch jobs posted by the current customer
   getMyJobs: async () => {
     const { data } = await api.get("/api/jobs/my-jobs");

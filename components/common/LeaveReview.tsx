@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Star, ThumbsUp, ThumbsDown, ChevronDown, CheckCircle } from 'lucide-react';
 import { getUserRole } from '@/utils/auth';
@@ -11,7 +11,7 @@ import toast from 'react-hot-toast';
 export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobId?: string; reviewTypeProp?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const traderId = searchParams.get('traderId') || '00000000-0000-0000-0000-000000000000';
+  const traderId = searchParams.get('traderId');
   const jobId = searchParams.get('jobId');
   const editReviewId = searchParams.get('editReviewId');
   const reviewCreatedAt = searchParams.get("createdAt");
@@ -35,6 +35,34 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
+
+  useEffect(() => {
+    if (searchParams.has('workCarriedOut')) {
+      setWorkCarriedOut(searchParams.get('workCarriedOut') === 'true');
+    }
+    if (searchParams.get('rating')) {
+      setRating(parseInt(searchParams.get('rating') || '0', 10));
+    }
+    const rec = searchParams.get('recommend');
+    if (rec !== null) {
+      setRecommend(rec === 'true' ? true : rec === 'false' ? false : null);
+    }
+    if (searchParams.get('reviewType')) {
+      setReviewType(searchParams.get('reviewType') || (jobId ? 'JOB' : 'DIRECTORY'));
+    }
+    if (searchParams.get('interactionSource')) {
+      setInteractionSource(searchParams.get('interactionSource') || '');
+    }
+    if (searchParams.get('completionDate')) {
+      setCompletionDate(searchParams.get('completionDate') || '');
+    }
+    if (searchParams.get('title')) {
+      setTitle(searchParams.get('title') || '');
+    }
+    if (searchParams.get('review')) {
+      setReview(searchParams.get('review') || '');
+    }
+  }, [searchParams]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -64,11 +92,6 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
     return diffHours <= 48;
   }, [editReviewId, reviewCreatedAt]);
 
-  if (editReviewId && !canEditReview) {
-    setError("Reviews can only be edited within 48 hours of submission.");
-    return;
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -86,20 +109,22 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
     setIsSubmitting(true);
     try {
       const payload = new FormData();
-      payload.append("traderId", traderId);
-      payload.append("reviewType", reviewType);
+
+      if (!editReviewId) {
+        if (traderId && traderId !== '00000000-0000-0000-0000-000000000000') {
+          payload.append("traderId", traderId);
+        }
+        const finalJobId = jobId || propJobId;
+        if (finalJobId && finalJobId !== '00000000-0000-0000-0000-000000000000') {
+          payload.append("jobId", finalJobId);
+        }
+        if (reviewType) payload.append("reviewType", reviewType);
+        if (interactionSource) payload.append("interactionSource", interactionSource);
+      }
+
       payload.append("wasWorkCompleted", String(workCarriedOut));
       payload.append("rating", String(workCarriedOut ? rating : 0));
 
-      const finalJobId = reviewType === 'JOB'
-        ? (jobId || propJobId || '00000000-0000-0000-0000-000000000000')
-        : (jobId || propJobId);
-      if (finalJobId) {
-        payload.append("jobId", finalJobId);
-      }
-
-      if (interactionSource) payload.append("interactionSource", interactionSource);
-      
       if (workCarriedOut) {
         if (completionDate) {
           payload.append("workCompletedDate", new Date(completionDate).toISOString());
@@ -107,7 +132,7 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
         if (recommend !== null) payload.append("wouldRecommendTrader", String(recommend));
         if (title) payload.append("title", title);
         if (review) payload.append("review", review);
-        
+
         if (files.length > 0) {
           files.forEach(f => payload.append("proofs", f));
         }
@@ -138,7 +163,7 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
   const handleReturn = () => {
     const role = getUserRole()?.toLowerCase();
     if (role === Role.Customer.toLowerCase()) {
-      router.push('/customer-dashboard');
+      router.push('/customer-dashboard/jobs');
     } else {
       router.push('/directory-listing/search');
     }

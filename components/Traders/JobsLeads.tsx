@@ -17,6 +17,7 @@ interface JobLead {
   timeAgo: string;
   postedDate: string;
   description: string;
+  hasQuoted?: boolean;
   customer: {
     name: string;
     avatar?: string;
@@ -100,6 +101,12 @@ export default function JobsLeads() {
       });
       toast.success("Job quote sent successfully!");
       setIsQuoteModalOpen(false);
+      setJobs((prevJobs) =>
+        prevJobs.map((j) =>
+          j.id === selectedJob.id ? { ...j, hasQuoted: true, status: "Contacted" } : j
+        )
+      );
+      setSelectedJob((prev) => (prev ? { ...prev, hasQuoted: true, status: "Contacted" } : null));
     } catch (error: any) {
       console.error("Failed to send quote", error);
       toast.error(error?.response?.data?.message || "Failed to send job quote");
@@ -124,6 +131,13 @@ export default function JobsLeads() {
             timeAgo: formatTimeAgo(item.createdAt),
             postedDate: formatPostedDate(item.createdAt),
             description: item.description || "",
+            hasQuoted: Boolean(
+              item.hasQuoted ||
+              item.isQuoted ||
+              item.matchStatus === "QUOTED" ||
+              (Array.isArray(item.quotes) && item.quotes.length > 0) ||
+              item.hasSentQuote
+            ),
             customer: {
               name: item.customer?.fullName || "Valued Customer",
               avatar: item.customer?.profileImage || undefined,
@@ -389,10 +403,14 @@ export default function JobsLeads() {
                 <div className="flex flex-col gap-3">
                   <button
                     onClick={openQuoteModal}
-                    className="w-full h-[48px] rounded-xl bg-[#1C2C1C] hover:bg-[#2A412A] text-white text-[14px] font-bold flex items-center justify-center gap-2 transition-colors"
+                    disabled={selectedJob.hasQuoted}
+                    className={`w-full h-[48px] rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 transition-colors ${selectedJob.hasQuoted
+                        ? "bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300"
+                        : "bg-[#1C2C1C] hover:bg-[#2A412A] text-white"
+                      }`}
                   >
                     <Send size={16} />
-                    Send Job Quote
+                    {selectedJob.hasQuoted ? "Quote Sent" : "Send Job Quote"}
                   </button>
                   <button className="w-full h-[48px] rounded-xl bg-white border border-[#E5E5E5] hover:bg-gray-50 text-[#1C2C1C] text-[14px] font-bold flex items-center justify-center gap-2 transition-colors shadow-sm">
                     <MessageCircle size={16} />

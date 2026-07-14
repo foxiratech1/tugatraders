@@ -48,7 +48,6 @@ const COMPANY_TYPES = [
 const TABS = [
   { id: "personal", label: "Personal Info", icon: User },
   { id: "business", label: "Business Details", icon: Briefcase },
-  { id: "skills", label: "Services & Skills", icon: Wrench },
   { id: "portfolio", label: "Portfolio", icon: ImageIcon },
 ] as const;
 
@@ -145,7 +144,7 @@ export default function TraderProfilePage() {
           companyType: tp?.companyType || "",
           niNumber: tp?.registrationNumber || tp?.niNumber || "",
           primarySkills: tp?.primarySkills || tp?.skills || "",
-          planName: tp?.subscription?.plan?.name || tp?.subscriptionTier || "Free",
+          planName: tp?.subscription?.plan?.name || tp?.subscriptionTier || "",
         });
 
         if (tp?.tradeCategories?.length > 0) setSelectedTradeCategory(tp.tradeCategories[0]);
@@ -321,16 +320,16 @@ export default function TraderProfilePage() {
     if (!personalForm.phone || !personalForm.phone.trim()) {
       return toast.error("Phone number is required.");
     }
-    const phoneRegex = /^[0-9]{10}$/;
+    // Allow optional +, spaces, dashes, and 9-15 digits
+    const phoneRegex = /^\+?[\d\s\-]{9,15}$/;
     if (!phoneRegex.test(personalForm.phone)) {
-      return toast.error("Phone number must be exactly 10 digits.");
+      return toast.error("Please enter a valid phone number (e.g. +351 912 345 678).");
     }
 
     if (!businessForm.companyName.trim()) return toast.error("Company Name is required.");
     if (!businessForm.companyType.trim()) return toast.error("Company Type is required.");
 
-    if (!selectedTradeCategory) return toast.error("Trade Category is required.");
-    if (selectedSkillServices.length === 0) return toast.error("At least one Skill Service is required.");
+
 
     setSaving(true);
     try {
@@ -340,17 +339,12 @@ export default function TraderProfilePage() {
       fd.append("phone", personalForm.phone);
       // professionalTitle, workLocation, and bio are mapped to location and about fields
       // optional geographic fields – send empty if not applicable
-      fd.append("latitude", "");
-      fd.append("longitude", "");
+      fd.append("latitude", "22.5530");
+      fd.append("longitude", "75.7569");
       fd.append("companyName", businessForm.companyName);
       fd.append("companyType", businessForm.companyType);
       fd.append("registrationNumber", businessForm.niNumber);
-      if (selectedTradeCategory) {
-        fd.append("tradeCategories", selectedTradeCategory);
-      }
 
-      selectedSkillServices.forEach(id => fd.append("skillsServices", id));
-      selectedSubCategories.forEach(id => fd.append("subCategories", id));
       fd.append("workRadius", personalForm.workRadius !== "" ? String(personalForm.workRadius) : "");
       fd.append("location", personalForm.workLocation);
       fd.append("about", personalForm.bio);
@@ -767,140 +761,26 @@ export default function TraderProfilePage() {
                     </div>
 
                     {/* Subscription Plan */}
-                    <div>
-                      <label className="block text-[12px] font-medium text-gray-500 mb-1">
-                        Subscription Plan
-                      </label>
-                      <input
-                        id="tp-planName"
-                        type="text"
-                        name="planName"
-                        value={businessForm.planName}
-                        readOnly
-                        className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] bg-gray-50 text-[13px] text-gray-400 font-bold uppercase cursor-not-allowed"
-                      />
-                    </div>
+                    {businessForm.planName && (
+                      <div>
+                        <label className="block text-[12px] font-medium text-gray-500 mb-1">
+                          Subscription Plan
+                        </label>
+                        <input
+                          id="tp-planName"
+                          type="text"
+                          name="planName"
+                          value={businessForm.planName}
+                          readOnly
+                          className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] bg-gray-50 text-[13px] text-gray-400 font-bold uppercase cursor-not-allowed"
+                        />
+                      </div>
+                    )}
 
                   </div>
                 </div>
               )}
 
-              {/* ════ SERVICES & SKILLS ════ */}
-              {activeTab === "skills" && (
-                <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm px-6 py-6">
-                  <h2 className="text-[14px] font-bold text-[#1C2C1C] mb-1">
-                    Services &amp; Skills
-                  </h2>
-                  <p className="text-[12px] text-gray-400 mb-5">
-                    List the trades and specialisations you offer.
-                  </p>
-                  <div className="space-y-5">
-
-                    <div>
-                      <label className="block text-[12px] font-medium text-gray-500 mb-2">
-                        Trade Category
-                      </label>
-
-                      <select
-                        value={selectedTradeCategory}
-                        onChange={(e) => setSelectedTradeCategory(e.target.value)}
-                        className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40"
-                      >
-                        <option value="">Select Trade Category</option>
-
-                        {tradeCategories.map((item) => (
-                          <option key={item.id} value={item.id}>
-                            {item.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-[12px] font-medium text-gray-500 mb-2">
-                        Skill Services
-                      </label>
-
-                      <select
-                        value=""
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val && !selectedSkillServices.includes(val)) {
-                            setSelectedSkillServices(prev => [...prev, val]);
-                          }
-                        }}
-                        disabled={!selectedTradeCategory}
-                        className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 disabled:bg-gray-100"
-                      >
-                        <option value="">Add Skill Service...</option>
-                        {skillServices.map((item) => (
-                          <option key={item.id} value={item.id} disabled={selectedSkillServices.includes(item.id)}>
-                            {item.name}
-                          </option>
-                        ))}
-                      </select>
-
-                      {selectedSkillServices.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-3">
-                          {selectedSkillServices.map(id => {
-                            const service = skillServices.find(s => s.id === id);
-                            return (
-                              <span key={id} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#6E9625]/10 text-[#6E9625] text-[12px] font-medium">
-                                {service ? service.name : id}
-                                <button type="button" onClick={() => setSelectedSkillServices(prev => prev.filter(s => s !== id))} className="hover:text-red-500 transition-colors">
-                                  <X size={14} />
-                                </button>
-                              </span>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="block text-[12px] font-medium text-gray-500 mb-2">
-                        Sub Categories
-                      </label>
-
-                      <select
-                        value=""
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val && !selectedSubCategories.includes(val)) {
-                            setSelectedSubCategories(prev => [...prev, val]);
-                          }
-                        }}
-                        disabled={selectedSkillServices.length === 0}
-                        className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 disabled:bg-gray-100"
-                      >
-                        <option value="">Add Sub Category...</option>
-                        {subCategories.map((item) => (
-                          <option key={item.id} value={item.id} disabled={selectedSubCategories.includes(item.id)}>
-                            {item.name}
-                          </option>
-                        ))}
-                      </select>
-
-                      {selectedSubCategories.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mt-3">
-                          {selectedSubCategories.map(id => {
-                            const subCat = subCategories.find(s => s.id === id);
-                            return (
-                              <span key={id} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#1C2C1C]/5 text-[#1C2C1C] text-[12px] font-medium border border-[#1C2C1C]/10">
-                                {subCat ? subCat.name : id}
-                                <button type="button" onClick={() => setSelectedSubCategories(prev => prev.filter(s => s !== id))} className="hover:text-red-500 transition-colors text-gray-400">
-                                  <X size={14} />
-                                </button>
-                              </span>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-
-                  </div>
-                </div>
-              )}
 
               {/* ════ PORTFOLIO ════ */}
               {activeTab === "portfolio" && (

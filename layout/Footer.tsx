@@ -8,11 +8,13 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FaFacebookF, FaInstagram, FaTiktok } from "react-icons/fa6";
 import { scrollToTop } from "@/utils/scroll";
+import VettingModal from "@/components/modal/VettingModal";
 
 export default function Footer() {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
   const [role, setRole] = useState<string | null>(null);
+  const [isVettingModalOpen, setIsVettingModalOpen] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -86,9 +88,23 @@ export default function Footer() {
                 {["Post a job", "Find a tradesperson", "How it works", "Vetting & badges", "FAQs"].map((link) => (
                   <li key={link}>
                     <Link
-                      href={link === "FAQs" ? "/faq" : link === "Find a tradesperson" ? "/directory-listing" : link === "Post a job" ? "/post-job" : "#"}
-                      scroll={false}
-                      onClick={() => scrollToTop()}
+                      href={link === "FAQs" ? "/faq" : link === "Find a tradesperson" ? "/directory-listing" : link === "Post a job" ? "/post-job" : link === "How it works" ? "/#how-it-works" : "#"}
+                      scroll={link === "How it works" ? true : false}
+                      onClick={(e) => {
+                        if (link === "How it works") {
+                          const el = document.getElementById('how-it-works');
+                          if (el) {
+                            e.preventDefault();
+                            const y = el.getBoundingClientRect().top + window.scrollY - 80;
+                            window.scrollTo({ top: y, behavior: 'smooth' });
+                          }
+                        } else if (link === "Vetting & badges") {
+                          e.preventDefault();
+                          setIsVettingModalOpen(true);
+                        } else {
+                          scrollToTop();
+                        }
+                      }}
                       className="text-[15px] font-medium text-[#6F736C] hover:text-[#4a8c3f] transition-colors"
                     >
                       {link}
@@ -110,10 +126,25 @@ export default function Footer() {
                           ? "/faq?tab=traders"
                           : link === "Join as a tradesperson"
                             ? "/trader-signup"
-                            : "#"
+                            : link === "How vetting works"
+                              ? "/trader-signup#vetting-section"
+                              : link === "Trader Agreement"
+                                ? "/terms?tab=traderAgreement"
+                                : "#"
                       }
-                      scroll={false}
-                      onClick={() => scrollToTop()}
+                      scroll={link === "How vetting works" ? true : false}
+                      onClick={(e) => {
+                        if (link === "How vetting works") {
+                          const el = document.getElementById('vetting-section');
+                          if (el) {
+                            e.preventDefault();
+                            const y = el.getBoundingClientRect().top + window.scrollY - 80;
+                            window.scrollTo({ top: y, behavior: 'smooth' });
+                          }
+                        } else {
+                          scrollToTop();
+                        }
+                      }}
                       className="text-[15px] font-medium text-[#6F736C] hover:text-[#4a8c3f] transition-colors"
                     >
                       {link}
@@ -130,7 +161,7 @@ export default function Footer() {
                 {["About", "Contact", "Legal"].map((link) => (
                   <li key={link}>
                     <Link
-                      href={link === "About" ? "/about" : link === "Contact" ? "/contact" : "#"}
+                      href={link === "About" ? "/about" : link === "Contact" ? "/contact" : link === "Legal" ? "/terms" : "#"}
                       scroll={false}
                       onClick={() => scrollToTop()}
                       className="text-[15px] font-medium text-[#6F736C] hover:text-[#4a8c3f] transition-colors"
@@ -199,6 +230,7 @@ export default function Footer() {
         </div>
 
       </div>
+      <VettingModal isOpen={isVettingModalOpen} onClose={() => setIsVettingModalOpen(false)} />
     </footer>
   );
 }

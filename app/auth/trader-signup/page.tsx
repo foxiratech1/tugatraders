@@ -260,8 +260,8 @@ export default function TraderSignupPage() {
         // state: formData.state,
         // country: formData.country,
         // postalCode: formData.postalCode,
-        latitude: 51.849400,
-        longitude: -0.127758,
+        latitude: 22.5530,
+        longitude: 75.7569,
         isCheckedTermsCondition: formData.agreeTerms,
         contactNumber: formData.contactNumber,
       };

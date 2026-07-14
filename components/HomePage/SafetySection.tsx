@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   FiUserCheck,
   FiStar,
@@ -10,6 +12,8 @@ import {
 } from "react-icons/fi";
 import { LuShieldAlert, LuShieldCheck } from "react-icons/lu";
 import { motion } from "framer-motion";
+import TrustSafetyModal from "@/components/modal/TrustSafetyModal";
+import VettingModal from "@/components/modal/VettingModal";
 
 const safetyFeatures = [
   {
@@ -63,6 +67,10 @@ const safetyFeatures = [
 ];
 
 export default function SafetySection() {
+  const router = useRouter();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isVettingModalOpen, setIsVettingModalOpen] = useState(false);
+
   return (
     <section className="w-full py-20 md:py-24 bg-white px-6 md:px-12 overflow-hidden">
       <div className="max-w-[1200px] mx-auto">
@@ -97,6 +105,15 @@ export default function SafetySection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, amount: 0.2 }}
               transition={{ duration: 0.5, delay: index * 0.08 }}
+              onClick={() => {
+                if (feature.title === "How we vet traders" || feature.title === "Profiles & badges explained") {
+                  setIsVettingModalOpen(true);
+                } else if (feature.title === "Reviews you can trust") {
+                  router.push("/terms?tab=review");
+                } else if (feature.title === "Staying safe when hiring") {
+                  setIsModalOpen(true);
+                }
+              }}
               className="group relative overflow-hidden bg-[#F8F9F8] border border-[#D7DAD4] rounded-[30px] p-6 min-h-[220px] hover:bg-[#243A24] hover:-translate-y-1 hover:shadow-2xl hover:shadow-[#243A24]/10 transition-all duration-500 cursor-pointer flex flex-col justify-between"
             >
               {/* TOP CONTENT */}
@@ -128,6 +145,9 @@ export default function SafetySection() {
           ))}
         </div>
       </div>
+
+      <TrustSafetyModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
+      <VettingModal isOpen={isVettingModalOpen} onClose={() => setIsVettingModalOpen(false)} />
     </section>
   );
 }

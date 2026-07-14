@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect } from "react";
 import { FiSearch, FiFileText, FiCheckCircle, FiStar, FiArrowRight, FiUsers } from "react-icons/fi";
 import { LuLayoutDashboard, LuMessageSquare, LuClipboardCheck } from "react-icons/lu";
 import { MdOutlineArrowRightAlt } from "react-icons/md";
@@ -9,8 +10,22 @@ import { motion } from "framer-motion";
 import { slideFromLeft, slideFromRight, staggerContainer } from "./animationVariants";
 
 export default function HowItWorks() {
+  useEffect(() => {
+    // If we land on the page from another route and the hash is #how-it-works
+    if (typeof window !== "undefined" && window.location.hash === "#how-it-works") {
+      setTimeout(() => {
+        const el = document.getElementById('how-it-works');
+        if (el) {
+          const y = el.getBoundingClientRect().top + window.scrollY - 80;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      }, 300); // small delay allows page to layout properly
+    }
+  }, []);
+
   return (
     <motion.section
+      id="how-it-works"
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true, amount: 0.1 }}

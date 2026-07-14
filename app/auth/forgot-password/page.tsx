@@ -105,7 +105,7 @@ export default function ForgotPasswordPage() {
                                     Recover Your Account
                                 </h2>
                                 <p className="text-[14px] sm:text-[15px] lg:text-[16px] font-medium leading-relaxed text-white/80 animate-fade-in">
-                                    Quickly reset your password and get back to managing your trades.
+                                    Quickly reset your password and get back to managing your jobs.
                                 </p>
                             </div>
                         </div>

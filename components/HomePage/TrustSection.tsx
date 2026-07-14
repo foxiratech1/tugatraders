@@ -1,11 +1,15 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { FiCheckCircle, FiArrowRight } from "react-icons/fi";
 import { IoShieldCheckmarkOutline } from "react-icons/io5";
 import { motion } from "framer-motion";
+import TrustSafetyModal from "@/components/modal/TrustSafetyModal";
 
 export default function TrustSection() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
     <section className="w-full py-24 bg-white px-6">
       <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
@@ -32,6 +36,10 @@ export default function TrustSection() {
               Check our{" "}
               <Link
                 href="#"
+                onClick={(e) => {
+                  e.preventDefault();
+                  setIsModalOpen(true);
+                }}
                 className="text-[#89b341] underline underline-offset-4 hover:text-[#a3c64c] transition-colors"
               >
                 Trust & Safety guide
@@ -97,6 +105,9 @@ export default function TrustSection() {
         </motion.div>
 
       </div>
+
+      {/* MODAL */}
+      <TrustSafetyModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </section>
   );
 }

@@ -40,7 +40,7 @@ export function middleware(request: NextRequest) {
       const roleStr = (decoded.role || decoded.user?.role || "").toString().toLowerCase();
 
       let dashboardUrl = '/';
-      
+
       if (roleStr === 'trader') {
         dashboardUrl = '/trader';
       } else if (roleStr === 'admin') {

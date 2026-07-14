@@ -19,6 +19,15 @@ function VerifyOtpContent() {
   const [otpValue, setOtpValue] = useState("");
   const [otpLoading, setOtpLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
+  const [timer, setTimer] = useState(60);
+
+  useEffect(() => {
+    if (timer <= 0) return;
+    const interval = setInterval(() => {
+      setTimer((prev) => prev - 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [timer]);
 
   useEffect(() => {
     const user = getUser();
@@ -48,6 +57,7 @@ function VerifyOtpContent() {
     try {
       await resendOtp({ email });
       toast.success("Verification code resent successfully!");
+      setTimer(60);
     } catch (err: any) {
       const msg = err.response?.data?.message?.[0] || err.response?.data?.error || err.message || "Failed to resend code";
       toast.error(msg);
@@ -180,10 +190,14 @@ function VerifyOtpContent() {
             <button
               type="button"
               onClick={handleResendOtp}
-              disabled={resendLoading}
+              disabled={resendLoading || timer > 0}
               className="text-[#6E9625] font-bold hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {resendLoading ? "Resending..." : "Resend OTP"}
+              {resendLoading
+                ? "Resending..."
+                : timer > 0
+                ? `Resend OTP in ${timer}s`
+                : "Resend OTP"}
             </button>
           </p>
           <button

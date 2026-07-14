@@ -48,7 +48,7 @@ const LoginModal = ({
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  action: "leave-review" | "view-profile";
+  action: "leave-review" | "view-profile" | "contact-trader";
 }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -80,10 +80,16 @@ const LoginModal = ({
     }
   };
 
-  const title = action === "leave-review" ? "Login to leave a review" : "Login to view profile";
+  const title = action === "leave-review"
+    ? "Login to leave a review"
+    : action === "contact-trader"
+      ? "Login to contact trader"
+      : "Login to view profile";
   const desc = action === "leave-review"
     ? "Please log in to share your experience with this trader."
-    : "Please log in to view this trader's full profile.";
+    : action === "contact-trader"
+      ? "Please log in to view contact info and chat with this trader."
+      : "Please log in to view this trader's full profile.";
   const btnText = loading ? 'Logging in…' : 'Log In & Continue';
 
   return (
@@ -193,30 +199,42 @@ const DirectorySearchResults = () => {
   // Login-prompt modal state
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [pendingTraderId, setPendingTraderId] = useState<string | null>(null);
-  const [pendingAction, setPendingAction] = useState<"leave-review" | "view-profile">("leave-review");
+  const [pendingAction, setPendingAction] = useState<"leave-review" | "view-profile" | "contact-trader">("leave-review");
 
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = async () => {
     setShowLoginModal(false);
     if (!pendingTraderId) return;
 
-    if (pendingAction === "view-profile") {
-      router.push(`/profile/${pendingTraderId}`);
+    if (pendingAction === "contact-trader") {
+      const id = pendingTraderId;
+      setPendingTraderId(null);
+      try {
+        await authApi.getTraderProfileById(id);
+      } catch (err) {
+        console.error("Failed to fetch trader profile by ID after login", err);
+      }
+      router.push(`/customer-dashboard/inbox?traderId=${id}`);
+    } else if (pendingAction === "view-profile") {
+      const id = pendingTraderId;
+      setPendingTraderId(null);
+      router.push(`/profile/${id}`);
     } else {
+      const id = pendingTraderId;
+      setPendingTraderId(null);
       const role = getUserRole();
       if (role === Role.Customer) {
-        router.push(`/customer-dashboard/leave-review?traderId=${pendingTraderId}&reviewType=DIRECTORY`);
+        router.push(`/customer-dashboard/leave-review?traderId=${id}&reviewType=DIRECTORY`);
       } else {
-        router.push(`/common/leave-review?traderId=${pendingTraderId}&reviewType=DIRECTORY`);
+        router.push(`/common/leave-review?traderId=${id}&reviewType=DIRECTORY`);
       }
     }
-    setPendingTraderId(null);
   };
 
   const handleLoadMore = () => {
     setDisplayCount((prev) => Math.min(prev + 3, traderResults.length));
   };
 
-  const handleProtectedAction = (e: React.MouseEvent, traderId: string, actionType: "leave-review" | "view-profile") => {
+  const handleProtectedAction = async (e: React.MouseEvent, traderId: string, actionType: "leave-review" | "view-profile" | "contact-trader") => {
     e.preventDefault();
     const token = getAccessToken();
     let isValid = false;
@@ -237,6 +255,16 @@ const DirectorySearchResults = () => {
       setPendingTraderId(traderId);
       setPendingAction(actionType);
       setShowLoginModal(true);
+      return;
+    }
+
+    if (actionType === "contact-trader") {
+      try {
+        await authApi.getTraderProfileById(traderId);
+      } catch (err) {
+        console.error("Failed to fetch trader profile by ID", err);
+      }
+      router.push(`/customer-dashboard/inbox?traderId=${traderId}`);
       return;
     }
 
@@ -577,26 +605,23 @@ const DirectorySearchResults = () => {
                           </span>
                           <span className="text-[#6B7280] text-[12px]">({trader.reviewCount || 0})</span>
                         </div>
-                        <div className="flex items-center gap-1.5 text-[#4B5563] text-[12px]">
+                        <button
+                          type="button"
+                          onClick={(e) => handleProtectedAction(e, String(trader.id), "contact-trader")}
+                          className="flex items-center gap-1.5 text-[#4B5563] text-[12px] hover:text-[#6E9625] cursor-pointer transition-colors"
+                        >
                           <Phone size={13} className="text-[#4B5563]" /> Click to view
-                        </div>
+                        </button>
                       </div>
 
                       {/* Bottom: action buttons */}
                       <div className="flex flex-col gap-2 w-full sm:w-auto">
-                        {/* <button
-                          onClick={(e) => { e.preventDefault(); }}
-                          className="w-full bg-[#243A24] text-white text-[13px] font-semibold py-2.5 px-5 rounded-[8px] hover:bg-[#1a2c1a] transition-colors cursor-pointer"
-                        >
-                          Request a Quote
-                        </button> */}
-                        <a
-                          href="#"
-                          onClick={(e) => handleProtectedAction(e, String(trader.id), "view-profile")}
+                        <Link
+                          href={`/profile/${trader.id}`}
                           className="w-full text-center border border-[#243A24] text-[#243A24] text-[13px] font-semibold py-2.5 px-5 rounded-[8px] hover:bg-[#f5f7f5] transition-colors"
                         >
                           View Profile
-                        </a>
+                        </Link>
                       </div>
                     </div>
                   </div>

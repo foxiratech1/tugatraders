@@ -34,7 +34,7 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
     const url = originalRequest?.url || '';
-    // Do not attempt token refresh on auth endpoints
+    // Do not attempt token refresh or login redirects on auth and public endpoints
     if (
       url.endsWith('/login') ||
       url.endsWith('/register') ||
@@ -43,7 +43,8 @@ api.interceptors.response.use(
       url.endsWith('/forgot-password') ||
       url.endsWith('/reset-password') ||
       url.endsWith('/verify-forgot-otp') ||
-      url.includes('/register-step-')
+      url.includes('/register-step-') ||
+      url.includes('/public/')
     ) {
       return Promise.reject(error);
     }

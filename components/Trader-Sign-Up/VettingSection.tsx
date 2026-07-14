@@ -1,4 +1,6 @@
-import React from 'react';
+"use client";
+
+import React, { useEffect } from 'react';
 import { IdCard, Briefcase, FileText, Check, Info } from 'lucide-react';
 
 const VettingSection = () => {
@@ -16,9 +18,20 @@ const VettingSection = () => {
       icon: <FileText className="w-7 h-7 text-[#1A2E1A]" />,
     },
   ];
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.location.hash === "#vetting-section") {
+      setTimeout(() => {
+        const el = document.getElementById('vetting-section');
+        if (el) {
+          const y = el.getBoundingClientRect().top + window.scrollY - 80;
+          window.scrollTo({ top: y, behavior: 'smooth' });
+        }
+      }, 300);
+    }
+  }, []);
 
   return (
-    <section className="py-16 px-4 font-sans bg-[#F8F9F7]">
+    <section id="vetting-section" className="py-16 px-4 font-sans bg-[#F8F9F7]">
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="mb-12">

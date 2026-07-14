@@ -87,7 +87,7 @@ export default function Hero() {
                 We connect you with vetted and reliable tradespeople so you don&apos;t have to search.
               </p>
             </div>
-            <Link href="#" className="inline-flex items-center justify-between w-full rounded-full bg-[#7ca13a] px-6 py-4 text-[15px] font-bold text-white hover:bg-[#6c8d32] transition-all">
+            <Link href="/post-job" className="inline-flex items-center justify-between w-full rounded-full bg-[#7ca13a] px-6 py-4 text-[15px] font-bold text-white hover:bg-[#6c8d32] transition-all">
               <span>Get Free Quotes</span>
               <FiArrowRight size={20} />
             </Link>

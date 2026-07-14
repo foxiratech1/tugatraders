@@ -32,11 +32,6 @@ export default function PostJobPage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   useEffect(() => {
-    const token = getAccessToken();
-    if (!token) {
-      setShowAuthModal(true);
-    }
-
     authApi.getCategories().then(res => {
       setCategories(res?.data || res || []);
     }).catch(err => console.error("Failed to fetch categories", err));
@@ -107,6 +102,11 @@ export default function PostJobPage() {
       return;
     }
 
+    if (title.trim().length < 5) {
+      toast.error("Job title must be at least 5 characters long.");
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       const formData = new FormData();
@@ -117,8 +117,8 @@ export default function PostJobPage() {
       formData.append('title', title);
       formData.append('description', description);
       formData.append('timescale', timescale);
-      formData.append('latitude', 51.507351.toString());
-      formData.append('longitude', (-0.127758).toString());
+      formData.append('latitude', 22.7196.toString());
+      formData.append('longitude', 75.8577.toString());
       // formData.append('radiusKm', '9');
       if (budgetRange) formData.append('budgetRange', budgetRange);
       formData.append('emergency', String(emergency));
@@ -156,17 +156,17 @@ export default function PostJobPage() {
             <div className="flex gap-4 w-full">
               <button
                 type="button"
-                onClick={() => router.push('/')}
-                className="flex-1 py-3 px-4 rounded-xl border border-[#E5E7EB] text-[#555555] font-semibold hover:bg-gray-50 transition-all"
+                onClick={() => router.push('/auth/login?redirect=/customer-dashboard/post-job')}
+                className="flex-1 py-3.5 px-4 rounded-2xl bg-[#6E9625] text-white font-bold text-base hover:bg-[#5c801e] transition-all shadow-sm"
               >
-                Go Back
+                Login
               </button>
               <button
                 type="button"
-                onClick={() => router.push('/auth/login?redirect=/customer-dashboard/post-job')}
-                className="flex-1 py-3 px-4 rounded-xl bg-[#6E9625] text-white font-bold hover:bg-[#58791C] transition-all"
+                onClick={() => router.push('/auth/signup?redirect=/customer-dashboard/post-job')}
+                className="flex-1 py-3.5 px-4 rounded-2xl bg-[#C00000] border-2 border-[#15232E] text-white font-bold text-base hover:bg-[#a60000] transition-all shadow-sm"
               >
-                Login Now
+                Sign up
               </button>
             </div>
           </div>
@@ -260,6 +260,7 @@ export default function PostJobPage() {
               <input
                 type="text"
                 required
+                minLength={5}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Master Bedroom Fitted Wardrobes"

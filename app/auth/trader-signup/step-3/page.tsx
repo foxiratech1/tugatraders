@@ -191,7 +191,7 @@ export default function Step3Page() {
                             </div>
                         )}
 
-                        {verificationStatus === "REJECTED" && (
+                        {(verificationStatus === "REJECTED" || verificationStatus === "MANUAL_CHECK") && (
                             <div className="flex flex-col items-center w-full">
                                 <p className="text-[15px] text-[#1C2C1C]/60 mb-4 leading-relaxed max-w-[340px]">
                                     Unfortunately, your profile verification was rejected. Please review the reason below and update your details.
@@ -209,6 +209,14 @@ export default function Step3Page() {
                         )}
 
                         {verificationStatus === "REJECTED" && (
+                            <button
+                                onClick={() => router.push("/trader/profile?mode=update")}
+                                className="w-full bg-[#1C2C1C] text-white font-bold py-3.5 px-6 rounded-xl hover:bg-[#2C4A2C] transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5"
+                            >
+                                Update Profile
+                            </button>
+                        )}
+                        {verificationStatus === "MANUAL_CHECK" && (
                             <button
                                 onClick={() => router.push("/trader/profile?mode=update")}
                                 className="w-full bg-[#1C2C1C] text-white font-bold py-3.5 px-6 rounded-xl hover:bg-[#2C4A2C] transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5"
@@ -371,7 +379,7 @@ export default function Step3Page() {
                             {loading ? "Processing..." : "Continue to Payment"}
                         </button>
                         <button
-                            onClick={() => router.push("/auth/trader-signup/step-2")}
+                            onClick={() => router.push("/trader/profile")}
                             className="text-[#1C2C1C] text-[14px] font-bold py-3.5 px-6 rounded-full hover:bg-[#F5F5F5] transition-colors"
                         >
                             Back to Profile Setup

@@ -7,6 +7,8 @@ import { Star, MessageSquare, Calendar, Briefcase, MapPin, Clock, Edit2 } from "
 
 interface Review {
   id: string;
+  traderId?: string;
+  jobId?: string;
   rating: number;
   title?: string;
   review?: string;
@@ -17,11 +19,13 @@ interface Review {
   wouldRecommendTrader?: boolean;
   createdAt: string;
   trader?: {
+    id?: string;
     fullName?: string;
     profileImage?: string;
     tradeCategories?: string[];
   };
   job?: {
+    id?: string;
     title?: string;
   };
 }
@@ -55,6 +59,10 @@ export default function CustomerReviews() {
   const handleEditClick = (r: Review) => {
     const params = new URLSearchParams();
     params.set('editReviewId', r.id);
+    const traderIdVal = r.traderId || (r as any).trader_id || (r as any).traderProfileId || r.trader?.id || (r.trader as any)?._id;
+    const jobIdVal = r.jobId || (r as any).job_id || r.job?.id || (r.job as any)?._id;
+    if (traderIdVal) params.set('traderId', traderIdVal);
+    if (jobIdVal) params.set('jobId', jobIdVal);
     if (r.rating) params.set('rating', r.rating.toString());
     if (r.title) params.set('title', r.title);
     if (r.review) params.set('review', r.review);
@@ -63,6 +71,7 @@ export default function CustomerReviews() {
     if (r.workCompletedDate) params.set('completionDate', r.workCompletedDate.split('T')[0]);
     if (r.workCarriedOut !== undefined) params.set('workCarriedOut', r.workCarriedOut.toString());
     if (r.reviewType) params.set('reviewType', r.reviewType);
+    if (r.createdAt) params.set('createdAt', r.createdAt);
     
     router.push(`/customer-dashboard/leave-review?${params.toString()}`);
   };

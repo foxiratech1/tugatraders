@@ -107,7 +107,7 @@ function LoginContent() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Mouse‑tracking for pupil
+  // Mouse-tracking for pupil
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (!eyeBtnRef.current) return;
@@ -222,7 +222,9 @@ function LoginContent() {
 
             const isCompleted = traderData?.isRegistrationCompleted;
 
-            if (isCompleted) {
+            if (traderData?.verificationStatus === "MANUAL_CHECK") {
+              targetPath = "/auth/trader-signup/step-3";
+            } else if (isCompleted) {
               targetPath = "/trader"; // Dashboard
             } else if (traderData?.step2Completed === false || traderData?.currentStep === 2) {
               // Pass the categoryId to step 2 so it can load the skills
@@ -396,7 +398,7 @@ function LoginContent() {
         </div>
         {/* RIGHT SECTION (Hero) */}
         <div className="relative hidden w-full lg:w-[50%] lg:h-auto lg:self-stretch overflow-hidden lg:block flex-shrink-0 z-0">
-          <Image src="/log in.png" alt="Find trusted professionals for every job" fill className="object-cover object-center" priority unoptimized style={{ opacity: 1 }} />
+          <Image src="/log%20in.png" alt="Find trusted professionals for every job" fill className="object-cover object-center" priority unoptimized style={{ opacity: 1 }} />
           <div className="absolute inset-0 bg-[#162716]/65 mix-blend-multiply z-10" />
           <div className="absolute inset-0 flex flex-col justify-end p-8 sm:p-12 xl:p-20 text-white z-20" style={{ background: 'linear-gradient(to top, rgba(22, 39, 22, 0.95) 0%, rgba(22, 39, 22, 0.4) 60%, transparent 100%)' }}>
             <div className="w-full max-w-[576px] h-auto lg:h-[439.73px] max-h-[90%] flex flex-col justify-end text-white" style={{ gap: '23.2px', opacity: 1 }}>

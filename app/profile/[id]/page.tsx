@@ -3,13 +3,13 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { authApi } from "@/app/api/authApi";
+import { getAccessToken } from "@/utils/auth";
 import Image from "next/image";
 import {
   Star, MapPin, Phone, Briefcase, Wrench, ShieldCheck,
   Mail, ArrowLeft, CheckCircle, FileText
 } from "lucide-react";
 import toast from "react-hot-toast";
-import AuthGuard from "@/components/Guards/AuthGuard";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://api.tugatraders.server24.in";
 function getImageUrl(path: string | null | undefined): string {
@@ -32,10 +32,10 @@ export default function PublicTraderProfilePage() {
   useEffect(() => {
     if (!traderId) return;
 
-    async function fetchProfile() {
+    async function loadProfile(lat: number, lng: number) {
       try {
         setLoading(true);
-        const res = await authApi.getTraderProfileById(traderId);
+        const res = await authApi.getPublicTraderProfileById(traderId, lat, lng);
 
         // Handle nested data structures gracefully
         const data = res?.data || res;
@@ -48,19 +48,32 @@ export default function PublicTraderProfilePage() {
       }
     }
 
-    fetchProfile();
+    const defaultLat = 22.5530;
+    const defaultLng = 75.7569;
+
+    if (typeof window !== "undefined" && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          loadProfile(pos.coords.latitude, pos.coords.longitude);
+        },
+        () => {
+          loadProfile(defaultLat, defaultLng);
+        },
+        { timeout: 3000 }
+      );
+    } else {
+      loadProfile(defaultLat, defaultLng);
+    }
   }, [traderId]);
 
   if (loading) {
     return (
-      <AuthGuard>
       <div className="min-h-screen bg-[#F8F9F5] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-[#243A24]/20 border-t-[#243A24] rounded-full animate-spin" />
           <p className="text-[#243A24] font-semibold tracking-wide animate-pulse">Loading Profile...</p>
         </div>
       </div>
-      </AuthGuard>
     );
   }
 
@@ -103,7 +116,6 @@ export default function PublicTraderProfilePage() {
   const workRadius = tp?.workRadius ? `${tp.workRadius} miles` : null;
 
   return (
-    <AuthGuard>
     <div className="min-h-screen bg-[#F8F9F5] font-sans selection:bg-[#6E9625]/20 selection:text-[#1C2C1C]">
 
       {/* ── Navbar Spacer (assuming layout has absolute navbar, or we just want some top padding) ── */}
@@ -295,7 +307,7 @@ export default function PublicTraderProfilePage() {
                       {typeof skill === 'object' ? skill.name : skill}
                     </span>
                   ))}
-                  
+
                   {/* Render Sub Categories */}
                   {tp?.subCategories?.map((sub: any, i: number) => (
                     <span key={`sub-${i}`} className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-[13px] font-bold tracking-wide border border-gray-200">
@@ -329,6 +341,5 @@ export default function PublicTraderProfilePage() {
         </div>
       </main>
     </div>
-    </AuthGuard>
   );
 }
