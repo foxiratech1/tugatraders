@@ -97,13 +97,38 @@ export default function PostJobPage() {
       return;
     }
 
-    if (!categoryId || !skillServiceId || !title || !description || !timescale) {
-      toast.error("Please fill in all required fields (Category, Service Type, Title, Description, Timescale)");
+    if (!categoryId) {
+      toast.error("Please select a Category.");
+      return;
+    }
+
+    if (!skillServiceId) {
+      toast.error("Please select a Service Type.");
+      return;
+    }
+
+    if (!subCategoryId) {
+      toast.error("Please select a Sub Category.");
+      return;
+    }
+
+    if (!postcode.trim()) {
+      toast.error("Please enter a Location or Postcode.");
+      return;
+    }
+
+    if (!title.trim()) {
+      toast.error("Please enter a Job Title.");
       return;
     }
 
     if (title.trim().length < 5) {
       toast.error("Job title must be at least 5 characters long.");
+      return;
+    }
+
+    if (!description.trim() || !timescale) {
+      toast.error("Please fill in all required fields.");
       return;
     }
 
@@ -223,10 +248,11 @@ export default function PostJobPage() {
             {/* Row 2: Sub Category & Location */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col gap-2">
-                <label className="text-[12px] font-bold text-[#243A24]">Sub Category</label>
+                <label className="text-[12px] font-bold text-[#243A24]">Sub Category *</label>
                 <select
                   value={subCategoryId}
                   onChange={(e) => setSubCategoryId(e.target.value)}
+                  required
                   disabled={!skillServiceId}
                   className="h-[48px] w-full rounded-[12px] border border-[#E5E7EB] bg-[#F7F5F04D]/30 px-4 text-[14px] text-[#555555] outline-none focus:border-[#6E9625] transition-all appearance-none disabled:opacity-50"
                 >
@@ -238,17 +264,18 @@ export default function PostJobPage() {
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className="text-[12px] font-bold text-[#243A24]">Location / Postcode</label>
+                <label className="text-[12px] font-bold text-[#243A24]">Location / Postcode *</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <MapPin size={16} className="text-[#6E9625]" />
                   </div>
                   <input
                     type="text"
+                    required
                     value={postcode}
                     onChange={(e) => setPostcode(e.target.value)}
                     placeholder="e.g. DD4 X2K7"
-                    className="h-[48px] w-full rounded-[12px] border border-[#E5E7EB] bg-[#F7F5F04D]/30 pl-10 pr-4 text-[14px] text-[#555555] outline-none  transition-all"
+                    className="h-[48px] w-full rounded-[12px] border border-[#E5E7EB] bg-[#F7F5F04D]/30 pl-10 pr-4 text-[14px] text-[#555555] outline-none transition-all"
                   />
                 </div>
               </div>

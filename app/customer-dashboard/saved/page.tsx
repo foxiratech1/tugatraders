@@ -11,11 +11,11 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://api.tugatraders.ser
 function getImageUrl(path: string | null | undefined): string {
   if (!path) return "/logo.png";
   if (path.startsWith("http")) return path;
-  
+
   const baseUrl = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
   let imagePath = path.startsWith('/') ? path : `/${path}`;
   imagePath = imagePath.replace(/\/\//g, '/'); // remove any double slashes inside the path
-  
+
   return `${baseUrl}${imagePath}`;
 }
 
@@ -254,7 +254,7 @@ export default function SavedTradersPage() {
                 href="/"
                 className="mt-2 px-6 py-3 bg-[#1C2C1C] text-white rounded-xl font-bold text-[14px] hover:bg-[#121E12] transition-colors"
               >
-                Browse Traders
+                Back To Dashboard
               </Link>
             )}
           </div>

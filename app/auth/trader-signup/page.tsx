@@ -298,18 +298,11 @@ export default function TraderSignupPage() {
         msg = Array.from(new Set(msg.split(/,\s*(?=[A-Z])/))).join(', ');
       }
 
-      if (msg.toLowerCase().includes("email already exists") || msg.toLowerCase().includes("email is already registered")) {
-        try {
-          await resendOtp({ email: formData.businessEmail });
-          toast.success("Please verify your email to continue.");
-          router.replace(`/auth/verify-otp?email=${encodeURIComponent(formData.businessEmail)}&categoryId=${encodeURIComponent(formData.tradeCategory)}`);
-        } catch (err: any) {
-          // If resend fails (e.g. already verified), just show the standard error
-          setErrors((prev) => ({ ...prev, businessEmail: "This email is already registered. Please log in." }));
-          toast.error("This email is already registered. Please log in.");
-        }
+      setErrors({});
+      if (msg.toLowerCase().includes("email already exists") || msg.toLowerCase().includes("email is already registered") || msg.toLowerCase().includes("already in use")) {
+        toast.error("This email is already registered. Please log in.", { id: 'auth-error' });
       } else {
-        toast.error(msg);
+        toast.error(msg, { id: 'auth-error' });
       }
     } finally {
       setLoading(false);
@@ -611,9 +604,9 @@ export default function TraderSignupPage() {
                   </div>
                   <p className="text-[11.5px] text-[#1C2C1C]/65 font-medium leading-tight">
                     I agree to the{" "}
-                    <span className="text-[#1C2C1C] font-bold hover:underline">Terms of Service</span>{" "}
+                    <span className="text-[#1C2C1C] font-bold hover:underline"><a href="/terms">Terms of Service</a></span>{" "}
                     and{" "}
-                    <span className="text-[#1C2C1C] font-bold hover:underline">Privacy Policy</span>
+                    <span className="text-[#1C2C1C] font-bold hover:underline"><a href="/terms">Privacy Policy</a></span>
                   </p>
                 </div>
 

@@ -1,6 +1,6 @@
 import Trader404View from "@/components/Trader/Trader404View";
 
-export default function TraderBillingPage() {
+export default function TraderSettingsPage() {
   return (
     <Trader404View
       title="Page Not Found"

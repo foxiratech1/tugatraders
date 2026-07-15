@@ -401,6 +401,11 @@ export const authApi = {
     return data;
   },
 
+  getPublicReviews: async (page = 1, limit = 10) => {
+    const { data } = await api.get(`/api/reviews/all/public?page=${page}&limit=${limit}`);
+    return data;
+  },
+
   getPublicFaqs: async () => {
     const { data } = await api.get('/api/faq/public');
     return data;

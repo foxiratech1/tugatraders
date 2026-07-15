@@ -337,16 +337,16 @@ export default function TraderNavbar() {
                   onClick={(e) => handleRestrictedNav(e, label)}
                   className={`
                       relative flex items-center gap-1.5 px-3 text-[13px] font-semibold
-                      transition-colors whitespace-nowrap h-full
-                      ${active ? "text-[#1C2C1C]" : "text-[#1C2C1C]/55 hover:text-[#1C2C1C]"}
+                      transition-all duration-200 whitespace-nowrap h-full group
+                      ${active ? "text-[#1C2C1C]" : "text-[#1C2C1C]/60 hover:text-[#1C2C1C] hover:scale-[1.02]"}
                       ${restricted ? "opacity-60 cursor-not-allowed" : ""}
                     `}
                 >
-                  <Icon size={14} className={active ? "text-[#6E9625]" : "text-current"} />
+                  <Icon size={14} className={`transition-all duration-200 ${active ? "text-[#6E9625] scale-110" : "text-current group-hover:text-[#6E9625]"}`} />
                   {label}
-                  {/* Active underline */}
+                  {/* Active underline with spring transition */}
                   {active && (
-                    <span className="absolute bottom-0 left-2 right-2 h-[3px] rounded-t-full bg-[#6E9625]" />
+                    <span className="absolute bottom-0 left-2 right-2 h-[3px] rounded-t-full bg-[#6E9625] shadow-[0_-2px_8px_rgba(110,150,37,0.4)] animate-fade-in-up" />
                   )}
                 </Link>
               );
@@ -360,20 +360,20 @@ export default function TraderNavbar() {
               <div className="relative" ref={notifDropdownRef}>
                 <button
                   onClick={() => setNotifOpen(!notifOpen)}
-                  className="relative w-8 h-8 rounded-full flex items-center justify-center text-[#1C2C1C]/60 hover:bg-[#F5F5F5] hover:text-[#1C2C1C] transition-all"
+                  className="relative w-8 h-8 rounded-full flex items-center justify-center text-[#1C2C1C]/60 hover:bg-[#F5F5F5] hover:text-[#1C2C1C] transition-all hover:scale-105 active:scale-95"
                   aria-label="Notifications"
                 >
                   <Bell size={18} />
-                  {/* Unread dot */}
+                  {/* Unread dot with pulse */}
                   {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 w-4 h-4 bg-[#6E9625] rounded-full border-2 border-white flex items-center justify-center text-[8px] text-white font-bold">
+                    <span className="absolute top-1 right-1 w-4 h-4 bg-[#6E9625] rounded-full border-2 border-white flex items-center justify-center text-[8px] text-white font-bold animate-pulse">
                       {unreadCount}
                     </span>
                   )}
                 </button>
 
                 {notifOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white border border-[#E5E5E5] rounded-2xl shadow-xl py-3 z-50 overflow-hidden">
+                  <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white/95 backdrop-blur-md border border-[#E5E5E5] rounded-2xl shadow-2xl py-3 z-50 overflow-hidden animate-fade-in-up">
                     <div className="flex items-center justify-between px-4 pb-2 border-b border-gray-100">
                       <span className="font-bold text-[14px] text-[#1C2C1C]">Notifications</span>
                       {unreadCount > 0 && (
@@ -422,19 +422,20 @@ export default function TraderNavbar() {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-2.5 py-1 px-2 rounded-lg hover:bg-[#F5F5F5] transition-all"
+                className="flex items-center gap-2.5 py-1 px-2 rounded-lg hover:bg-[#F5F5F5] transition-all hover:scale-[1.01]"
               >
                 <div className="text-right hidden sm:block">
                   <p className="text-[12px] font-bold text-[#1C2C1C] leading-tight tracking-wide uppercase">
                     {userName}
                   </p>
-                  <p className="text-[11px] text-[#6E9625] font-semibold leading-tight">
+                  <p className="text-[11px] text-[#6E9625] font-semibold leading-tight flex items-center justify-end gap-1">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#6E9625] animate-pulse" />
                     {userRole}
                   </p>
                 </div>
 
                 {/* Avatar */}
-                <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#6E9625] flex-shrink-0 bg-[#1C2C1C] flex items-center justify-center">
+                <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#6E9625] flex-shrink-0 bg-[#1C2C1C] flex items-center justify-center shadow-sm hover:rotate-6 transition-transform">
                   {userAvatar ? (
                     <Image
                       src={userAvatar}
@@ -451,13 +452,14 @@ export default function TraderNavbar() {
                 </div>
                 <ChevronDown
                   size={14}
-                  className={`text-[#1C2C1C]/50 transition-transform ${dropdownOpen ? "rotate-180" : ""}`}
+                  className={`text-[#1C2C1C]/50 transition-transform duration-300 ${dropdownOpen ? "rotate-180 text-[#6E9625]" : ""}`}
                 />
               </button>
 
               {/* Dropdown menu */}
               {dropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-52 bg-white rounded-xl shadow-[0_8px_32px_rgba(0,0,0,0.12)] border border-[#E5E5E5] overflow-hidden z-50 py-1">
+                <div className="absolute right-0 top-full mt-2 w-56 bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] border border-[#E5E5E5] overflow-hidden z-50 py-1.5 animate-fade-in-up">
+
                   <Link
                     href="/trader/profile"
                     className="flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-[#1C2C1C] hover:bg-[#F5F5F5] transition-colors"

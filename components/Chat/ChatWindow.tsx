@@ -71,11 +71,11 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 function getImageUrl(path: string | null | undefined): string | null {
   if (!path) return null;
   if (path.startsWith("http")) return path;
-  
+
   const baseUrl = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
   let imagePath = path.startsWith('/') ? path : `/${path}`;
   imagePath = imagePath.replace(/\/\//g, '/'); // remove any double slashes inside the path
-  
+
   return `${baseUrl}${imagePath}`;
 }
 
@@ -216,21 +216,61 @@ export default function ChatWindow({
     }
   };
 
+  const getErrorMessage = (error: any, fallback: string) => {
+    if (!error) return fallback;
+    const data = error.response?.data;
+    if (data?.message) {
+      return Array.isArray(data.message) ? data.message[0] : data.message;
+    }
+    if (data?.error) return typeof data.error === "string" ? data.error : fallback;
+    if (error.message && typeof error.message === "string") return error.message;
+    return fallback;
+  };
+
+  const [loadingComplete, setLoadingComplete] = useState(false);
+  const [loadingClose, setLoadingClose] = useState(false);
+
   // Job Completion Action
   const handleJobComplete = async () => {
     if (!activeJobId) {
-      toast.error("No job is linked to this conversation");
+      toast.error("No job is linked to this conversation", { id: "job-action-error" });
       return;
     }
 
     try {
+      setLoadingComplete(true);
       await authApi.completeJob(activeJobId);
       setJobStatus("COMPLETED");
-      toast.success("Job marked as complete successfully!");
+      toast.success("Job marked as complete successfully!", { id: "job-action-success" });
       if (onRefreshConversations) onRefreshConversations();
     } catch (error: any) {
       console.error("Failed to mark job complete:", error);
-      toast.error(error?.message || "Failed to mark job complete");
+      const errMsg = getErrorMessage(error, "Failed to mark job complete");
+      toast.error(errMsg, { id: "job-action-error" });
+    } finally {
+      setLoadingComplete(false);
+    }
+  };
+
+  // Job Close / Cancel Action
+  const handleJobClose = async () => {
+    if (!activeJobId) {
+      toast.error("No job is linked to this conversation", { id: "job-action-error" });
+      return;
+    }
+
+    try {
+      setLoadingClose(true);
+      await authApi.cancelJob(activeJobId);
+      setJobStatus("CANCELLED");
+      toast.success("Job closed successfully!", { id: "job-action-success" });
+      if (onRefreshConversations) onRefreshConversations();
+    } catch (error: any) {
+      console.error("Failed to close job:", error);
+      const errMsg = getErrorMessage(error, "Failed to close job");
+      toast.error(errMsg, { id: "job-action-error" });
+    } finally {
+      setLoadingClose(false);
     }
   };
 
@@ -318,32 +358,49 @@ export default function ChatWindow({
             <button
               onClick={() => setShowReportModal(true)}
               disabled={isReported}
-              className={`px-3.5 py-1.5 rounded-xl text-[12px] font-semibold flex items-center gap-1 transition-colors ${isReported
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
-                : "text-red-600 hover:bg-red-50 border border-red-100"
+              className={`px-3.5 py-1.5 rounded-xl text-[12px] font-bold border transition-all flex items-center gap-1 ${isReported
+                ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                : "text-red-500 border-red-200 hover:bg-red-50"
                 }`}
             >
               <AlertTriangle size={14} />
               {isReported ? "Reported" : "Report"}
             </button>
 
-            {/* Job Complete action only for customer role and when a job is linked */}
-            {!isTraderView && activeJobId && jobStatus !== "COMPLETED" && (
-              <button
-                onClick={handleJobComplete}
-                className="px-4 py-1.5 bg-[#6E9625] text-white hover:bg-[#5E831E] rounded-xl text-[12px] font-bold transition-all shadow-sm flex items-center gap-1"
-              >
-                <CheckCircle size={14} />
-                Job Complete
-              </button>
-            )}
+            {/* Customer Job Actions when linked to a job */}
+            {!isTraderView && activeJobId && (
+              <>
+                {jobStatus === "COMPLETED" ? (
+                  <span className="px-4 py-1.5 bg-[#6E9625] text-white rounded-xl text-[12px] font-bold flex items-center gap-1.5 shadow-xs">
+                    <CheckCircle size={14} />
+                    JOB COMPLETE
+                  </span>
+                ) : jobStatus === "CANCELLED" || jobStatus === "CLOSED" ? (
+                  <span className="px-4 py-1.5 bg-gray-100 text-gray-500 border border-gray-200 rounded-xl text-[12px] font-bold flex items-center gap-1">
+                    Job Closed
+                  </span>
+                ) : (
+                  <>
+                    <button
+                      onClick={handleJobComplete}
+                      disabled={loadingComplete || loadingClose}
+                      className="px-4 py-1.5 bg-[#6E9625] hover:bg-[#5C7F1F] text-white rounded-xl text-[12px] font-bold transition-all shadow-xs flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <CheckCircle size={14} />
+                      {loadingComplete ? "Completing..." : "Job Complete"}
+                    </button>
 
-            <button
-              onClick={() => toast.error("Complain features are under construction")}
-              className="px-3.5 py-1.5 border border-gray-200 text-gray-500 hover:bg-gray-50 rounded-xl text-[12px] font-semibold transition-colors"
-            >
-              Close
-            </button>
+                    <button
+                      onClick={handleJobClose}
+                      disabled={loadingComplete || loadingClose}
+                      className="px-4 py-1.5 bg-[#1C2C1C] hover:bg-[#2C422C] text-white rounded-xl text-[12px] font-bold transition-all shadow-xs flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {loadingClose ? "Closing..." : "Close Job"}
+                    </button>
+                  </>
+                )}
+              </>
+            )}
           </div>
         </div>
 

@@ -258,19 +258,11 @@ export default function RegisterPage() {
                 msg = Array.from(new Set(msg.split(/,\s*(?=[A-Z])/))).join(', ');
             }
 
+            setErrors({});
             if (msg.toLowerCase().includes("email already exists") || msg.toLowerCase().includes("email is already registered") || msg.toLowerCase().includes("already in use")) {
-                try {
-                    await resendOtp({ email: formData.email });
-                    toast.success("Please verify your email to continue.");
-                    setTimeout(() => {
-                        router.replace(`/auth/verify-otp?email=${encodeURIComponent(formData.email)}&redirectTo=${encodeURIComponent("/customer-dashboard/jobs")}`);
-                    }, 2000);
-                } catch (err: any) {
-                    setErrors((prev) => ({ ...prev, email: "This email is already registered. Please log in." }));
-                    toast.error("This email is already registered. Please log in.");
-                }
+                toast.error("This email is already registered. Please log in.", { id: 'auth-error' });
             } else {
-                toast.error(msg);
+                toast.error(msg, { id: 'auth-error' });
             }
         } finally {
             setLoading(false);
@@ -512,7 +504,7 @@ export default function RegisterPage() {
                                         )}
                                     </div>
                                     <p className="text-[11.5px] sm:text-[12px] text-[#1C2C1C]/70 font-medium leading-tight">
-                                        I agree to the <span className="text-[#1C2C1C] font-extrabold hover:underline">Terms of Service</span> and <span className="text-[#1C2C1C] font-extrabold hover:underline">Privacy Policy</span>.
+                                        I agree to the <span className="text-[#1C2C1C] font-extrabold hover:underline"><a href="/terms">Terms of Service</a></span> and <span className="text-[#1C2C1C] font-extrabold hover:underline"><a href="/terms">Privacy Policy</a></span>.
                                     </p>
                                 </div>
 
