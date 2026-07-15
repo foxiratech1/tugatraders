@@ -174,7 +174,11 @@ export default function Step3Page() {
                             className="text-[28px] font-bold text-[#1C2C1C] mb-3 tracking-tight leading-tight"
                             style={{ fontFamily: "var(--font-bricolage), sans-serif" }}
                         >
-                            {verificationStatus === "PENDING" ? "Verification Pending" : "Verification Rejected"}
+                            {verificationStatus === "PENDING"
+                                ? "Verification Pending"
+                                : verificationStatus === "MANUAL_CHECK"
+                                    ? "Verification"
+                                    : "Verification Rejected"}
                         </h2>
 
                         {verificationStatus === "PENDING" && (
@@ -191,13 +195,39 @@ export default function Step3Page() {
                             </div>
                         )}
 
-                        {(verificationStatus === "REJECTED" || verificationStatus === "MANUAL_CHECK") && (
+                        {verificationStatus === "MANUAL_CHECK" && (
+                            <div className="flex flex-col items-center w-full">
+                                <p className="text-[15px] text-[#1C2C1C]/60 mb-4 leading-relaxed max-w-[340px]">
+                                    Your profile requires additional updates for verification. Please review any details below and update your profile information.
+                                </p>
+
+                                {rejectionReason && (
+                                    <div className="w-full bg-amber-50/60 border border-amber-200/60 rounded-xl p-4 mb-6 text-left">
+                                        <p className="text-[12px] font-extrabold text-amber-800 uppercase tracking-wider mb-1">
+                                            Verification Note
+                                        </p>
+                                        <p className="text-[14px] text-amber-900 font-medium leading-relaxed">
+                                            {rejectionReason}
+                                        </p>
+                                    </div>
+                                )}
+
+                                <button
+                                    onClick={() => router.push("/trader/profile?mode=update")}
+                                    className="w-full bg-[#1C2C1C] text-white font-bold py-3.5 px-6 rounded-xl hover:bg-[#2C4A2C] transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5"
+                                >
+                                    Update profile
+                                </button>
+                            </div>
+                        )}
+
+                        {verificationStatus === "REJECTED" && (
                             <div className="flex flex-col items-center w-full">
                                 <p className="text-[15px] text-[#1C2C1C]/60 mb-4 leading-relaxed max-w-[340px]">
                                     Unfortunately, your profile verification was rejected. Please review the reason below and update your details.
                                 </p>
 
-                                <div className="w-full bg-red-50/50 border border-red-100 rounded-xl p-4 mb-8 text-left">
+                                <div className="w-full bg-red-50/50 border border-red-100 rounded-xl p-4 mb-6 text-left">
                                     <p className="text-[12px] font-extrabold text-red-800 uppercase tracking-wider mb-1">
                                         Reason for rejection
                                     </p>
@@ -205,24 +235,14 @@ export default function Step3Page() {
                                         {rejectionReason || "Please contact support for more details about why your verification was rejected."}
                                     </p>
                                 </div>
-                            </div>
-                        )}
 
-                        {verificationStatus === "REJECTED" && (
-                            <button
-                                onClick={() => router.push("/trader/profile?mode=update")}
-                                className="w-full bg-[#1C2C1C] text-white font-bold py-3.5 px-6 rounded-xl hover:bg-[#2C4A2C] transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5"
-                            >
-                                Update Profile
-                            </button>
-                        )}
-                        {verificationStatus === "MANUAL_CHECK" && (
-                            <button
-                                onClick={() => router.push("/trader/profile?mode=update")}
-                                className="w-full bg-[#1C2C1C] text-white font-bold py-3.5 px-6 rounded-xl hover:bg-[#2C4A2C] transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5"
-                            >
-                                Update Profile
-                            </button>
+                                <button
+                                    onClick={() => router.push("/trader/profile?mode=update")}
+                                    className="w-full bg-[#1C2C1C] text-white font-bold py-3.5 px-6 rounded-xl hover:bg-[#2C4A2C] transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5"
+                                >
+                                    Update profile
+                                </button>
+                            </div>
                         )}
                     </div>
                 </div>

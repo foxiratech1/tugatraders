@@ -206,9 +206,33 @@ export default function TraderSignupPage() {
   };
 
   const field = (key: keyof typeof formData, value: string | boolean) => {
-    setFormData((p) => ({ ...p, [key]: value }));
-    setErrors((p) => ({ ...p, [key]: undefined }));
+    setFormData((p) => {
+      const next = { ...p, [key]: value };
+      setErrors((errs) => {
+        const nextErrs = { ...errs, [key]: undefined };
+        if (key === "password" || key === "confirmPassword") {
+          if (next.password && next.confirmPassword && next.password !== next.confirmPassword) {
+            nextErrs.confirmPassword = "Passwords do not match";
+          } else if (next.password && next.confirmPassword && next.password === next.confirmPassword) {
+            nextErrs.confirmPassword = undefined;
+          }
+        }
+        return nextErrs;
+      });
+      return next;
+    });
   };
+
+  const isFormFilled =
+    Boolean(formData.tradeCategory) &&
+    Boolean(formData.workRadius.trim()) &&
+    Boolean(formData.baseLocation.trim()) &&
+    Boolean(formData.fullName.trim()) &&
+    Boolean(formData.businessEmail.trim()) &&
+    Boolean(formData.contactNumber.trim()) &&
+    Boolean(formData.password) &&
+    Boolean(formData.confirmPassword) &&
+    Boolean(formData.agreeTerms);
 
   const isSubmitting = useRef(false);
 
@@ -232,9 +256,11 @@ export default function TraderSignupPage() {
     }
 
     if (Object.keys(newErrors).length > 0 || passwordComplexityError) {
-      setErrors({}); // Don't show in the form
+      setErrors(newErrors);
 
-      if (passwordComplexityError) {
+      if (newErrors.confirmPassword) {
+        toast.error(newErrors.confirmPassword, { id: 'validation-error' });
+      } else if (passwordComplexityError) {
         toast.error(passwordComplexityError, { id: 'validation-error' });
       } else {
         const firstErrorKey = Object.keys(newErrors)[0] as keyof typeof newErrors;
@@ -613,8 +639,8 @@ export default function TraderSignupPage() {
                 {/* Submit */}
                 <button
                   type="submit"
-                  disabled={loading}
-                  className="h-[48px] w-full rounded-[12px] bg-[#1C2C1C] text-[15px] font-bold text-white shadow-sm transition-all hover:bg-[#2C4A2C] hover:shadow-md cursor-pointer mt-1 disabled:opacity-60 disabled:cursor-not-allowed"
+                  disabled={loading || !isFormFilled}
+                  className="h-[48px] w-full rounded-[12px] bg-[#1C2C1C] text-[15px] font-bold text-white shadow-sm transition-all hover:bg-[#2C4A2C] hover:shadow-md cursor-pointer mt-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#1C2C1C]"
                 >
                   {loading ? "Creating Account…" : "Create Account"}
                 </button>

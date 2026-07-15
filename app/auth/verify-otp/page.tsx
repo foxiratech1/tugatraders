@@ -96,15 +96,16 @@ function VerifyOtpContent() {
       } else if (responseData?.user) {
         setUser(responseData.user);
       }
-      // Redirect based on provided target or dynamically check registration status
-      if (redirectTo) {
-        window.location.replace(redirectTo);
-      } else {
-        try {
-          const statusResponse = await getRegistrationStatus();
-          const data = statusResponse?.data || statusResponse;
-          const isCompleted = data?.isRegistrationCompleted;
+      // Redirect based on trader registration status or provided target URL
+      const userObj = currentUser || responseData?.user;
+      const userRole = (userObj?.role || "").toLowerCase();
 
+      try {
+        const statusResponse = await getRegistrationStatus();
+        const data = statusResponse?.data || statusResponse;
+        const isCompleted = data?.isRegistrationCompleted;
+
+        if (userRole === "trader" || data?.selectedCategories || data?.currentStep) {
           if (isCompleted) {
             window.location.replace("/trader");
           } else if (data?.step2Completed === false || data?.currentStep === 2) {
@@ -113,11 +114,22 @@ function VerifyOtpContent() {
           } else if (data?.step3Completed === false || data?.currentStep === 3) {
             window.location.replace("/auth/trader-signup/step-3");
           } else {
-            window.location.replace("/trader");
+            const catId = data?.selectedCategories?.[0]?.id || categoryId;
+            window.location.replace(catId ? `/auth/trader-signup/step-2?categoryId=${catId}` : "/auth/trader-signup/step-2");
           }
-        } catch (statusErr) {
-          console.error("Failed to fetch registration status", statusErr);
+        } else if (redirectTo) {
+          window.location.replace(redirectTo);
+        } else {
+          window.location.replace("/customer-dashboard/jobs");
+        }
+      } catch (statusErr) {
+        console.error("Failed to fetch registration status", statusErr);
+        if (userRole === "trader") {
           window.location.replace(`/auth/trader-signup/step-2${categoryId ? `?categoryId=${categoryId}` : ""}`);
+        } else if (redirectTo) {
+          window.location.replace(redirectTo);
+        } else {
+          window.location.replace("/");
         }
       }
     } catch (err: any) {

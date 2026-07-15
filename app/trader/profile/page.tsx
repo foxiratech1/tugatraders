@@ -13,9 +13,180 @@ import {
   FileText,
   X,
   Plus,
+  AlertCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+
+// ─── ChevronDown Icon ─────────────────────────────────────────────────────────
+const ChevronDown = () => (
+  <svg
+    className="w-4 h-4 pointer-events-none"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={2.5}
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+);
+
+// ─── MultiSelect Component ───────────────────────────────────────────────────
+interface MultiSelectProps {
+  options: Array<{ id: string; name: string }>;
+  selectedIds: string[];
+  onChange: (selectedIds: string[]) => void;
+  placeholder: string;
+  disabled?: boolean;
+}
+
+const MultiSelect = ({
+  options,
+  selectedIds,
+  onChange,
+  placeholder,
+  disabled = false,
+}: MultiSelectProps) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggleOption = (id: string) => {
+    if (selectedIds.includes(id)) {
+      onChange(selectedIds.filter((item) => item !== id));
+    } else {
+      onChange([...selectedIds, id]);
+    }
+  };
+
+  const removeOption = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    onChange(selectedIds.filter((item) => item !== id));
+  };
+
+  const filteredOptions = options.filter((opt) =>
+    opt.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const selectedLabels = options.filter((opt) => selectedIds.includes(opt.id));
+
+  return (
+    <div className="relative w-full" ref={containerRef}>
+      <div
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        className={`min-h-[42px] w-full rounded-lg border bg-white px-3 py-1.5 flex items-center justify-between gap-2 cursor-pointer transition-all border-[#E0E0E0] ${isOpen ? "border-[#6E9625] ring-2 ring-[#6E9625]/40" : ""
+          } ${disabled ? "opacity-50 cursor-not-allowed bg-gray-50" : "hover:border-gray-400"}`}
+      >
+        <div className="flex flex-wrap items-center gap-1.5 flex-1 max-h-[100px] overflow-y-auto">
+          {selectedLabels.length === 0 ? (
+            <span className="text-[13px] text-gray-400 font-medium select-none">
+              {placeholder}
+            </span>
+          ) : (
+            selectedLabels.map((item) => (
+              <span
+                key={item.id}
+                className="inline-flex items-center gap-1 bg-[#6E9625]/10 border border-[#6E9625]/20 text-[#1C2C1C] text-[12px] font-semibold px-2 py-0.5 rounded-md"
+              >
+                <span>{item.name}</span>
+                <button
+                  type="button"
+                  onClick={(e) => removeOption(item.id, e)}
+                  className="hover:text-red-500 rounded-full focus:outline-none ml-0.5"
+                >
+                  &times;
+                </button>
+              </span>
+            ))
+          )}
+        </div>
+        <div className="flex items-center gap-1 flex-shrink-0 text-gray-400">
+          {selectedIds.length > 0 && (
+            <span className="text-[10px] font-bold bg-[#6E9625] text-white rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
+              {selectedIds.length}
+            </span>
+          )}
+          <ChevronDown />
+        </div>
+      </div>
+
+      {isOpen && !disabled && (
+        <div className="absolute z-50 left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded-xl shadow-xl max-h-[240px] flex flex-col overflow-hidden animate-in fade-in-50 zoom-in-95 duration-100">
+          {options.length > 5 && (
+            <div className="p-2 border-b border-gray-100 bg-gray-50">
+              <input
+                type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                placeholder="Search..."
+                className="w-full h-8 px-3 text-[12px] rounded-lg border border-gray-200 outline-none focus:border-[#6E9625]"
+                onClick={(e) => e.stopPropagation()}
+              />
+            </div>
+          )}
+
+          <div className="overflow-y-auto p-1.5 space-y-0.5 flex-1">
+            {filteredOptions.length === 0 ? (
+              <div className="p-3 text-[12px] text-center text-gray-400">
+                {options.length === 0 ? "No options available" : "No results found"}
+              </div>
+            ) : (
+              filteredOptions.map((opt) => {
+                const isSelected = selectedIds.includes(opt.id);
+                return (
+                  <div
+                    key={opt.id}
+                    onClick={() => toggleOption(opt.id)}
+                    className={`flex items-center justify-between px-3 py-2 rounded-lg text-[13px] font-medium cursor-pointer transition-colors ${isSelected
+                        ? "bg-[#6E9625]/10 text-[#1C2C1C] font-semibold"
+                        : "text-[#1C2C1C]/80 hover:bg-gray-100"
+                      }`}
+                  >
+                    <span>{opt.name}</span>
+                    <div
+                      className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${isSelected
+                          ? "bg-[#6E9625] border-[#6E9625] text-white"
+                          : "border-gray-300 bg-white"
+                        }`}
+                    >
+                      {isSelected && (
+                        <svg
+                          className="w-3 h-3"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                          strokeWidth={3}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
 
 /* ─────────────────────────────────── types ─────────────────────────────────── */
 interface PersonalForm {
@@ -345,7 +516,22 @@ export default function TraderProfilePage() {
       fd.append("companyType", businessForm.companyType);
       fd.append("registrationNumber", businessForm.niNumber);
 
-      fd.append("workRadius", personalForm.workRadius !== "" ? String(personalForm.workRadius) : "");
+      if (traderStatus !== "MANUAL_CHECK") {
+        if (selectedTradeCategory) {
+          fd.append("tradeCategories", JSON.stringify([selectedTradeCategory]));
+        }
+        if (selectedSkillServices.length > 0) {
+          fd.append("skillsServices", JSON.stringify(selectedSkillServices));
+        }
+        if (selectedSubCategories.length > 0) {
+          fd.append("subCategories", JSON.stringify(selectedSubCategories));
+        }
+      }
+
+      const numericRadius = Number(personalForm.workRadius);
+      if (!isNaN(numericRadius) && numericRadius >= 1) {
+        fd.append("workRadius", String(numericRadius));
+      }
       fd.append("location", personalForm.workLocation);
       fd.append("about", personalForm.bio);
 
@@ -776,8 +962,66 @@ export default function TraderProfilePage() {
                         />
                       </div>
                     )}
-
                   </div>
+
+                  {/* Trade Categories & Skill Services */}
+                  {traderStatus !== "MANUAL_CHECK" && (
+                    <div className="border-t border-[#E8E8E8] pt-5 mt-5">
+                      <h3 className="text-[14px] font-bold text-[#1C2C1C] mb-1">
+                        Trade Categories & Skill Services
+                      </h3>
+
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
+                        {/* Main Trade Category */}
+                        <div className="sm:col-span-2">
+                          <label className="block text-[12px] font-medium text-gray-500 mb-1">
+                            Main Trade Category
+                          </label>
+                          <select
+                            value={selectedTradeCategory}
+                            onChange={(e) => setSelectedTradeCategory(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all bg-white"
+                          >
+                            <option value="">Select Main Trade Category</option>
+                            {tradeCategories.map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+
+                        {/* Skill Services */}
+                        <div>
+                          <label className="block text-[12px] font-medium text-gray-500 mb-1">
+                            Skill Services
+                          </label>
+                          <MultiSelect
+                            options={skillServices}
+                            selectedIds={selectedSkillServices}
+                            onChange={setSelectedSkillServices}
+                            placeholder="Select Skill Services"
+                            disabled={!selectedTradeCategory}
+                          />
+                        </div>
+
+                        {/* Sub Categories */}
+                        <div>
+                          <label className="block text-[12px] font-medium text-gray-500 mb-1">
+                            Sub Categories
+                          </label>
+                          <MultiSelect
+                            options={subCategories}
+                            selectedIds={selectedSubCategories}
+                            onChange={setSelectedSubCategories}
+                            placeholder="Select Sub Categories"
+                            disabled={selectedSkillServices.length === 0}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 

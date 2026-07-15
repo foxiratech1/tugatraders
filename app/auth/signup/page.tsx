@@ -102,6 +102,7 @@ export default function RegisterPage() {
 
     const eyeBtnRef = useRef<HTMLButtonElement>(null);
     const eyeBtnRefC = useRef<HTMLButtonElement>(null);
+    const isSubmitting = useRef(false);
 
     // Periodic random blink — password field
     useEffect(() => {
@@ -155,7 +156,12 @@ export default function RegisterPage() {
         return () => window.removeEventListener("mousemove", move);
     }, []);
 
-    const isSubmitting = useRef(false);
+    const isFormFilled =
+        Boolean(formData.fullName.trim()) &&
+        Boolean(formData.email.trim()) &&
+        Boolean(formData.password) &&
+        Boolean(formData.confirmPassword) &&
+        Boolean(formData.agreeTerms);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -167,9 +173,6 @@ export default function RegisterPage() {
         if (!formData.fullName.trim()) newErrors.fullName = "Full name is required";
         if (!formData.email) newErrors.email = "Email is required";
         else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = "Please enter a valid email address";
-        // if (!formData.phoneNumber) newErrors.phoneNumber = "Phone number is required";
-        // else if (formData.phoneNumber.length > 15) newErrors.phoneNumber = "Phone number cannot exceed 15 digits";
-        // if (formData.phoneNumber && !/^[0-9]+$/.test(formData.phoneNumber)) newErrors.phoneNumber = "Phone number must contain only digits";
 
         let passwordComplexityError = "";
         if (!formData.password) {
@@ -187,7 +190,7 @@ export default function RegisterPage() {
 
         if (!formData.confirmPassword) {
             newErrors.confirmPassword = "Confirm password is required";
-        } else if (formData.password !== formData.confirmPassword) {
+        } else if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
             newErrors.confirmPassword = "Passwords do not match";
         } else if (formData.confirmPassword.length < 6) {
             newErrors.confirmPassword = "Confirm password must be at least 6 characters";
@@ -195,12 +198,11 @@ export default function RegisterPage() {
         if (!formData.agreeTerms) newErrors.agreeTerms = "You must agree to the Terms of Service";
 
         if (Object.keys(newErrors).length > 0 || passwordComplexityError) {
-            // setErrors(newErrors); // Keep red borders? The user said "do not show in the form"
-            // Let's set errors for red borders, but we will remove the <p> tags later if needed.
-            // Actually, just clearing errors is safest to strictly follow "do not show in the form"
-            setErrors({});
+            setErrors(newErrors);
 
-            if (passwordComplexityError) {
+            if (newErrors.confirmPassword) {
+                toast.error(newErrors.confirmPassword, { id: 'validation-error' });
+            } else if (passwordComplexityError) {
                 toast.error(passwordComplexityError, { id: 'validation-error' });
             } else {
                 const firstErrorKey = Object.keys(newErrors)[0] as keyof typeof newErrors;
@@ -424,8 +426,17 @@ export default function RegisterPage() {
                                                 placeholder="••••••••"
                                                 value={formData.password}
                                                 onChange={(e) => {
-                                                    setFormData({ ...formData, password: e.target.value });
-                                                    if (errors.password) setErrors({ ...errors, password: undefined });
+                                                    const pwd = e.target.value;
+                                                    setFormData({ ...formData, password: pwd });
+                                                    setErrors((prev) => {
+                                                        const next = { ...prev, password: undefined };
+                                                        if (pwd && formData.confirmPassword && pwd !== formData.confirmPassword) {
+                                                            next.confirmPassword = "Passwords do not match";
+                                                        } else if (pwd && formData.confirmPassword && pwd === formData.confirmPassword) {
+                                                            next.confirmPassword = undefined;
+                                                        }
+                                                        return next;
+                                                    });
                                                 }}
                                                 className={`h-[44px] w-full rounded-[12px] border bg-white px-4 pr-10 text-[14px] text-[#1C2C1C] placeholder-[#1C2C1C]/30 outline-none transition-all font-medium ${errors.password
                                                     ? "border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500"
@@ -457,8 +468,17 @@ export default function RegisterPage() {
                                                 placeholder="••••••••"
                                                 value={formData.confirmPassword}
                                                 onChange={(e) => {
-                                                    setFormData({ ...formData, confirmPassword: e.target.value });
-                                                    if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: undefined });
+                                                    const confirmPwd = e.target.value;
+                                                    setFormData({ ...formData, confirmPassword: confirmPwd });
+                                                    setErrors((prev) => {
+                                                        const next = { ...prev };
+                                                        if (formData.password && confirmPwd && formData.password !== confirmPwd) {
+                                                            next.confirmPassword = "Passwords do not match";
+                                                        } else {
+                                                            next.confirmPassword = undefined;
+                                                        }
+                                                        return next;
+                                                    });
                                                 }}
                                                 className={`h-[44px] w-full rounded-[12px] border bg-white px-4 pr-10 text-[14px] text-[#1C2C1C] placeholder-[#1C2C1C]/30 outline-none transition-all font-medium ${errors.confirmPassword
                                                     ? "border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500"
@@ -511,9 +531,9 @@ export default function RegisterPage() {
                                 {/* SUBMIT BUTTON */}
                                 <button
                                     type="submit"
-                                    disabled={loading}
-                                    className={`h-[48px] w-full rounded-[12px] bg-[#1C2C1C] text-[15px] font-bold text-white shadow-sm transition-all mt-1 ${loading
-                                        ? "opacity-70 cursor-not-allowed"
+                                    disabled={loading || !isFormFilled}
+                                    className={`h-[48px] w-full rounded-[12px] bg-[#1C2C1C] text-[15px] font-bold text-white shadow-sm transition-all mt-1 ${loading || !isFormFilled
+                                        ? "opacity-50 cursor-not-allowed"
                                         : "hover:bg-[#121E12] hover:shadow-md cursor-pointer"
                                         }`}
                                 >

@@ -184,7 +184,8 @@ function LoginContent() {
 
         if (isEmailVerified === false) {
           toast.error("Please verify your email to continue.");
-          router.replace(`/auth/verify-otp?email=${encodeURIComponent(email)}&redirectTo=${encodeURIComponent(roleStr === Role.Customer.toLowerCase() ? "/customer-dashboard/jobs" : "/trader")}`);
+          const targetRedirect = roleStr === Role.Customer.toLowerCase() ? "/customer-dashboard/jobs" : "";
+          router.replace(`/auth/verify-otp?email=${encodeURIComponent(email)}${targetRedirect ? `&redirectTo=${encodeURIComponent(targetRedirect)}` : ""}`);
           return;
         }
 
@@ -262,12 +263,14 @@ function LoginContent() {
       toast.error(msg, { id: 'login-error' });
 
       const lowerMsg = msg.toLowerCase();
-      if (lowerMsg.includes("password") || lowerMsg.includes("credential")) {
-        setErrors({ password: "Password is incorrect" });
-      } else if (lowerMsg.includes("email") || lowerMsg.includes("user") || lowerMsg.includes("exist") || lowerMsg.includes("found")) {
+      if (lowerMsg.includes("email") || lowerMsg.includes("user") || lowerMsg.includes("found") || lowerMsg.includes("exist")) {
         setErrors({ email: msg });
-      } else {
+      } else if (lowerMsg.includes("password") && !lowerMsg.includes("email")) {
         setErrors({ password: "Password is incorrect" });
+      } else if (lowerMsg.includes("credential")) {
+        setErrors({ email: "Invalid email or password" });
+      } else {
+        setErrors({});
       }
     } finally {
       setIsLoading(false);
