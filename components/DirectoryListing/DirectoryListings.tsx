@@ -251,14 +251,7 @@ const DirectoryListings = () => {
   };
 
   const handleViewProfile = (traderId: string) => {
-    const token = localStorage.getItem('accessToken');
-    if (!token) {
-      setPendingTraderId(traderId);
-      setModalAction('VIEW_PROFILE');
-      setShowLoginModal(true);
-    } else {
-      router.push(`/profile/${traderId}`);
-    }
+    router.push(`/profile/${traderId}`);
   };
 
   return (

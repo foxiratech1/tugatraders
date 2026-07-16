@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { IdCard, Image as ImageIcon, ChevronRight, Lock, ShieldCheck } from "lucide-react";
+import { IdCard, Image as ImageIcon, ChevronRight, Lock, ShieldCheck, X, Search, Plus } from "lucide-react";
 import toast from "react-hot-toast";
 import { traderRegisterStep2, authApi, getRegistrationStatus } from "@/app/api/authApi";
 
@@ -91,8 +91,8 @@ const MultiSelect = ({
         onChange(selectedIds.filter((item) => item !== id));
     };
 
-    const filteredOptions = options.filter((opt) =>
-        opt.name.toLowerCase().includes(searchTerm.toLowerCase())
+    const filteredOptions = options.filter(
+        (opt) => !selectedIds.includes(opt.id) && opt.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
     const selectedLabels = options.filter((opt) => selectedIds.includes(opt.id));
@@ -101,36 +101,35 @@ const MultiSelect = ({
         <div className="relative w-full" ref={containerRef}>
             <div
                 onClick={() => !disabled && setIsOpen(!isOpen)}
-                className={`min-h-[44px] w-full rounded-[12px] border bg-white px-3 py-2 flex items-center justify-between gap-2 cursor-pointer transition-all border-[#243A241F] ${
-                    isOpen ? "border-[#6E9625] ring-1 ring-[#6E9625]" : ""
-                } ${disabled ? "opacity-50 cursor-not-allowed bg-gray-50" : "hover:border-[#1C2C1C]/30"}`}
+                className={`min-h-[44px] w-full rounded-[12px] border bg-white px-3 py-1.5 flex items-center justify-between gap-2 cursor-pointer transition-all border-[#243A241F] ${isOpen ? "border-[#6E9625] ring-1 ring-[#6E9625]" : ""
+                    } ${disabled ? "opacity-50 cursor-not-allowed bg-gray-50" : "hover:border-[#1C2C1C]/30"}`}
             >
-                <div className="flex flex-wrap items-center gap-1.5 flex-1 max-h-[120px] overflow-y-auto">
+                <div className="flex flex-wrap items-center gap-1 flex-1 max-h-[110px] overflow-y-auto">
                     {selectedLabels.length === 0 ? (
-                        <span className="text-[14px] text-[#1C2C1C]/40 font-medium px-1 select-none">
+                        <span className="text-[14px] text-[#1C2C1C]/40 font-medium select-none px-1">
                             {placeholder}
                         </span>
                     ) : (
                         selectedLabels.map((item) => (
                             <span
                                 key={item.id}
-                                className="inline-flex items-center gap-1 bg-[#6E9625]/10 border border-[#6E9625]/20 text-[#1C2C1C] text-[12px] font-semibold px-2 py-0.5 rounded-md"
+                                className="inline-flex items-center gap-1 bg-[#6E9625]/12 border border-[#6E9625]/25 text-[#1C2C1C] text-[11px] font-semibold pl-2 pr-1 py-0.5 rounded-md transition-all hover:bg-[#6E9625]/20 group/tag"
                             >
                                 <span>{item.name}</span>
                                 <button
                                     type="button"
                                     onClick={(e) => removeOption(item.id, e)}
-                                    className="hover:text-red-500 rounded-full focus:outline-none ml-0.5"
+                                    className="p-0.5 text-[#1C2C1C]/40 group-hover/tag:text-red-600 hover:bg-black/10 rounded-full transition-colors flex items-center justify-center ml-0.5"
                                 >
-                                    &times;
+                                    <X size={10} strokeWidth={2.5} />
                                 </button>
                             </span>
                         ))
                     )}
                 </div>
-                <div className="flex items-center gap-1 flex-shrink-0 text-[#1C2C1C]/40">
+                <div className="flex items-center gap-1 flex-shrink-0 text-[#1C2C1C]/40 self-center">
                     {selectedIds.length > 0 && (
-                        <span className="text-[11px] font-bold bg-[#6E9625] text-white rounded-full px-1.5 py-0.5 min-w-[20px] text-center">
+                        <span className="text-[10px] font-bold bg-[#6E9625] text-white rounded-full px-1.5 py-0.5 min-w-[18px] text-center leading-none">
                             {selectedIds.length}
                         </span>
                     )}
@@ -139,65 +138,39 @@ const MultiSelect = ({
             </div>
 
             {isOpen && !disabled && (
-                <div className="absolute z-50 left-0 right-0 top-full mt-1.5 bg-white border border-[#243A241F] rounded-[16px] shadow-xl max-h-[260px] flex flex-col overflow-hidden animate-in fade-in-50 zoom-in-95 duration-100">
-                    {options.length > 5 && (
-                        <div className="p-2 border-b border-[#243A240F] bg-[#FAFAFA]">
-                            <input
-                                type="text"
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                placeholder="Search..."
-                                className="w-full h-8 px-3 text-[12px] rounded-lg border border-[#243A241F] outline-none focus:border-[#6E9625]"
-                                onClick={(e) => e.stopPropagation()}
-                            />
-                        </div>
-                    )}
+                <div className="absolute z-50 left-0 right-0 top-full mt-1.5 bg-white border border-[#243A241F] rounded-[16px] shadow-[0_16px_40px_rgba(28,44,28,0.12)] max-h-[260px] flex flex-col overflow-hidden animate-in fade-in-50 zoom-in-95 duration-100">
+                    <div className="p-2 border-b border-[#243A240A] bg-[#F9FAF8] relative">
+                        <Search size={14} className="absolute left-4.5 top-1/2 -translate-y-1/2 text-[#1C2C1C]/40 pointer-events-none" />
+                        <input
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="Search..."
+                            className="w-full h-8 pl-8 pr-3 text-[12px] rounded-lg border border-[#243A241A] bg-white outline-none focus:border-[#6E9625] focus:ring-1 focus:ring-[#6E9625] transition-all"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    </div>
 
                     <div className="overflow-y-auto p-1.5 space-y-0.5 flex-1">
                         {filteredOptions.length === 0 ? (
-                            <div className="p-3 text-[12px] text-center text-[#1C2C1C]/40">
-                                {options.length === 0 ? "No options available" : "No results found"}
+                            <div className="p-3 text-[12px] text-center text-[#1C2C1C]/40 font-medium">
+                                {options.length === 0
+                                    ? "No options available"
+                                    : selectedIds.length === options.length
+                                        ? "All options selected"
+                                        : "No results found"}
                             </div>
                         ) : (
-                            filteredOptions.map((opt) => {
-                                const isSelected = selectedIds.includes(opt.id);
-                                return (
-                                    <div
-                                        key={opt.id}
-                                        onClick={() => toggleOption(opt.id)}
-                                        className={`flex items-center justify-between px-3 py-2 rounded-lg text-[13px] font-medium cursor-pointer transition-colors ${
-                                            isSelected
-                                                ? "bg-[#6E9625]/10 text-[#1C2C1C] font-semibold"
-                                                : "text-[#1C2C1C]/80 hover:bg-[#1C2C1C]/5"
-                                        }`}
-                                    >
-                                        <span>{opt.name}</span>
-                                        <div
-                                            className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                                                isSelected
-                                                    ? "bg-[#6E9625] border-[#6E9625] text-white"
-                                                    : "border-[#1C2C1C]/30 bg-white"
-                                            }`}
-                                        >
-                                            {isSelected && (
-                                                <svg
-                                                    className="w-3 h-3"
-                                                    fill="none"
-                                                    viewBox="0 0 24 24"
-                                                    stroke="currentColor"
-                                                    strokeWidth={3}
-                                                >
-                                                    <path
-                                                        strokeLinecap="round"
-                                                        strokeLinejoin="round"
-                                                        d="M5 13l4 4L19 7"
-                                                    />
-                                                </svg>
-                                            )}
-                                        </div>
-                                    </div>
-                                );
-                            })
+                            filteredOptions.map((opt) => (
+                                <div
+                                    key={opt.id}
+                                    onClick={() => toggleOption(opt.id)}
+                                    className="flex items-center justify-between px-3 py-2 rounded-lg text-[13px] font-medium text-[#1C2C1C]/80 hover:bg-[#6E9625]/10 hover:text-[#1C2C1C] cursor-pointer transition-all duration-150 group"
+                                >
+                                    <span>{opt.name}</span>
+                                    <Plus size={14} className="text-[#6E9625] opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </div>
+                            ))
                         )}
                     </div>
                 </div>
@@ -485,24 +458,56 @@ export default function Step2Page() {
                                 />
                             </label>
                             {idFile && (
-                                <p className="text-[10px] text-[#6E9625] mt-3 font-bold truncate max-w-full">
-                                    {idFile.name}
-                                </p>
+                                <div className="mt-3 inline-flex items-center gap-1.5 bg-[#6E9625]/12 border border-[#6E9625]/25 text-[#1C2C1C] text-[11px] font-semibold px-3 py-1 rounded-full max-w-full shadow-2xs">
+                                    <span className="truncate max-w-[160px]">{idFile.name}</span>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setIdFile(null);
+                                        }}
+                                        className="p-0.5 text-[#1C2C1C]/50 hover:text-red-600 hover:bg-black/10 rounded-full transition-colors flex items-center justify-center"
+                                        title="Remove file"
+                                    >
+                                        <X size={12} strokeWidth={2.5} />
+                                    </button>
+                                </div>
                             )}
                         </div>
                     )}
 
                     {/* Profile / Logo */}
                     <div className="border border-dashed border-[#1C2C1C]/20 rounded-2xl p-6 flex flex-col items-center justify-center text-center hover:border-[#6E9625] hover:bg-[#6E9625]/5 transition-all bg-[#FAFAFA]">
-                        <div className="w-10 h-10 bg-[#6E9625] rounded-full flex items-center justify-center text-white mb-4">
-                            <ImageIcon size={18} />
-                        </div>
+                        {logoFile ? (
+                            <div className="relative w-20 h-20 mb-3">
+                                <img
+                                    src={URL.createObjectURL(logoFile)}
+                                    alt="Profile preview"
+                                    className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md ring-2 ring-[#6E9625]"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setLogoFile(null);
+                                    }}
+                                    className="absolute -top-1 -right-1 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition-colors flex items-center justify-center"
+                                    title="Remove image"
+                                >
+                                    <X size={12} strokeWidth={2.5} />
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="w-10 h-10 bg-[#6E9625] rounded-full flex items-center justify-center text-white mb-4">
+                                <ImageIcon size={18} />
+                            </div>
+                        )}
                         <h3 className="text-[13px] font-bold text-[#1C2C1C] mb-1">Profile / Logo</h3>
-                        <p className="text-[10px] text-[#1C2C1C]/40 mb-5 max-w-[200px]">
+                        <p className="text-[10px] text-[#1C2C1C]/40 mb-4 max-w-[200px]">
                             (A high-quality business image for your public profile)
                         </p>
                         <label className="bg-[#1C2C1C] text-white text-[11px] font-bold py-2.5 px-6 rounded-full cursor-pointer hover:bg-[#2C4A2C] transition-colors shadow-sm">
-                            {logoFile ? "Change File" : "Upload Profile"}
+                            {logoFile ? "Change Image" : "Upload Profile"}
                             <input
                                 type="file"
                                 className="hidden"
@@ -510,11 +515,6 @@ export default function Step2Page() {
                                 onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
                             />
                         </label>
-                        {logoFile && (
-                            <p className="text-[10px] text-[#6E9625] mt-3 font-bold truncate max-w-full">
-                                {logoFile.name}
-                            </p>
-                        )}
                     </div>
                 </div>
 

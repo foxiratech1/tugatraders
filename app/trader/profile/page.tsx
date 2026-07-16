@@ -150,15 +150,15 @@ const MultiSelect = ({
                     key={opt.id}
                     onClick={() => toggleOption(opt.id)}
                     className={`flex items-center justify-between px-3 py-2 rounded-lg text-[13px] font-medium cursor-pointer transition-colors ${isSelected
-                        ? "bg-[#6E9625]/10 text-[#1C2C1C] font-semibold"
-                        : "text-[#1C2C1C]/80 hover:bg-gray-100"
+                      ? "bg-[#6E9625]/10 text-[#1C2C1C] font-semibold"
+                      : "text-[#1C2C1C]/80 hover:bg-gray-100"
                       }`}
                   >
                     <span>{opt.name}</span>
                     <div
                       className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${isSelected
-                          ? "bg-[#6E9625] border-[#6E9625] text-white"
-                          : "border-gray-300 bg-white"
+                        ? "bg-[#6E9625] border-[#6E9625] text-white"
+                        : "border-gray-300 bg-white"
                         }`}
                     >
                       {isSelected && (
@@ -481,24 +481,24 @@ export default function TraderProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!personalForm.fullName.trim()) return toast.error("Full Name is required.");
+    if (!personalForm.fullName.trim()) return toast.error("Full Name is required.", { id: "trader-profile-error" });
 
-    if (!personalForm.email.trim()) return toast.error("Email is required.");
+    if (!personalForm.email.trim()) return toast.error("Email is required.", { id: "trader-profile-error" });
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(personalForm.email.trim())) {
-      return toast.error("Please enter a valid email address.");
+      return toast.error("Please enter a valid email address.", { id: "trader-profile-error" });
     }
 
     if (!personalForm.phone || !personalForm.phone.trim()) {
-      return toast.error("Phone number is required.");
+      return toast.error("Phone number is required.", { id: "trader-profile-error" });
     }
     // Allow optional +, spaces, dashes, and 9-15 digits
     const phoneRegex = /^\+?[\d\s\-]{9,15}$/;
     if (!phoneRegex.test(personalForm.phone)) {
-      return toast.error("Please enter a valid phone number (e.g. +351 912 345 678).");
+      return toast.error("Please enter a valid phone number (e.g. +351 912 345 678).", { id: "trader-profile-error" });
     }
 
-    if (!businessForm.companyName.trim()) return toast.error("Company Name is required.");
-    if (!businessForm.companyType.trim()) return toast.error("Company Type is required.");
+    if (!businessForm.companyName.trim()) return toast.error("Company Name is required.", { id: "trader-profile-error" });
+    if (!businessForm.companyType.trim()) return toast.error("Company Type is required.", { id: "trader-profile-error" });
 
 
 
@@ -549,7 +549,7 @@ export default function TraderProfilePage() {
       }
     } catch (err: any) {
       console.error("Update profile error", err);
-      toast.error(err?.response?.data?.message || "Failed to update profile");
+      toast.error(err?.response?.data?.message || "Failed to update profile", { id: "trader-profile-error" });
     } finally {
       setSaving(false);
     }

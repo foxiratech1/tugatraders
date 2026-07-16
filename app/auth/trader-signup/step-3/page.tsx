@@ -97,7 +97,7 @@ export default function Step3Page() {
                     setPlans(data.data.filter((p: Plan) => p.isActive));
                 }
             } catch (error) {
-                toast.error("Failed to load membership plans");
+                toast.error("Failed to load membership plans", { id: "fetch-plans-error" });
             } finally {
                 setPlansLoading(false);
             }
@@ -120,7 +120,7 @@ export default function Step3Page() {
                     setRejectionReason(reason);
                 }
             } catch (err) {
-                toast.error("Failed to fetch verification status");
+                toast.error("Failed to fetch verification status", { id: "fetch-verification-status-error" });
                 setVerificationStatus("PENDING");
             } finally {
                 setStatusLoading(false);
@@ -224,7 +224,7 @@ export default function Step3Page() {
                         {verificationStatus === "REJECTED" && (
                             <div className="flex flex-col items-center w-full">
                                 <p className="text-[15px] text-[#1C2C1C]/60 mb-4 leading-relaxed max-w-[340px]">
-                                    Unfortunately, your profile verification was rejected. Please review the reason below and update your details.
+                                    Unfortunately, your profile verification was rejected. Please review the reason below.
                                 </p>
 
                                 <div className="w-full bg-red-50/50 border border-red-100 rounded-xl p-4 mb-6 text-left">
@@ -237,10 +237,10 @@ export default function Step3Page() {
                                 </div>
 
                                 <button
-                                    onClick={() => router.push("/trader/profile?mode=update")}
+                                    onClick={() => authApi.handleLogout(router)}
                                     className="w-full bg-[#1C2C1C] text-white font-bold py-3.5 px-6 rounded-xl hover:bg-[#2C4A2C] transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5"
                                 >
-                                    Update profile
+                                    Log out
                                 </button>
                             </div>
                         )}

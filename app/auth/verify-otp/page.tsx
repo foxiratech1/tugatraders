@@ -208,8 +208,8 @@ function VerifyOtpContent() {
               {resendLoading
                 ? "Resending..."
                 : timer > 0
-                ? `Resend OTP in ${timer}s`
-                : "Resend OTP"}
+                  ? `Resend OTP in ${timer}s`
+                  : "Resend OTP"}
             </button>
           </p>
           <button

@@ -198,7 +198,9 @@ export default function TraderNavbar() {
   const handleRestrictedNav = (e: React.MouseEvent, label: string) => {
     if (!isApproved && label !== "Profile") {
       e.preventDefault();
-      toast.error("Complete your verification to access this feature.");
+      toast.error("Complete your verification to access this feature.", {
+        id: "trader-restricted-feature",
+      });
     }
   };
 

@@ -32,7 +32,7 @@ export const setTokens = (accessToken: string, refreshToken?: string) => {
     const isSecure = window.location.protocol === 'https:' ? 'secure;' : '';
     // Sync with cookies for middleware access (Path=/ makes it accessible across the whole app)
     document.cookie = `accessToken=${accessToken}; path=/; max-age=${60 * 60 * 24 * 7}; ${isSecure} samesite=lax`;
-    
+
     if (refreshToken) {
       localStorage.setItem("refreshToken", refreshToken);
       document.cookie = `refreshToken=${refreshToken}; path=/; max-age=${60 * 60 * 24 * 30}; ${isSecure} samesite=lax`;

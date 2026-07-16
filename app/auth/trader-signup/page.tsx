@@ -9,6 +9,8 @@ import { authApi, traderRegister, resendOtp } from "@/app/api/authApi";
 import { AnimatedEye } from "@/app/ui/AnimatedEye";
 import { setTokens, setUser } from "@/utils/auth";
 import PublicGuard from "@/components/Guards/PublicGuard";
+import { PhoneInput } from "react-international-phone";
+import "react-international-phone/style.css";
 
 // ─── Trade Categories ─────────────────────────────────────────────────────────
 // Trade categories will be loaded from the API
@@ -176,16 +178,23 @@ export default function TraderSignupPage() {
     if (!formData.businessEmail) e.businessEmail = "Business email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.businessEmail))
       e.businessEmail = "Please enter a valid email address";
+    const phoneDigits = formData.contactNumber.replace(/\D/g, "");
     if (!formData.contactNumber.trim()) {
       e.contactNumber = "Contact number is required";
-    } else if (!/^\d{8,15}$/.test(formData.contactNumber)) {
+    } else if (phoneDigits.length < 7 || phoneDigits.length > 15) {
       e.contactNumber = "Please enter a valid contact number";
     }
-    // Ensure contact number is numeric and limited to 15 digits
-    if (formData.contactNumber && !/^\d+$/.test(formData.contactNumber)) e.contactNumber = "Contact number must contain only digits";
-    if (formData.contactNumber && formData.contactNumber.length > 15) e.contactNumber = "Contact number must be at most 15 digits";
     if (!formData.password) {
       e.password = "Password is required";
+    } else if (
+      formData.password.length < 8 ||
+      formData.password.length > 64 ||
+      !/[A-Z]/.test(formData.password) ||
+      !/[a-z]/.test(formData.password) ||
+      !/[0-9]/.test(formData.password) ||
+      !/[^A-Za-z0-9]/.test(formData.password)
+    ) {
+      e.password = "Requires 8-64 chars, 1 uppercase, 1 lowercase, 1 number, and 1 special char.";
     }
 
     if (!formData.confirmPassword) {
@@ -195,7 +204,12 @@ export default function TraderSignupPage() {
     }
     // if (!formData.address.trim()) e.address = "Address is required";
     // if (!formData.city.trim()) e.city = "City is required";
-    if (!formData.workRadius) e.workRadius = "Work radius is required";
+    const radiusVal = Number(formData.workRadius);
+    if (!formData.workRadius) {
+      e.workRadius = "Work radius is required";
+    } else if (isNaN(radiusVal) || radiusVal <= 0 || radiusVal > 500) {
+      e.workRadius = "Radius must be between 1 and 500";
+    }
     if (!formData.baseLocation) e.baseLocation = "Location is required";
     // if (!formData.address.trim()) e.address = "Address is required";
     // if (!formData.city.trim()) e.city = "City is required";
@@ -242,30 +256,8 @@ export default function TraderSignupPage() {
 
     const newErrors = validate();
 
-    let passwordComplexityError = "";
-    if (
-      formData.password &&
-      (formData.password.length < 8 ||
-        formData.password.length > 64 ||
-        !/[A-Z]/.test(formData.password) ||
-        !/[a-z]/.test(formData.password) ||
-        !/[0-9]/.test(formData.password) ||
-        !/[^A-Za-z0-9]/.test(formData.password))
-    ) {
-      passwordComplexityError = "Password must contain at least one uppercase letter, one lowercase letter, one number, one special character, and be between 8 and 64 characters long.";
-    }
-
-    if (Object.keys(newErrors).length > 0 || passwordComplexityError) {
+    if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
-
-      if (newErrors.confirmPassword) {
-        toast.error(newErrors.confirmPassword, { id: 'validation-error' });
-      } else if (passwordComplexityError) {
-        toast.error(passwordComplexityError, { id: 'validation-error' });
-      } else {
-        const firstErrorKey = Object.keys(newErrors)[0] as keyof typeof newErrors;
-        toast.error(newErrors[firstErrorKey] || 'Validation error', { id: 'validation-error' });
-      }
       isSubmitting.current = false;
       return;
     }
@@ -407,10 +399,10 @@ export default function TraderSignupPage() {
                 {/* Work Radius + Base Location */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">Work Radius</label>
+                    <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">Work Radius (Miles)</label>
                     <input
-                      type="text"
-                      placeholder="e.g. 25 miles"
+                      type="number"
+                      placeholder="e.g. 25"
                       value={formData.workRadius}
                       onChange={(e) => field("workRadius", e.target.value)}
                       className={inputCls(errors.workRadius)}
@@ -590,16 +582,18 @@ export default function TraderSignupPage() {
                     Contact Number
                   </label>
 
-                  <input
-                    type="tel"
-                    placeholder="97112345678"
+                  <PhoneInput
+                    defaultCountry="pt"
                     value={formData.contactNumber}
-                    maxLength={15}
-                    onChange={(e) => {
-                      const value = e.target.value.replace(/\D/g, ""); // numbers only
-                      field("contactNumber", value);
+                    onChange={(phone) => field("contactNumber", phone)}
+                    inputClassName="!h-[44px] !w-full !rounded-r-[12px] !border-l-0 !text-[14px] !text-[#1C2C1C] !font-medium !placeholder-[#1C2C1C]/30 !outline-none !bg-white"
+                    countrySelectorStyleProps={{
+                      buttonClassName: "!h-[44px] !rounded-l-[12px] !border-[#243A241F] !bg-white !px-3 hover:!bg-[#F5F5F5]",
                     }}
-                    className={inputCls(errors.contactNumber)}
+                    className={`w-full rounded-[12px] border transition-all ${errors.contactNumber
+                        ? "border-red-400 focus-within:border-red-500 focus-within:ring-1 focus-within:ring-red-400"
+                        : "border-[#243A241F] focus-within:border-[#6E9625] focus-within:ring-1 focus-within:ring-[#6E9625]"
+                      }`}
                   />
 
                   {errors.contactNumber && (
