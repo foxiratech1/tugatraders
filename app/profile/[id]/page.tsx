@@ -4,10 +4,9 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { authApi } from "@/app/api/authApi";
 import { getAccessToken } from "@/utils/auth";
-import Image from "next/image";
 import {
   Star, MapPin, Phone, Briefcase, Wrench, ShieldCheck,
-  Mail, ArrowLeft, CheckCircle, FileText
+  Mail, ArrowLeft, CheckCircle, FileText, Check, Info, Image as ImageIcon, X
 } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -68,7 +67,7 @@ export default function PublicTraderProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F8F9F5] flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-[#243A24]/20 border-t-[#243A24] rounded-full animate-spin" />
           <p className="text-[#243A24] font-semibold tracking-wide animate-pulse">Loading Profile...</p>
@@ -79,7 +78,7 @@ export default function PublicTraderProfilePage() {
 
   if (!profile) {
     return (
-      <div className="min-h-screen bg-[#F8F9F5] flex flex-col items-center justify-center gap-6 px-4">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-6 px-4">
         <div className="w-24 h-24 bg-red-100 text-red-500 rounded-full flex items-center justify-center">
           <ShieldCheck size={48} />
         </div>
@@ -98,32 +97,30 @@ export default function PublicTraderProfilePage() {
     );
   }
 
-  // Extract variables defensively
-  const tp = profile?.profile || profile?.traderProfile || profile;
-  const user = profile?.user || profile;
+  // Extract variables carefully based on provided JSON structure
+  const tp = profile?.profile || {};
   const metrics = profile?.metrics || {};
 
-  const fullName = user?.fullName || tp?.fullName || "Professional";
-  const title = tp?.professionalTitle || tp?.title || "Specialist";
-  const companyName = tp?.companyName || tp?.businessName;
-  const avatarUrl = getImageUrl(user?.profileImage || tp?.logo || tp?.profileImage);
-  const location = tp?.location || tp?.workLocation || user?.city || "Location not specified";
-  const bio = tp?.about || tp?.bio || tp?.description || "No description provided.";
-  const rating = metrics?.averageRating || tp?.ratingAvg || user?.ratingAvg || 0;
-  const reviewCount = metrics?.totalReviews || tp?.reviewCount || user?.reviewCount || 0;
+  const fullName = profile?.fullName || tp?.fullName || "Professional";
+  const email = profile?.email;
+  const phone = profile?.phone;
+  const companyName = tp?.companyName;
+  const avatarUrl = getImageUrl(profile?.profileImage || tp?.logo);
+  const location = tp?.location || profile?.city || "Location not specified";
+  const bio = tp?.about || tp?.bio || "No description provided.";
+  const rating = metrics?.averageRating || 0;
+  const reviewCount = metrics?.totalReviews || 0;
 
-  const isVerified = (tp?.verificationStatus === "APPROVED") || tp?.isVerified || user?.isVerified || false;
-  const workRadius = tp?.workRadius ? `${tp.workRadius} miles` : null;
+  const isVerified = tp?.verificationStatus === "APPROVED";
+  const isInsured = tp?.insured || false;
+  const portfolio = tp?.portfolio || [];
 
   return (
-    <div className="min-h-screen bg-[#F8F9F5] font-sans selection:bg-[#6E9625]/20 selection:text-[#1C2C1C]">
-
-      {/* ── Navbar Spacer (assuming layout has absolute navbar, or we just want some top padding) ── */}
+    <div className="min-h-screen bg-white font-sans selection:bg-[#6E9625]/20 selection:text-[#1C2C1C]">
+      {/* ── Navbar Spacer ── */}
       <div className="h-16 lg:h-24" />
 
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
-
-        {/* Back Button */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <button
           onClick={() => router.push("/directory-listing/search")}
           className="flex items-center gap-2 text-gray-500 hover:text-[#243A24] font-medium transition-colors mb-6 lg:mb-10"
@@ -132,214 +129,217 @@ export default function PublicTraderProfilePage() {
           Back to Search Results
         </button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
+        <div className="flex flex-col lg:flex-row gap-10 lg:gap-16">
 
-          {/* ── Left Sidebar (Overview) ── */}
-          <div className="lg:col-span-4 flex flex-col gap-6">
-
-            <div className="bg-white rounded-3xl p-8 shadow-[0_8px_40px_rgba(36,58,36,0.04)] border border-[#243A240A] flex flex-col items-center text-center relative overflow-hidden">
-              {/* Decorative top shape */}
-              <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-[#6E9625]/10 to-transparent pointer-events-none" />
-
-              {/* Avatar */}
-              <div className="relative w-36 h-36 rounded-full border-4 border-white shadow-lg overflow-hidden mb-5 bg-gray-100 z-10 flex items-center justify-center text-gray-400">
-                <img src={avatarUrl} alt={fullName} className="w-full h-full object-cover" />
-              </div>
-
-              <h1 className="text-2xl font-extrabold text-[#1C2C1C] tracking-tight mb-1" style={{ fontFamily: 'var(--font-bricolage), sans-serif' }}>
-                {fullName}
-              </h1>
-
-              <p className="text-[#6E9625] font-bold text-sm tracking-wide uppercase mb-4">
-                {title}
-              </p>
-
-              {isVerified && (
-                <div className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1 rounded-full text-[12px] font-bold tracking-wide uppercase mb-6">
-                  <ShieldCheck size={14} className="stroke-[2.5]" />
-                  Verified Professional
-                </div>
-              )}
-
-              {/* Stats Row */}
-              <div className="flex items-center justify-center gap-6 w-full pt-6 border-t border-gray-100">
-                <div className="flex flex-col items-center">
-                  <div className="flex items-center gap-1 text-[#F59E0B]">
-                    <Star size={16} className="fill-current" />
-                    <span className="font-bold text-[#1C2C1C]">{rating || 'New'}</span>
-                  </div>
-                  <span className="text-[11px] text-gray-500 font-medium uppercase tracking-wider mt-1">
-                    {reviewCount} Reviews
-                  </span>
-                </div>
-                <div className="w-[1px] h-8 bg-gray-200" />
-                <div className="flex flex-col items-center">
-                  <div className="flex items-center gap-1 text-[#6E9625]">
-                    <MapPin size={16} />
-                    <span className="font-bold text-[#1C2C1C] truncate max-w-[100px]">{location.split(',')[0]}</span>
-                  </div>
-                  <span className="text-[11px] text-gray-500 font-medium uppercase tracking-wider mt-1">
-                    Location
-                  </span>
-                </div>
-              </div>
+          {/* ── Left Sidebar ── */}
+          <div className="w-full lg:w-72 flex-shrink-0 flex flex-col items-center text-center">
+            {/* Avatar */}
+            <div className="w-40 h-40 rounded-full border border-gray-100 overflow-hidden mb-5 bg-gray-50 flex items-center justify-center">
+              <img src={avatarUrl} alt={fullName} className="w-full h-full object-cover" />
             </div>
 
-            {/* Quick Contact & Info */}
-            <div className="bg-white rounded-3xl p-8 shadow-[0_8px_40px_rgba(36,58,36,0.04)] border border-[#243A240A]">
-              <h3 className="text-[13px] font-extrabold text-[#1C2C1C] tracking-widest uppercase mb-5">At a Glance</h3>
-              <div className="flex flex-col gap-4">
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">{fullName}</h1>
 
-                {companyName && (
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#6E9625]/10 flex items-center justify-center text-[#6E9625] flex-shrink-0">
-                      <Briefcase size={14} />
-                    </div>
-                    <div>
-                      <p className="text-[12px] text-gray-500 font-medium">Company</p>
-                      <p className="text-[14px] font-semibold text-[#1C2C1C]">{companyName}</p>
-                      {tp?.companyType && <p className="text-[12px] text-gray-500">{tp.companyType}</p>}
-                      {tp?.registrationNumber && <p className="text-[12px] text-gray-400">Reg: {tp.registrationNumber}</p>}
-                    </div>
-                  </div>
-                )}
+            {/* Verified Badge */}
+            {isVerified && (
+              <div className="flex items-center gap-1.5 text-[#243A24] font-semibold text-sm mb-4">
+                <div className="w-5 h-5 rounded-full bg-white border border-[#243A24] flex items-center justify-center">
+                  <Check size={12} className="text-[#243A24]" strokeWidth={3} />
+                </div>
+                Vetted Trader
+              </div>
+            )}
 
+            {/* Rating */}
+            <div className="flex flex-col items-center mb-8">
+              <div className="flex items-center gap-1.5 text-[#F59E0B] font-bold mb-1">
+                <Star size={18} className="fill-current" />
+                <span className="text-gray-900">{rating || 'New'}</span>
+              </div>
+              <span className="text-xs text-gray-400 font-semibold uppercase tracking-wider">{reviewCount} REVIEWS</span>
+            </div>
+
+            {/* Contact info */}
+            <div className="w-full text-left space-y-5 mb-10 pl-2">
+              {email && (
                 <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-[#6E9625]/10 flex items-center justify-center text-[#6E9625] flex-shrink-0">
-                    <MapPin size={14} />
+                  <div className="w-8 h-8 rounded-full bg-[#F2F6EC] flex items-center justify-center text-[#6E9625] flex-shrink-0">
+                    <Mail size={16} />
                   </div>
                   <div>
-                    <p className="text-[12px] text-gray-500 font-medium">Service Area</p>
-                    <p className="text-[14px] font-semibold text-[#1C2C1C]">
-                      {location} {workRadius && <span className="text-gray-400">({workRadius} radius)</span>}
-                    </p>
+                    <p className="text-xs text-gray-500 font-medium mb-0.5">Email</p>
+                    <a href={`mailto:${email}`} className="text-sm font-semibold text-[#6E9625] hover:underline break-all">{email}</a>
+                  </div>
+                </div>
+              )}
+              {phone && (
+                <div className="flex items-start gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#F2F6EC] flex items-center justify-center text-[#6E9625] flex-shrink-0">
+                    <Phone size={16} />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500 font-medium mb-0.5">Phone</p>
+                    <a href={`tel:${phone}`} className="text-sm font-semibold text-[#6E9625] hover:underline">{phone}</a>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Stats List */}
+            <div className="w-full space-y-5 pl-2 text-left">
+              <div className="flex flex-col gap-1">
+                <span className="text-gray-600 font-medium text-sm">Company:</span>
+                <span className="font-semibold text-gray-900">{companyName || '-'}</span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-gray-600 font-medium text-sm">Location:</span>
+                <span className="font-semibold text-gray-900">{location || '-'}</span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-gray-600 font-medium text-sm">Jobs Complete:</span>
+                <span className="font-semibold text-gray-900">{metrics?.completedJobs || 0}</span>
+              </div>
+              <div className="flex flex-col gap-1">
+                <span className="text-gray-600 font-medium text-sm">Response Rate:</span>
+                <span className="font-semibold text-gray-900">{metrics?.responseRate ? `${Math.round(metrics.responseRate * 100)}%` : 'N/A'}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Right Content ── */}
+          <div className="flex-1 flex flex-col pt-2 lg:pl-10">
+            {/* Top Vetting Header */}
+            <div className="flex flex-wrap items-start justify-between gap-6 mb-8 lg:mb-12 border-b border-gray-100 pb-8">
+              <div className="flex flex-wrap items-start gap-8 lg:gap-16">
+                {/* Individual Checks */}
+                <div className="group relative cursor-pointer">
+                  <div className="flex flex-col items-center">
+                    {isVerified ? (
+                      <Check size={28} className="text-black mb-2" strokeWidth={3} />
+                    ) : (
+                      <X size={28} className="text-gray-300 mb-2" strokeWidth={3} />
+                    )}
+                    <span className={`font-extrabold text-[15px] ${isVerified ? 'text-black' : 'text-gray-400'}`}>Individual Checks</span>
+                  </div>
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-max max-w-[200px] opacity-0 group-hover:opacity-100 transition-opacity bg-white shadow-xl rounded-lg p-3 text-sm text-gray-700 border border-gray-100 pointer-events-none z-10">
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li>{isVerified ? 'Identification verified' : 'Identification pending'}</li>
+                    </ul>
                   </div>
                 </div>
 
-                {user?.email && (
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#6E9625]/10 flex items-center justify-center text-[#6E9625] flex-shrink-0">
-                      <Mail size={14} />
-                    </div>
-                    <div>
-                      <p className="text-[12px] text-gray-500 font-medium">Email</p>
-                      <a href={`mailto:${user.email}`} className="text-[14px] font-semibold text-[#6E9625] hover:underline">
-                        {user.email}
-                      </a>
-                    </div>
+                {/* Trade Checks */}
+                <div className="group relative cursor-pointer">
+                  <div className="flex flex-col items-center">
+                    {isVerified ? (
+                      <Check size={28} className="text-black mb-2" strokeWidth={3} />
+                    ) : (
+                      <X size={28} className="text-gray-300 mb-2" strokeWidth={3} />
+                    )}
+                    <span className={`font-extrabold text-[15px] ${isVerified ? 'text-black' : 'text-gray-400'}`}>Trade Checks</span>
                   </div>
-                )}
-
-                {user?.phone && (
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#6E9625]/10 flex items-center justify-center text-[#6E9625] flex-shrink-0">
-                      <Phone size={14} />
-                    </div>
-                    <div>
-                      <p className="text-[12px] text-gray-500 font-medium">Phone</p>
-                      <a href={`tel:${user.phone}`} className="text-[14px] font-semibold text-[#6E9625] hover:underline">
-                        {user.phone}
-                      </a>
-                    </div>
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-max max-w-[250px] opacity-0 group-hover:opacity-100 transition-opacity bg-white shadow-xl rounded-lg p-3 text-sm text-gray-700 border border-gray-100 pointer-events-none z-10">
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li>{isVerified ? 'Registered business verified' : 'Business registration pending'}</li>
+                      <li>{isVerified ? 'Company trading history checked' : 'Trading history pending'}</li>
+                      <li>{isVerified ? 'Customer reviews monitored' : 'Reviews pending'}</li>
+                    </ul>
                   </div>
-                )}
+                </div>
 
+                {/* Insured */}
+                <div className="group relative cursor-pointer">
+                  <div className="flex flex-col items-center">
+                    {isInsured ? (
+                      <Check size={28} className="text-black mb-2" strokeWidth={3} />
+                    ) : (
+                      <X size={28} className="text-gray-300 mb-2" strokeWidth={3} />
+                    )}
+                    <span className={`font-extrabold text-[15px] ${isInsured ? 'text-black' : 'text-gray-400'}`}>Insured</span>
+                  </div>
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-3 w-max max-w-[200px] opacity-0 group-hover:opacity-100 transition-opacity bg-white shadow-xl rounded-lg p-3 text-sm text-gray-700 border border-gray-100 pointer-events-none z-10">
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li>{isInsured ? 'Public liability insurance verified' : 'Insurance pending or not verified'}</li>
+                    </ul>
+                  </div>
+                </div>
               </div>
+
+                <div className="flex items-center gap-2 text-sm text-gray-700 flex-shrink-0">
+                   <Info size={20} className="text-gray-400 flex-shrink-0" />
+                   <span className="whitespace-nowrap">Learn more about traders <a href="#" className="underline font-semibold">Vetting & badges.</a></span>
+                </div>
             </div>
 
-          </div>
+            {/* Light Background Area for Cards */}
+            <div className="bg-[#F8F9F5] rounded-[32px] p-6 sm:p-10 flex flex-col gap-6 w-full">
 
-          {/* ── Right Content (Details) ── */}
-          <div className="lg:col-span-8 flex flex-col gap-6">
-
-            {/* Performance Metrics */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-white rounded-3xl p-6 shadow-[0_8px_40px_rgba(36,58,36,0.04)] border border-[#243A240A] flex flex-col items-center text-center">
-                <span className="text-3xl font-black text-[#1C2C1C] mb-1">{metrics?.completedJobs || 0}</span>
-                <span className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">Completed Jobs</span>
-              </div>
-              <div className="bg-white rounded-3xl p-6 shadow-[0_8px_40px_rgba(36,58,36,0.04)] border border-[#243A240A] flex flex-col items-center text-center">
-                <span className="text-3xl font-black text-[#1C2C1C] mb-1">{metrics?.responseRate ? `${Math.round(metrics.responseRate * 100)}%` : 'N/A'}</span>
-                <span className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">Response Rate</span>
-              </div>
-              <div className="bg-white rounded-3xl p-6 shadow-[0_8px_40px_rgba(36,58,36,0.04)] border border-[#243A240A] flex flex-col items-center text-center">
-                <span className="text-3xl font-black text-[#1C2C1C] mb-1">{metrics?.totalMatchedJobs || 0}</span>
-                <span className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">Matched Jobs</span>
-              </div>
-              <div className="bg-white rounded-3xl p-6 shadow-[0_8px_40px_rgba(36,58,36,0.04)] border border-[#243A240A] flex flex-col items-center text-center">
-                <span className="text-3xl font-black text-[#6E9625] mb-1">{tp?.insured ? 'Yes' : 'No'}</span>
-                <span className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">Fully Insured</span>
-              </div>
-            </div>
-
-            {/* About Section */}
-            <div className="bg-white rounded-3xl p-8 lg:p-10 shadow-[0_8px_40px_rgba(36,58,36,0.04)] border border-[#243A240A]">
-              <h3 className="text-xl font-bold text-[#1C2C1C] mb-6 flex items-center gap-3">
-                <FileText className="text-[#6E9625]" size={24} />
-                About {fullName.split(' ')[0]}
-              </h3>
-              <div className="prose prose-sm sm:prose-base prose-green max-w-none text-[#1C2C1C]/70 font-medium leading-relaxed">
-                {bio.split('\n').map((paragraph: string, idx: number) => (
-                  <p key={idx} className="mb-4 last:mb-0">{paragraph}</p>
-                ))}
-              </div>
-            </div>
-
-            {/* Skills & Services */}
-            {((tp?.tradeCategories && tp.tradeCategories.length > 0) || (tp?.skillsServices && tp.skillsServices.length > 0)) && (
-              <div className="bg-white rounded-3xl p-8 lg:p-10 shadow-[0_8px_40px_rgba(36,58,36,0.04)] border border-[#243A240A]">
-                <h3 className="text-xl font-bold text-[#1C2C1C] mb-6 flex items-center gap-3">
-                  <Wrench className="text-[#6E9625]" size={24} />
+              {/* Services & Expertise */}
+              <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-50">
+                <h3 className="text-[17px] font-bold text-[#1C2C1C] mb-6 flex items-center gap-3">
+                  <Wrench className="text-[#6E9625]" size={20} />
                   Services & Expertise
                 </h3>
 
-                <div className="flex flex-wrap gap-2.5">
+                <div className="flex flex-wrap gap-3">
                   {/* Render Categories */}
                   {tp?.tradeCategories?.map((cat: any, i: number) => (
-                    <span key={`cat-${i}`} className="inline-flex items-center gap-1.5 bg-[#243A24] text-white px-4 py-2 rounded-xl text-[13px] font-bold tracking-wide">
+                    <span key={`cat-${i}`} className="inline-flex items-center bg-[#243A24] text-white px-5 py-2.5 rounded-[10px] text-[13px] font-bold">
                       {typeof cat === 'object' ? cat.name : cat}
                     </span>
                   ))}
 
                   {/* Render Skills */}
                   {tp?.skillsServices?.map((skill: any, i: number) => (
-                    <span key={`skill-${i}`} className="inline-flex items-center gap-1.5 bg-[#6E9625]/10 text-[#243A24] px-4 py-2 rounded-xl text-[13px] font-bold tracking-wide border border-[#6E9625]/20">
+                    <span key={`skill-${i}`} className="inline-flex items-center bg-[#F2F6EC] text-[#243A24] px-5 py-2.5 rounded-[10px] text-[13px] font-bold">
                       {typeof skill === 'object' ? skill.name : skill}
                     </span>
                   ))}
 
                   {/* Render Sub Categories */}
                   {tp?.subCategories?.map((sub: any, i: number) => (
-                    <span key={`sub-${i}`} className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-[13px] font-bold tracking-wide border border-gray-200">
+                    <span key={`sub-${i}`} className="inline-flex items-center bg-[#F3F4F6] text-gray-700 px-5 py-2.5 rounded-[10px] text-[13px] font-bold">
                       {typeof sub === 'object' ? sub.name : sub}
                     </span>
                   ))}
                 </div>
               </div>
-            )}
 
-            {/* Request Quote Call to Action */}
-            {/* <div className="bg-gradient-to-r from-[#243A24] to-[#1C2C1C] rounded-3xl p-8 lg:p-10 shadow-xl border border-white/10 relative overflow-hidden flex flex-col sm:flex-row items-center justify-between gap-6">
-              <div className="absolute -top-24 -right-24 w-64 h-64 bg-[#6E9625] rounded-full blur-[80px] opacity-30 pointer-events-none" />
-              <div className="relative z-10 text-center sm:text-left">
-                <h3 className="text-xl sm:text-2xl font-bold text-white mb-2" style={{ fontFamily: 'var(--font-bricolage), sans-serif' }}>
-                  Ready to hire {fullName.split(' ')[0]}?
+              {/* About */}
+              <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-50">
+                <h3 className="text-[17px] font-bold text-[#1C2C1C] mb-6 flex items-center gap-3">
+                  <FileText className="text-[#6E9625]" size={20} />
+                  About {fullName.split(' ')[0]}
                 </h3>
-                <p className="text-white/70 text-sm sm:text-base font-medium max-w-md">
-                  Get in touch to discuss your project requirements and receive a detailed quote.
-                </p>
+                <div className="text-gray-600 font-medium text-[15px] leading-relaxed whitespace-pre-wrap">
+                  {bio}
+                </div>
               </div>
-              <button 
-                onClick={() => router.push(`/customer-dashboard/leave-review?traderId=${traderId}&reviewType=DIRECTORY`)}
-                className="relative z-10 w-full sm:w-auto flex-shrink-0 bg-[#6E9625] text-white px-8 py-4 rounded-2xl font-bold text-[15px] hover:bg-[#5b7d1e] hover:shadow-lg transition-all transform hover:-translate-y-0.5"
-              >
-                Request a Quote
-              </button>
-            </div> */}
 
+              {/* Gallery */}
+              <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_4px_20px_rgba(0,0,0,0.03)] border border-gray-50">
+                <h3 className="text-[17px] font-bold text-[#1C2C1C] mb-6 flex items-center gap-3">
+                  <ImageIcon className="text-[#6E9625]" size={20} />
+                  Gallery
+                </h3>
+                {portfolio && portfolio.length > 0 ? (
+                  <div className="flex flex-wrap gap-4">
+                    {portfolio.map((img: any, i: number) => (
+                      <div key={i} className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-gray-100 overflow-hidden border border-gray-200">
+                        <img src={getImageUrl(img.url || img)} alt="Gallery Image" className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500 font-medium text-sm">No image found</p>
+                )}
+              </div>
+
+            </div>
           </div>
         </div>
       </main>
     </div>
   );
 }
+
