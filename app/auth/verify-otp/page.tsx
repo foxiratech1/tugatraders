@@ -36,17 +36,35 @@ function VerifyOtpContent() {
       if (redirectTo) {
         window.location.replace(redirectTo);
       } else {
-        const role = user?.role?.toLowerCase();
-        if (role === "trader") {
-          window.location.replace("/trader");
-        } else if (role === "customer") {
-          window.location.replace("/customer-dashboard/jobs");
-        } else {
-          window.location.replace("/");
-        }
+        getRegistrationStatus().then((res) => {
+          const data = res?.data || res;
+          const userRole = (user?.role || "").toLowerCase();
+          const isCompleted = data?.isRegistrationCompleted;
+          if (userRole === "trader" || data?.selectedCategories || data?.currentStep) {
+            if (isCompleted) {
+              window.location.replace("/trader");
+            } else {
+              const catId = data?.selectedCategories?.[0]?.id || categoryId;
+              window.location.replace(catId ? `/auth/trader-signup/step-2?categoryId=${catId}` : "/auth/trader-signup/step-2");
+            }
+          } else if (userRole === "customer") {
+            window.location.replace("/customer-dashboard/jobs");
+          } else {
+            window.location.replace("/");
+          }
+        }).catch(() => {
+          const role = (user?.role || "").toLowerCase();
+          if (role === "trader") {
+            window.location.replace(`/auth/trader-signup/step-2${categoryId ? `?categoryId=${categoryId}` : ""}`);
+          } else if (role === "customer") {
+            window.location.replace("/customer-dashboard/jobs");
+          } else {
+            window.location.replace("/");
+          }
+        });
       }
     }
-  }, [router, redirectTo]);
+  }, [router, redirectTo, categoryId]);
 
   const handleResendOtp = async () => {
     if (!email) {
@@ -108,11 +126,6 @@ function VerifyOtpContent() {
         if (userRole === "trader" || data?.selectedCategories || data?.currentStep) {
           if (isCompleted) {
             window.location.replace("/trader");
-          } else if (data?.step2Completed === false || data?.currentStep === 2) {
-            const catId = data?.selectedCategories?.[0]?.id || categoryId;
-            window.location.replace(catId ? `/auth/trader-signup/step-2?categoryId=${catId}` : "/auth/trader-signup/step-2");
-          } else if (data?.step3Completed === false || data?.currentStep === 3) {
-            window.location.replace("/auth/trader-signup/step-3");
           } else {
             const catId = data?.selectedCategories?.[0]?.id || categoryId;
             window.location.replace(catId ? `/auth/trader-signup/step-2?categoryId=${catId}` : "/auth/trader-signup/step-2");

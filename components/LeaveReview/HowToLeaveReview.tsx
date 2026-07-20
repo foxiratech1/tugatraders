@@ -1,15 +1,214 @@
 "use client";
 
-import React from 'react';
-import { Search, Clock, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Search, Clock, ArrowRight, LogIn } from 'lucide-react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { authApi } from '@/app/api/authApi';
+
+const LoginModal = ({
+  isOpen,
+  onClose,
+  onSuccess,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+}) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [showPw, setShowPw] = useState(false);
+
+  if (!isOpen) return null;
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+    try {
+      const data = await authApi.login({ email, password });
+      const accessToken = data?.accessToken || data?.access_token || data?.token;
+      const refreshToken = data?.refreshToken || data?.refresh_token;
+      if (accessToken) {
+        localStorage.setItem('accessToken', accessToken);
+        if (refreshToken) localStorage.setItem('refreshToken', refreshToken);
+        onSuccess();
+      } else {
+        setError('Login failed. Please try again.');
+      }
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Invalid email or password.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+      <div className="bg-white rounded-2xl p-6 sm:p-8 w-full max-w-[420px] shadow-2xl relative">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full text-[#1C2C1C]/40 hover:bg-gray-100 hover:text-[#1C2C1C] transition-colors cursor-pointer text-lg"
+        >
+          ✕
+        </button>
+
+        <div className="w-12 h-12 rounded-full bg-[#F3F8EC] flex items-center justify-center mb-4">
+          <LogIn size={22} className="text-[#6E9625]" />
+        </div>
+
+        <h3 className="text-[22px] font-bold text-[#1C2C1C] mb-1" style={{ fontFamily: 'var(--font-bricolage), sans-serif' }}>
+          Login to Dashboard
+        </h3>
+        <p className="text-[13px] text-[#1C2C1C]/55 font-medium mb-6">
+          Please log in to access your dashboard.
+        </p>
+
+        {error && (
+          <div className="mb-4 px-4 py-2.5 bg-red-50 border border-red-200 rounded-xl text-[13px] text-red-600 font-medium">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleLogin} className="flex flex-col gap-3">
+          <div>
+            <label className="block text-[11px] font-extrabold text-[#1C2C1C] uppercase tracking-wider mb-1.5">Email</label>
+            <input
+              type="email"
+              placeholder="name@example.com"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+              className="w-full px-4 py-3 rounded-xl border border-[#E5E5E5] outline-none text-[14px] font-medium focus:border-[#6E9625] focus:ring-1 focus:ring-[#6E9625] transition-all"
+            />
+          </div>
+          <div>
+            <label className="block text-[11px] font-extrabold text-[#1C2C1C] uppercase tracking-wider mb-1.5">Password</label>
+            <div className="relative">
+              <input
+                type={showPw ? 'text' : 'password'}
+                placeholder="••••••••"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                className="w-full px-4 py-3 pr-10 rounded-xl border border-[#E5E5E5] outline-none text-[14px] font-medium focus:border-[#6E9625] focus:ring-1 focus:ring-[#6E9625] transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPw(v => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#1C2C1C]/40 hover:text-[#1C2C1C] transition-colors cursor-pointer"
+              >
+                {showPw ? (
+                  <svg viewBox="0 0 24 24" width="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24" /><line x1="1" y1="1" x2="23" y2="23" /></svg>
+                ) : (
+                  <svg viewBox="0 0 24 24" width="18" fill="none" stroke="currentColor" strokeWidth="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" /></svg>
+                )}
+              </button>
+            </div>
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full mt-1 py-3 bg-[#1C2C1C] text-white rounded-xl font-bold text-[14px] hover:bg-[#121E12] transition-colors disabled:opacity-60 cursor-pointer shadow-sm"
+          >
+            {loading ? 'Logging in…' : 'Log In & Continue'}
+          </button>
+        </form>
+
+        <p className="text-center text-[12px] text-[#1C2C1C]/50 mt-4">
+          Don&apos;t have an account?{' '}
+          <Link href="/auth/signup" className="text-[#6E9625] font-bold hover:underline">Sign up</Link>
+        </p>
+      </div>
+    </div>
+  );
+};
 
 const HowToLeaveReview = () => {
+  const [showLogin, setShowLogin] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [dropdownResults, setDropdownResults] = useState<any[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [isDropdownLoading, setIsDropdownLoading] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchDropdownResults = async () => {
+      if (searchQuery.trim().length > 1) {
+        setIsDropdownLoading(true);
+        setShowDropdown(true);
+        try {
+          const res = await authApi.searchTraders({ search: searchQuery });
+          const results = Array.isArray(res) ? res : res?.data || [];
+          setDropdownResults(results);
+        } catch (err) {
+          console.error('Failed to fetch dropdown traders', err);
+          setDropdownResults([]);
+        } finally {
+          setIsDropdownLoading(false);
+        }
+      } else {
+        setDropdownResults([]);
+        setShowDropdown(false);
+      }
+    };
+
+    const timeoutId = setTimeout(fetchDropdownResults, 300);
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleSearch = async () => {
+    setIsSearching(true);
+    try {
+      const params = searchQuery ? { query: searchQuery } : {};
+      await authApi.searchTraders(params);
+      
+      const queryString = searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : '';
+      router.push(`/directory-listing/search${queryString}`);
+    } catch (error) {
+      console.error("Search failed:", error);
+      const queryString = searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : '';
+      router.push(`/directory-listing/search${queryString}`);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleLoginSuccess = () => {
+    setShowLogin(false);
+    router.push('/trader');
+  };
+
   return (
+    <>
+      <LoginModal 
+        isOpen={showLogin} 
+        onClose={() => setShowLogin(false)} 
+        onSuccess={handleLoginSuccess} 
+      />
     <section className="bg-[#F8F9F5] pt-4 lg:pt-8 pb-16 lg:pb-24 px-4 sm:px-6 lg:px-20 overflow-hidden">
       <div className="max-w-[1200px] mx-auto w-full">
 
         {/* Search Bar Container */}
-        <div className="max-w-[1050px] mx-auto bg-white rounded-[28px] sm:rounded-[34px] shadow-[0_18px_50px_rgba(0,0,0,0.05)] border-2 border-[#243A24] px-4 sm:px-5 py-4 flex flex-col sm:flex-row items-center mb-6 gap-3 sm:gap-0">
+        <div 
+          ref={dropdownRef}
+          className="max-w-[1050px] mx-auto bg-white rounded-[28px] sm:rounded-[34px] shadow-[0_18px_50px_rgba(0,0,0,0.05)] border-2 border-[#243A24] px-4 sm:px-5 py-4 flex flex-col sm:flex-row items-center mb-6 gap-3 sm:gap-0 relative z-20"
+        >
           <div className="flex-1 flex items-center gap-5 px-5 sm:px-8 py-4 sm:py-3 w-full">
             <Search className="text-[#243A24] shrink-0" size={28} />
 
@@ -20,16 +219,64 @@ const HowToLeaveReview = () => {
 
               <input
                 type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSearch();
+                }}
                 placeholder="SEARCH BY TRADER'S NAME OR COMPANY..."
                 className="block w-full text-[13px] tracking-[0.18em] uppercase font-semibold text-[#111111] placeholder-[#55555570] bg-transparent outline-none mt-1"
               />
             </div>
           </div>
 
-          <button className="w-full sm:w-auto bg-[#243A24] hover:bg-[#152719] text-white px-10 sm:px-12 py-5 rounded-[20px] sm:rounded-[26px] flex items-center justify-center gap-2 font-bold text-[16px] transition-all shrink-0 cursor-pointer">
-            Find Tradesperson
+          <button 
+            onClick={handleSearch}
+            disabled={isSearching}
+            className="w-full sm:w-auto bg-[#243A24] hover:bg-[#152719] text-white px-10 sm:px-12 py-5 rounded-[20px] sm:rounded-[26px] flex items-center justify-center gap-2 font-bold text-[16px] transition-all shrink-0 cursor-pointer disabled:opacity-70">
+            {isSearching ? 'Searching...' : 'Find Tradesperson'}
             <ArrowRight size={18} />
           </button>
+
+          {/* Autocomplete Dropdown */}
+          {showDropdown && (
+            <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-[#E5E5E5] rounded-[20px] shadow-2xl max-h-[300px] overflow-y-auto z-50 overflow-hidden">
+              {isDropdownLoading ? (
+                <div className="px-6 py-6 text-center text-[14px] text-[#6B7280] font-medium flex items-center justify-center gap-2">
+                  <div className="w-4 h-4 border-2 border-[#6E9625] border-t-transparent rounded-full animate-spin"></div>
+                  Searching...
+                </div>
+              ) : dropdownResults.length > 0 ? (
+                dropdownResults.map((trader) => (
+                  <div 
+                    key={trader.id}
+                    onClick={() => router.push(`/profile/${trader.id}`)}
+                    className="flex items-center gap-4 px-6 py-4 hover:bg-[#F3F8EC] transition-colors cursor-pointer border-b border-[#E5E5E5] last:border-b-0"
+                  >
+                    <div className="w-12 h-12 bg-gray-100 rounded-full overflow-hidden shrink-0">
+                      <img 
+                        src={trader.profileImage || trader.logo || '/placeholder.png'} 
+                        alt={trader.fullName} 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <div>
+                      <h4 className="text-[15px] font-bold text-[#1F2937]">{trader.fullName}</h4>
+                      <p className="text-[13px] text-[#6B7280]">{trader.companyName || trader.location || 'Trader'}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="px-6 py-8 text-center flex flex-col items-center justify-center">
+                  <div className="w-12 h-12 rounded-full bg-[#F3F8EC] flex items-center justify-center mb-3">
+                    <Search className="text-[#6E9625]" size={20} />
+                  </div>
+                  <p className="text-[15px] font-bold text-[#1F2937] mb-1">Trader not found</p>
+                  <p className="text-[13px] text-[#6B7280]">We couldn't find any tradesperson matching "{searchQuery}".</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Spelling Helper Text */}
@@ -101,7 +348,11 @@ const HowToLeaveReview = () => {
             </div>
 
             {/* Button */}
-            <button className="bg-[#243A24] hover:bg-[#1A301A] text-white px-7 py-3.5 rounded-[14px] flex items-center justify-center gap-2 font-bold text-[14px] transition-all w-full cursor-pointer shadow-md">
+            <button 
+              onClick={() => {
+                router.push('/directory-listing/search');
+              }}
+              className="bg-[#243A24] hover:bg-[#1A301A] text-white px-7 py-3.5 rounded-[14px] flex items-center justify-center gap-2 font-bold text-[14px] transition-all w-full cursor-pointer shadow-md">
               Find Tradesperson
               <ArrowRight size={16} />
             </button>
@@ -155,7 +406,10 @@ const HowToLeaveReview = () => {
             </div>
 
             {/* Button */}
-            <button className="bg-[#6E9625] hover:bg-[#5a7d1e] text-white px-7 py-3.5 rounded-[14px] flex items-center justify-center gap-2 font-bold text-[14px] transition-all w-full cursor-pointer shadow-md">
+            <button 
+              onClick={() => setShowLogin(true)}
+              className="bg-[#6E9625] hover:bg-[#5a7d1e] text-white px-7 py-3.5 rounded-[14px] flex items-center justify-center gap-2 font-bold text-[14px] transition-all w-full cursor-pointer shadow-md"
+            >
               Go To Dashboard
             </button>
           </div>
@@ -180,6 +434,7 @@ const HowToLeaveReview = () => {
 
       </div>
     </section>
+    </>
   );
 };
 

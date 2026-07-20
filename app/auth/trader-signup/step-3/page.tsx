@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Check, ShieldCheck, Lock, Clock, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
 import { traderRegisterStep3, authApi, getRegistrationStatus } from "@/app/api/authApi";
@@ -28,44 +28,14 @@ interface Plan {
 
 export default function Step3Page() {
     const router = useRouter();
+    const pathname = usePathname();
     const [loading, setLoading] = useState(false);
     const [billingCycle, setBillingCycle] = useState<"MONTHLY" | "YEARLY">("YEARLY");
 
-    // Handle payment and final registration step
-    const handlePayment = async () => {
-        if (!selectedPlanId) return;
-        setLoading(true);
-        try {
-            // Find selected plan and price id for current billing cycle
-            const selectedPlan = plans.find(p => p.id === selectedPlanId);
-            const price = selectedPlan?.prices.find(p => p.billingCycle === billingCycle);
-            if (!price) {
-                toast.error("Price not found for selected plan.");
-                setLoading(false);
-                return;
-            }
-            await traderRegisterStep3({ planId: selectedPlanId, priceId: price.id });
-            toast.success("Registration completed! Redirecting to dashboard...");
-            router.push("/trader"); // adjust path as needed
-        } catch (err) {
-            toast.error("Payment processing failed.");
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
-    const [plans, setPlans] = useState<Plan[]>([]);
-    const [plansLoading, setPlansLoading] = useState(true);
-    const [verificationStatus, setVerificationStatus] = useState<string>('PENDING');
-    const [rejectionReason, setRejectionReason] = useState<string>('');
-    const [statusLoading, setStatusLoading] = useState(true);
-
-    // We store the selected plan ID
-    const [selectedPlanId, setSelectedPlanId] = useState<string>("");
-
-    // Guard to prevent non-traders or unverified users from accessing step-3
+    // Guard to prevent non-traders, unverified users, or incomplete step-2 traders from accessing step-3
     useEffect(() => {
-        import("@/utils/auth").then(({ getUserRole, getAccessToken, parseJwt }) => {
+        const checkStep3Guard = async () => {
+            const { getUserRole, getAccessToken, parseJwt } = await import("@/utils/auth");
             const role = getUserRole();
             if (role === "customer") {
                 router.replace("/customer-dashboard/jobs");
@@ -81,10 +51,69 @@ export default function Step3Page() {
                 const isEmailVerified = decoded?.isEmailVerified ?? decoded?.user?.isEmailVerified;
                 if (isEmailVerified === false) {
                     router.replace("/auth/verify-otp");
+                    return;
                 }
             }
-        });
-    }, [router]);
+
+            try {
+                const statusRes = await getRegistrationStatus();
+                const data = statusRes?.data || statusRes;
+                const vStatus = data?.verificationStatus ?? data?.status;
+                const isStep2Done = data?.step2Completed === true || data?.currentStep === 3 || vStatus === "MANUAL_CHECK";
+
+                if (data?.isRegistrationCompleted && vStatus === "APPROVED") {
+                    router.replace("/trader");
+                } else if (!isStep2Done) {
+                    const catId = data?.selectedCategories?.[0]?.id;
+                    router.replace(catId ? `/auth/trader-signup/step-2?categoryId=${catId}` : "/auth/trader-signup/step-2");
+                }
+            } catch (err) {
+                console.error("Step3 guard check failed", err);
+            }
+        };
+
+        checkStep3Guard();
+
+        const handlePageShow = (e: PageTransitionEvent) => {
+            if (e.persisted) {
+                checkStep3Guard();
+            }
+        };
+        window.addEventListener("pageshow", handlePageShow);
+        return () => window.removeEventListener("pageshow", handlePageShow);
+    }, [router, pathname]);
+
+    // Handle payment and final registration step
+    const handlePayment = async () => {
+        if (!selectedPlanId) return;
+        setLoading(true);
+        try {
+            // Find selected plan and price id for current billing cycle
+            const selectedPlan = plans.find(p => p.id === selectedPlanId);
+            const price = selectedPlan?.prices.find(p => p.billingCycle === billingCycle);
+            if (!price) {
+                toast.error("Price not found for selected plan.");
+                setLoading(false);
+                return;
+            }
+            await traderRegisterStep3({ planId: selectedPlanId, priceId: price.id });
+            toast.success("Subscription activated successfully!");
+            router.replace("/trader"); // adjust path as needed
+        } catch (err) {
+            toast.error("Payment processing failed.");
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+    const [plans, setPlans] = useState<Plan[]>([]);
+    const [plansLoading, setPlansLoading] = useState(true);
+    const [verificationStatus, setVerificationStatus] = useState<string>('PENDING');
+    const [rejectionReason, setRejectionReason] = useState<string>('');
+    const [statusLoading, setStatusLoading] = useState(true);
+
+    // We store the selected plan ID
+    const [selectedPlanId, setSelectedPlanId] = useState<string>("");
 
     useEffect(() => {
         const fetchPlans = async () => {
@@ -153,11 +182,8 @@ export default function Step3Page() {
         <main className="min-h-screen bg-[#F0EDE8] pt-32 pb-20 px-4 flex justify-center font-sans relative">
 
             {verificationStatus !== "APPROVED" && (
-                <div className="absolute inset-0 z-50 flex items-center justify-center p-4 bg-[#1C2C1C]/30 backdrop-blur-md">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1C2C1C]/30 backdrop-blur-md">
                     <div className="relative w-full max-w-[480px] bg-white rounded-[32px] shadow-[0_32px_80px_rgba(28,44,28,0.15)] border border-[#243A240A] p-10 flex flex-col items-center text-center overflow-hidden">
-                        {/* Top decorative gradient */}
-                        <div className="absolute top-0 left-0 right-0 h-2 bg-gradient-to-r from-[#6E9625] to-[#4A6B17]" />
-
                         {/* Icon */}
                         <div className="w-20 h-20 mb-6 rounded-full flex items-center justify-center bg-[#F8F9F5] border-4 border-white shadow-sm relative">
                             {verificationStatus === "PENDING" ? (

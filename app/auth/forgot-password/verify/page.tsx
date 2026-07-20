@@ -1,18 +1,21 @@
 // app/auth/forgot-password/verify/page.tsx
 "use client";
 
-import React, { useState, useRef, Suspense } from "react";
+import React, { useState, useRef, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import toast from "react-hot-toast";
 import { authApi } from "@/app/api/authApi";
+import PublicGuard from "@/components/Guards/PublicGuard";
 
 export default function VerifyForgotOtpPage() {
     return (
-        <Suspense fallback={null}>
-            <VerifyForgotOtpContent />
-        </Suspense>
+        <PublicGuard>
+            <Suspense fallback={null}>
+                <VerifyForgotOtpContent />
+            </Suspense>
+        </PublicGuard>
     );
 }
 
@@ -25,6 +28,13 @@ function VerifyForgotOtpContent() {
 
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+
+    // Prerequisite guard: require email search parameter
+    useEffect(() => {
+        if (!email) {
+            router.replace("/auth/forgot-password");
+        }
+    }, [email, router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -39,7 +49,7 @@ function VerifyForgotOtpContent() {
             const response = await authApi.verifyForgotOtp({ email, otp });
             const resetToken = response?.resetToken || response?.token || "";
             toast.success("OTP verified successfully. You can now set a new password.");
-            router.push(`/auth/forgot-password/reset?email=${encodeURIComponent(email)}&resetToken=${encodeURIComponent(resetToken)}`);
+            router.replace(`/auth/forgot-password/reset?email=${encodeURIComponent(email)}&resetToken=${encodeURIComponent(resetToken)}`);
         } catch (err: any) {
             const msg = err.response?.data?.message?.[0] || err.response?.data?.error || "Failed to verify OTP";
             toast.error(msg);

@@ -1,7 +1,7 @@
 // app/auth/forgot-password/reset/page.tsx
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,6 +9,7 @@ import toast from "react-hot-toast";
 import { authApi } from "@/app/api/authApi";
 import { AnimatedEye } from "@/app/ui/AnimatedEye";
 import { useAnimatedEye } from "@/app/hooks/useAnimatedEye";
+import PublicGuard from "@/components/Guards/PublicGuard";
 
 function ResetPasswordContent() {
     const router = useRouter();
@@ -23,6 +24,13 @@ function ResetPasswordContent() {
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+    // Prerequisite guard: require resetToken search parameter
+    useEffect(() => {
+        if (!resetToken) {
+            router.replace("/auth/forgot-password");
+        }
+    }, [resetToken, router]);
+
     // Shared eye logic for each password field
     const { isBlinking: isBlinkingNew, mouseOffset: mouseOffsetNew, eyeRef: eyeNewRef } = useAnimatedEye();
     const { isBlinking: isBlinkingConfirm, mouseOffset: mouseOffsetConfirm, eyeRef: eyeConfirmRef } = useAnimatedEye();
@@ -36,7 +44,6 @@ function ResetPasswordContent() {
             setError("Password is required");
             return;
         }
-        // (Removed strong password validation – only mismatch check remains)
         // Confirm match validation
         if (password !== confirmPassword) {
             setError("Passwords do not match");
@@ -47,7 +54,7 @@ function ResetPasswordContent() {
         try {
             await authApi.resetPassword({ resetToken, password, confirmPassword });
             toast.success("Password reset successful. You can now log in.");
-            router.push("/auth/login");
+            router.replace("/auth/login");
         } catch (err: any) {
             const msg = err.response?.data?.message?.[0] || err.response?.data?.error || "Failed to reset password";
             toast.error(msg);
@@ -166,12 +173,14 @@ function ResetPasswordContent() {
 
 export default function ResetPasswordPage() {
     return (
-        <React.Suspense fallback={
-            <main className="flex min-h-screen w-full items-center justify-center bg-[#F8F9F5] font-sans antialiased">
-                <div className="text-[14px] text-gray-500">Loading...</div>
-            </main>
-        }>
-            <ResetPasswordContent />
-        </React.Suspense>
+        <PublicGuard>
+            <React.Suspense fallback={
+                <main className="flex min-h-screen w-full items-center justify-center bg-[#F8F9F5] font-sans antialiased">
+                    <div className="text-[14px] text-gray-500">Loading...</div>
+                </main>
+            }>
+                <ResetPasswordContent />
+            </React.Suspense>
+        </PublicGuard>
     );
 }

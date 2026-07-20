@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Info } from "lucide-react";
 
@@ -9,10 +10,34 @@ interface VettingModalProps {
 }
 
 export default function VettingModal({ isOpen, onClose }: VettingModalProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
+
+  // Lock body scroll and forward backdrop wheel events to modal content
+  useEffect(() => {
+    const backdrop = backdropRef.current;
+    if (!isOpen || !backdrop) return;
+
+    document.body.style.overflow = "hidden";
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop += e.deltaY;
+      }
+    };
+
+    backdrop.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      backdrop.removeEventListener("wheel", onWheel);
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 mt-6 backdrop-blur-sm">
+        <div ref={backdropRef} className="fixed inset-0 z-50 flex items-center justify-center p-4 mt-6 backdrop-blur-sm overflow-hidden">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -23,7 +48,7 @@ export default function VettingModal({ isOpen, onClose }: VettingModalProps) {
             <div className="relative h-[200px] md:h-[240px] w-full shrink-0">
               <img src="/vettingimage.png" alt="Vetting" className="absolute inset-0 w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-r from-[#1b2b1b]/95 via-[#1b2b1b]/85 to-[#1b2b1b]/70" />
-              
+
               <button
                 onClick={onClose}
                 className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center cursor-pointer bg-black/40 hover:bg-black/60 rounded-full text-white transition-colors z-10"
@@ -40,12 +65,12 @@ export default function VettingModal({ isOpen, onClose }: VettingModalProps) {
             </div>
 
             {/* Content Area */}
-            <div className="p-6 md:p-8 bg-white overflow-y-auto flex flex-col gap-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              
+            <div ref={scrollRef} className="p-6 md:p-8 bg-white overflow-y-auto flex flex-col gap-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+
               <section>
                 <h3 className="text-[18px] font-bold text-gray-900 mb-1">Customer Vetting & Trust Statement</h3>
                 <p className="text-[14px] text-gray-500 mb-4">Our commitment to trust and quality</p>
-                
+
                 <div className="space-y-3 text-[14px] text-gray-600 leading-relaxed">
                   <p>
                     We take steps to verify the tradespeople on our platform, which may include checks on identity, business
@@ -78,7 +103,7 @@ export default function VettingModal({ isOpen, onClose }: VettingModalProps) {
                   </div>
                   <h4 className="text-[18px] font-bold text-gray-900">Badge Disclaimer</h4>
                 </div>
-                
+
                 <div className="space-y-3 text-[14px] text-gray-600 leading-relaxed mb-5">
                   <p>
                     Badges displayed on Trader profiles (including "Insured", "Vetted", or similar indicators) are based on
@@ -101,18 +126,7 @@ export default function VettingModal({ isOpen, onClose }: VettingModalProps) {
                 </div>
               </section>
 
-              {/* Footer */}
-              <div className="flex items-center justify-end gap-6 pt-4 border-t border-gray-100 mt-2">
-                <button className="text-[14px] text-gray-500 hover:text-gray-800 transition-colors">
-                  Learn more
-                </button>
-                <button 
-                  onClick={onClose}
-                  className="bg-[#243A24] text-white px-8 py-2.5 rounded-lg text-[14px] font-medium hover:bg-[#1a291a] transition-colors"
-                >
-                  Understood
-                </button>
-              </div>
+
 
             </div>
           </motion.div>

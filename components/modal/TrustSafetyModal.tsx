@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ListChecks, ShieldCheck, X, CheckCircle2 } from "lucide-react";
 import { IoIosWarning } from "react-icons/io";
@@ -11,10 +12,34 @@ interface TrustSafetyModalProps {
 }
 
 export default function TrustSafetyModal({ isOpen, onClose }: TrustSafetyModalProps) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
+
+  // Lock body scroll and forward backdrop wheel events to modal content
+  useEffect(() => {
+    const backdrop = backdropRef.current;
+    if (!isOpen || !backdrop) return;
+
+    document.body.style.overflow = "hidden";
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop += e.deltaY;
+      }
+    };
+
+    backdrop.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      backdrop.removeEventListener("wheel", onWheel);
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
   return (
     <AnimatePresence>
       {isOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 mt-6 backdrop-blur-sm">
+        <div ref={backdropRef} className="fixed inset-0 z-50 flex items-center justify-center p-4 mt-6 backdrop-blur-sm overflow-hidden">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -44,7 +69,7 @@ export default function TrustSafetyModal({ isOpen, onClose }: TrustSafetyModalPr
             </div>
 
             {/* Content Area */}
-            <div className="p-5 md:p-8 bg-white overflow-y-auto">
+            <div ref={scrollRef} className="p-5 md:p-8 bg-white overflow-y-auto">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-5">
 
                 {/* Card 1 */}

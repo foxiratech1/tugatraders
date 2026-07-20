@@ -220,22 +220,17 @@ function LoginContent() {
 
             // Extract data assuming it could be in statusResponse.data or just statusResponse
             const traderData = statusResponse?.data || statusResponse;
-
             const isCompleted = traderData?.isRegistrationCompleted;
+            const step2Done = traderData?.step2Completed === true || traderData?.currentStep === 3;
 
-            if (traderData?.verificationStatus === "MANUAL_CHECK") {
-              targetPath = "/auth/trader-signup/step-3";
-            } else if (isCompleted) {
+            if (isCompleted) {
               targetPath = "/trader"; // Dashboard
-            } else if (traderData?.step2Completed === false || traderData?.currentStep === 2) {
+            } else if (!step2Done && traderData?.verificationStatus !== "MANUAL_CHECK") {
               // Pass the categoryId to step 2 so it can load the skills
               const catId = traderData?.selectedCategories?.[0]?.id;
               targetPath = catId ? `/auth/trader-signup/step-2?categoryId=${catId}` : "/auth/trader-signup/step-2";
-            } else if (traderData?.step3Completed === false || traderData?.currentStep === 3) {
-              targetPath = "/auth/trader-signup/step-3";
             } else {
-              // Fallback just in case
-              targetPath = "/trader";
+              targetPath = "/auth/trader-signup/step-3";
             }
           } catch (statusErr) {
             console.error("Failed to fetch registration status", statusErr);

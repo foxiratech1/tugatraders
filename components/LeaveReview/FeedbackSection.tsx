@@ -7,8 +7,8 @@ import { IoShieldHalfSharp } from "react-icons/io5";
 
 const FeedbackSection = () => {
   return (
-    <section className="bg-[#FAFAF9] pt-24 lg:pt-36 pb-16 lg:pb-20 px-4 sm:px-6 lg:px-20 overflow-hidden min-h-[90vh] flex items-center">
-      <div className="max-w-[1200px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24 items-center">
+    <section className="bg-[#FAFAF9] pt-16 lg:pt-28 pb-10 lg:pb-12 px-4 sm:px-6 lg:px-20 overflow-hidden flex items-center">
+      <div className="max-w-[1200px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
 
         {/* Left Column (Content) */}
         <div className="lg:col-span-5 w-full lg:w-[638px] flex flex-col items-start pr-0 lg:pr-4 animate-fade-in">
@@ -35,7 +35,7 @@ const FeedbackSection = () => {
 
         {/* Right Column (Images and Cards) */}
         <div className="lg:col-span-7 flex justify-center lg:justify-end relative w-full">
-          <div className="relative w-full max-w-[460px] aspect-[500/440] lg:max-w-[520px] lg:h-[540px] lg:aspect-auto lg:ml-auto">
+          <div className="relative w-full max-w-[400px] aspect-[500/440] lg:max-w-[480px] lg:h-[500px] lg:aspect-auto lg:ml-auto mt-4 lg:mt-0">
 
             {/* Background Decorative Glass Card */}
             <div

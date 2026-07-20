@@ -32,7 +32,7 @@ const HowItWorksHero = () => {
   return (
     <section className="bg-[#F7F9F6] pt-40 pb-20 px-6 lg:px-20 overflow-hidden min-h-screen">
       <div className="max-w-[1400px] mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start lg:items-center">
 
           {/* Left Column - Content & Form */}
           <div className="lg:col-span-7 flex flex-col gap-8">
@@ -54,6 +54,17 @@ const HowItWorksHero = () => {
             {/* Form Card */}
             <div className="bg-white rounded-[24px] p-10 shadow-[0_40px_80px_-15px_rgba(0,0,0,0.08)] border border-[#E5E5E5] max-w-[448px]">
               <form className="space-y-6">
+                <div>
+                  <label className="block text-[10px] font-bold text-[#1F3D2B66] uppercase tracking-[2px] mb-3 px-1">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="John Doe"
+                    className="w-full h-14 bg-[#F8F9F7] border border-[#E5E5E5] rounded-2xl px-6 text-[#9CA3AF] font-semibold placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#6E9625]/20 focus:border-[#6E9625] transition-all"
+                  />
+                </div>
+
                 <div>
                   <label className="block text-[10px] font-bold text-[#1F3D2B66] uppercase tracking-[2px] mb-3 px-1">
                     Trade Category
@@ -105,6 +116,17 @@ const HowItWorksHero = () => {
                   </div>
                 </div>
 
+                <div>
+                  <label className="block text-[10px] font-bold text-[#1F3D2B66] uppercase tracking-[2px] mb-3 px-1">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    placeholder="••••••••"
+                    className="w-full h-14 bg-[#F8F9F7] border border-[#E5E5E5] rounded-2xl px-6 text-[#9CA3AF] font-semibold placeholder:text-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#6E9625]/20 focus:border-[#6E9625] transition-all"
+                  />
+                </div>
+
                 <button className="w-full h-16 bg-[#6E9625] text-white text-[18px] font-bold rounded-2xl shadow-xl shadow-[#6E9625]/20 hover:bg-[#5a7d1e] transition-all flex items-center justify-center gap-3 mt-4 cursor-pointer">
                   Sign Up Now
                 </button>
@@ -113,7 +135,7 @@ const HowItWorksHero = () => {
           </div>
 
           {/* Right Column - Timeline */}
-          <div className="lg:col-span-5 relative pl-12 lg:pl-20 mt-12 lg:mt-24">
+          <div className="lg:col-span-5 relative pl-12 lg:pl-20 mt-12 lg:mt-0">
             {/* Connecting Line */}
             <div className="absolute left-[47.5px] lg:left-[115.5px] top-4 bottom-4 w-[1px] bg-[#E5E5E5]" />
 

@@ -23,6 +23,7 @@ import {
   Eye,
   DollarSign,
   MessageSquare,
+  MoreVertical,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import Link from "next/link";
@@ -487,6 +488,7 @@ export default function CustomerJobDashboard() {
   const [savedTraders, setSavedTraders] = useState<any[]>([]);
   const [savedTradersLoading, setSavedTradersLoading] = useState(true);
   const [quotesModalOpen, setQuotesModalOpen] = useState(false);
+  const [jobMenuOpen, setJobMenuOpen] = useState(false);
 
   const handleOpenChat = async (traderId: string, jobId?: string) => {
     try {
@@ -746,14 +748,39 @@ ${isSelected
                       </div>
                     </div>
 
-                    <div className="flex gap-2">
-                      <button className="w-8 h-8 rounded-full border border-[#DCDCDC] flex items-center justify-center">
-                        <Edit2 size={14} />
+                    <div className="relative">
+                      <button
+                        onClick={() => setJobMenuOpen(!jobMenuOpen)}
+                        onBlur={() => setTimeout(() => setJobMenuOpen(false), 200)}
+                        className="w-8 h-8 flex items-center justify-center text-[#223321]"
+                      >
+                        <MoreVertical size={20} />
                       </button>
 
-                      <button className="w-8 h-8 rounded-full border border-[#DCDCDC] flex items-center justify-center">
-                        <Download size={14} />
-                      </button>
+                      {jobMenuOpen && (
+                        <div className="absolute right-0 top-full mt-1 w-[150px] bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.12)] border border-gray-100 p-3.5 z-10 flex flex-col gap-3">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCompleteJob();
+                              setJobMenuOpen(false);
+                            }}
+                            className="w-full text-center py-2.5 px-3 text-[14px] rounded-xl bg-[#B2D8B2] hover:bg-[#a1cca1] transition-colors text-[#001D3D]"
+                          >
+                            Job complete
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCancelJob();
+                              setJobMenuOpen(false);
+                            }}
+                            className="w-full text-center py-2.5 px-3 text-[14px] bg-[#E8E8E8] rounded-xl hover:bg-[#d6d6d6] transition-colors text-[#001D3D]"
+                          >
+                            Close job
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

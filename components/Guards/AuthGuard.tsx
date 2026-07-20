@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useLayoutEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { getAccessToken, parseJwt, getUserRole, getUser } from "@/utils/auth";
 import { Role } from "@/utils/role";
 import { authApi } from "@/app/api/authApi";
@@ -15,6 +15,7 @@ import { authApi } from "@/app/api/authApi";
  */
 export default function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [authorized, setAuthorized] = useState(false);
 
   useLayoutEffect(() => {
@@ -79,9 +80,35 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     };
 
     checkAuth();
-  }, []);
 
-  // Back button trap removed to allow normal navigation
+    // Handle bfcache (back/forward cache)
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        checkAuth();
+      }
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, [router, pathname]);
+
+  // Prevent browser back/forward navigation from leaving customer dashboard
+  useEffect(() => {
+    if (authorized) {
+      window.history.pushState(null, "", window.location.href);
+
+      const handlePopState = () => {
+        if (!window.location.pathname.startsWith("/customer-dashboard")) {
+          window.history.pushState(null, "", window.location.href);
+          router.replace("/customer-dashboard/jobs");
+        }
+      };
+
+      window.addEventListener("popstate", handlePopState);
+      return () => {
+        window.removeEventListener("popstate", handlePopState);
+      };
+    }
+  }, [authorized, router]);
 
   if (!authorized) {
     return (

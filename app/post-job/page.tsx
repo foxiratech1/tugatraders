@@ -1,11 +1,120 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import { MapPin, CloudUpload, Zap, ArrowRight, Trash2 } from 'lucide-react';
+import { MapPin, CloudUpload, Zap, ArrowRight, Trash2, ChevronDown } from 'lucide-react';
 import { authApi } from '@/app/api/authApi';
 import api from '@/utils/api';
 import { getAccessToken } from '@/utils/auth';
 import toast from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
+
+const CustomDropdown = ({
+  options,
+  value,
+  onChange,
+  placeholder,
+  disabled = false,
+}: {
+  options: { id: string; name: string }[];
+  value: string;
+  onChange: (val: string) => void;
+  placeholder: string;
+  disabled?: boolean;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find((o) => o.id === value);
+
+  return (
+    <div className="relative w-full" ref={dropdownRef}>
+      {/* Trigger */}
+      <div
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        className={`h-[48px] w-full rounded-[12px] border ${isOpen ? "border-[#6E9625]" : "border-[#E5E7EB]"
+          } bg-[#F7F5F04D]/30 px-4 flex items-center justify-between transition-all ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+          }`}
+      >
+        {selectedOption ? (
+          <div className="flex items-center gap-1.5 bg-[#F3F8EC] rounded-md px-2.5 py-1">
+            <span className="text-[13px] font-bold text-[#6E9625]">
+              {selectedOption.name}
+            </span>
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!disabled) onChange("");
+              }}
+              className="text-[#6E9625] hover:text-red-500 cursor-pointer text-[14px] leading-none"
+            >
+              ×
+            </span>
+          </div>
+        ) : (
+          <span className="text-[14px] text-[#555555]">{placeholder}</span>
+        )}
+        <ChevronDown size={18} className="text-[#9CA3AF]" />
+      </div>
+
+      {/* Dropdown Menu */}
+      {isOpen && !disabled && (
+        <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white border border-[#E5E7EB] rounded-[12px] shadow-[0_8px_30px_rgb(0,0,0,0.08)] max-h-[260px] overflow-y-auto z-50 py-2 custom-scrollbar">
+          {options.map((opt) => {
+            const isSelected = opt.id === value;
+            return (
+              <div
+                key={opt.id}
+                onClick={() => {
+                  onChange(opt.id);
+                  setIsOpen(false);
+                }}
+                className="flex items-center gap-3 px-4 py-3 hover:bg-[#F9FAFB] cursor-pointer transition-colors"
+              >
+                <div
+                  className={`w-[18px] h-[18px] rounded-[4px] border flex items-center justify-center shrink-0 transition-colors ${isSelected
+                      ? "bg-[#111827] border-[#111827]"
+                      : "border-[#D1D5DB] bg-white"
+                    }`}
+                >
+                  {isSelected && (
+                    <svg
+                      viewBox="0 0 14 14"
+                      fill="none"
+                      className="w-3 h-3 text-white"
+                    >
+                      <path
+                        d="M2.5 7.5L5.5 10.5L11.5 3.5"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  )}
+                </div>
+                <span
+                  className={`text-[14px] ${isSelected ? "text-[#111827] font-medium" : "text-[#4B5563]"
+                    }`}
+                >
+                  {opt.name}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function PostJobPage() {
   const router = useRouter();
@@ -37,8 +146,7 @@ export default function PostJobPage() {
     }).catch(err => console.error("Failed to fetch categories", err));
   }, []);
 
-  const handleCategoryChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const catId = e.target.value;
+  const handleCategoryChange = async (catId: string) => {
     setCategoryId(catId);
     setSkillServiceId("");
     setSubCategoryId("");
@@ -54,8 +162,7 @@ export default function PostJobPage() {
     }
   };
 
-  const handleSkillChange = async (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const skillId = e.target.value;
+  const handleSkillChange = async (skillId: string) => {
     setSkillServiceId(skillId);
     setSubCategoryId("");
     setSubCategories([]);
@@ -198,6 +305,20 @@ export default function PostJobPage() {
         </div>
       )}
       <main className="min-h-screen bg-[#F8F9F5] pt-40 pb-20 px-4 sm:px-6">
+        <style>{`
+          .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+            margin: 4px;
+          }
+          .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #9CA3AF;
+            border-radius: 10px;
+            border: 2px solid white;
+          }
+        `}</style>
         <div className="max-w-[800px] mx-auto bg-white rounded-[24px] shadow-sm border border-[#243A240A] p-6 sm:p-10">
 
           {/* Header */}
@@ -215,33 +336,23 @@ export default function PostJobPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col gap-2">
                 <label className="text-[12px] font-bold text-[#243A24]">Category *</label>
-                <select
+                <CustomDropdown
+                  options={categories.map(c => ({ id: c.id || c._id, name: c.name }))}
                   value={categoryId}
                   onChange={handleCategoryChange}
-                  required
-                  className="h-[48px] w-full rounded-[12px] border border-[#E5E7EB] bg-[#F7F5F04D]/30 px-4 text-[14px] text-[#555555] outline-none transition-all appearance-none"
-                >
-                  <option value="">Categories..</option>
-                  {categories.map((c: any) => (
-                    <option key={c.id || c._id} value={c.id || c._id}>{c.name}</option>
-                  ))}
-                </select>
+                  placeholder="Categories.."
+                />
               </div>
 
               <div className="flex flex-col gap-2">
                 <label className="text-[12px] font-bold text-[#243A24]">Service Type *</label>
-                <select
+                <CustomDropdown
+                  options={skillServices.map(s => ({ id: s.id || s._id, name: s.name }))}
                   value={skillServiceId}
                   onChange={handleSkillChange}
-                  required
+                  placeholder="Service Type.."
                   disabled={!categoryId}
-                  className="h-[48px] w-full rounded-[12px] border border-[#E5E7EB] bg-[#F7F5F04D]/30 px-4 text-[14px] text-[#555555] outline-none transition-all appearance-none disabled:opacity-50"
-                >
-                  <option value="">Service Type..</option>
-                  {skillServices.map((s: any) => (
-                    <option key={s.id || s._id} value={s.id || s._id}>{s.name}</option>
-                  ))}
-                </select>
+                />
               </div>
             </div>
 
@@ -249,18 +360,13 @@ export default function PostJobPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col gap-2">
                 <label className="text-[12px] font-bold text-[#243A24]">Sub Category *</label>
-                <select
+                <CustomDropdown
+                  options={subCategories.map(s => ({ id: s.id || s._id, name: s.name }))}
                   value={subCategoryId}
-                  onChange={(e) => setSubCategoryId(e.target.value)}
-                  required
+                  onChange={setSubCategoryId}
+                  placeholder="Sub Categories.."
                   disabled={!skillServiceId}
-                  className="h-[48px] w-full rounded-[12px] border border-[#E5E7EB] bg-[#F7F5F04D]/30 px-4 text-[14px] text-[#555555] outline-none focus:border-[#6E9625] transition-all appearance-none disabled:opacity-50"
-                >
-                  <option value="">Sub Categories..</option>
-                  {subCategories.map((s: any) => (
-                    <option key={s.id || s._id} value={s.id || s._id}>{s.name}</option>
-                  ))}
-                </select>
+                />
               </div>
 
               <div className="flex flex-col gap-2">
@@ -275,7 +381,7 @@ export default function PostJobPage() {
                     value={postcode}
                     onChange={(e) => setPostcode(e.target.value)}
                     placeholder="e.g. DD4 X2K7"
-                    className="h-[48px] w-full rounded-[12px] border border-[#E5E7EB] bg-[#F7F5F04D]/30 pl-10 pr-4 text-[14px] text-[#555555] outline-none transition-all"
+                    className="h-[48px] w-full rounded-[12px] border border-[#E5E7EB] bg-[#F7F5F04D]/30 pl-10 pr-4 text-[14px] text-[#555555] outline-none focus:border-[#6E9625] transition-all"
                   />
                 </div>
               </div>
@@ -291,7 +397,7 @@ export default function PostJobPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Master Bedroom Fitted Wardrobes"
-                className="h-[48px] w-full md:w-[calc(50%-12px)] rounded-[12px] border border-[#E5E7EB] bg-[#F7F5F04D]/30 px-4 text-[14px] text-[#555555] outline-none  transition-all"
+                className="h-[48px] w-full md:w-[calc(50%-12px)] rounded-[12px] border border-[#E5E7EB] bg-[#F7F5F04D]/30 px-4 text-[14px] text-[#555555] outline-none focus:border-[#6E9625] transition-all"
               />
             </div>
 
@@ -307,7 +413,7 @@ export default function PostJobPage() {
                 onChange={(e) => setDescription(e.target.value)}
                 maxLength={2000}
                 placeholder="Describe the project in detail, including measurements and specific material preferences..."
-                className="w-full rounded-[12px] border border-[#E5E7EB] bg-[#F7F5F04D]/30 p-4 text-[14px] text-[#555555] outline-none  transition-all min-h-[160px] resize-none"
+                className="w-full rounded-[12px] border border-[#E5E7EB] bg-[#F7F5F04D]/30 p-4 text-[14px] text-[#555555] outline-none focus:border-[#6E9625] transition-all min-h-[160px] resize-none"
               ></textarea>
             </div>
 
@@ -315,37 +421,38 @@ export default function PostJobPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col gap-2">
                 <label className="text-[12px] font-bold text-[#243A24]">Project Timescale</label>
-                <select
+                <CustomDropdown
+                  options={[
+                    { id: "FLEXIBLE", name: "Flexible / Planning stage" },
+                    { id: "URGENT", name: "Urgent" },
+                    { id: "WITHIN_3_DAYS", name: "Within 3 days" },
+                    { id: "WITHIN_1_WEEK", name: "Within 1 week" },
+                    { id: "WITHIN_1_MONTH", name: "Within 1 month" }
+                  ]}
                   value={timescale}
-                  onChange={(e) => setTimescale(e.target.value)}
-                  className="h-[48px] w-full rounded-[12px] border border-[#E5E7EB] bg-[#F7F5F04D]/30 px-4 text-[14px] text-[#555555] outline-none  transition-all appearance-none"
-                >
-                  <option value="FLEXIBLE">Flexible / Planning stage</option>
-                  <option value="URGENT">Urgent</option>
-                  <option value="WITHIN_3_DAYS">Within 3 days</option>
-                  <option value="WITHIN_1_WEEK">Within 1 week</option>
-                  <option value="WITHIN_1_MONTH">Within 1 month</option>
-                </select>
+                  onChange={setTimescale}
+                  placeholder="Select Timescale"
+                />
               </div>
               <div className="flex flex-col gap-2">
                 <label className="text-[12px] font-bold text-[#243A24]">Project Budget</label>
-                <select
+                <CustomDropdown
+                  options={[
+                    { id: "UNDER_100", name: "Under €100" },
+                    { id: "UNDER_250", name: "Under €250" },
+                    { id: "UNDER_500", name: "Under €500" },
+                    { id: "UNDER_1000", name: "Under €1,000" },
+                    { id: "UNDER_2000", name: "Under €2,000" },
+                    { id: "UNDER_4000", name: "Under €4,000" },
+                    { id: "UNDER_8000", name: "Under €8,000" },
+                    { id: "BETWEEN_10000_20000", name: "€10,000 - €20,000" },
+                    { id: "BETWEEN_20000_30000", name: "€20,000 - €30,000" },
+                    { id: "ABOVE_30000", name: "Above €30,000" }
+                  ]}
                   value={budgetRange}
-                  onChange={(e) => setBudgetRange(e.target.value)}
-                  className="h-[48px] w-full rounded-[12px] border border-[#E5E7EB] bg-[#F7F5F04D]/30 px-4 text-[14px] text-[#555555] outline-none  transition-all appearance-none"
-                >
-                  <option value="">Select Budget</option>
-                  <option value="UNDER_100">Under €100</option>
-                  <option value="UNDER_250">Under €250</option>
-                  <option value="UNDER_500">Under €500</option>
-                  <option value="UNDER_1000">Under €1,000</option>
-                  <option value="UNDER_2000">Under €2,000</option>
-                  <option value="UNDER_4000">Under €4,000</option>
-                  <option value="UNDER_8000">Under €8,000</option>
-                  <option value="BETWEEN_10000_20000">€10,000 - €20,000</option>
-                  <option value="BETWEEN_20000_30000">€20,000 - €30,000</option>
-                  <option value="ABOVE_30000">Above €30,000</option>
-                </select>
+                  onChange={setBudgetRange}
+                  placeholder="Select Budget"
+                />
               </div>
             </div>
 

@@ -7,7 +7,7 @@ import {
   Wrench, List, ChevronDown,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { getAccessToken, getUserRole, parseJwt, clearTokens } from '@/utils/auth';
 import { Role } from '@/utils/role';
 import { LogIn, X } from 'lucide-react';
@@ -176,8 +176,11 @@ const LoginModal = ({
 
 const DirectorySearchResults = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialCategoryId = searchParams?.get('categoryId') || '';
+
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState(initialCategoryId);
   const [loading, setLoading] = useState(false);
 
   const [skillServices, setSkillServices] = useState<Array<{ id: string; name: string }>>([]);
@@ -295,6 +298,14 @@ const DirectorySearchResults = () => {
               ? categoriesData.categories
               : [];
         setCategories(categoriesArray);
+
+        const categoryName = searchParams?.get('categoryName');
+        if (!initialCategoryId && categoryName && categoriesArray.length > 0) {
+          const matched = categoriesArray.find((c: any) => c.name?.toLowerCase() === categoryName.toLowerCase());
+          if (matched) {
+            setSelectedCategory(matched.id || matched._id);
+          }
+        }
       } catch (err) {
         console.error('Failed to load categories', err);
       } finally {

@@ -30,7 +30,7 @@ export default function ForgotPasswordPage() {
         try {
             await authApi.forgotPassword({ email });
             toast.success("Password reset link sent! Please check your email.");
-            router.push(`/auth/forgot-password/verify?email=${encodeURIComponent(email)}`);
+            router.replace(`/auth/forgot-password/verify?email=${encodeURIComponent(email)}`);
         } catch (err: any) {
             const msg = err.response?.data?.message?.[0] || err.response?.data?.error || "Failed to send reset email";
             toast.error(msg);

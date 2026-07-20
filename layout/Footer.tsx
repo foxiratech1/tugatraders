@@ -161,7 +161,7 @@ export default function Footer() {
                 {["About", "Contact", "Legal"].map((link) => (
                   <li key={link}>
                     <Link
-                      href={link === "About" ? "/about" : link === "Contact" ? "/contact" : link === "Legal" ? "/terms" : "#"}
+                      href={link === "About" ? "/about" : link === "Contact" ? "/contact" : link === "Legal" ? "/terms?tab=terms" : "#"}
                       scroll={false}
                       onClick={() => scrollToTop()}
                       className="text-[15px] font-medium text-[#6F736C] hover:text-[#4a8c3f] transition-colors"
@@ -195,15 +195,19 @@ export default function Footer() {
                 href={
                   link === "Terms & Conditions"
                     ? "/terms"
-                    : link === "Cookie Settings"
-                      ? "/terms?tab=cookieSettings"
-                      : link === "Disputes"
-                        ? "/terms?tab=disputes"
-                        : link === "Content Moderation"
-                          ? "/terms?tab=moderation"
-                          : link === "Trader Agreement"
-                            ? "/terms?tab=traderAgreement"
-                            : "#"
+                    : link === "Privacy & Cookies"
+                      ? "/terms?tab=cookies"
+                      : link === "Cookie Settings"
+                        ? "/terms?tab=cookieSettings"
+                        : link === "Trust & Safety"
+                          ? "/terms?tab=trust"
+                          : link === "Disputes"
+                            ? "/terms?tab=disputes"
+                            : link === "Content Moderation"
+                              ? "/terms?tab=moderation"
+                              : link === "Trader Agreement"
+                                ? "/terms?tab=traderAgreement"
+                                : "#"
                 }
                 scroll={false}
                 onClick={() => scrollToTop()}

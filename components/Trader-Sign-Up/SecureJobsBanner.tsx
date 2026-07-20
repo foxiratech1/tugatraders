@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { UserPlus } from 'lucide-react';
 
 const SecureJobsBanner = () => {
@@ -30,10 +31,12 @@ const SecureJobsBanner = () => {
           </p>
         </div>
 
-        <button className="bg-[#C60C03] text-white px-6 py-3 rounded-[12px] font-bold text-[14px] flex items-center gap-2.5 transition-all hover:scale-[1.02] shadow-xl group">
-          <UserPlus size={18} className="transition-transform group-hover:scale-110" />
-          Join as a Tradesperson
-        </button>
+        <Link href="/auth/trader-signup">
+          <button className="bg-[#C60C03] text-white px-6 py-3 rounded-[12px] font-bold text-[14px] flex items-center gap-2.5 transition-all hover:scale-[1.02] shadow-xl group cursor-pointer">
+            <UserPlus size={18} className="transition-transform group-hover:scale-110" />
+            Join as a Tradesperson
+          </button>
+        </Link>
 
       </div>
     </section>

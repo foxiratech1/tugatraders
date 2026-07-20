@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { MapPin, Briefcase, Star, Check } from "lucide-react";
 
 const JoinNetworkSection = () => {
@@ -208,9 +209,11 @@ const JoinNetworkSection = () => {
 
         {/* CTA Button */}
         <div className="text-center">
-          <button className="bg-[#B91C1C] hover:bg-[#991B1B] text-white font-bold text-[16px] px-12 py-4 rounded-lg transition-colors shadow-md cursor-pointer">
-            Get Started
-          </button>
+          <Link href="/auth/trader-signup">
+            <button className="bg-[#B91C1C] hover:bg-[#991B1B] text-white font-bold text-[16px] px-12 py-4 rounded-lg transition-colors shadow-md cursor-pointer">
+              Get Started
+            </button>
+          </Link>
         </div>
       </div>
     </section>

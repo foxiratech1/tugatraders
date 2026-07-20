@@ -17,11 +17,12 @@ export default function Hero() {
     >
 
       {/* BACKGROUND IMAGE */}
-      <motion.div variants={slideFromRight} className="absolute inset-0 z-0">
+      <div className="absolute inset-0 z-0">
         <Image
-          src="/homepage.png"
+          src="/Homepageimage.png"
           alt="Tradespeople working"
           fill
+          unoptimized
           className="object-cover object-center"
           priority
         />
@@ -29,7 +30,7 @@ export default function Hero() {
           className="absolute inset-0"
           style={{ background: "linear-gradient(180deg, rgba(36, 58, 36, 0.8) 0%, rgba(36, 58, 36, 0) 50%, #243A24 100%)" }}
         />
-      </motion.div>
+      </div>
 
       <div className="relative z-10 max-w-[1400px] mx-auto flex flex-col items-center text-center ">
 

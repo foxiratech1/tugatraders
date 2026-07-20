@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { IdCard, Image as ImageIcon, ChevronRight, Lock, ShieldCheck, X, Search, Plus } from "lucide-react";
 import toast from "react-hot-toast";
 import { traderRegisterStep2, authApi, getRegistrationStatus } from "@/app/api/authApi";
@@ -69,8 +69,8 @@ const MultiSelect = ({
     const containerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
                 setIsOpen(false);
             }
         };
@@ -80,7 +80,7 @@ const MultiSelect = ({
 
     const toggleOption = (id: string) => {
         if (selectedIds.includes(id)) {
-            onChange(selectedIds.filter((item) => item !== id));
+            onChange(selectedIds.filter((i) => i !== id));
         } else {
             onChange([...selectedIds, id]);
         }
@@ -88,7 +88,7 @@ const MultiSelect = ({
 
     const removeOption = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
-        onChange(selectedIds.filter((item) => item !== id));
+        onChange(selectedIds.filter((i) => i !== id));
     };
 
     const filteredOptions = options.filter(
@@ -152,13 +152,30 @@ const MultiSelect = ({
                     </div>
 
                     <div className="overflow-y-auto p-1.5 space-y-0.5 flex-1">
-                        {filteredOptions.length === 0 ? (
+                        {options.length > 0 && searchTerm === "" && (
+                            <div
+                                onClick={() => {
+                                    if (selectedIds.length === options.length) {
+                                        onChange([]);
+                                    } else {
+                                        onChange(options.map(opt => opt.id));
+                                    }
+                                }}
+                                className={`flex items-center justify-between px-3 py-2 rounded-lg text-[13px] font-semibold cursor-pointer transition-all duration-150 mb-1 ${selectedIds.length === options.length ? "text-[#1C2C1C] bg-[#6E9625]/10 hover:bg-[#6E9625]/20" : "text-[#1C2C1C] bg-[#6E9625]/10 hover:bg-[#6E9625]/20"}`}
+                            >
+                                <span>{selectedIds.length === options.length ? "Clear All" : "Select All"}</span>
+                                {selectedIds.length === options.length ? (
+                                    <X size={14} className="text-[#1C2C1C]" />
+                                ) : (
+                                    <Plus size={14} className="text-[#6E9625]" />
+                                )}
+                            </div>
+                        )}
+                        {filteredOptions.length === 0 && selectedIds.length < options.length ? (
                             <div className="p-3 text-[12px] text-center text-[#1C2C1C]/40 font-medium">
                                 {options.length === 0
                                     ? "No options available"
-                                    : selectedIds.length === options.length
-                                        ? "All options selected"
-                                        : "No results found"}
+                                    : "No results found"}
                             </div>
                         ) : (
                             filteredOptions.map((opt) => (
@@ -181,12 +198,14 @@ const MultiSelect = ({
 
 export default function Step2Page() {
     const router = useRouter();
+    const pathname = usePathname();
     const [loading, setLoading] = useState(false);
     const [selectedCategory, setSelectedCategory] = useState<string>("");
 
-    // Guard to prevent non-traders or unverified users from accessing step-2
+    // Guard to prevent non-traders, unverified users, or completed step-2 traders from accessing step-2
     useEffect(() => {
-        import("@/utils/auth").then(({ getUserRole, getAccessToken, parseJwt }) => {
+        const checkStep2Guard = async () => {
+            const { getUserRole, getAccessToken, parseJwt } = await import("@/utils/auth");
             const role = getUserRole();
             if (role === "customer") {
                 router.replace("/customer-dashboard/jobs");
@@ -202,10 +221,53 @@ export default function Step2Page() {
                 const isEmailVerified = decoded?.isEmailVerified ?? decoded?.user?.isEmailVerified;
                 if (isEmailVerified === false) {
                     router.replace("/auth/verify-otp");
+                    return;
                 }
             }
-        });
-    }, [router]);
+
+            try {
+                const statusRes = await getRegistrationStatus();
+                const data = statusRes?.data || statusRes;
+                const vStatus = data?.verificationStatus ?? data?.status;
+                const isStep2Done = data?.step2Completed === true || data?.currentStep === 3 || vStatus === "MANUAL_CHECK";
+
+                if (data?.isRegistrationCompleted && vStatus === "APPROVED") {
+                    router.replace("/trader");
+                } else if (isStep2Done) {
+                    router.replace("/auth/trader-signup/step-3");
+                }
+            } catch (err) {
+                console.error("Step2 guard check failed", err);
+            }
+        };
+
+        checkStep2Guard();
+
+        const handlePageShow = (e: PageTransitionEvent) => {
+            if (e.persisted) {
+                checkStep2Guard();
+            }
+        };
+        window.addEventListener("pageshow", handlePageShow);
+        return () => window.removeEventListener("pageshow", handlePageShow);
+    }, [router, pathname]);
+
+    // Lock browser back button on Step 2 page
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            window.history.pushState(null, "", window.location.href);
+
+            const handlePopState = (e: PopStateEvent) => {
+                e.preventDefault();
+                window.history.pushState(null, "", window.location.href);
+            };
+
+            window.addEventListener("popstate", handlePopState);
+            return () => {
+                window.removeEventListener("popstate", handlePopState);
+            };
+        }
+    }, []);
 
     const [formData, setFormData] = useState({
         companyName: "",
@@ -403,7 +465,7 @@ export default function Step2Page() {
 
             await traderRegisterStep2(payload);
             toast.success("Business verification submitted!");
-            router.push("/auth/trader-signup/step-3");
+            router.replace("/auth/trader-signup/step-3");
         } catch (err: any) {
             const msg =
                 err.response?.data?.message?.[0] ||

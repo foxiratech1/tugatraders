@@ -22,8 +22,13 @@ export default function TraderAuthGuard({ children }: { children: React.ReactNod
           if (pathname === "/trader/profile" || pathname === "/trader/update-documents") {
             setIsAllowed(true);
           } else {
-            // Otherwise redirect to step 3
-            router.replace("/auth/trader-signup/step-3");
+            const step2Done = unwrapped?.step2Completed === true || unwrapped?.currentStep === 3;
+            if (!step2Done && status !== "MANUAL_CHECK") {
+              const catId = unwrapped?.selectedCategories?.[0]?.id;
+              router.replace(catId ? `/auth/trader-signup/step-2?categoryId=${catId}` : "/auth/trader-signup/step-2");
+            } else {
+              router.replace("/auth/trader-signup/step-3");
+            }
           }
         } else {
           setIsAllowed(true);
@@ -33,9 +38,16 @@ export default function TraderAuthGuard({ children }: { children: React.ReactNod
       }
     };
     checkAuth();
-  }, [pathname, router]);
 
-  // Back button trap removed to allow normal navigation
+    // Handle bfcache (back/forward cache)
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        checkAuth();
+      }
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, [pathname, router]);
 
   if (!isAllowed) {
     return <div className="min-h-screen flex items-center justify-center bg-[#F0EDE8]"><p className="text-[#1C2C1C]">Loading...</p></div>;

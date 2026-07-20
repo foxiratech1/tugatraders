@@ -36,9 +36,13 @@ const CategoryCard = ({ cat }: { cat: any }) => {
   const Icon = getCategoryIcon(cat.name || "");
   const name = cat.name || "Trade Service";
 
+  const targetUrl = cat.id || cat._id 
+    ? `/directory-listing/search?categoryId=${cat.id || cat._id}`
+    : `/directory-listing/search?categoryName=${encodeURIComponent(name)}`;
+
   return (
     <Link
-      href={`/directory-listing?trade=${encodeURIComponent(name)}`}
+      href={targetUrl}
       className="group relative overflow-hidden flex items-center justify-between rounded-[32px] border border-[#D7DAD4] bg-[#F8F9F8] px-6 py-6 hover:bg-[#243A24] transition-all duration-500 hover:-translate-y-1 hover:shadow-2xl hover:shadow-[#243A24]/10 w-[300px] md:w-[380px] shrink-0"
     >
       {/* LEFT CONTENT */}

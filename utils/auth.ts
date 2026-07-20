@@ -69,7 +69,8 @@ export const getUserRole = (): Role | null => {
   const token = getAccessToken();
   if (!token) return null;
   const decoded = parseJwt(token);
-  const role = decoded?.role || decoded?.user?.role;
+  const localUser = getUser();
+  const role = decoded?.role || decoded?.user?.role || localUser?.role;
   if (!role) return null;
   // Normalize role to lowercase to match Role enum values
   const normalized = typeof role === 'string' ? role.toLowerCase() : role;

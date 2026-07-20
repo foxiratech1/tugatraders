@@ -166,7 +166,11 @@ export const authApi = {
     // Remove client‑side tokens & redirect
     localStorage.removeItem('user');
     clearTokens();
-    router.push('/auth/login');
+    if (router && typeof router.replace === "function") {
+      router.replace('/auth/login');
+    } else {
+      window.location.replace('/auth/login');
+    }
   },
 
   verifyForgotOtp: async (payload: { email: string; otp: string; password?: string }) => {

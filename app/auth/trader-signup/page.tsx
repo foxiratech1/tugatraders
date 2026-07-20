@@ -35,7 +35,7 @@ const ChevronDown = () => (
 export default function TraderSignupPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    tradeCategory: "",
+    tradeCategories: [] as string[],
     workRadius: "",
     baseLocation: "",
     fullName: "",
@@ -51,6 +51,20 @@ export default function TraderSignupPage() {
   const [loading, setLoading] = useState(false);
 
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
+        setIsCategoryDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   // Fetch trade categories on mount
   const [location, setLocation] = useState({
     latitude: null as number | null,
@@ -106,7 +120,7 @@ export default function TraderSignupPage() {
     loadCategories();
   }, []);
   const [errors, setErrors] = useState<{
-    tradeCategory?: string;
+    tradeCategories?: string;
     workRadius?: string;
     baseLocation?: string;
     fullName?: string;
@@ -114,11 +128,6 @@ export default function TraderSignupPage() {
     contactNumber?: string;
     password?: string;
     confirmPassword?: string;
-    // address?: string;
-    // city?: string;
-    // state?: string;
-    // country?: string;
-    // postalCode?: string;
     agreeTerms?: string;
   }>({});
 
@@ -173,7 +182,7 @@ export default function TraderSignupPage() {
   // ── Validation & Submit ─────────────────────────────────────────────────────
   const validate = () => {
     const e: typeof errors = {};
-    if (!formData.tradeCategory) e.tradeCategory = "Please select a trade category";
+    if (formData.tradeCategories.length === 0) e.tradeCategories = "Please select at least one trade category";
     if (!formData.fullName.trim()) e.fullName = "Full name is required";
     if (!formData.businessEmail) e.businessEmail = "Business email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.businessEmail))
@@ -219,7 +228,7 @@ export default function TraderSignupPage() {
     return e;
   };
 
-  const field = (key: keyof typeof formData, value: string | boolean) => {
+  const field = <K extends keyof typeof formData>(key: K, value: typeof formData[K]) => {
     setFormData((p) => {
       const next = { ...p, [key]: value };
       setErrors((errs) => {
@@ -238,7 +247,7 @@ export default function TraderSignupPage() {
   };
 
   const isFormFilled =
-    Boolean(formData.tradeCategory) &&
+    formData.tradeCategories.length > 0 &&
     Boolean(formData.workRadius.trim()) &&
     Boolean(formData.baseLocation.trim()) &&
     Boolean(formData.fullName.trim()) &&
@@ -271,7 +280,7 @@ export default function TraderSignupPage() {
         email: formData.businessEmail,
         password: formData.password,
         confirmPassword: formData.confirmPassword,
-        tradeCategories: formData.tradeCategory ? [formData.tradeCategory] : [],
+        tradeCategories: formData.tradeCategories,
         workRadius: Number(formData.workRadius),
         // addressLine: formData.address,
         // city: formData.city,
@@ -297,7 +306,7 @@ export default function TraderSignupPage() {
       }
 
       toast.success("Trader account created! Please verify your email.");
-      router.replace(`/auth/verify-otp?email=${encodeURIComponent(formData.businessEmail)}&categoryId=${encodeURIComponent(formData.tradeCategory)}`);
+      router.replace(`/auth/verify-otp?email=${encodeURIComponent(formData.businessEmail)}&categoryId=${encodeURIComponent(formData.tradeCategories[0] || "")}`);
     } catch (err: any) {
       let msg = "An unexpected error occurred";
 
@@ -368,31 +377,74 @@ export default function TraderSignupPage() {
               <form onSubmit={handleSubmit} className="flex flex-col gap-[14px]">
 
                 {/* Trade Category */}
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-1.5" ref={categoryDropdownRef}>
                   <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">
-                    Trade Category
+                    Trade Categories
                   </label>
                   <div className="relative">
-                    <select
-                      value={formData.tradeCategory}
-                      onChange={(e) => field("tradeCategory", e.target.value)}
-                      className={`${inputCls(errors.tradeCategory)} appearance-none pr-9 cursor-pointer bg-white`}
+                    <div
+                      onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
+                      className={`${inputCls(errors.tradeCategories)} cursor-pointer flex items-center min-h-[44px] h-auto py-2`}
                     >
-                      <option value="" disabled>
-                        Select Trade Category
-                      </option>
-                      {categories.map((cat) => (
-                        <option key={cat.id} value={cat.id}>
-                          {cat.name}
-                        </option>
-                      ))}
-                    </select>
-                    <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#1C2C1C]/40">
+                      {formData.tradeCategories.length === 0 ? (
+                        <span className="text-[#1C2C1C]/30">Select Trade Categories</span>
+                      ) : (
+                        <div className="flex flex-wrap gap-1.5 w-[calc(100%-24px)]">
+                          {formData.tradeCategories.map(catId => {
+                            const cat = categories.find(c => c.id === catId);
+                            return (
+                              <span key={catId} className="bg-[#6E9625]/10 text-[#6E9625] px-2 py-0.5 rounded-[6px] text-[12px] font-bold flex items-center gap-1 mt-0.5 mb-0.5">
+                                {cat?.name}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    field("tradeCategories", formData.tradeCategories.filter(id => id !== catId));
+                                  }}
+                                  className="text-[#6E9625] hover:text-[#243A24]"
+                                >
+                                  &times;
+                                </button>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                    <span className="pointer-events-none absolute right-3 top-[22px] -translate-y-1/2 text-[#1C2C1C]/40">
                       <ChevronDown />
                     </span>
+
+                    {isCategoryDropdownOpen && (
+                      <div className="absolute top-[calc(100%+4px)] left-0 right-0 bg-white border border-[#243A241F] rounded-[12px] shadow-[0_12px_48px_rgba(36,58,36,0.12)] max-h-[220px] overflow-y-auto z-[60] py-1">
+                        {categories.map((cat) => (
+                          <div
+                            key={cat.id}
+                            onClick={() => {
+                              const isSelected = formData.tradeCategories.includes(cat.id);
+                              if (isSelected) {
+                                field("tradeCategories", formData.tradeCategories.filter(id => id !== cat.id));
+                              } else {
+                                field("tradeCategories", [...formData.tradeCategories, cat.id]);
+                              }
+                            }}
+                            className={`px-4 py-2.5 text-[14px] font-medium cursor-pointer hover:bg-[#F8F9F8] flex items-center gap-3 transition-colors ${formData.tradeCategories.includes(cat.id) ? "text-[#1C2C1C]" : "text-[#1C2C1C]/80"}`}
+                          >
+                            <div className={`w-4 h-4 rounded-[4px] border flex items-center justify-center flex-shrink-0 transition-colors ${formData.tradeCategories.includes(cat.id) ? "bg-[#1C2C1C] border-[#1C2C1C]" : "border-[#1C2C1C]/25"}`}>
+                              {formData.tradeCategories.includes(cat.id) && (
+                                <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
+                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
+                            </div>
+                            {cat.name}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  {errors.tradeCategory && (
-                    <p className="text-red-500 text-[11px] font-medium">{errors.tradeCategory}</p>
+                  {errors.tradeCategories && (
+                    <p className="text-red-500 text-[11px] font-medium">{errors.tradeCategories}</p>
                   )}
                 </div>
 
@@ -591,8 +643,8 @@ export default function TraderSignupPage() {
                       buttonClassName: "!h-[44px] !rounded-l-[12px] !border-[#243A241F] !bg-white !px-3 hover:!bg-[#F5F5F5]",
                     }}
                     className={`w-full rounded-[12px] border transition-all ${errors.contactNumber
-                        ? "border-red-400 focus-within:border-red-500 focus-within:ring-1 focus-within:ring-red-400"
-                        : "border-[#243A241F] focus-within:border-[#6E9625] focus-within:ring-1 focus-within:ring-[#6E9625]"
+                      ? "border-red-400 focus-within:border-red-500 focus-within:ring-1 focus-within:ring-red-400"
+                      : "border-[#243A241F] focus-within:border-[#6E9625] focus-within:ring-1 focus-within:ring-[#6E9625]"
                       }`}
                   />
 
