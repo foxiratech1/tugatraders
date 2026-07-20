@@ -678,7 +678,7 @@ export default function TraderSignupPage() {
                     I agree to the{" "}
                     <span className="text-[#1C2C1C] font-bold hover:underline"><a href="/terms">Terms of Service</a></span>{" "}
                     and{" "}
-                    <span className="text-[#1C2C1C] font-bold hover:underline"><a href="/terms">Privacy Policy</a></span>
+                    <span className="text-[#1C2C1C] font-bold hover:underline"><a href="/terms?tab=cookies">Privacy Policy</a></span>
                   </p>
                 </div>
 

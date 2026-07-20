@@ -9,6 +9,7 @@ import {
   Mail, ArrowLeft, CheckCircle, FileText, Check, Info, Image as ImageIcon, X
 } from "lucide-react";
 import toast from "react-hot-toast";
+import VettingModal from "@/components/modal/VettingModal";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://api.tugatraders.server24.in";
 function getImageUrl(path: string | null | undefined): string {
@@ -27,6 +28,7 @@ export default function PublicTraderProfilePage() {
 
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isVettingModalOpen, setIsVettingModalOpen] = useState(false);
 
   useEffect(() => {
     if (!traderId) return;
@@ -265,10 +267,10 @@ export default function PublicTraderProfilePage() {
                 </div>
               </div>
 
-                <div className="flex items-center gap-2 text-sm text-gray-700 flex-shrink-0">
-                   <Info size={20} className="text-gray-400 flex-shrink-0" />
-                   <span className="whitespace-nowrap">Learn more about traders <a href="#" className="underline font-semibold">Vetting & badges.</a></span>
-                </div>
+              <div className="flex items-center gap-2 text-sm text-gray-700 flex-shrink-0">
+                <Info size={20} className="text-gray-400 flex-shrink-0" />
+                <span className="whitespace-nowrap">Learn more about traders <button onClick={(e) => { e.preventDefault(); setIsVettingModalOpen(true); }} className="underline font-semibold cursor-pointer hover:text-black transition-colors">Vetting & badges.</button></span>
+              </div>
             </div>
 
             {/* Light Background Area for Cards */}
@@ -339,7 +341,11 @@ export default function PublicTraderProfilePage() {
           </div>
         </div>
       </main>
+
+      <VettingModal
+        isOpen={isVettingModalOpen}
+        onClose={() => setIsVettingModalOpen(false)}
+      />
     </div>
   );
 }
-
