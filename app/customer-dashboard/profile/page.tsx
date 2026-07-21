@@ -86,20 +86,20 @@ export default function CustomerProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.fullName.trim()) return toast.error("Full Name is required.");
-    if (!form.email.trim()) return toast.error("Email is required.");
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return toast.error("Please enter a valid email address.");
+    if (!form.fullName.trim()) return toast.error("Full Name is required.", { id: "profile-update-error" });
+    if (!form.email.trim()) return toast.error("Email is required.", { id: "profile-update-error" });
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return toast.error("Please enter a valid email address.", { id: "profile-update-error" });
 
     if (!form.phone || form.phone.trim() === "") {
-      return toast.error("Phone number is required.");
+      return toast.error("Phone number is required.", { id: "profile-update-error" });
     }
     const phoneRegex = /^\d{10}$/;
     if (!phoneRegex.test(form.phone.trim())) {
-      return toast.error("Phone number must be exactly 10 digits.");
+      return toast.error("Phone number must be exactly 10 digits.", { id: "profile-update-error" });
     }
 
     if (!selectedFile && !previewUrl) {
-      return toast.error("Profile image is required.");
+      return toast.error("Profile image is required.", { id: "profile-update-error" });
     }
 
     setSaving(true);
@@ -114,10 +114,10 @@ export default function CustomerProfilePage() {
       // fd.append("address", form.address);
       if (selectedFile) fd.append("profileImage", selectedFile);
       await authApi.updateProfile(fd);
-      toast.success("Profile updated successfully!");
+      toast.success("Profile updated successfully!", { id: "profile-update-success" });
     } catch (err: any) {
       console.error("Update profile error", err);
-      toast.error(err?.response?.data?.message || "Failed to update profile");
+      toast.error(err?.response?.data?.message || "Failed to update profile", { id: "profile-update-error" });
     } finally {
       setSaving(false);
     }

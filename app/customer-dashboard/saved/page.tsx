@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { authApi } from "@/app/api/authApi";
-import { Star, MapPin, Wrench, Search, ChevronDown, BookmarkX } from "lucide-react";
+import { Star, MapPin, Wrench, Search, ChevronDown, BookmarkX, Bookmark } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://api.tugatraders.server24.in";
 
@@ -32,6 +32,9 @@ type SavedTrader = {
   subscriptionTier: string;
   location?: string;
   skills?: string[];
+  tradeCategories?: string[];
+  skillServices?: string[];
+  subCategories?: string[];
 };
 
 function StarRating({ rating }: { rating: number }) {
@@ -52,11 +55,39 @@ function StarRating({ rating }: { rating: number }) {
 
 function TraderCard({ trader }: { trader: SavedTrader }) {
   const [imgError, setImgError] = useState(false);
+  const [isSaved, setIsSaved] = useState(true);
+  const [isToggling, setIsToggling] = useState(false);
   const src = imgError ? "/logo.png" : getImageUrl(trader.profileImage || trader.logo);
-  console.log(`[SSR Debug] Trader: ${trader.fullName}, Raw Profile: ${trader.profileImage}, Raw Logo: ${trader.logo}, Generated Src: ${src}`);
+
+  const allSkills = [
+    ...(trader.tradeCategories || []),
+    ...(trader.skillServices || []),
+    ...(trader.subCategories || [])
+  ].filter(Boolean);
+
+  const handleToggleSave = async () => {
+    if (isToggling) return;
+    setIsToggling(true);
+    try {
+      await authApi.toggleSaveTrader(trader.id);
+      setIsSaved(!isSaved);
+    } catch (err) {
+      console.error("Failed to toggle save", err);
+    } finally {
+      setIsToggling(false);
+    }
+  };
 
   return (
-    <div className="bg-white rounded-2xl border border-[#F0EDE8] shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col">
+    <div className="bg-white rounded-2xl border border-[#F0EDE8] shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col relative">
+      <button
+        onClick={handleToggleSave}
+        disabled={isToggling}
+        className="absolute top-4 right-4 z-10 w-9 h-9 rounded-[10px] bg-[#F8F9F5] flex items-center justify-center hover:bg-[#F0EDE8] transition-colors disabled:opacity-50"
+      >
+        <Bookmark size={18} className={isSaved ? "text-[#1C2C1C] fill-[#1C2C1C]" : "text-[#1C2C1C]"} />
+      </button>
+
       {/* Avatar */}
       <div className="relative w-14 h-14 mx-6 mt-6 rounded-full overflow-hidden bg-gray-100 flex-shrink-0 border border-[#F0EDE8]">
         <Image
@@ -95,11 +126,11 @@ function TraderCard({ trader }: { trader: SavedTrader }) {
           </div>
         )}
 
-        {/* Skills */}
-        {trader.skills && trader.skills.length > 0 && (
+        {/* All Skills / Categories */}
+        {allSkills.length > 0 && (
           <div className="flex items-center gap-1.5 text-[12px] text-[#1C2C1C]/60">
             <Wrench size={13} className="text-[#1C2C1C]/40 flex-shrink-0" />
-            <span className="truncate">{trader.skills.slice(0, 3).join(", ")}</span>
+            <span className="truncate">{allSkills.join(", ")}</span>
           </div>
         )}
       </div>
@@ -132,19 +163,25 @@ export default function SavedTradersPage() {
 
         const list: SavedTrader[] = rawList.map((item: any) => {
           const t = item.trader || item;
+          const profile = t.traderProfile || item.traderProfile || {};
+          const extractNames = (arr: any[]) => Array.isArray(arr) ? arr.map(a => a.name) : [];
+
           return {
             id: t.id,
             fullName: t.fullName || "",
-            companyName: t.companyName || t.traderProfile?.companyName || item.traderProfile?.companyName || "",
-            profileImage: t.profileImage || t.traderProfile?.profileImage || t.user?.profileImage || item.traderProfile?.profileImage || t.image || null,
-            logo: t.logo || t.traderProfile?.logo || t.user?.logo || item.traderProfile?.logo || t.image || null,
+            companyName: t.companyName || profile.companyName || "",
+            profileImage: t.profileImage || profile.profileImage || t.user?.profileImage || t.image || null,
+            logo: t.logo || profile.logo || t.user?.logo || t.image || null,
             ratingAvg: t.traderMetrics?.averageRating ?? t.ratingAvg ?? 0,
             reviewCount: t.traderMetrics?.totalReviews ?? t.reviewCount ?? 0,
             workRadius: t.workRadius ?? 0,
             isVerified: t.isVerified ?? false,
             subscriptionTier: t.subscriptionTier ?? "",
-            location: t.traderProfile?.location ?? t.location ?? "",
+            location: profile.location ?? t.location ?? "",
             skills: t.skills ?? [],
+            tradeCategories: extractNames(profile.tradeCategoryDetails),
+            skillServices: extractNames(profile.skillServiceDetails),
+            subCategories: extractNames(profile.subCategoryDetails),
           };
         });
         setTraders(list);

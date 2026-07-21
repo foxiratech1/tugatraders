@@ -397,7 +397,11 @@ export default function TraderNavbar() {
                         notifications.map((n) => (
                           <div
                             key={n.id}
-                            className={`px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-[#F5F5F5] transition-colors text-left ${!n.isRead && !n.read ? "bg-[#6E9625]/5" : ""
+                            onClick={() => {
+                              setNotifOpen(false);
+                              router.push(`/trader/notifications?id=${n.id}`);
+                            }}
+                            className={`cursor-pointer px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-[#F5F5F5] transition-colors text-left ${!n.isRead && !n.read ? "bg-[#6E9625]/5" : ""
                               }`}
                           >
                             <div className="flex items-start justify-between gap-2">

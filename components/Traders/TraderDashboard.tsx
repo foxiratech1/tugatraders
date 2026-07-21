@@ -110,11 +110,10 @@ function GuideMilestone({
     <div className="flex gap-3 py-2.5">
       <div className="flex flex-col items-center pt-0.5">
         <div
-          className={`w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 ${
-            completed
-              ? "bg-[#6E9625] border-[#6E9625]"
-              : "bg-white border-[#D0D0D0]"
-          }`}
+          className={`w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 ${completed
+            ? "bg-[#6E9625] border-[#6E9625]"
+            : "bg-white border-[#D0D0D0]"
+            }`}
         />
       </div>
       <div>
@@ -162,7 +161,7 @@ export default function TraderDashboard() {
                   <ArrowRight size={15} />
                 </Link>
                 <Link
-                  href="/trader/profile/public"
+                  href=""
                   className="text-[13px] font-semibold text-[#1C2C1C]/60 hover:text-[#1C2C1C] transition-colors"
                 >
                   View Public Profile

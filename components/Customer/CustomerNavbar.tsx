@@ -37,10 +37,9 @@ export default function CustomerNavbar() {
   // Navigation items mapping
   const navLinks = [
     { name: "Inbox", href: "/customer-dashboard/inbox", icon: Inbox },
-    // { name: "Jobs", href: "/customer-dashboard/jobs", icon: Briefcase },
+    { name: "Jobs", href: "/customer-dashboard/job-history", icon: Briefcase },
     // { name: "Quotes", href: "/customer-dashboard/quotes", icon: FileText },
     { name: "Saved", href: "/customer-dashboard/saved", icon: Bookmark },
-    { name: "Contact", href: "/customer-dashboard/contact", icon: Mail },
     // { name: "Profile", href: "/customer-dashboard/profile", icon: User },
     { name: "Reviews", href: "/customer-dashboard/reviews", icon: Star },
     { name: "Account", href: "/customer-dashboard/account", icon: Settings },
@@ -132,7 +131,7 @@ export default function CustomerNavbar() {
       {/* Middle: Navigation Pill */}
       <div className="hidden lg:flex items-center bg-[#F9F9F9] rounded-full p-1 border border-[#F0EDE8]">
         {navLinks.map((link) => {
-          const isActive = pathname === link.href || (link.name === "Jobs" && pathname === "/customer-dashboard/jobs"); // Example active state
+          const isActive = pathname === link.href;
           const Icon = link.icon;
 
           return (
@@ -192,7 +191,11 @@ export default function CustomerNavbar() {
                   notifications.map((n) => (
                     <div
                       key={n.id}
-                      className={`px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors ${!n.isRead && !n.read ? "bg-[#6E9625]/5" : ""
+                      onClick={() => {
+                        setShowNotifDropdown(false);
+                        router.push(`/customer-dashboard/notifications?id=${n.id}`);
+                      }}
+                      className={`cursor-pointer px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors ${!n.isRead && !n.read ? "bg-[#6E9625]/5" : ""
                         }`}
                     >
                       <div className="flex items-start justify-between gap-2">

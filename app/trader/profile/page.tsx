@@ -17,6 +17,19 @@ import {
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
+import Swal from "sweetalert2";
+
+const ThemeSwal = Swal.mixin({
+  buttonsStyling: false,
+  width: '22em',
+  customClass: {
+    popup: 'rounded-3xl border border-[#E8E8E8] shadow-2xl bg-white p-6',
+    title: 'text-[1.25rem] font-bold text-[#1C2C1C] mt-1',
+    htmlContainer: 'text-[13px] text-gray-500 font-medium mt-1',
+    actions: 'mt-6',
+    confirmButton: 'px-12 py-3 rounded-xl bg-[#1C2C1C] hover:bg-[#2c3e2c] text-white text-[14px] font-bold transition-colors',
+  }
+});
 
 // ─── ChevronDown Icon ─────────────────────────────────────────────────────────
 const ChevronDown = () => (
@@ -101,13 +114,15 @@ const MultiSelect = ({
                 className="inline-flex items-center gap-1 bg-[#6E9625]/10 border border-[#6E9625]/20 text-[#1C2C1C] text-[12px] font-semibold px-2 py-0.5 rounded-md"
               >
                 <span>{item.name}</span>
-                <button
-                  type="button"
-                  onClick={(e) => removeOption(item.id, e)}
-                  className="hover:text-red-500 rounded-full focus:outline-none ml-0.5"
-                >
-                  &times;
-                </button>
+                {!disabled && (
+                  <button
+                    type="button"
+                    onClick={(e) => removeOption(item.id, e)}
+                    className="hover:text-red-500 rounded-full focus:outline-none ml-0.5"
+                  >
+                    &times;
+                  </button>
+                )}
               </span>
             ))
           )}
@@ -290,6 +305,10 @@ export default function TraderProfilePage() {
   const [selectedTradeCategory, setSelectedTradeCategory] = useState("");
   const [selectedSkillServices, setSelectedSkillServices] = useState<string[]>([]);
   const [selectedSubCategories, setSelectedSubCategories] = useState<string[]>([]);
+
+  const [initialTradeCategory, setInitialTradeCategory] = useState("");
+  const [initialSkillServices, setInitialSkillServices] = useState<string[]>([]);
+  const [initialSubCategories, setInitialSubCategories] = useState<string[]>([]);
   /* ── load profile ── */
   useEffect(() => {
     async function load() {
@@ -318,9 +337,18 @@ export default function TraderProfilePage() {
           planName: tp?.subscription?.plan?.name || tp?.subscriptionTier || "",
         });
 
-        if (tp?.tradeCategories?.length > 0) setSelectedTradeCategory(tp.tradeCategories[0]);
-        if (tp?.skillsServices?.length > 0) setSelectedSkillServices(tp.skillsServices);
-        if (tp?.subCategories?.length > 0) setSelectedSubCategories(tp.subCategories);
+        if (tp?.tradeCategories?.length > 0) {
+          setSelectedTradeCategory(tp.tradeCategories[0]);
+          setInitialTradeCategory(tp.tradeCategories[0]);
+        }
+        if (tp?.skillsServices?.length > 0) {
+          setSelectedSkillServices(tp.skillsServices);
+          setInitialSkillServices(tp.skillsServices);
+        }
+        if (tp?.subCategories?.length > 0) {
+          setSelectedSubCategories(tp.subCategories);
+          setInitialSubCategories(tp.subCategories);
+        }
 
         const categories = await authApi.getCategories();
 
@@ -481,24 +509,24 @@ export default function TraderProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!personalForm.fullName.trim()) return toast.error("Full Name is required.", { id: "trader-profile-error" });
+    if (!personalForm.fullName.trim()) { ThemeSwal.fire({ icon: 'warning', iconColor: '#F59E0B', title: 'Validation Error', text: 'Full Name is required.' }); return; }
 
-    if (!personalForm.email.trim()) return toast.error("Email is required.", { id: "trader-profile-error" });
+    if (!personalForm.email.trim()) { ThemeSwal.fire({ icon: 'warning', iconColor: '#F59E0B', title: 'Validation Error', text: 'Email is required.' }); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(personalForm.email.trim())) {
-      return toast.error("Please enter a valid email address.", { id: "trader-profile-error" });
+      ThemeSwal.fire({ icon: 'warning', iconColor: '#F59E0B', title: 'Validation Error', text: 'Please enter a valid email address.' }); return;
     }
 
     if (!personalForm.phone || !personalForm.phone.trim()) {
-      return toast.error("Phone number is required.", { id: "trader-profile-error" });
+      ThemeSwal.fire({ icon: 'warning', iconColor: '#F59E0B', title: 'Validation Error', text: 'Phone number is required.' }); return;
     }
     // Allow optional +, spaces, dashes, and 9-15 digits
     const phoneRegex = /^\+?[\d\s\-]{9,15}$/;
     if (!phoneRegex.test(personalForm.phone)) {
-      return toast.error("Please enter a valid phone number (e.g. +351 912 345 678).", { id: "trader-profile-error" });
+      ThemeSwal.fire({ icon: 'warning', iconColor: '#F59E0B', title: 'Validation Error', text: 'Please enter a valid phone number (e.g. +351 912 345 678).' }); return;
     }
 
-    if (!businessForm.companyName.trim()) return toast.error("Company Name is required.", { id: "trader-profile-error" });
-    if (!businessForm.companyType.trim()) return toast.error("Company Type is required.", { id: "trader-profile-error" });
+    if (!businessForm.companyName.trim()) { ThemeSwal.fire({ icon: 'warning', iconColor: '#F59E0B', title: 'Validation Error', text: 'Company Name is required.' }); return; }
+    if (!businessForm.companyType.trim()) { ThemeSwal.fire({ icon: 'warning', iconColor: '#F59E0B', title: 'Validation Error', text: 'Company Type is required.' }); return; }
 
 
 
@@ -516,7 +544,12 @@ export default function TraderProfilePage() {
       fd.append("companyType", businessForm.companyType);
       fd.append("registrationNumber", businessForm.niNumber);
 
-      if (traderStatus !== "MANUAL_CHECK") {
+      const categoriesChanged =
+        selectedTradeCategory !== initialTradeCategory ||
+        JSON.stringify([...selectedSkillServices].sort()) !== JSON.stringify([...initialSkillServices].sort()) ||
+        JSON.stringify([...selectedSubCategories].sort()) !== JSON.stringify([...initialSubCategories].sort());
+
+      if (traderStatus !== "MANUAL_CHECK" && categoriesChanged) {
         if (selectedTradeCategory) {
           fd.append("tradeCategories", JSON.stringify([selectedTradeCategory]));
         }
@@ -541,7 +574,7 @@ export default function TraderProfilePage() {
       // portfolio files not sent per API spec
 
       await authApi.updateProfile(fd);
-      toast.success("Profile updated successfully!");
+      ThemeSwal.fire({ icon: 'success', iconColor: '#6E9625', title: 'Success', text: 'Profile updated successfully!' });
 
       const searchParams = new URLSearchParams(window.location.search);
       if (searchParams.get("mode") === "update") {
@@ -549,7 +582,18 @@ export default function TraderProfilePage() {
       }
     } catch (err: any) {
       console.error("Update profile error", err);
-      toast.error(err?.response?.data?.message || "Failed to update profile", { id: "trader-profile-error" });
+
+      const errorMessage = err?.response?.data?.message || "Failed to update profile";
+      // If it's a specific logic error, we use a softer icon. Otherwise standard error.
+      const isLogicError = errorMessage.toLowerCase().includes("pending");
+
+      ThemeSwal.fire({
+        icon: isLogicError ? 'info' : 'error',
+        iconColor: isLogicError ? '#6E9625' : '#EF4444',
+        title: isLogicError ? 'Notice' : 'Error',
+        text: errorMessage,
+        confirmButtonText: 'Okay'
+      });
     } finally {
       setSaving(false);
     }
@@ -965,63 +1009,62 @@ export default function TraderProfilePage() {
                   </div>
 
                   {/* Trade Categories & Skill Services */}
-                  {traderStatus !== "MANUAL_CHECK" && (
-                    <div className="border-t border-[#E8E8E8] pt-5 mt-5">
-                      <h3 className="text-[14px] font-bold text-[#1C2C1C] mb-1">
-                        Trade Categories & Skill Services
-                      </h3>
+                  <div className="border-t border-[#E8E8E8] pt-5 mt-5">
+                    <h3 className="text-[14px] font-bold text-[#1C2C1C] mb-1">
+                      Trade Categories & Skill Services
+                    </h3>
 
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
-                        {/* Main Trade Category */}
-                        <div className="sm:col-span-2">
-                          <label className="block text-[12px] font-medium text-gray-500 mb-1">
-                            Main Trade Category
-                          </label>
-                          <select
-                            value={selectedTradeCategory}
-                            onChange={(e) => setSelectedTradeCategory(e.target.value)}
-                            className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all bg-white"
-                          >
-                            <option value="">Select Main Trade Category</option>
-                            {tradeCategories.map((c) => (
-                              <option key={c.id} value={c.id}>
-                                {c.name}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
+                      {/* Main Trade Category */}
+                      <div className="sm:col-span-2">
+                        <label className="block text-[12px] font-medium text-gray-500 mb-1">
+                          Main Trade Category
+                        </label>
+                        <select
+                          value={selectedTradeCategory}
+                          onChange={(e) => setSelectedTradeCategory(e.target.value)}
+                          disabled={traderStatus === "MANUAL_CHECK"}
+                          className={`w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all ${traderStatus === "MANUAL_CHECK" ? "bg-gray-50 cursor-not-allowed" : "bg-white"}`}
+                        >
+                          <option value="">Select Main Trade Category</option>
+                          {tradeCategories.map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
 
-                        {/* Skill Services */}
-                        <div>
-                          <label className="block text-[12px] font-medium text-gray-500 mb-1">
-                            Skill Services
-                          </label>
-                          <MultiSelect
-                            options={skillServices}
-                            selectedIds={selectedSkillServices}
-                            onChange={setSelectedSkillServices}
-                            placeholder="Select Skill Services"
-                            disabled={!selectedTradeCategory}
-                          />
-                        </div>
+                      {/* Skill Services */}
+                      <div>
+                        <label className="block text-[12px] font-medium text-gray-500 mb-1">
+                          Skill Services
+                        </label>
+                        <MultiSelect
+                          options={skillServices}
+                          selectedIds={selectedSkillServices}
+                          onChange={setSelectedSkillServices}
+                          placeholder="Select Skill Services"
+                          disabled={!selectedTradeCategory || traderStatus === "MANUAL_CHECK"}
+                        />
+                      </div>
 
-                        {/* Sub Categories */}
-                        <div>
-                          <label className="block text-[12px] font-medium text-gray-500 mb-1">
-                            Sub Categories
-                          </label>
-                          <MultiSelect
-                            options={subCategories}
-                            selectedIds={selectedSubCategories}
-                            onChange={setSelectedSubCategories}
-                            placeholder="Select Sub Categories"
-                            disabled={selectedSkillServices.length === 0}
-                          />
-                        </div>
+                      {/* Sub Categories */}
+                      <div>
+                        <label className="block text-[12px] font-medium text-gray-500 mb-1">
+                          Sub Categories
+                        </label>
+                        <MultiSelect
+                          options={subCategories}
+                          selectedIds={selectedSubCategories}
+                          onChange={setSelectedSubCategories}
+                          placeholder="Select Sub Categories"
+                          disabled={selectedSkillServices.length === 0 || traderStatus === "MANUAL_CHECK"}
+                        />
                       </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               )}
 

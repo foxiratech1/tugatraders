@@ -229,10 +229,10 @@ export default function Step3Page() {
 
                                 {rejectionReason && (
                                     <div className="w-full bg-amber-50/60 border border-amber-200/60 rounded-xl p-4 mb-6 text-left">
-                                        <p className="text-[12px] font-extrabold text-amber-800 uppercase tracking-wider mb-1">
+                                        <p className="text-center text-[12px] font-extrabold text-amber-800 uppercase tracking-wider mb-1">
                                             Verification Note
                                         </p>
-                                        <p className="text-[14px] text-amber-900 font-medium leading-relaxed">
+                                        <p className="text-center text-[14px] text-amber-900 font-medium leading-relaxed">
                                             {rejectionReason}
                                         </p>
                                     </div>
@@ -240,7 +240,7 @@ export default function Step3Page() {
 
                                 <button
                                     onClick={() => router.push("/trader/profile?mode=update")}
-                                    className="w-full bg-[#1C2C1C] text-white font-bold py-3.5 px-6 rounded-xl hover:bg-[#2C4A2C] transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5"
+                                    className="w-full bg-[#1C2C1C] text-white font-bold py-3.5 px-6 rounded-xl hover:bg-[#2C4A2C] transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
                                 >
                                     Update profile
                                 </button>
@@ -253,18 +253,18 @@ export default function Step3Page() {
                                     Unfortunately, your profile verification was rejected. Please review the reason below.
                                 </p>
 
-                                <div className="w-full bg-red-50/50 border border-red-100 rounded-xl p-4 mb-6 text-left">
-                                    <p className="text-[12px] font-extrabold text-red-800 uppercase tracking-wider mb-1">
+                                <div className="w-full bg-red-50/50 border border-red-100 rounded-xl p-4 mb-6 text-center">
+                                    <p className="text-center text-[12px] font-extrabold text-red-800 uppercase tracking-wider mb-1">
                                         Reason for rejection
                                     </p>
-                                    <p className="text-[14px] text-red-600 font-medium leading-relaxed">
+                                    <p className="text-center text-[14px] text-red-600 font-medium leading-relaxed">
                                         {rejectionReason || "Please contact support for more details about why your verification was rejected."}
                                     </p>
                                 </div>
 
                                 <button
                                     onClick={() => authApi.handleLogout(router)}
-                                    className="w-full bg-[#1C2C1C] text-white font-bold py-3.5 px-6 rounded-xl hover:bg-[#2C4A2C] transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5"
+                                    className="w-full bg-[#1C2C1C] text-white font-bold py-3.5 px-6 rounded-xl hover:bg-[#2C4A2C] transition-all duration-300 shadow-md hover:shadow-lg hover:-translate-y-0.5 cursor-pointer"
                                 >
                                     Log out
                                 </button>
