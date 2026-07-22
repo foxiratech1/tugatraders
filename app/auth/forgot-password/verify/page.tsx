@@ -8,6 +8,7 @@ import Link from "next/link";
 import toast from "react-hot-toast";
 import { authApi } from "@/app/api/authApi";
 import PublicGuard from "@/components/Guards/PublicGuard";
+import { useForgotPassword } from "../layout";
 
 export default function VerifyForgotOtpPage() {
     return (
@@ -21,13 +22,13 @@ export default function VerifyForgotOtpPage() {
 
 function VerifyForgotOtpContent() {
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const email = searchParams.get("email") ?? "";
+    const { email, setResetToken } = useForgotPassword();
     const [otpDigits, setOtpDigits] = useState(Array(6).fill(""));
     const otpRefs = Array.from({ length: 6 }, () => useRef<HTMLInputElement>(null));
 
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [resendLoading, setResendLoading] = useState(false);
 
     // Prerequisite guard: require email search parameter
     useEffect(() => {
@@ -46,10 +47,11 @@ function VerifyForgotOtpContent() {
         setError(null);
         setLoading(true);
         try {
-            const response = await authApi.verifyForgotOtp({ email, otp });
-            const resetToken = response?.resetToken || response?.token || "";
+            const response = await authApi.verifyForgotOtp({ email: email!, otp });
+            const token = response?.resetToken || response?.token || "";
+            setResetToken(token);
             toast.success("OTP verified successfully. You can now set a new password.");
-            router.replace(`/auth/forgot-password/reset?email=${encodeURIComponent(email)}&resetToken=${encodeURIComponent(resetToken)}`);
+            router.replace(`/auth/forgot-password/reset`);
         } catch (err: any) {
             const msg = err.response?.data?.message?.[0] || err.response?.data?.error || "Failed to verify OTP";
             toast.error(msg);
@@ -59,11 +61,14 @@ function VerifyForgotOtpContent() {
     };
 
     const handleResend = async () => {
+        setResendLoading(true);
         try {
-            await authApi.resendForgotOtp({ email });
-            toast.success("OTP resent to your email.");
+            await authApi.forgotPassword({ email: email! });
+            toast.success("A new OTP has been sent to your email.");
         } catch (err: any) {
             toast.error("Failed to resend OTP.");
+        } finally {
+            setResendLoading(false);
         }
     };
 

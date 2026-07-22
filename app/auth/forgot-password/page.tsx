@@ -8,12 +8,20 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { authApi } from "@/app/api/authApi";
 import PublicGuard from "@/components/Guards/PublicGuard";
+import { useForgotPassword } from "./layout";
 
 export default function ForgotPasswordPage() {
     const router = useRouter();
+    const { setEmail: setContextEmail, setResetToken } = useForgotPassword();
     const [email, setEmail] = useState("");
     const [error, setError] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+
+    // Clear context state on mount in case they hit Back to this page
+    React.useEffect(() => {
+        setContextEmail(null);
+        setResetToken(null);
+    }, [setContextEmail, setResetToken]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -29,8 +37,9 @@ export default function ForgotPasswordPage() {
         setLoading(true);
         try {
             await authApi.forgotPassword({ email });
+            setContextEmail(email);
             toast.success("Password reset link sent! Please check your email.");
-            router.replace(`/auth/forgot-password/verify?email=${encodeURIComponent(email)}`);
+            router.replace(`/auth/forgot-password/verify`);
         } catch (err: any) {
             const msg = err.response?.data?.message?.[0] || err.response?.data?.error || "Failed to send reset email";
             toast.error(msg);

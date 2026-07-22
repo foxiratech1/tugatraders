@@ -10,11 +10,11 @@ import { authApi } from "@/app/api/authApi";
 import { AnimatedEye } from "@/app/ui/AnimatedEye";
 import { useAnimatedEye } from "@/app/hooks/useAnimatedEye";
 import PublicGuard from "@/components/Guards/PublicGuard";
+import { useForgotPassword } from "../layout";
 
 function ResetPasswordContent() {
     const router = useRouter();
-    const searchParams = useSearchParams();
-    const resetToken = searchParams.get("resetToken") ?? "";
+    const { resetToken } = useForgotPassword();
 
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
@@ -52,7 +52,7 @@ function ResetPasswordContent() {
         setError(null);
         setLoading(true);
         try {
-            await authApi.resetPassword({ resetToken, password, confirmPassword });
+            await authApi.resetPassword({ resetToken: resetToken!, password, confirmPassword });
             toast.success("Password reset successful. You can now log in.");
             router.replace("/auth/login");
         } catch (err: any) {
