@@ -297,7 +297,7 @@ const DirectorySearchResults = () => {
             : Array.isArray(categoriesData?.categories)
               ? categoriesData.categories
               : [];
-        setCategories(categoriesArray);
+        setCategories([...categoriesArray].sort((a: any, b: any) => (a.name || "").localeCompare(b.name || "")));
 
         const categoryName = searchParams?.get('categoryName');
         if (!initialCategoryId && categoryName && categoriesArray.length > 0) {
@@ -332,7 +332,7 @@ const DirectorySearchResults = () => {
             : Array.isArray(skillsData?.services)
               ? skillsData.services
               : [];
-        setSkillServices(servicesArray);
+        setSkillServices([...servicesArray].sort((a: any, b: any) => (a.name || "").localeCompare(b.name || "")));
       } catch (err) {
         console.error('Failed to load skill services', err);
         setSkillServices([]);
@@ -361,7 +361,7 @@ const DirectorySearchResults = () => {
             : Array.isArray(subData?.subCategories)
               ? subData.subCategories
               : [];
-        setSubCategories(subArray);
+        setSubCategories([...subArray].sort((a: any, b: any) => (a.name || "").localeCompare(b.name || "")));
       } catch (err) {
         console.error('Failed to load sub‑categories', err);
         setSubCategories([]);

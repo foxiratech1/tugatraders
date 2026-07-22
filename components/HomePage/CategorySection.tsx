@@ -36,7 +36,7 @@ const CategoryCard = ({ cat }: { cat: any }) => {
   const Icon = getCategoryIcon(cat.name || "");
   const name = cat.name || "Trade Service";
 
-  const targetUrl = cat.id || cat._id 
+  const targetUrl = cat.id || cat._id
     ? `/directory-listing/search?categoryId=${cat.id || cat._id}`
     : `/directory-listing/search?categoryName=${encodeURIComponent(name)}`;
 

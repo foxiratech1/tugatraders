@@ -25,7 +25,9 @@ const CategoryBrowse = () => {
     async function fetchCategories() {
       try {
         const res = await authApi.getCategories();
-        setCategories(Array.isArray(res) ? res : res.data || []);
+        let cats = Array.isArray(res) ? res : res.data || [];
+        cats = cats.sort((a: any, b: any) => (a.name || "").localeCompare(b.name || ""));
+        setCategories(cats);
       } catch (err) {
         console.error("Failed to fetch categories", err);
       }

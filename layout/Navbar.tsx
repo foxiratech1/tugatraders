@@ -83,7 +83,7 @@ export default function Navbar() {
                 setLoginOpen(!loginOpen);
                 setSignupOpen(false);
               }}
-              className="flex items-center gap-2 rounded-full bg-[#1d3321] px-5 py-2 xl:px-6 xl:py-2.5 text-[14px] font-bold text-white shadow-lg shadow-[#1d3321]/20 hover:bg-[#28462d] transition-all duration-300"
+              className="flex items-center gap-2 rounded-[12px] bg-[#1d3321] px-5 py-2 xl:px-6 xl:py-2.5 text-[14px] font-bold text-white shadow-lg shadow-[#1d3321]/20 hover:bg-[#28462d] transition-all duration-300"
             >
               <FiLogIn size={18} />
               Log in
@@ -122,7 +122,7 @@ export default function Navbar() {
                 setSignupOpen(!signupOpen);
                 setLoginOpen(false);
               }}
-              className="flex items-center gap-2 rounded-full border border-[#C60C03] bg-[#C60C03] px-5 py-2 xl:px-6 xl:py-2.5 text-[14px] font-bold text-white hover:bg-[#d93b33] hover:border-[#d93b33] transition-all duration-300"
+              className="flex items-center gap-2 rounded-[12px] border border-[#C60C03] bg-[#C60C03] px-5 py-2 xl:px-6 xl:py-2.5 text-[14px] font-bold text-white hover:bg-[#d93b33] hover:border-[#d93b33] transition-all duration-300"
             >
               <FiUserPlus size={18} />
               Sign up

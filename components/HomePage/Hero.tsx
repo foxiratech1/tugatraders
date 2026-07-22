@@ -72,7 +72,7 @@ export default function Hero() {
                 Quickly connect with a local, trusted tradespeople to get the job done.
               </p>
             </div>
-            <Link href="/directory-listing" className="inline-flex items-center justify-between w-full rounded-full bg-[#1d3321] px-6 py-4 text-[15px] font-bold text-white hover:bg-[#152719] transition-all">
+            <Link href="/directory-listing" className="inline-flex items-center justify-between w-full rounded-[16px] bg-[#1d3321] px-6 py-4 text-[15px] font-bold text-white hover:bg-[#152719] transition-all">
               <span>Browse Trade Services</span>
               <FiArrowRight size={20} className="" />
             </Link>
@@ -88,7 +88,7 @@ export default function Hero() {
                 We connect you with vetted and reliable tradespeople so you don&apos;t have to search.
               </p>
             </div>
-            <Link href="/post-job" className="inline-flex items-center justify-between w-full rounded-full bg-[#7ca13a] px-6 py-4 text-[15px] font-bold text-white hover:bg-[#6c8d32] transition-all">
+            <Link href="/post-job" className="inline-flex items-center justify-between w-full rounded-[16px] bg-[#7ca13a] px-6 py-4 text-[15px] font-bold text-white hover:bg-[#6c8d32] transition-all">
               <span>Get Free Quotes</span>
               <FiArrowRight size={20} />
             </Link>
@@ -123,7 +123,7 @@ export default function Hero() {
             <p className="text-[20px] font-bold text-white text-center lg:text-right">
               Your Next Job Is Just One Click Away
             </p>
-            <Link href="/trader-signup" className="inline-flex items-center gap-3 rounded-full bg-[#d91e1e] px-8 py-4 text-[15px] font-bold text-white hover:bg-[#b81919] transition-all shadow-xl shadow-red-900/20">
+            <Link href="/trader-signup" className="inline-flex items-center gap-3 rounded-[16px] bg-[#d91e1e] px-8 py-4 text-[15px] font-bold text-white hover:bg-[#b81919] transition-all shadow-xl shadow-red-900/20">
               <FiUserPlus size={20} />
               <span>Join as a Tradesperson</span>
             </Link>

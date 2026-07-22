@@ -1,8 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { Check, ShieldCheck, Lock, Clock, AlertCircle } from "lucide-react";
+import { Check, ShieldCheck, Lock, Clock, AlertCircle, X, ChevronDown, Plus, Search, Edit2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { traderRegisterStep3, authApi, getRegistrationStatus } from "@/app/api/authApi";
 
@@ -19,11 +19,153 @@ interface Plan {
     id: string;
     name: string;
     description: string;
-    maxCategories: number;
+    maxTrades: number;
+    unlimitedTrades: boolean;
     maxPortfolioUploads: number;
     maxQuotesPerDay: number;
     isActive: boolean;
     prices: Price[];
+}
+
+interface CategoryGroup {
+    id: string; // unique local ID for the UI
+    categoryId: string;
+    selectedSkillServices: string[];
+    selectedSubCategories: string[];
+    isCollapsed?: boolean;
+}
+
+// Multi-Select Dropdown Component
+interface MultiSelectProps {
+    options: Array<{ id: string; name: string }>;
+    selectedIds: string[];
+    onChange: (selectedIds: string[]) => void;
+    placeholder: string;
+    disabled?: boolean;
+}
+
+const MultiSelect = ({
+    options,
+    selectedIds,
+    onChange,
+    placeholder,
+    disabled = false,
+}: MultiSelectProps) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const filteredOptions = options.filter(opt =>
+        opt.name.toLowerCase().includes(searchTerm.toLowerCase()) && !selectedIds.includes(opt.id)
+    );
+
+    const toggleOption = (id: string) => {
+        if (selectedIds.includes(id)) {
+            onChange(selectedIds.filter(selectedId => selectedId !== id));
+        } else {
+            onChange([...selectedIds, id]);
+        }
+    };
+
+    return (
+        <div className="relative" ref={containerRef}>
+            <div
+                onClick={() => !disabled && setIsOpen(!isOpen)}
+                className={`min-h-[44px] w-full rounded-[12px] border bg-white px-4 py-2 text-[14px] font-medium transition-all flex items-center justify-between
+                    ${disabled ? "opacity-50 cursor-not-allowed bg-gray-50 border-[#243A241F]" : "cursor-pointer border-[#243A241F] focus-within:border-[#6E9625] focus-within:ring-1 focus-within:ring-[#6E9625]"}
+                `}
+            >
+                <div className="flex flex-wrap gap-1.5 flex-1">
+                    {selectedIds.length === 0 ? (
+                        <span className="text-[#1C2C1C]/40 py-0.5">{placeholder}</span>
+                    ) : (
+                        selectedIds.map(id => {
+                            const option = options.find(o => o.id === id);
+                            return option ? (
+                                <span
+                                    key={id}
+                                    className="bg-[#6E9625]/10 text-[#6E9625] px-2 py-0.5 rounded-md text-[12px] flex items-center gap-1 font-bold"
+                                >
+                                    {option.name}
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            toggleOption(id);
+                                        }}
+                                        className="hover:text-red-500 transition-colors"
+                                    >
+                                        <X size={12} strokeWidth={3} />
+                                    </button>
+                                </span>
+                            ) : null;
+                        })
+                    )}
+                    {selectedIds.length > 0 && !disabled && (
+                        <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setIsOpen(true); }}
+                            className="bg-transparent border border-dashed border-[#1C2C1C]/30 text-[#1C2C1C]/60 px-2 py-0.5 rounded-md text-[12px] flex items-center gap-1 font-bold hover:bg-[#F5F5F5] hover:text-[#1C2C1C] transition-colors cursor-pointer"
+                        >
+                            <Plus size={12} strokeWidth={2.5} /> Add More
+                        </button>
+                    )}
+                </div>
+                <ChevronDown size={16} className={`text-[#1C2C1C]/40 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+            </div>
+
+            {isOpen && (
+                <div className="absolute z-50 w-full mt-2 bg-white border border-[#243A240A] rounded-[16px] shadow-[0_12px_48px_rgba(36,58,36,0.12)] overflow-hidden">
+                    <div className="p-3 border-b border-[#243A240A]">
+                        <div className="relative">
+                            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#1C2C1C]/40" />
+                            <input
+                                type="text"
+                                placeholder="Search..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                onClick={(e) => e.stopPropagation()}
+                                className="w-full pl-9 pr-4 py-2 bg-[#F5F5F5] rounded-lg text-[13px] outline-none placeholder-[#1C2C1C]/40 text-[#1C2C1C]"
+                            />
+                        </div>
+                    </div>
+                    <div className="max-h-[240px] overflow-y-auto p-2 scrollbar-thin scrollbar-thumb-[#6E9625]/20 scrollbar-track-transparent">
+                        {filteredOptions.length === 0 ? (
+                            <div className="py-4 text-center text-[13px] text-[#1C2C1C]/40 font-medium">
+                                No results found
+                            </div>
+                        ) : (
+                            filteredOptions.map(option => (
+                                <div
+                                    key={option.id}
+                                    onClick={() => toggleOption(option.id)}
+                                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${selectedIds.includes(option.id) ? "bg-[#6E9625]/10" : "hover:bg-[#F5F5F5]"
+                                        }`}
+                                >
+                                    <div className={`w-4 h-4 rounded-md border flex items-center justify-center transition-colors ${selectedIds.includes(option.id) ? "bg-[#6E9625] border-[#6E9625]" : "border-[#1C2C1C]/20"
+                                        }`}>
+                                        {selectedIds.includes(option.id) && <Check size={12} className="text-white" strokeWidth={3} />}
+                                    </div>
+                                    <span className={`text-[13px] ${selectedIds.includes(option.id) ? "font-bold text-[#6E9625]" : "font-medium text-[#1C2C1C]"}`}>
+                                        {option.name}
+                                    </span>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
 }
 
 export default function Step3Page() {
@@ -83,29 +225,6 @@ export default function Step3Page() {
         return () => window.removeEventListener("pageshow", handlePageShow);
     }, [router, pathname]);
 
-    // Handle payment and final registration step
-    const handlePayment = async () => {
-        if (!selectedPlanId) return;
-        setLoading(true);
-        try {
-            // Find selected plan and price id for current billing cycle
-            const selectedPlan = plans.find(p => p.id === selectedPlanId);
-            const price = selectedPlan?.prices.find(p => p.billingCycle === billingCycle);
-            if (!price) {
-                toast.error("Price not found for selected plan.");
-                setLoading(false);
-                return;
-            }
-            await traderRegisterStep3({ planId: selectedPlanId, priceId: price.id });
-            toast.success("Subscription activated successfully!");
-            router.replace("/trader"); // adjust path as needed
-        } catch (err) {
-            toast.error("Payment processing failed.");
-            console.error(err);
-        } finally {
-            setLoading(false);
-        }
-    };
     const [plans, setPlans] = useState<Plan[]>([]);
     const [plansLoading, setPlansLoading] = useState(true);
     const [verificationStatus, setVerificationStatus] = useState<string>('PENDING');
@@ -114,6 +233,151 @@ export default function Step3Page() {
 
     // We store the selected plan ID
     const [selectedPlanId, setSelectedPlanId] = useState<string>("");
+
+    // UI Phase State
+    const [phase, setPhase] = useState<'PLAN' | 'CATEGORIES'>('PLAN');
+
+    // --- Category Selection State ---
+    const [categoryGroups, setCategoryGroups] = useState<CategoryGroup[]>([]);
+    const [allCategories, setAllCategories] = useState<{ id: string; name: string }[]>([]);
+    const [skillServicesMap, setSkillServicesMap] = useState<Record<string, { id: string; name: string }[]>>({});
+    const [subCategoriesMap, setSubCategoriesMap] = useState<Record<string, { id: string; name: string }[]>>({});
+
+    // Fetch categories on mount
+    useEffect(() => {
+        const fetchCats = async () => {
+            try {
+                const res = await authApi.getCategories();
+                if (res?.data) {
+                    setAllCategories(res.data);
+                }
+            } catch (err) {
+                console.error("Failed to load categories", err);
+            }
+        };
+        fetchCats();
+    }, []);
+
+    // Helper functions for category groups
+    const addCategoryGroup = () => {
+        setCategoryGroups(prev => [
+            ...prev.map(g => ({ ...g, isCollapsed: true })),
+            {
+                id: Date.now().toString() + Math.random().toString(),
+                categoryId: "",
+                selectedSkillServices: [],
+                selectedSubCategories: [],
+                isCollapsed: false
+            }
+        ]);
+    };
+
+    const removeCategoryGroup = (id: string) => {
+        setCategoryGroups(prev => prev.filter(g => g.id !== id));
+    };
+
+    const handleCategoryGroupChange = (id: string, field: keyof CategoryGroup, value: any) => {
+        setCategoryGroups(prev => prev.map(g => {
+            if (g.id !== id) return g;
+
+            if (field === 'categoryId') {
+                if (value && !skillServicesMap[value]) {
+                    authApi.getSkillServices(value).then(res => {
+                        const skillsArray = Array.isArray(res) ? res : res?.data || res?.services || [];
+                        setSkillServicesMap(prevMap => ({ ...prevMap, [value]: skillsArray }));
+                    }).catch(err => console.error(err));
+                }
+                return { ...g, categoryId: value, selectedSkillServices: [], selectedSubCategories: [] };
+            }
+
+            if (field === 'selectedSkillServices') {
+                const newSkills = value as string[];
+                const addedSkills = newSkills.filter(s => !g.selectedSkillServices.includes(s));
+                const removedSkills = g.selectedSkillServices.filter(s => !newSkills.includes(s));
+
+                addedSkills.forEach(skillId => {
+                    if (!subCategoriesMap[skillId]) {
+                        authApi.getSubCategories(skillId).then(res => {
+                            const subArray = Array.isArray(res) ? res : res?.data || res?.subCategories || [];
+                            setSubCategoriesMap(prevMap => ({ ...prevMap, [skillId]: subArray }));
+                        }).catch(err => console.error(err));
+                    }
+                });
+
+                let newSubCats = [...g.selectedSubCategories];
+                removedSkills.forEach(skillId => {
+                    const subsToRemove = (subCategoriesMap[skillId] || []).map(sub => sub.id);
+                    newSubCats = newSubCats.filter(id => !subsToRemove.includes(id));
+                });
+
+                return { ...g, selectedSkillServices: newSkills, selectedSubCategories: newSubCats };
+            }
+
+            return { ...g, [field]: value };
+        }));
+    };
+
+    // Handle payment and final registration step
+    const handlePayment = async () => {
+        if (!selectedPlanId) return;
+
+        // Validation for Categories
+        const selectedPlan = plans.find(p => p.id === selectedPlanId);
+        if (!selectedPlan) return;
+
+        if (categoryGroups.length === 0) {
+            toast.error("Please add at least one Trade Category.");
+            return;
+        }
+
+        const validGroups = categoryGroups.filter(g => g.categoryId && g.selectedSkillServices.length > 0 && g.selectedSubCategories.length > 0);
+        if (validGroups.length !== categoryGroups.length || categoryGroups.length === 0) {
+            toast.error("Please completely fill out all added Trade Categories (Category, Skill Services, and Sub Categories).");
+            return;
+        }
+
+        setLoading(true);
+        try {
+            // Find price id for current billing cycle
+            const price = selectedPlan.prices.find(p => p.billingCycle === billingCycle);
+            if (!price) {
+                toast.error("Selected billing cycle is not available for this plan.");
+                setLoading(false);
+                return;
+            }
+
+            // 1. First register step 3 (creates the subscription)
+            const registerRes = await traderRegisterStep3({
+                planId: selectedPlan.id,
+                priceId: price.id,
+            });
+
+            // 2. Then save categories (requires the subscription to exist)
+            const tradeCategories = validGroups.map(g => g.categoryId);
+            const skillServiceIds = validGroups.flatMap(g => g.selectedSkillServices);
+            const subCategoryIds = validGroups.flatMap(g => g.selectedSubCategories);
+
+            await authApi.saveTraderCategories({
+                tradeCategories,
+                skillServiceIds,
+                subCategoryIds
+            });
+
+            // 3. Finally, redirect to checkout if applicable
+            const checkoutUrl = registerRes?.data?.url || registerRes?.url;
+            if (checkoutUrl) {
+                window.location.href = checkoutUrl;
+            } else {
+                toast.success("Registration completed successfully!");
+                router.replace("/trader/profile"); // or whatever the dashboard route is
+            }
+        } catch (err: any) {
+            toast.error("Payment processing failed.");
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         const fetchPlans = async () => {
@@ -163,12 +427,7 @@ export default function Step3Page() {
         p.prices?.some(price => price.billingCycle === billingCycle && price.isActive)
     );
 
-    // Auto-select first plan when switching tabs if none is selected for this tab
-    useEffect(() => {
-        if (visiblePlans.length > 0 && !visiblePlans.find(p => p.id === selectedPlanId)) {
-            setSelectedPlanId(visiblePlans[0].id);
-        }
-    }, [billingCycle, visiblePlans, selectedPlanId]);
+
 
     if (statusLoading) {
         return (
@@ -288,11 +547,13 @@ export default function Step3Page() {
                         className="text-[26px] sm:text-[34px] font-bold text-[#1C2C1C] tracking-tight leading-tight mb-4"
                         style={{ fontFamily: "var(--font-bricolage), sans-serif" }}
                     >
-                        Select Membership Plan
+                        {phase === 'PLAN' ? "Select Membership Plan" : "Select Trade Categories"}
                     </h1>
                     <p className="text-[14px] sm:text-[15px] text-[#1C2C1C]/60 font-medium mb-6">
-                        Activate your trader profile to start receiving leads, managing jobs,
-                        and connecting with customers.
+                        {phase === 'PLAN'
+                            ? "Activate your trader profile to start receiving leads, managing jobs, and connecting with customers."
+                            : "Define your trade categories, skill services, and sub-categories so customers can find you."
+                        }
                     </p>
 
                     <div className="flex flex-wrap items-center justify-start sm:justify-center gap-4 sm:gap-6 text-[12px] font-bold text-[#6E9625]">
@@ -302,99 +563,225 @@ export default function Step3Page() {
                     </div>
                 </div>
 
-                {/* Billing Toggle */}
-                <div className="flex items-center p-1.5 bg-[#F5F5F5] rounded-full mb-12">
-                    <button
-                        onClick={() => setBillingCycle("MONTHLY")}
-                        className={`py-2 px-6 rounded-full text-[13px] font-bold transition-all ${billingCycle === "MONTHLY"
-                            ? "bg-white text-[#1C2C1C] shadow-sm"
-                            : "text-[#1C2C1C]/50 hover:text-[#1C2C1C]"
-                            }`}
-                    >
-                        Monthly
-                    </button>
-                    <button
-                        onClick={() => setBillingCycle("YEARLY")}
-                        className={`py-2 px-6 rounded-full text-[13px] font-bold transition-all flex items-center gap-2 ${billingCycle === "YEARLY"
-                            ? "bg-white text-[#1C2C1C] shadow-sm"
-                            : "text-[#1C2C1C]/50 hover:text-[#1C2C1C]"
-                            }`}
-                    >
-                        Annual
-                        <span className="bg-[#6E9625] text-white text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider">Save 20%</span>
-                    </button>
-                </div>
-
-                {/* Pricing Cards */}
-                <div className={`grid grid-cols-1 md:grid-cols-${Math.max(1, Math.min(visiblePlans.length || 1, 3))} gap-6 w-full mb-12 justify-center`}>
-                    {plansLoading ? (
-                        <div className="col-span-full flex justify-center py-12">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1C2C1C]" />
+                {/* PLAN PHASE */}
+                {phase === 'PLAN' && (
+                    <div className="w-full flex flex-col items-center animate-in fade-in duration-300">
+                        {/* Billing Toggle */}
+                        <div className="flex items-center p-1.5 bg-[#F5F5F5] rounded-full mb-12">
+                            <button
+                                onClick={() => setBillingCycle("MONTHLY")}
+                                className={`py-2 px-6 rounded-full text-[13px] font-bold transition-all ${billingCycle === "MONTHLY"
+                                    ? "bg-white text-[#1C2C1C] shadow-sm"
+                                    : "text-[#1C2C1C]/50 hover:text-[#1C2C1C]"
+                                    }`}
+                            >
+                                Monthly
+                            </button>
+                            <button
+                                onClick={() => setBillingCycle("YEARLY")}
+                                className={`py-2 px-6 rounded-full text-[13px] font-bold transition-all flex items-center gap-2 ${billingCycle === "YEARLY"
+                                    ? "bg-white text-[#1C2C1C] shadow-sm"
+                                    : "text-[#1C2C1C]/50 hover:text-[#1C2C1C]"
+                                    }`}
+                            >
+                                Annual
+                                <span className="bg-[#6E9625] text-white text-[9px] px-2 py-0.5 rounded-full uppercase tracking-wider">Save 20%</span>
+                            </button>
                         </div>
-                    ) : visiblePlans.length === 0 ? (
-                        <div className="col-span-full text-center text-[#1C2C1C]/50 py-12 font-medium">
-                            No plans currently available for {billingCycle.toLowerCase()} billing.
-                        </div>
-                    ) : (
-                        visiblePlans.map((plan) => {
-                            const isSelected = selectedPlanId === plan.id;
-                            const currentPrice = plan.prices.find(p => p.billingCycle === billingCycle);
-                            if (!currentPrice) return null;
-                            return (
-                                <div
-                                    key={plan.id}
-                                    onClick={() => setSelectedPlanId(plan.id)}
-                                    className={`rounded-[24px] border-2 p-8 relative cursor-pointer transition-all ${isSelected ? "border-[#6E9625] bg-[#1C2C1C] shadow-[0_12px_32px_rgba(110,150,37,0.2)]" : "border-[#E5E5E5] hover:border-[#1C2C1C]/30 bg-white"
-                                        }`}
-                                >
-                                    {isSelected && (
-                                        <div className="absolute top-6 right-6 bg-[#6E9625] text-[#1C2C1C] text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full">
-                                            Selected
-                                        </div>
-                                    )}
 
-                                    <h3 className={`text-[20px] font-bold mb-1 ${isSelected ? 'text-white' : 'text-[#1C2C1C]'}`}>{plan.name}</h3>
-                                    <p className={`text-[13px] font-medium mb-6 ${isSelected ? 'text-white/50' : 'text-[#1C2C1C]/50'}`}>{plan.description}</p>
-
-                                    <div className="flex items-end gap-1 mb-8">
-                                        <span className={`text-[40px] font-black leading-none ${isSelected ? 'text-white' : 'text-[#1C2C1C]'}`}>€{currentPrice.amount}</span>
-                                        <span className={`text-[14px] font-medium pb-1 ${isSelected ? 'text-white/50' : 'text-[#1C2C1C]/50'}`}>/{billingCycle === 'YEARLY' ? 'year' : 'month'}</span>
-                                    </div>
-
-                                    <ul className="flex flex-col gap-4 mb-10">
-                                        <li className={`flex items-start gap-3 text-[14px] font-medium ${isSelected ? 'text-white/80' : 'text-[#1C2C1C]/70'}`}>
-                                            <Check size={18} className="text-[#6E9625] flex-shrink-0 mt-0.5" />
-                                            {plan.maxCategories === 9999 ? "Unlimited" : `Up to ${plan.maxCategories}`} Categories
-                                        </li>
-                                        <li className={`flex items-start gap-3 text-[14px] font-medium ${isSelected ? 'text-white/80' : 'text-[#1C2C1C]/70'}`}>
-                                            <Check size={18} className="text-[#6E9625] flex-shrink-0 mt-0.5" />
-                                            {plan.maxPortfolioUploads} Portfolio Uploads
-                                        </li>
-                                        <li className={`flex items-start gap-3 text-[14px] font-medium ${isSelected ? 'text-white/80' : 'text-[#1C2C1C]/70'}`}>
-                                            <Check size={18} className="text-[#6E9625] flex-shrink-0 mt-0.5" />
-                                            {plan.maxQuotesPerDay === 9999 ? "Unlimited" : `${plan.maxQuotesPerDay}`} Quotes per Day
-                                        </li>
-                                    </ul>
-
-                                    <div className="mt-auto pt-4">
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setSelectedPlanId(plan.id);
-                                            }}
-                                            className={`w-full py-4 rounded-full text-[14px] font-bold transition-all shadow-sm ${isSelected
-                                                ? "bg-[#6E9625] text-white hover:bg-[#5C7D1F]"
-                                                : "bg-[#F5F5F5] text-[#1C2C1C] hover:bg-[#E5E5E5]"
+                        {/* Pricing Cards */}
+                        <div className={`grid grid-cols-1 md:grid-cols-${Math.max(1, Math.min(visiblePlans.length || 1, 3))} gap-6 w-full mb-12 justify-center`}>
+                            {plansLoading ? (
+                                <div className="col-span-full flex justify-center py-12">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1C2C1C]" />
+                                </div>
+                            ) : visiblePlans.length === 0 ? (
+                                <div className="col-span-full text-center text-[#1C2C1C]/50 py-12 font-medium">
+                                    No plans currently available for {billingCycle.toLowerCase()} billing.
+                                </div>
+                            ) : (
+                                visiblePlans.map((plan) => {
+                                    const isSelected = selectedPlanId === plan.id;
+                                    const currentPrice = plan.prices.find(p => p.billingCycle === billingCycle);
+                                    if (!currentPrice) return null;
+                                    return (
+                                        <div
+                                            key={plan.id}
+                                            onClick={() => setSelectedPlanId(plan.id)}
+                                            className={`rounded-[24px] border-2 p-8 relative cursor-pointer transition-all ${isSelected ? "border-[#6E9625] bg-[#1C2C1C] shadow-[0_12px_32px_rgba(110,150,37,0.2)]" : "border-[#E5E5E5] hover:border-[#1C2C1C]/30 bg-white"
                                                 }`}
                                         >
-                                            {isSelected ? 'Selected Plan' : 'Select Plan'}
-                                        </button>
+                                            {isSelected && (
+                                                <div className="absolute top-6 right-6 bg-[#6E9625] text-[#1C2C1C] text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full">
+                                                    Selected
+                                                </div>
+                                            )}
+
+                                            <h3 className={`text-[20px] font-bold mb-1 ${isSelected ? 'text-white' : 'text-[#1C2C1C]'}`}>{plan.name}</h3>
+                                            <p className={`text-[13px] font-medium mb-6 ${isSelected ? 'text-white/50' : 'text-[#1C2C1C]/50'}`}>{plan.description}</p>
+
+                                            <div className="flex items-end gap-1 mb-8">
+                                                <span className={`text-[40px] font-black leading-none ${isSelected ? 'text-white' : 'text-[#1C2C1C]'}`}>€{currentPrice.amount}</span>
+                                                <span className={`text-[14px] font-medium pb-1 ${isSelected ? 'text-white/50' : 'text-[#1C2C1C]/50'}`}>/{billingCycle === 'YEARLY' ? 'year' : 'month'}</span>
+                                            </div>
+
+                                            <ul className="flex flex-col gap-4 mb-10">
+                                                <li className={`flex items-start gap-3 text-[14px] font-medium ${isSelected ? 'text-white/80' : 'text-[#1C2C1C]/70'}`}>
+                                                    <Check size={18} className="text-[#6E9625] flex-shrink-0 mt-0.5" />
+                                                    {plan.unlimitedTrades ? "Unlimited" : `Up to ${plan.maxTrades}`} Categories
+                                                </li>
+                                                <li className={`flex items-start gap-3 text-[14px] font-medium ${isSelected ? 'text-white/80' : 'text-[#1C2C1C]/70'}`}>
+                                                    <Check size={18} className="text-[#6E9625] flex-shrink-0 mt-0.5" />
+                                                    {plan.maxPortfolioUploads} Portfolio Uploads
+                                                </li>
+                                                <li className={`flex items-start gap-3 text-[14px] font-medium ${isSelected ? 'text-white/80' : 'text-[#1C2C1C]/70'}`}>
+                                                    <Check size={18} className="text-[#6E9625] flex-shrink-0 mt-0.5" />
+                                                    {plan.maxQuotesPerDay === 9999 ? "Unlimited" : `${plan.maxQuotesPerDay}`} Quotes per Day
+                                                </li>
+                                            </ul>
+
+                                            <div className="mt-auto pt-4">
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setSelectedPlanId(plan.id);
+                                                    }}
+                                                    className={`w-full py-4 rounded-full text-[14px] font-bold transition-all shadow-sm ${isSelected
+                                                        ? "bg-[#6E9625] text-white hover:bg-[#5C7D1F]"
+                                                        : "bg-[#F5F5F5] text-[#1C2C1C] hover:bg-[#E5E5E5]"
+                                                        }`}
+                                                >
+                                                    {isSelected ? 'Selected Plan' : 'Select Plan'}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    );
+                                })
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* CATEGORIES PHASE */}
+                {phase === 'CATEGORIES' && selectedPlanId && (
+                    <div className="w-full mt-4 mb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="flex items-center justify-center mb-8 relative">
+                            <div className="absolute inset-0 flex items-center">
+                                <div className="w-full border-t border-[#1C2C1C]/10"></div>
+                            </div>
+                            <span className="relative bg-white px-4 text-[10px] font-extrabold text-[#6E9625] tracking-widest uppercase">
+                                Trade Categories
+                            </span>
+                        </div>
+
+                        <div className="bg-[#FAFAFA] border border-[#1C2C1C]/10 rounded-[20px] p-6 sm:p-8 mb-6">
+                            <h4 className="text-[14px] font-bold text-[#1C2C1C] mb-4">Select Trade Categories</h4>
+                            <MultiSelect
+                                options={allCategories}
+                                selectedIds={categoryGroups.map(g => g.categoryId).filter(Boolean)}
+                                onChange={(ids) => {
+                                    const selectedPlan = plans.find(p => p.id === selectedPlanId);
+                                    const maxCats = selectedPlan?.unlimitedTrades ? 9999 : (selectedPlan?.maxTrades || 1);
+                                    if (ids.length > maxCats) {
+                                        toast.error(`Your plan allows a maximum of ${maxCats === 9999 ? 'Unlimited' : maxCats} Categories.`);
+                                        return;
+                                    }
+
+                                    setCategoryGroups(prev => {
+                                        const next = prev.filter(g => ids.includes(g.categoryId));
+
+                                        ids.forEach(id => {
+                                            if (!next.find(g => g.categoryId === id)) {
+                                                next.push({
+                                                    id: Date.now().toString() + Math.random().toString(),
+                                                    categoryId: id,
+                                                    selectedSkillServices: [],
+                                                    selectedSubCategories: [],
+                                                    isCollapsed: false
+                                                });
+
+                                                if (!skillServicesMap[id]) {
+                                                    authApi.getSkillServices(id).then(res => {
+                                                        const skillsArray = Array.isArray(res) ? res : res?.data || res?.services || [];
+                                                        setSkillServicesMap(m => ({ ...m, [id]: skillsArray }));
+                                                    }).catch(err => console.error(err));
+                                                }
+                                            }
+                                        });
+                                        return next;
+                                    });
+                                }}
+                                placeholder="Select Categories *"
+                            />
+                        </div>
+
+                        <div className="flex flex-col gap-6">
+                            {categoryGroups.map((group, index) => {
+                                const categoryName = allCategories.find(c => c.id === group.categoryId)?.name || "Category";
+                                const skillServices = skillServicesMap[group.categoryId] || [];
+                                const subCategories = group.selectedSkillServices.flatMap(skillId => subCategoriesMap[skillId] || []);
+
+                                return (
+                                    <div key={group.id} className="relative bg-white border border-[#1C2C1C]/10 rounded-[20px] p-6 sm:p-8 shadow-sm">
+                                        <div className="flex justify-between items-center mb-6 border-b border-[#1C2C1C]/10 pb-4">
+                                            <h4 className="text-[16px] font-bold text-[#1C2C1C]">{categoryName} Services</h4>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 gap-6">
+                                            <div>
+                                                <label className="block text-[12px] font-bold text-[#1C2C1C]/60 mb-2 uppercase tracking-wide">
+                                                    Select {categoryName} Skill Services *
+                                                </label>
+                                                <MultiSelect
+                                                    options={skillServices}
+                                                    selectedIds={group.selectedSkillServices}
+                                                    onChange={(ids) => handleCategoryGroupChange(group.id, 'selectedSkillServices', ids)}
+                                                    placeholder="Choose Skill Services..."
+                                                />
+                                            </div>
+
+                                            {group.selectedSkillServices.length === 0 ? (
+                                                <div>
+                                                    <label className="block text-[12px] font-bold text-[#1C2C1C]/60 mb-2 uppercase tracking-wide">
+                                                        Select Sub Categories *
+                                                    </label>
+                                                    <MultiSelect
+                                                        options={[]}
+                                                        selectedIds={[]}
+                                                        onChange={() => { }}
+                                                        placeholder="Choose Sub Categories..."
+                                                        disabled={true}
+                                                    />
+                                                </div>
+                                            ) : (
+                                                group.selectedSkillServices.map(skillId => {
+                                                    const skillName = skillServices.find(s => s.id === skillId)?.name || "Skill Service";
+                                                    const skillSubCats = subCategoriesMap[skillId] || [];
+
+                                                    if (skillSubCats.length === 0) return null;
+
+                                                    return (
+                                                        <div key={skillId}>
+                                                            <label className="block text-[12px] font-bold text-[#1C2C1C]/60 mb-2 uppercase tracking-wide">
+                                                                Select {skillName} Sub Categories *
+                                                            </label>
+                                                            <MultiSelect
+                                                                options={skillSubCats}
+                                                                selectedIds={group.selectedSubCategories}
+                                                                onChange={(ids) => handleCategoryGroupChange(group.id, 'selectedSubCategories', ids)}
+                                                                placeholder="Choose Sub Categories..."
+                                                            />
+                                                        </div>
+                                                    );
+                                                })
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            );
-                        })
-                    )}
-                </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
 
                 {/* Footer info */}
                 <div className="w-full flex flex-col items-center border-t border-[#1C2C1C]/10 pt-8 mt-4">
@@ -417,19 +804,44 @@ export default function Step3Page() {
                     </p>
 
                     <div className="flex items-center gap-4">
-                        <button
-                            onClick={handlePayment}
-                            disabled={loading || !selectedPlanId}
-                            className="bg-[#1C2C1C] text-white text-[14px] font-bold py-3.5 px-8 rounded-full hover:bg-[#2C4A2C] transition-colors shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
-                        >
-                            {loading ? "Processing..." : "Continue to Payment"}
-                        </button>
-                        <button
-                            onClick={() => router.push("/trader/profile")}
-                            className="text-[#1C2C1C] text-[14px] font-bold py-3.5 px-6 rounded-full hover:bg-[#F5F5F5] transition-colors"
-                        >
-                            Back to Profile Setup
-                        </button>
+                        {phase === 'PLAN' ? (
+                            <>
+                                <button
+                                    onClick={() => {
+                                        setPhase('CATEGORIES');
+                                        if (categoryGroups.length === 0) {
+                                            addCategoryGroup();
+                                        }
+                                    }}
+                                    disabled={!selectedPlanId}
+                                    className="bg-[#1C2C1C] text-white text-[14px] font-bold py-3.5 px-8 rounded-full hover:bg-[#2C4A2C] transition-colors shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
+                                >
+                                    Continue to Categories
+                                </button>
+                                <button
+                                    onClick={() => router.push("/trader/profile")}
+                                    className="text-[#1C2C1C] text-[14px] font-bold py-3.5 px-6 rounded-full hover:bg-[#F5F5F5] transition-colors"
+                                >
+                                    Back to Profile Setup
+                                </button>
+                            </>
+                        ) : (
+                            <>
+                                <button
+                                    onClick={handlePayment}
+                                    disabled={loading}
+                                    className="bg-[#1C2C1C] text-white text-[14px] font-bold py-3.5 px-8 rounded-full hover:bg-[#2C4A2C] transition-colors shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
+                                >
+                                    {loading ? "Processing..." : "Complete & Pay"}
+                                </button>
+                                <button
+                                    onClick={() => setPhase('PLAN')}
+                                    className="text-[#1C2C1C] text-[14px] font-bold py-3.5 px-6 rounded-full hover:bg-[#F5F5F5] transition-colors"
+                                >
+                                    Back to Plans
+                                </button>
+                            </>
+                        )}
                     </div>
                 </div>
 

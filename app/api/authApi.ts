@@ -120,6 +120,16 @@ export const authApi = {
     return data;
   },
 
+  // Save trader's selected categories, skill services, and sub-categories
+  saveTraderCategories: async (payload: {
+    tradeCategories: string[];
+    skillServiceIds: string[];
+    subCategoryIds: string[];
+  }) => {
+    const { data } = await api.put("/api/auth/trader/categories", payload);
+    return data;
+  },
+
   // Authentication – forgot password
   forgotPassword: async (payload: { email: string }) => {
     const { data } = await api.post('/api/auth/forgot-password', payload);
@@ -483,7 +493,7 @@ export const traderRegister = async (payload: {
   email: string;
   password: string;
   confirmPassword: string;
-  tradeCategories: string[];
+  // tradeCategories: string[];
   workRadius: number;
   latitude: number;
   longitude: number;

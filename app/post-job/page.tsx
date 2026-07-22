@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import { MapPin, CloudUpload, Zap, ArrowRight, Trash2, ChevronDown } from 'lucide-react';
+import { MapPin, CloudUpload, Zap, ArrowRight, Trash2, ChevronDown, X } from 'lucide-react';
 import { authApi } from '@/app/api/authApi';
 import api from '@/utils/api';
 import { getAccessToken } from '@/utils/auth';
@@ -275,7 +275,15 @@ export default function PostJobPage() {
     <>
       {showAuthModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-2xl p-6 md:p-8 max-w-md w-full shadow-xl flex flex-col items-center text-center">
+          <div className="bg-white rounded-2xl p-6 md:p-8 max-w-md w-full shadow-xl flex flex-col items-center text-center relative">
+            <button
+              type="button"
+              onClick={() => setShowAuthModal(false)}
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-[#555555] hover:text-[#243A24]"
+              aria-label="Close"
+            >
+              <X size={20} />
+            </button>
             <div className="w-16 h-16 bg-[#F0F5E8] rounded-full flex items-center justify-center mb-4">
               <Zap className="text-[#6E9625]" size={32} />
             </div>
@@ -296,7 +304,7 @@ export default function PostJobPage() {
               <button
                 type="button"
                 onClick={() => router.push('/auth/signup?redirect=/customer-dashboard/post-job')}
-                className="flex-1 py-3.5 px-4 rounded-2xl bg-[#C00000] border-2 border-[#15232E] text-white font-bold text-base hover:bg-[#a60000] transition-all shadow-sm"
+                className="flex-1 py-3.5 px-4 rounded-2xl bg-[#C00000] text-white font-bold text-base hover:bg-[#a60000] transition-all shadow-sm"
               >
                 Sign up
               </button>

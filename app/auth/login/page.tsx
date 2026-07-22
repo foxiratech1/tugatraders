@@ -348,7 +348,7 @@ function LoginContent() {
                 </div>
               </div>
               {/* REMEMBER */}
-              <div className="flex items-center gap-2.5 cursor-pointer select-none group mt-1" onClick={() => setRememberMe(!rememberMe)}>
+              {/* <div className="flex items-center gap-2.5 cursor-pointer select-none group mt-1" onClick={() => setRememberMe(!rememberMe)}>
                 <div className={`w-[18px] h-[18px] rounded border flex items-center justify-center flex-shrink-0 transition-all ${rememberMe ? "bg-[#1C2C1C] border-[#1C2C1C]" : "border-[#243A2429] bg-white group-hover:border-[#1C2C1C]/60"}`}>
                   {rememberMe && (
                     <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
@@ -357,7 +357,7 @@ function LoginContent() {
                   )}
                 </div>
                 <span className="text-[12px] text-[#1C2C1C]/70 font-extrabold">Remember me</span>
-              </div>
+              </div> */}
               {/* SUBMIT */}
               <button
                 type="submit"

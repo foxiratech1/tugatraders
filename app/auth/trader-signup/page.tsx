@@ -12,9 +12,9 @@ import PublicGuard from "@/components/Guards/PublicGuard";
 import { PhoneInput } from "react-international-phone";
 import "react-international-phone/style.css";
 
-// ─── Trade Categories ─────────────────────────────────────────────────────────
-// Trade categories will be loaded from the API
-const TRADE_CATEGORIES: Array<{ id: string; name: string }> = []; // placeholder, will be replaced by state
+// ─── Trade Categories (COMMENTED OUT) ────────────────────────────────────────
+// // Trade categories will be loaded from the API
+// const TRADE_CATEGORIES: Array<{ id: string; name: string }> = []; // placeholder, will be replaced by state
 
 // ─── ChevronDown Icon ─────────────────────────────────────────────────────────
 const ChevronDown = () => (
@@ -35,7 +35,7 @@ const ChevronDown = () => (
 export default function TraderSignupPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    tradeCategories: [] as string[],
+    // tradeCategories: [] as string[],
     workRadius: "",
     baseLocation: "",
     fullName: "",
@@ -49,21 +49,6 @@ export default function TraderSignupPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-
-  const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
-  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
-  const categoryDropdownRef = useRef<HTMLDivElement>(null);
-
-  // Close dropdown on click outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
-        setIsCategoryDropdownOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   // Fetch trade categories on mount
   const [location, setLocation] = useState({
@@ -94,33 +79,33 @@ export default function TraderSignupPage() {
     );
   }, []);
 
-  useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const data = await authApi.getCategories();
-
-        console.log("Categories API Response:", data);
-
-        if (Array.isArray(data)) {
-          console.log("Categories Array:", data);
-          setCategories(data);
-        } else if (data?.data && Array.isArray(data.data)) {
-          console.log("Categories Data Array:", data.data);
-          setCategories(data.data);
-        } else {
-          console.log("Unexpected Response Format:", data);
-          setCategories([]);
-        }
-      } catch (err) {
-        console.error("Categories API Error:", err);
-        toast.error("Unable to load trade categories");
-      }
-    };
-
-    loadCategories();
-  }, []);
+  // useEffect(() => {
+  //   const loadCategories = async () => {
+  //     try {
+  //       const data = await authApi.getCategories();
+  //
+  //       console.log("Categories API Response:", data);
+  //
+  //       if (Array.isArray(data)) {
+  //         console.log("Categories Array:", data);
+  //         setCategories(data);
+  //       } else if (data?.data && Array.isArray(data.data)) {
+  //         console.log("Categories Data Array:", data.data);
+  //         setCategories(data.data);
+  //       } else {
+  //         console.log("Unexpected Response Format:", data);
+  //         setCategories([]);
+  //       }
+  //     } catch (err) {
+  //       console.error("Categories API Error:", err);
+  //       toast.error("Unable to load trade categories");
+  //     }
+  //   };
+  //
+  //   loadCategories();
+  // }, []);
   const [errors, setErrors] = useState<{
-    tradeCategories?: string;
+    // tradeCategories?: string;
     workRadius?: string;
     baseLocation?: string;
     fullName?: string;
@@ -182,7 +167,7 @@ export default function TraderSignupPage() {
   // ── Validation & Submit ─────────────────────────────────────────────────────
   const validate = () => {
     const e: typeof errors = {};
-    if (formData.tradeCategories.length === 0) e.tradeCategories = "Please select at least one trade category";
+    // if (formData.tradeCategories.length === 0) e.tradeCategories = "Please select at least one trade category";
     if (!formData.fullName.trim()) e.fullName = "Full name is required";
     if (!formData.businessEmail) e.businessEmail = "Business email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.businessEmail))
@@ -247,7 +232,7 @@ export default function TraderSignupPage() {
   };
 
   const isFormFilled =
-    formData.tradeCategories.length > 0 &&
+    // formData.tradeCategories.length > 0 &&
     Boolean(formData.workRadius.trim()) &&
     Boolean(formData.baseLocation.trim()) &&
     Boolean(formData.fullName.trim()) &&
@@ -280,7 +265,7 @@ export default function TraderSignupPage() {
         email: formData.businessEmail,
         password: formData.password,
         confirmPassword: formData.confirmPassword,
-        tradeCategories: formData.tradeCategories,
+        // tradeCategories: formData.tradeCategories,
         workRadius: Number(formData.workRadius),
         // addressLine: formData.address,
         // city: formData.city,
@@ -306,7 +291,7 @@ export default function TraderSignupPage() {
       }
 
       toast.success("Trader account created! Please verify your email.");
-      router.replace(`/auth/verify-otp?email=${encodeURIComponent(formData.businessEmail)}&categoryId=${encodeURIComponent(formData.tradeCategories[0] || "")}`);
+      router.replace(`/auth/verify-otp?email=${encodeURIComponent(formData.businessEmail)}`);
     } catch (err: any) {
       let msg = "An unexpected error occurred";
 
@@ -376,7 +361,7 @@ export default function TraderSignupPage() {
               {/* Form */}
               <form onSubmit={handleSubmit} className="flex flex-col gap-[14px]">
 
-                {/* Trade Category */}
+                {/* Trade Category (COMMENTED OUT)
                 <div className="flex flex-col gap-1.5" ref={categoryDropdownRef}>
                   <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">
                     Trade Categories
@@ -447,6 +432,7 @@ export default function TraderSignupPage() {
                     <p className="text-red-500 text-[11px] font-medium">{errors.tradeCategories}</p>
                   )}
                 </div>
+                */}
 
                 {/* Work Radius + Base Location */}
                 <div className="grid grid-cols-2 gap-4">
@@ -729,7 +715,7 @@ export default function TraderSignupPage() {
 
             {/* Background photo */}
             <Image
-              src="/trader-img.png"
+              src="/traderimage.jfif"
               alt="Professional tradesperson at work"
               fill
               className="object-cover object-center"
@@ -758,6 +744,7 @@ export default function TraderSignupPage() {
                   <div className="w-6 h-[2px] bg-[#6E9625] rounded-full" />
                   <span className="text-[#6E9625] text-[10.5px] font-extrabold tracking-[0.22em] uppercase">
                     Trusted by Thousands
+
                   </span>
                 </div>
 
@@ -771,7 +758,9 @@ export default function TraderSignupPage() {
 
                 {/* Sub copy */}
                 <p className="text-[14px] lg:text-[15px] font-medium leading-relaxed text-white/75">
-                  Receive quality job leads, connect with local customers, and<br /> grow your business with a trusted platform built for tradespeople
+                  Receive quality job leads, connect with local customers, and
+                  grow your business with a trusted platform built for tradespeople
+
                 </p>
 
                 {/* Container.png social proof widget */}

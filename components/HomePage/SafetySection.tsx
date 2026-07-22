@@ -31,7 +31,7 @@ const safetyFeatures = [
         <p>We&apos;ve reviewed key information during sign-up.</p>
         <p>We do not guarantee the quality of work, reliability, or ongoing compliance.</p>
         <p>Always carry out your own checks before hiring.</p>
-        <p>For more info click <span className="underline font-medium">here</span>.<br/><span className="text-[#89b341] italic text-xs">Vetting & badge page</span></p>
+        <p>For more info click <span className="underline font-medium">here</span>.<br /><span className="text-[#6E9625] italic text-xs">Vetting & badge page</span></p>
       </div>
     ),
     icon: <FiUserCheck className="text-[#6E9625]" size={20} />,
@@ -49,7 +49,7 @@ const safetyFeatures = [
         <p>These are based on information provided by the trader and reviewed at a specific point in time.</p>
         <p>They help you make informed decisions, they are not guarantees or certifications.</p>
         <p>We recommend asking traders for up-to-date documents before starting any work.</p>
-        <p>For more info click <span className="underline font-medium">here</span>.<br/><span className="text-[#89b341] italic text-xs">Vetting & badge page</span></p>
+        <p>For more info click <span className="underline font-medium">here</span>.<br /><span className="text-[#6E9625] italic text-xs">Vetting & badge page</span></p>
       </div>
     ),
     icon: <LuShieldCheck className="text-[#6E9625]" size={20} />,
@@ -66,7 +66,7 @@ const safetyFeatures = [
         </ul>
         <p>Honest feedback helps you choose the right trader</p>
         <p>Reviews are opinions, not guarantees</p>
-        <p>For more info click <span className="underline font-medium">here</span>.<br/><span className="text-[#89b341] italic text-xs">Review policy page</span></p>
+        <p>For more info click <span className="underline font-medium">here</span>.<br /><span className="text-[#6E9625] italic text-xs">Review policy page</span></p>
       </div>
     ),
     icon: <FiStar className="text-[#6E9625]" size={20} />,
@@ -82,7 +82,7 @@ const safetyFeatures = [
           <li>Content moderation rights: We may remove fake, abusive, defamatory, or illegal content and suspend accounts where necessary.</li>
           <li>No guarantee on content accuracy: Reviews and profiles are user-generated and may not be fully verified; users should exercise their own judgment.</li>
         </ul>
-        <p>For more info click <span className="underline font-medium">here</span>.<br/><span className="text-[#89b341] italic text-xs">Hiring Safely pop up window</span></p>
+        <p>For more info click <span className="underline font-medium">here</span>.<br /><span className="text-[#6E9625] italic text-xs">Hiring Safely pop up window</span></p>
       </div>
     ),
     icon: <LuShieldAlert className="text-[#6E9625]" size={20} />,
@@ -231,12 +231,12 @@ export default function SafetySection() {
                   {feature.description}
                 </div>
 
-                {!feature.hideLearnMore && (
+                {/* {!feature.hideLearnMore && (
                   <div className="flex items-center gap-2 mt-2 text-[#89b341] text-[14px] font-semibold">
                     Learn more
                     <FiArrowRight className="group-hover:translate-x-1 transition-transform duration-300" />
                   </div>
-                )}
+                )} */}
               </div>
 
               {/* HOVER GLOW */}

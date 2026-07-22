@@ -41,7 +41,7 @@ export default function TermsLayout() {
   // Map of tab keys to their display titles
   const titles: Record<string, string> = {
     terms: 'Terms & Conditions',
-    cookies: 'Cookies Policy',
+    cookies: 'Privacy & Cookie policy',
     trust: 'Trust & Safety',
     review: 'Review Policy',
     moderation: 'Content Moderation',
@@ -106,7 +106,7 @@ export default function TermsLayout() {
                 <div className={`flex items-center justify-center ${activeTab === 'cookies' ? '' : 'w-6 h-6 rounded-full bg-[#111111]'}`}>
                   <Cookie size={activeTab === 'cookies' ? 18 : 12} className="text-white" />
                 </div>
-                <span className="text-[14px]">Cookies Policy</span>
+                <span className="text-[14px]">Privacy & Cookie policy</span>
               </button>
 
               {/* Disputes Tab */}

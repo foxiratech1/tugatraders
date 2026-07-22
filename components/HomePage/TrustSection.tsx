@@ -47,13 +47,12 @@ export default function TrustSection() {
               for a safer hiring experience.
             </p>
 
-            <Link
-              href="#"
+            <p
               className="inline-flex items-center gap-2 text-[#89b341] font-bold text-[16px] hover:gap-4 transition-all"
             >
               Learn how we protect you
               <FiArrowRight size={20} />
-            </Link>
+            </p>
           </div>
 
           {/* Subtle accent shadow */}

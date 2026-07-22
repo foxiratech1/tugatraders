@@ -14,6 +14,7 @@ import {
   X,
   Plus,
   AlertCircle,
+  Edit2,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -45,6 +46,14 @@ const ChevronDown = () => (
     <polyline points="6 9 12 15 18 9" />
   </svg>
 );
+
+interface CategoryGroup {
+  id: string; // unique local ID for the UI
+  categoryId: string;
+  selectedSkillServices: string[];
+  selectedSubCategories: string[];
+  isCollapsed?: boolean;
+}
 
 // ─── MultiSelect Component ───────────────────────────────────────────────────
 interface MultiSelectProps {
@@ -294,21 +303,13 @@ export default function TraderProfilePage() {
     Array<{ id: string; name: string }>
   >([]);
 
-  const [skillServices, setSkillServices] = useState<
-    Array<{ id: string; name: string }>
-  >([]);
+  const [categoryGroups, setCategoryGroups] = useState<CategoryGroup[]>([]);
+  const [initialCategoryGroups, setInitialCategoryGroups] = useState<CategoryGroup[]>([]);
+  const [skillServicesMap, setSkillServicesMap] = useState<Record<string, { id: string; name: string }[]>>({});
+  const [subCategoriesMap, setSubCategoriesMap] = useState<Record<string, { id: string; name: string }[]>>({});
 
-  const [subCategories, setSubCategories] = useState<
-    Array<{ id: string; name: string }>
-  >([]);
-
-  const [selectedTradeCategory, setSelectedTradeCategory] = useState("");
-  const [selectedSkillServices, setSelectedSkillServices] = useState<string[]>([]);
-  const [selectedSubCategories, setSelectedSubCategories] = useState<string[]>([]);
-
-  const [initialTradeCategory, setInitialTradeCategory] = useState("");
-  const [initialSkillServices, setInitialSkillServices] = useState<string[]>([]);
-  const [initialSubCategories, setInitialSubCategories] = useState<string[]>([]);
+  const [maxTrades, setMaxTrades] = useState<number>(1);
+  const [unlimitedTrades, setUnlimitedTrades] = useState<boolean>(false);
   /* ── load profile ── */
   useEffect(() => {
     async function load() {
@@ -337,17 +338,49 @@ export default function TraderProfilePage() {
           planName: tp?.subscription?.plan?.name || tp?.subscriptionTier || "",
         });
 
-        if (tp?.tradeCategories?.length > 0) {
-          setSelectedTradeCategory(tp.tradeCategories[0]);
-          setInitialTradeCategory(tp.tradeCategories[0]);
-        }
-        if (tp?.skillsServices?.length > 0) {
-          setSelectedSkillServices(tp.skillsServices);
-          setInitialSkillServices(tp.skillsServices);
-        }
-        if (tp?.subCategories?.length > 0) {
-          setSelectedSubCategories(tp.subCategories);
-          setInitialSubCategories(tp.subCategories);
+        // Parse category details from backend
+        const cDetails = tp?.categoryDetails || [];
+        const sDetails = tp?.skillServiceDetails || [];
+        const subDetails = tp?.subCategoryDetails || [];
+
+        const groups: CategoryGroup[] = cDetails.map((c: any) => {
+          const catSkills = sDetails.filter((s: any) => s.categoryId === c.id).map((s: any) => s.id);
+          // A sub-category belongs to a skill service. We find all sub-categories whose skillServiceId is in our catSkills.
+          const catSubs = subDetails.filter((sub: any) => catSkills.includes(sub.skillServiceId)).map((sub: any) => sub.id);
+          return {
+            id: c.id,
+            categoryId: c.id,
+            selectedSkillServices: catSkills,
+            selectedSubCategories: catSubs,
+            isCollapsed: true
+          };
+        });
+        setCategoryGroups(groups);
+        setInitialCategoryGroups(JSON.parse(JSON.stringify(groups)));
+
+        // Pre-populate maps for existing selections so UI renders correctly
+        const sMap: Record<string, any[]> = {};
+        sDetails.forEach((s: any) => {
+          if (!sMap[s.categoryId]) sMap[s.categoryId] = [];
+          sMap[s.categoryId].push({ id: s.id, name: s.name });
+        });
+        setSkillServicesMap(sMap);
+
+        const subMap: Record<string, any[]> = {};
+        subDetails.forEach((sub: any) => {
+          if (!subMap[sub.skillServiceId]) subMap[sub.skillServiceId] = [];
+          subMap[sub.skillServiceId].push({ id: sub.id, name: sub.name });
+        });
+
+        // Convert skillServiceId-based map to generic ID-based map for UI compatibility
+        // In the UI we lookup subcategories by skillServiceId
+        setSubCategoriesMap(subMap);
+
+        // Subscription limits
+        const plan = tp?.subscription?.plan;
+        if (plan) {
+          setMaxTrades(plan.maxTrades || 1);
+          setUnlimitedTrades(plan.unlimitedTrades || false);
         }
 
         const categories = await authApi.getCategories();
@@ -404,8 +437,9 @@ export default function TraderProfilePage() {
   ) => {
     let { name, value } = e.target;
     if (name === "phone") {
-      value = value.replace(/\D/g, "");
-      if (value.length > 10) return;
+      // Allow +, digits, spaces, and dashes for international numbers
+      value = value.replace(/[^\d+\s-]/g, "");
+      if (value.length > 20) return;
     }
     setPersonalForm((prev) => ({ ...prev, [name]: value }));
   };
@@ -413,8 +447,15 @@ export default function TraderProfilePage() {
   const handleProfileFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    
+    // Update personal details profile image
     setSelectedProfileFile(file);
-    setPreviewUrl(URL.createObjectURL(file));
+    const objectUrl = URL.createObjectURL(file);
+    setPreviewUrl(objectUrl);
+    
+    // Sync with Business Profile / Logo
+    setLogoFile(file);
+    setLogoPreview(objectUrl);
   };
 
   const handleRemovePhoto = () => {
@@ -422,6 +463,11 @@ export default function TraderProfilePage() {
     setPreviewUrl(null);
     setPersonalForm((prev) => ({ ...prev, profileImage: null }));
     if (profileInputRef.current) profileInputRef.current.value = "";
+    
+    // Sync with Business Profile / Logo
+    setLogoFile(null);
+    setLogoPreview(null);
+    if (logoInputRef.current) logoInputRef.current.value = "";
   };
 
   /* ── handlers: proof of identity ── */
@@ -478,32 +524,53 @@ export default function TraderProfilePage() {
     setBusinessForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
-  useEffect(() => {
-    if (!selectedTradeCategory) return;
+  const handleCategoryGroupChange = (groupId: string, field: keyof CategoryGroup, value: any) => {
+    setCategoryGroups(prev => prev.map(g => {
+      if (g.id !== groupId) return g;
 
-    authApi.getSkillServices(selectedTradeCategory).then((res) => {
-      setSkillServices(Array.isArray(res) ? res : res?.data || []);
-    });
+      if (field === 'categoryId') {
+        const newCatId = value as string;
+        if (!skillServicesMap[newCatId]) {
+          authApi.getSkillServices(newCatId).then(res => {
+            setSkillServicesMap(m => ({ ...m, [newCatId]: Array.isArray(res) ? res : res?.data || [] }));
+          });
+        }
+        return { ...g, categoryId: newCatId, selectedSkillServices: [], selectedSubCategories: [] };
+      }
 
-    setSelectedSkillServices([]);
-    setSelectedSubCategories([]);
-  }, [selectedTradeCategory]);
+      if (field === 'selectedSkillServices') {
+        const newSkills = value as string[];
+        newSkills.forEach(skillId => {
+          if (!subCategoriesMap[skillId]) {
+            authApi.getSubCategories(skillId).then(res => {
+              setSubCategoriesMap(m => ({ ...m, [skillId]: Array.isArray(res) ? res : res?.data || [] }));
+            });
+          }
+        });
+        // We just clear subcategories when skills change to enforce re-selection and avoid orphaned subcategories
+        return { ...g, selectedSkillServices: newSkills, selectedSubCategories: [] };
+      }
 
-  useEffect(() => {
-    if (selectedSkillServices.length === 0) {
-      setSubCategories([]);
-      return;
-    }
+      return { ...g, [field]: value };
+    }));
+  };
 
-    Promise.all(
-      selectedSkillServices.map(id => authApi.getSubCategories(id))
-    ).then((results) => {
-      const allSubs = results.flatMap((res: any) => Array.isArray(res) ? res : res?.data || []);
-      const uniqueSubs = Array.from(new Map(allSubs.map((s: any) => [s.id, s])).values()) as Array<{ id: string; name: string }>;
-      setSubCategories(uniqueSubs);
-    });
+  const addCategoryGroup = () => {
+    setCategoryGroups(prev => [
+      ...prev.map(g => ({ ...g, isCollapsed: true })),
+      {
+        id: Date.now().toString() + Math.random().toString(),
+        categoryId: "",
+        selectedSkillServices: [],
+        selectedSubCategories: [],
+        isCollapsed: false
+      }
+    ]);
+  };
 
-  }, [selectedSkillServices]);
+  const removeCategoryGroup = (groupId: string) => {
+    setCategoryGroups(prev => prev.filter(g => g.id !== groupId));
+  };
 
   /* ── submit ── */
   const handleSubmit = async (e: React.FormEvent) => {
@@ -544,20 +611,34 @@ export default function TraderProfilePage() {
       fd.append("companyType", businessForm.companyType);
       fd.append("registrationNumber", businessForm.niNumber);
 
-      const categoriesChanged =
-        selectedTradeCategory !== initialTradeCategory ||
-        JSON.stringify([...selectedSkillServices].sort()) !== JSON.stringify([...initialSkillServices].sort()) ||
-        JSON.stringify([...selectedSubCategories].sort()) !== JSON.stringify([...initialSubCategories].sort());
+      const normalizeGroups = (groups: CategoryGroup[]) => {
+        return groups
+          .filter(g => g.categoryId && g.selectedSkillServices.length > 0 && g.selectedSubCategories.length > 0)
+          .map(g => ({
+            categoryId: g.categoryId,
+            selectedSkillServices: [...g.selectedSkillServices].sort(),
+            selectedSubCategories: [...g.selectedSubCategories].sort()
+          }))
+          .sort((a, b) => a.categoryId.localeCompare(b.categoryId));
+      };
+
+      const categoriesChanged = JSON.stringify(normalizeGroups(categoryGroups)) !== JSON.stringify(normalizeGroups(initialCategoryGroups));
 
       if (traderStatus !== "MANUAL_CHECK" && categoriesChanged) {
-        if (selectedTradeCategory) {
-          fd.append("tradeCategories", JSON.stringify([selectedTradeCategory]));
+        const validGroups = categoryGroups.filter(g => g.categoryId && g.selectedSkillServices.length > 0 && g.selectedSubCategories.length > 0);
+
+        const tradeCategories = validGroups.map(g => g.categoryId);
+        const skillServiceIds = validGroups.flatMap(g => g.selectedSkillServices);
+        const subCategoryIds = validGroups.flatMap(g => g.selectedSubCategories);
+
+        if (tradeCategories.length > 0) {
+          fd.append("tradeCategories", JSON.stringify(tradeCategories));
         }
-        if (selectedSkillServices.length > 0) {
-          fd.append("skillsServices", JSON.stringify(selectedSkillServices));
+        if (skillServiceIds.length > 0) {
+          fd.append("skillsServices", JSON.stringify(skillServiceIds));
         }
-        if (selectedSubCategories.length > 0) {
-          fd.append("subCategories", JSON.stringify(selectedSubCategories));
+        if (subCategoryIds.length > 0) {
+          fd.append("subCategories", JSON.stringify(subCategoryIds));
         }
       }
 
@@ -635,7 +716,7 @@ export default function TraderProfilePage() {
 
             {/* ── Left sidebar ── */}
             <div className="w-48 flex-shrink-0 space-y-1">
-              {TABS.map(({ id, label, icon: Icon }) => (
+              {TABS.filter(tab => tab.id !== "portfolio" || businessForm.planName).map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
                   type="button"
@@ -1015,54 +1096,154 @@ export default function TraderProfilePage() {
                     </h3>
 
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
-                      {/* Main Trade Category */}
-                      <div className="sm:col-span-2">
-                        <label className="block text-[12px] font-medium text-gray-500 mb-1">
-                          Main Trade Category
-                        </label>
-                        <select
-                          value={selectedTradeCategory}
-                          onChange={(e) => setSelectedTradeCategory(e.target.value)}
-                          disabled={traderStatus === "MANUAL_CHECK"}
-                          className={`w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all ${traderStatus === "MANUAL_CHECK" ? "bg-gray-50 cursor-not-allowed" : "bg-white"}`}
-                        >
-                          <option value="">Select Main Trade Category</option>
-                          {tradeCategories.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                    <div className="flex flex-col gap-6">
+                      {categoryGroups.map((group, index) => {
+                        // Filter out categories already selected in other groups
+                        const availableCategories = tradeCategories.filter(cat =>
+                          cat.id === group.categoryId || !categoryGroups.some(g => g.categoryId === cat.id)
+                        );
 
-                      {/* Skill Services */}
-                      <div>
-                        <label className="block text-[12px] font-medium text-gray-500 mb-1">
-                          Skill Services
-                        </label>
-                        <MultiSelect
-                          options={skillServices}
-                          selectedIds={selectedSkillServices}
-                          onChange={setSelectedSkillServices}
-                          placeholder="Select Skill Services"
-                          disabled={!selectedTradeCategory || traderStatus === "MANUAL_CHECK"}
-                        />
-                      </div>
+                        const skillServicesOptions = skillServicesMap[group.categoryId] || [];
+                        const subCategoriesOptions = group.selectedSkillServices.flatMap(skillId => subCategoriesMap[skillId] || []);
 
-                      {/* Sub Categories */}
-                      <div>
-                        <label className="block text-[12px] font-medium text-gray-500 mb-1">
-                          Sub Categories
-                        </label>
-                        <MultiSelect
-                          options={subCategories}
-                          selectedIds={selectedSubCategories}
-                          onChange={setSelectedSubCategories}
-                          placeholder="Select Sub Categories"
-                          disabled={selectedSkillServices.length === 0 || traderStatus === "MANUAL_CHECK"}
-                        />
-                      </div>
+                        return (
+                          <div key={group.id} className="relative bg-[#FAFAFA] border border-[#1C2C1C]/10 rounded-[20px] p-6 sm:p-8">
+                            <div className="flex justify-between items-center mb-6">
+                              <h4 className="text-[14px] font-bold text-[#1C2C1C]">Category {index + 1}</h4>
+                              <div className="flex items-center gap-2">
+                                {group.isCollapsed && traderStatus !== "MANUAL_CHECK" && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCategoryGroupChange(group.id, 'isCollapsed', false)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
+                                  >
+                                    <Edit2 size={14} strokeWidth={2.5} />
+                                  </button>
+                                )}
+                                {traderStatus !== "MANUAL_CHECK" && categoryGroups.length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => removeCategoryGroup(group.id)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
+                                  >
+                                    <X size={16} strokeWidth={2.5} />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+
+                            {group.isCollapsed ? (
+                              <div className="flex flex-col gap-3">
+                                <div className="flex items-center gap-3">
+                                  <span className="text-[16px] font-bold text-[#1C2C1C]">
+                                    {availableCategories.find(c => c.id === group.categoryId)?.name || "Unknown Category"}
+                                  </span>
+                                </div>
+                                <div className="flex flex-col gap-4 mt-2">
+                                  {group.selectedSkillServices.length > 0 && (
+                                    <div className="flex flex-col gap-2">
+                                      <span className="text-[12px] font-bold text-[#1C2C1C]/50 uppercase tracking-wider">Skill Services</span>
+                                      <div className="flex flex-wrap gap-2">
+                                        {group.selectedSkillServices.map(id => {
+                                          // Use pre-fetched map or global state as fallback
+                                          const name = skillServicesOptions.find(s => s.id === id)?.name;
+                                          if (!name) return null;
+                                          return (
+                                            <span key={id} className="bg-[#6E9625]/10 text-[#6E9625] px-3 py-1.5 rounded-md text-[13px] font-semibold">
+                                              {name}
+                                            </span>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  )}
+                                  {group.selectedSubCategories.length > 0 && (
+                                    <div className="flex flex-col gap-2">
+                                      <span className="text-[12px] font-bold text-[#1C2C1C]/50 uppercase tracking-wider">Sub Categories</span>
+                                      <div className="flex flex-wrap gap-2">
+                                        {group.selectedSubCategories.map(id => {
+                                          const name = subCategoriesOptions.find(s => s.id === id)?.name;
+                                          if (!name) return null;
+                                          return (
+                                            <span key={id} className="bg-[#F5F5F5] text-[#1C2C1C]/70 border border-[#1C2C1C]/10 px-3 py-1.5 rounded-md text-[13px] font-semibold">
+                                              {name}
+                                            </span>
+                                          );
+                                        })}
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="grid grid-cols-1 gap-5">
+                                <div className="relative">
+                                  <select
+                                    value={group.categoryId}
+                                    onChange={(e) => handleCategoryGroupChange(group.id, 'categoryId', e.target.value)}
+                                    className="w-full h-[44px] rounded-[12px] border bg-white px-4 text-[14px] text-[#1C2C1C] placeholder-[#1C2C1C]/40 outline-none transition-all font-medium border-[#243A241F] focus:border-[#6E9625] focus:ring-1 focus:ring-[#6E9625] appearance-none cursor-pointer"
+                                  >
+                                    <option value="" disabled>Select a Category *</option>
+                                    {availableCategories.map(cat => (
+                                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                                    ))}
+                                  </select>
+                                  <ChevronDown />
+                                </div>
+
+                                <MultiSelect
+                                  options={skillServicesOptions}
+                                  selectedIds={group.selectedSkillServices}
+                                  onChange={(ids) => handleCategoryGroupChange(group.id, 'selectedSkillServices', ids)}
+                                  placeholder="Select Skill Services *"
+                                  disabled={!group.categoryId}
+                                />
+
+                                <MultiSelect
+                                  options={subCategoriesOptions}
+                                  selectedIds={group.selectedSubCategories}
+                                  onChange={(ids) => handleCategoryGroupChange(group.id, 'selectedSubCategories', ids)}
+                                  placeholder="Select Sub Categories *"
+                                  disabled={group.selectedSkillServices.length === 0}
+                                />
+
+                                <div className="mt-2 flex justify-end">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCategoryGroupChange(group.id, 'isCollapsed', true)}
+                                    disabled={!group.categoryId || group.selectedSkillServices.length === 0 || group.selectedSubCategories.length === 0}
+                                    className="bg-[#6E9625] text-white text-[13px] font-bold py-2.5 px-6 rounded-full hover:bg-[#5C7D1F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                  >
+                                    Save Category
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+
+                      {traderStatus !== "MANUAL_CHECK" && (() => {
+                        const maxCats = unlimitedTrades ? 9999 : (maxTrades || 1);
+                        const canAddMore = categoryGroups.length < maxCats;
+
+                        return (
+                          <button
+                            type="button"
+                            onClick={addCategoryGroup}
+                            disabled={!canAddMore}
+                            className={`flex items-center justify-center gap-2 py-4 rounded-[16px] border-2 border-dashed font-bold text-[14px] transition-all
+                                        ${canAddMore
+                                ? "border-[#6E9625]/40 text-[#6E9625] hover:bg-[#6E9625]/5"
+                                : "border-[#1C2C1C]/10 text-[#1C2C1C]/30 cursor-not-allowed bg-[#FAFAFA]"
+                              }
+                                    `}
+                          >
+                            <Plus size={18} strokeWidth={2.5} />
+                            {canAddMore ? "Add Another Category" : `Maximum ${maxCats === 9999 ? 'Unlimited' : maxCats} Categories Reached`}
+                          </button>
+                        );
+                      })()}
                     </div>
                   </div>
                 </div>

@@ -87,7 +87,7 @@ const MapSearchSection = () => {
           {/* Center Map */}
           <div className="relative flex-shrink-0 w-full max-w-[320px] md:max-w-[380px]">
             <Image
-              src="/mapimage.jpg"
+              src="/maplogo.jfif"
               alt="Portugal Map with Trades"
               width={380}
               height={500}
