@@ -77,9 +77,10 @@ const AnimatedEye = ({
   );
 };
 
-function LoginContent() {
+function LoginContent({ role }: { role?: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const currentRole = role || searchParams.get("role") || "CUSTOMER";
   const redirectParam = searchParams.get("redirect");
   const traderIdParam = searchParams.get("traderId");
   const [showPassword, setShowPassword] = useState(false);
@@ -396,7 +397,7 @@ function LoginContent() {
         </div>
         {/* RIGHT SECTION (Hero) */}
         <div className="relative hidden w-full lg:w-[50%] lg:h-auto lg:self-stretch overflow-hidden lg:block flex-shrink-0 z-0">
-          <Image src="/log%20in.png" alt="Find trusted professionals for every job" fill className="object-cover object-center" priority unoptimized style={{ opacity: 1 }} />
+          <Image src={currentRole.toUpperCase() === "TRADER" ? "/TraderLogin.jfif" : "/log%20in.png"} alt="Find trusted professionals for every job" fill className="object-cover object-center" priority unoptimized style={{ opacity: 1 }} />
           <div className="absolute inset-0 bg-[#162716]/65 mix-blend-multiply z-10" />
           <div className="absolute inset-0 flex flex-col justify-end p-8 sm:p-12 xl:p-20 text-white z-20" style={{ background: 'linear-gradient(to top, rgba(22, 39, 22, 0.95) 0%, rgba(22, 39, 22, 0.4) 60%, transparent 100%)' }}>
             <div className="w-full max-w-[576px] h-auto lg:h-[439.73px] max-h-[90%] flex flex-col justify-end text-white" style={{ gap: '23.2px', opacity: 1 }}>
@@ -405,10 +406,18 @@ function LoginContent() {
                 <span className="text-[#6E9625] text-[10px] sm:text-[11px] font-extrabold tracking-[0.2em] uppercase">TRUSTED BY THOUSANDS</span>
               </div>
               <h2 className="text-[32px] sm:text-[40px] lg:text-[38px] xl:text-[52px] font-bold leading-[1.1] tracking-tight text-white animate-slide-up" style={{ fontFamily: 'var(--font-bricolage), sans-serif' }}>
-                Find trusted<br />professionals<br /> for every job
+                {currentRole.toUpperCase() === "TRADER" ? (
+                  <>The smarter way to<br />win new business.</>
+                ) : (
+                  <>Find trusted<br />professionals<br /> for every job</>
+                )}
               </h2>
               <p className="text-[14px] sm:text-[15px] lg:text-[16px] font-medium leading-relaxed text-white/80 animate-fade-in">
-                Compare quotes, hire with confidence, and get<br /> your home projects done right.
+                {currentRole.toUpperCase() === "TRADER" ? (
+                  <>Receive quality job leads, connect with local customers, and<br />grow your business with a trusted platform built for tradespeople</>
+                ) : (
+                  <>Compare quotes, hire with confidence, and get<br /> your home projects done right.</>
+                )}
               </p>
               {/* Social proof */}
               <div className="flex-shrink-0">

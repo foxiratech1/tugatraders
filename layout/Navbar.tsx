@@ -94,7 +94,7 @@ export default function Navbar() {
               <div className="absolute right-0 mt-2 w-52 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
                 <button
                   onClick={() => {
-                    router.push("/auth/login");
+                    router.push("/auth/login?role=CUSTOMER");
                     setLoginOpen(false);
                   }}
                   className="block w-full px-4 py-3 text-left text-sm font-medium hover:bg-gray-100"
@@ -104,7 +104,7 @@ export default function Navbar() {
 
                 <button
                   onClick={() => {
-                    router.push("/auth/login");
+                    router.push("/auth/login?role=TRADER");
                     setLoginOpen(false);
                   }}
                   className="block w-full px-4 py-3 text-left text-sm font-medium hover:bg-gray-100"
@@ -197,7 +197,7 @@ export default function Navbar() {
 
             <div className="flex flex-col gap-2">
               <Link
-                href="/auth/login"
+                href="/auth/login?role=CUSTOMER"
                 onClick={closeMenu}
                 className="rounded-lg bg-white px-4 py-3 text-sm font-medium"
               >
@@ -205,7 +205,7 @@ export default function Navbar() {
               </Link>
 
               <Link
-                href="/auth/login"
+                href="/auth/login?role=TRADER"
                 onClick={closeMenu}
                 className="rounded-lg bg-white px-4 py-3 text-sm font-medium"
               >

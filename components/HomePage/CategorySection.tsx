@@ -4,11 +4,9 @@ import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   FiChevronRight,
-  FiWind,
-  FiDroplet,
   FiArrowRight,
 } from "react-icons/fi";
-import { LuDrill, LuWrench, LuPaintbrush, LuBug } from "react-icons/lu";
+import { Hammer, Wrench, Paintbrush, Wind, Bug, Droplet, Zap, Leaf } from "lucide-react";
 import { motion } from "framer-motion";
 import { authApi } from "@/app/api/authApi";
 
@@ -23,13 +21,16 @@ const defaultCategories = [
 
 const getCategoryIcon = (name: string) => {
   const upper = name?.toUpperCase() || "";
-  if (upper.includes("CARPENTER") || upper.includes("WOOD")) return LuDrill;
-  if (upper.includes("HANDYMAN") || upper.includes("BUILD")) return LuWrench;
-  if (upper.includes("PAINT")) return LuPaintbrush;
-  if (upper.includes("HVAC") || upper.includes("AIR") || upper.includes("HEAT")) return FiWind;
-  if (upper.includes("PEST")) return LuBug;
-  if (upper.includes("PLUMB") || upper.includes("WATER")) return FiDroplet;
-  return LuWrench;
+  if (upper.includes("BUILD") || upper.includes("BRICK") || upper.includes("MASON")) return Hammer;
+  if (upper.includes("PLUMB") || upper.includes("WATER") || upper.includes("PIPE")) return Wrench;
+  if (upper.includes("CARPENTER") || upper.includes("WOOD")) return Hammer;
+  if (upper.includes("ELECTRIC") || upper.includes("WIRE")) return Zap;
+  if (upper.includes("GARDEN") || upper.includes("LANDSCAPE") || upper.includes("TREE")) return Leaf;
+  if (upper.includes("PAINT")) return Paintbrush;
+  if (upper.includes("HVAC") || upper.includes("AIR") || upper.includes("HEAT")) return Wind;
+  if (upper.includes("PEST") || upper.includes("BUG")) return Bug;
+  if (upper.includes("HANDYMAN")) return Hammer;
+  return Wrench;
 };
 
 const CategoryCard = ({ cat }: { cat: any }) => {

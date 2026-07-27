@@ -224,6 +224,16 @@ export const authApi = {
     return data;
   },
 
+  // Update trader assets (portfolio, certificates, etc.)
+  updateTraderAssets: async (formData: FormData) => {
+    const { data } = await api.put("/api/auth/update-trader-assets", formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return data;
+  },
+
   // Fetch a specific trader profile by ID (Customer side)
   getTraderProfileById: async (traderId: string) => {
     const { data } = await api.get(`/api/customer/traders/${traderId}`);
@@ -308,6 +318,10 @@ export const authApi = {
   },
   cancelJob: async (jobId: string) => {
     const { data } = await api.patch(`/api/jobs/${jobId}/cancel`);
+    return data;
+  },
+  closeJob: async (jobId: string) => {
+    const { data } = await api.post(`/api/jobs/${jobId}/close`);
     return data;
   },
 

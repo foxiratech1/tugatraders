@@ -255,6 +255,8 @@ export default function TraderProfilePage() {
   const idInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
   const portfolioInputRef = useRef<HTMLInputElement>(null);
+  const certInputRef = useRef<HTMLInputElement>(null);
+  const insInputRef = useRef<HTMLInputElement>(null);
 
   const [activeTab, setActiveTab] = useState<TabId>("personal");
   const [loading, setLoading] = useState(true);
@@ -274,9 +276,22 @@ export default function TraderProfilePage() {
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   /* portfolio */
+  const [existingPortfolio, setExistingPortfolio] = useState<any[]>([]);
   const [portfolioFiles, setPortfolioFiles] = useState<File[]>([]);
   const [portfolioPreviews, setPortfolioPreviews] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+
+  /* certificates */
+  const [existingCertificates, setExistingCertificates] = useState<any[]>([]);
+  const [certificateFiles, setCertificateFiles] = useState<File[]>([]);
+  const [certificatePreviews, setCertificatePreviews] = useState<string[]>([]);
+  const [isCertDragging, setIsCertDragging] = useState(false);
+
+  /* insurance */
+  const [existingInsurance, setExistingInsurance] = useState<any[]>([]);
+  const [insuranceFiles, setInsuranceFiles] = useState<File[]>([]);
+  const [insurancePreviews, setInsurancePreviews] = useState<string[]>([]);
+  const [isInsDragging, setIsInsDragging] = useState(false);
 
   /* forms */
   const [personalForm, setPersonalForm] = useState<PersonalForm>({
@@ -419,6 +434,34 @@ export default function TraderProfilePage() {
 
         const logo = tp?.logo || tp?.profileImage;
         if (logo) setLogoPreview(getFullUrl(logo));
+
+        // Load existing portfolio items
+        const portfolio = tp?.portfolioItems || tp?.portfolio || [];
+        setExistingPortfolio(portfolio);
+        const pPreviews = portfolio.map((item: any) => {
+          let url = typeof item === 'object' ? item.url || item.path || item.fileUrl : item;
+          return url ? getFullUrl(url) : null;
+        }).filter(Boolean);
+        setPortfolioPreviews(pPreviews);
+
+        // Load existing certificates
+        const certs = tp?.certificates || [];
+        setExistingCertificates(certs);
+        const cPreviews = certs.map((item: any) => {
+          let url = typeof item === 'object' ? item.url || item.path || item.fileUrl : item;
+          return url ? getFullUrl(url) : null;
+        }).filter(Boolean);
+        setCertificatePreviews(cPreviews);
+
+        // Load existing insurance
+        const ins = tp?.insuranceDocuments || [];
+        setExistingInsurance(ins);
+        const iPreviews = ins.map((item: any) => {
+          let url = typeof item === 'object' ? item.url || item.path || item.fileUrl : item;
+          return url ? getFullUrl(url) : null;
+        }).filter(Boolean);
+        setInsurancePreviews(iPreviews);
+
       } catch (e) {
         console.error("Failed to load profile", e);
       } finally {
@@ -513,8 +556,90 @@ export default function TraderProfilePage() {
   const handleDragLeave = () => setIsDragging(false);
 
   const removePortfolioItem = (index: number) => {
-    setPortfolioFiles((prev) => prev.filter((_, i) => i !== index));
     setPortfolioPreviews((prev) => prev.filter((_, i) => i !== index));
+    
+    if (index < existingPortfolio.length) {
+      // Removed an existing item
+      setExistingPortfolio((prev) => prev.filter((_, i) => i !== index));
+    } else {
+      // Removed a newly added file
+      const fileIndex = index - existingPortfolio.length;
+      setPortfolioFiles((prev) => prev.filter((_, i) => i !== fileIndex));
+    }
+  };
+
+  /* ── handlers: certificates ── */
+  const addCertificateFiles = (files: FileList | File[]) => {
+    const arr = Array.from(files).filter((f) => f.type.startsWith("image/") || f.type === "application/pdf");
+    setCertificateFiles((prev) => [...prev, ...arr]);
+    setCertificatePreviews((prev) => [
+      ...prev,
+      ...arr.map((f) => f.type === "application/pdf" ? "/placeholder.png" : URL.createObjectURL(f)),
+    ]);
+  };
+
+  const handleCertificateSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) addCertificateFiles(e.target.files);
+  };
+
+  const handleCertDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsCertDragging(false);
+    if (e.dataTransfer.files) addCertificateFiles(e.dataTransfer.files);
+  }, []);
+
+  const handleCertDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsCertDragging(true);
+  };
+
+  const handleCertDragLeave = () => setIsCertDragging(false);
+
+  const removeCertificateItem = (index: number) => {
+    setCertificatePreviews((prev) => prev.filter((_, i) => i !== index));
+    if (index < existingCertificates.length) {
+      setExistingCertificates((prev) => prev.filter((_, i) => i !== index));
+    } else {
+      const fileIndex = index - existingCertificates.length;
+      setCertificateFiles((prev) => prev.filter((_, i) => i !== fileIndex));
+    }
+  };
+
+  /* ── handlers: insurance ── */
+  const addInsuranceFiles = (files: FileList | File[]) => {
+    const arr = Array.from(files).filter((f) => f.type.startsWith("image/") || f.type === "application/pdf");
+    setInsuranceFiles((prev) => [...prev, ...arr]);
+    setInsurancePreviews((prev) => [
+      ...prev,
+      ...arr.map((f) => f.type === "application/pdf" ? "/placeholder.png" : URL.createObjectURL(f)),
+    ]);
+  };
+
+  const handleInsuranceSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) addInsuranceFiles(e.target.files);
+  };
+
+  const handleInsDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsInsDragging(false);
+    if (e.dataTransfer.files) addInsuranceFiles(e.dataTransfer.files);
+  }, []);
+
+  const handleInsDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsInsDragging(true);
+  };
+
+  const handleInsDragLeave = () => setIsInsDragging(false);
+
+  const removeInsuranceItem = (index: number) => {
+    setInsurancePreviews((prev) => prev.filter((_, i) => i !== index));
+    if (index < existingInsurance.length) {
+      setExistingInsurance((prev) => prev.filter((_, i) => i !== index));
+    } else {
+      const fileIndex = index - existingInsurance.length;
+      setInsuranceFiles((prev) => prev.filter((_, i) => i !== fileIndex));
+    }
   };
 
   /* ── handlers: business ── */
@@ -652,10 +777,48 @@ export default function TraderProfilePage() {
       if (selectedProfileFile) fd.append("profileImage", selectedProfileFile);
       if (idFile) fd.append("document", idFile);
       if (logoFile) fd.append("logo", logoFile);
-      // portfolio files not sent per API spec
+      // portfolio files are sent to a separate endpoint
 
-      await authApi.updateProfile(fd);
-      ThemeSwal.fire({ icon: 'success', iconColor: '#6E9625', title: 'Success', text: 'Profile updated successfully!' });
+      const updateRes = await authApi.updateProfile(fd);
+
+      // --- NEW: Update Assets ---
+      if (traderStatus !== "MANUAL_CHECK") {
+        const assetsFd = new FormData();
+        assetsFd.append("aboutUs", personalForm.bio || " ");
+        
+        if (portfolioFiles && portfolioFiles.length > 0) {
+          portfolioFiles.forEach((file) => {
+            assetsFd.append("portfolioImages", file);
+          });
+        }
+
+        if (certificateFiles && certificateFiles.length > 0) {
+          certificateFiles.forEach((file) => {
+            assetsFd.append("certificates", file);
+          });
+        }
+
+        if (insuranceFiles && insuranceFiles.length > 0) {
+          insuranceFiles.forEach((file) => {
+            assetsFd.append("insuranceDocuments", file);
+          });
+        }
+        
+        await authApi.updateTraderAssets(assetsFd);
+      }
+      // --------------------------
+
+      const backendMessage = updateRes?.message;
+      const finalMessage = categoriesChanged 
+        ? "Profile updated successfully! Your category changes are pending approval." 
+        : (backendMessage || "Profile updated successfully!");
+
+      ThemeSwal.fire({ 
+        icon: categoriesChanged ? 'info' : 'success', 
+        iconColor: '#6E9625', 
+        title: categoriesChanged ? 'Notice' : 'Success', 
+        text: finalMessage 
+      });
 
       const searchParams = new URLSearchParams(window.location.search);
       if (searchParams.get("mode") === "update") {
@@ -893,7 +1056,7 @@ export default function TraderProfilePage() {
                       </div>
 
                       {/* Email (read-only) */}
-                      <div className="col-span-2">
+                      <div>
                         <label className="block text-[12px] font-medium text-gray-500 mb-1">
                           Email
                         </label>
@@ -908,10 +1071,10 @@ export default function TraderProfilePage() {
                         />
                       </div>
 
-                      {/* Bio */}
+                      {/* About Us */}
                       <div className="col-span-2">
                         <label className="block text-[12px] font-medium text-gray-500 mb-1">
-                          Bio
+                          About Us
                         </label>
                         <textarea
                           id="tp-bio"
@@ -1324,6 +1487,155 @@ export default function TraderProfilePage() {
                       </button>
                     </div>
                   )}
+
+                  <hr className="my-8 border-[#E8E8E8]" />
+
+                  {/* ════ CERTIFICATES ════ */}
+                  <h2 className="text-[14px] font-bold text-[#1C2C1C] mb-1">
+                    Certificates
+                  </h2>
+                  <p className="text-[12px] text-gray-400 mb-5">
+                    Upload your professional certificates.
+                  </p>
+
+                  <div
+                    onDrop={handleCertDrop}
+                    onDragOver={handleCertDragOver}
+                    onDragLeave={handleCertDragLeave}
+                    onClick={() => certInputRef.current?.click()}
+                    className={`border-2 border-dashed rounded-xl flex flex-col items-center justify-center py-12 cursor-pointer transition-colors ${isCertDragging
+                      ? "border-[#6E9625] bg-[#6E9625]/5"
+                      : "border-[#C8D8B0] hover:border-[#6E9625] hover:bg-[#6E9625]/5"
+                      }`}
+                  >
+                    <div className="w-12 h-12 rounded-full bg-[#6E9625]/10 flex items-center justify-center mb-3">
+                      <Upload size={20} className="text-[#6E9625]" />
+                    </div>
+                    <p className="text-[13px] font-semibold text-[#1C2C1C]">
+                      Click to upload or drag and drop
+                    </p>
+                    <p className="text-[12px] text-gray-400 mt-1">
+                      PNG, JPG, PDF up to 10 MB each
+                    </p>
+                    <input
+                      ref={certInputRef}
+                      type="file"
+                      accept="image/*,application/pdf"
+                      multiple
+                      className="hidden"
+                      onChange={handleCertificateSelect}
+                    />
+                  </div>
+
+                  {certificatePreviews.length > 0 && (
+                    <div className="grid grid-cols-3 gap-3 mt-5">
+                      {certificatePreviews.map((src, i) => (
+                        <div
+                          key={i}
+                          className="relative group rounded-xl overflow-hidden aspect-square bg-gray-100 flex items-center justify-center"
+                        >
+                          <img
+                            src={src}
+                            alt={`Certificate ${i + 1}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => { e.currentTarget.src = "/pdf-icon.png"; }}
+                          />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeCertificateItem(i);
+                            }}
+                            className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X size={12} className="text-white" />
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => certInputRef.current?.click()}
+                        className="aspect-square rounded-xl border-2 border-dashed border-[#C8D8B0] flex items-center justify-center hover:border-[#6E9625] hover:bg-[#6E9625]/5 transition-colors"
+                      >
+                        <Plus size={20} className="text-[#6E9625]" />
+                      </button>
+                    </div>
+                  )}
+
+                  <hr className="my-8 border-[#E8E8E8]" />
+
+                  {/* ════ INSURANCE ════ */}
+                  <h2 className="text-[14px] font-bold text-[#1C2C1C] mb-1">
+                    Insurance Documents
+                  </h2>
+                  <p className="text-[12px] text-gray-400 mb-5">
+                    Upload your insurance policies.
+                  </p>
+
+                  <div
+                    onDrop={handleInsDrop}
+                    onDragOver={handleInsDragOver}
+                    onDragLeave={handleInsDragLeave}
+                    onClick={() => insInputRef.current?.click()}
+                    className={`border-2 border-dashed rounded-xl flex flex-col items-center justify-center py-12 cursor-pointer transition-colors ${isInsDragging
+                      ? "border-[#6E9625] bg-[#6E9625]/5"
+                      : "border-[#C8D8B0] hover:border-[#6E9625] hover:bg-[#6E9625]/5"
+                      }`}
+                  >
+                    <div className="w-12 h-12 rounded-full bg-[#6E9625]/10 flex items-center justify-center mb-3">
+                      <Upload size={20} className="text-[#6E9625]" />
+                    </div>
+                    <p className="text-[13px] font-semibold text-[#1C2C1C]">
+                      Click to upload or drag and drop
+                    </p>
+                    <p className="text-[12px] text-gray-400 mt-1">
+                      PNG, JPG, PDF up to 10 MB each
+                    </p>
+                    <input
+                      ref={insInputRef}
+                      type="file"
+                      accept="image/*,application/pdf"
+                      multiple
+                      className="hidden"
+                      onChange={handleInsuranceSelect}
+                    />
+                  </div>
+
+                  {insurancePreviews.length > 0 && (
+                    <div className="grid grid-cols-3 gap-3 mt-5">
+                      {insurancePreviews.map((src, i) => (
+                        <div
+                          key={i}
+                          className="relative group rounded-xl overflow-hidden aspect-square bg-gray-100 flex items-center justify-center"
+                        >
+                          <img
+                            src={src}
+                            alt={`Insurance ${i + 1}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => { e.currentTarget.src = "/pdf-icon.png"; }}
+                          />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeInsuranceItem(i);
+                            }}
+                            className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X size={12} className="text-white" />
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => insInputRef.current?.click()}
+                        className="aspect-square rounded-xl border-2 border-dashed border-[#C8D8B0] flex items-center justify-center hover:border-[#6E9625] hover:bg-[#6E9625]/5 transition-colors"
+                      >
+                        <Plus size={20} className="text-[#6E9625]" />
+                      </button>
+                    </div>
+                  )}
+
                 </div>
               )}
 

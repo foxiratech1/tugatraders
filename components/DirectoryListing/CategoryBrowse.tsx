@@ -2,13 +2,35 @@
 
 import React, { useRef, useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { authApi } from "@/app/api/authApi";
 import {
   ChevronLeft,
   ChevronRight,
-  LayoutGrid,
   ArrowRight,
+  Hammer,
+  Wrench,
+  Paintbrush,
+  Wind,
+  Bug,
+  Droplet,
+  Zap,
+  Leaf
 } from "lucide-react";
+
+const getCategoryIcon = (name: string) => {
+  const upper = name?.toUpperCase() || "";
+  if (upper.includes("BUILD") || upper.includes("BRICK") || upper.includes("MASON")) return Hammer;
+  if (upper.includes("PLUMB") || upper.includes("WATER") || upper.includes("PIPE")) return Wrench;
+  if (upper.includes("CARPENTER") || upper.includes("WOOD")) return Hammer;
+  if (upper.includes("ELECTRIC") || upper.includes("WIRE")) return Zap;
+  if (upper.includes("GARDEN") || upper.includes("LANDSCAPE") || upper.includes("TREE")) return Leaf;
+  if (upper.includes("PAINT")) return Paintbrush;
+  if (upper.includes("HVAC") || upper.includes("AIR") || upper.includes("HEAT")) return Wind;
+  if (upper.includes("PEST") || upper.includes("BUG")) return Bug;
+  if (upper.includes("HANDYMAN")) return Hammer;
+  return Wrench;
+};
 
 interface Category {
   id: string;
@@ -110,10 +132,13 @@ const CategoryBrowse = () => {
             }
           `}</style>
 
-          {categories.map((cat, index) => (
-            <div
+          {categories.map((cat, index) => {
+            const Icon = getCategoryIcon(cat.name);
+            return (
+            <Link
+              href={`/directory-listing/search?categoryId=${cat.id}`}
               key={index}
-              className="group relative min-w-[250px] h-[220px] bg-white rounded-[34px] p-7 overflow-hidden flex-shrink-0 shadow-2xl cursor-pointer transition-all duration-500 hover:bg-[#F5F8F2] hover:-translate-y-1"
+              className="group relative block min-w-[250px] h-[220px] bg-white rounded-[34px] p-7 overflow-hidden flex-shrink-0 shadow-2xl cursor-pointer transition-all duration-500 hover:bg-[#F5F8F2] hover:-translate-y-1"
             >
               {/* CONTENT */}
               <div className="relative z-10 h-full flex flex-col justify-between">
@@ -124,7 +149,7 @@ const CategoryBrowse = () => {
                     {cat.image ? (
                       <img src={cat.image} alt={cat.name} className="w-8 h-8 object-contain" />
                     ) : (
-                      <LayoutGrid className="text-[#064E3B]" size={24} />
+                      <Icon className="text-[#064E3B]" size={24} />
                     )}
                   </div>
 
@@ -151,8 +176,8 @@ const CategoryBrowse = () => {
 
               {/* HOVER BACKGROUND EFFECT */}
               <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-gradient-to-br from-[#6E9625]/5 to-transparent transition-opacity duration-500" />
-            </div>
-          ))}
+            </Link>
+          )})}
         </div>
 
         {/* BOTTOM LINE */}

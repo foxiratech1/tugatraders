@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import { MapPin, CloudUpload, Zap, ArrowRight, Trash2, ChevronDown, X } from 'lucide-react';
+import { MapPin, CloudUpload, Zap, ArrowRight, Trash2, ChevronDown, X, Megaphone } from 'lucide-react';
 import { authApi } from '@/app/api/authApi';
 import api from '@/utils/api';
 import { getAccessToken } from '@/utils/auth';
@@ -81,8 +81,8 @@ const CustomDropdown = ({
               >
                 <div
                   className={`w-[18px] h-[18px] rounded-[4px] border flex items-center justify-center shrink-0 transition-colors ${isSelected
-                      ? "bg-[#111827] border-[#111827]"
-                      : "border-[#D1D5DB] bg-white"
+                    ? "bg-[#111827] border-[#111827]"
+                    : "border-[#D1D5DB] bg-white"
                     }`}
                 >
                   {isSelected && (
@@ -139,6 +139,28 @@ export default function PostJobPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+
+  // Load from sessionStorage if exists
+  useEffect(() => {
+    const savedData = sessionStorage.getItem('pendingJobPost');
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        if (parsed.categoryId) setCategoryId(parsed.categoryId);
+        if (parsed.skillServiceId) setSkillServiceId(parsed.skillServiceId);
+        if (parsed.subCategoryId) setSubCategoryId(parsed.subCategoryId);
+        if (parsed.postcode) setPostcode(parsed.postcode);
+        if (parsed.title) setTitle(parsed.title);
+        if (parsed.description) setDescription(parsed.description);
+        if (parsed.timescale) setTimescale(parsed.timescale);
+        if (parsed.budgetRange) setBudgetRange(parsed.budgetRange);
+        if (parsed.emergency !== undefined) setEmergency(parsed.emergency);
+      } catch (e) {
+        console.error('Failed to parse pending job post data', e);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     authApi.getCategories().then(res => {
@@ -175,6 +197,19 @@ export default function PostJobPage() {
       }
     }
   };
+
+  // Keep skill and subcategories synced when loaded from sessionStorage
+  useEffect(() => {
+    if (categoryId && skillServices.length === 0) {
+      authApi.getSkillServices(categoryId).then(res => setSkillServices(res?.data || res || []));
+    }
+  }, [categoryId]);
+
+  useEffect(() => {
+    if (skillServiceId && subCategories.length === 0) {
+      authApi.getSubCategories(skillServiceId).then(res => setSubCategories(res?.data || res || []));
+    }
+  }, [skillServiceId]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -261,8 +296,9 @@ export default function PostJobPage() {
 
       await authApi.postJob(formData);
 
+      sessionStorage.removeItem('pendingJobPost'); // Clear after success
       toast.success("Job posted successfully!");
-      router.push('/customer-dashboard/jobs');
+      setShowSuccessModal(true);
     } catch (error: any) {
       console.error("Failed to post job", error);
       toast.error(error?.response?.data?.message || "Failed to post job. Please try again.");
@@ -273,6 +309,28 @@ export default function PostJobPage() {
 
   return (
     <>
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-[24px] p-10 max-w-[400px] w-full shadow-2xl flex flex-col items-center text-center">
+            <div className="w-20 h-20 bg-[#E8F5E9] rounded-full flex items-center justify-center mb-6">
+              <Megaphone className="text-[#32C850]" size={36} fill="#32C850" />
+            </div>
+            <h2 className="text-[22px] font-bold text-[#1C2C1C] mb-3">
+              Job Posted Successfully
+            </h2>
+            <p className="text-[#6B7280] text-[15px] mb-8">
+              Traders in your area have been notified.
+            </p>
+            <button
+              onClick={() => router.push('/customer-dashboard/jobs')}
+              className="w-full bg-[#0A2B14] hover:bg-[#144221] text-white font-bold py-3.5 rounded-[12px] transition-colors text-[15px]"
+            >
+              View Job
+            </button>
+          </div>
+        </div>
+      )}
+
       {showAuthModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
           <div className="bg-white rounded-2xl p-6 md:p-8 max-w-md w-full shadow-xl flex flex-col items-center text-center relative">
@@ -296,14 +354,24 @@ export default function PostJobPage() {
             <div className="flex gap-4 w-full">
               <button
                 type="button"
-                onClick={() => router.push('/auth/login?redirect=/customer-dashboard/post-job')}
+                onClick={() => {
+                  sessionStorage.setItem('pendingJobPost', JSON.stringify({
+                    categoryId, skillServiceId, subCategoryId, postcode, title, description, timescale, budgetRange, emergency
+                  }));
+                  router.push('/auth/login?redirect=/post-job');
+                }}
                 className="flex-1 py-3.5 px-4 rounded-2xl bg-[#6E9625] text-white font-bold text-base hover:bg-[#5c801e] transition-all shadow-sm"
               >
                 Login
               </button>
               <button
                 type="button"
-                onClick={() => router.push('/auth/signup?redirect=/customer-dashboard/post-job')}
+                onClick={() => {
+                  sessionStorage.setItem('pendingJobPost', JSON.stringify({
+                    categoryId, skillServiceId, subCategoryId, postcode, title, description, timescale, budgetRange, emergency
+                  }));
+                  router.push('/auth/signup?redirect=/post-job');
+                }}
                 className="flex-1 py-3.5 px-4 rounded-2xl bg-[#C00000] text-white font-bold text-base hover:bg-[#a60000] transition-all shadow-sm"
               >
                 Sign up

@@ -138,7 +138,7 @@ function TraderCard({ trader }: { trader: SavedTrader }) {
       {/* CTA */}
       <div className="px-6 pb-6">
         <Link
-          href={`/trader-profile/${trader.id}`}
+          href={`/customer-dashboard/trader-profile/${trader.id}`}
           className="block w-full text-center py-2.5 rounded-xl bg-[#1C2C1C] text-white text-[13px] font-bold hover:bg-[#121E12] transition-colors"
         >
           View Profile

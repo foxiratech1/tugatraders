@@ -24,6 +24,7 @@ import {
   DollarSign,
   MessageSquare,
   MoreVertical,
+  PlusCircle,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import Link from "next/link";
@@ -62,6 +63,13 @@ interface SelectedTrader {
   fullName: string;
   email: string;
   profileImage?: string | null;
+  traderProfile?: {
+    companyName?: string | null;
+  } | null;
+  traderMetrics?: {
+    averageRating: number;
+    totalReviews: number;
+  } | null;
 }
 
 interface Quote {
@@ -387,19 +395,16 @@ function TraderQuoteCard({
           </div>
           <div>
             <Link href={`/customer-dashboard/trader-profile/${trader.id}`}>
-              <p className="text-[13px] font-bold text-[#1C2C1C] hover:underline cursor-pointer">{trader.fullName}</p>
+              <p className="text-[13px] font-bold text-[#1C2C1C] hover:underline cursor-pointer">
+                {trader.traderProfile?.companyName || trader.fullName || 'Unknown Trader'}
+              </p>
             </Link>
-            {/* <div className="flex items-center gap-3 mt-0.5">
-              <span className="flex items-center gap-0.5 text-[11px] text-gray-500">
-                <Star size={10} fill="#F59E0B" className="text-[#F59E0B]" />
-                <span className="font-semibold text-[#1C2C1C]">10.0</span>
-                <span className="text-gray-400">(2 reviews)</span>
+            <div className="flex items-center gap-3 mt-0.5">
+              <span className="flex items-center gap-1 bg-[#FFF9E5] text-[#D97706] px-2 py-0.5 rounded-[6px] font-bold border border-[#FEF08A]/50 text-[11px]">
+                <Star size={10} fill="currentColor" /> {(trader.traderMetrics?.averageRating || 0).toFixed(1)}
               </span>
-              <span className="flex items-center gap-0.5 text-[11px] text-gray-400">
-                <MapPin size={10} />
-                2.4 miles away
-              </span>
-            </div> */}
+              <span className="text-gray-400 text-[11px]">({trader.traderMetrics?.totalReviews || 0} reviews)</span>
+            </div>
           </div>
         </div>
 
@@ -574,6 +579,21 @@ export default function CustomerJobDashboard() {
     }
   };
 
+  const handleCloseJob = async () => {
+    if (!selectedJob) return;
+    try {
+      await authApi.closeJob(selectedJob.id);
+      toast.success("Job closed successfully!");
+      const res = await authApi.getMyJobs();
+      const arr = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
+      setJobs(arr);
+      const updatedJob = arr.find((j: Job) => j.id === selectedJob.id);
+      if (updatedJob) setSelectedJob(updatedJob);
+    } catch (error: any) {
+      toast.error(error?.response?.data?.message || "Failed to close job");
+    }
+  };
+
   useEffect(() => {
     async function fetchJobs() {
       try {
@@ -640,32 +660,35 @@ export default function CustomerJobDashboard() {
         {/* ── Page Header ───────────────────────────────────────────────── */}
         <div className="flex items-start justify-between mb-8">
           <h1 className="text-[2rem] font-bold text-[#1C2C1C] leading-tight">
-            Customer Job dashboard
+            DashBoard
           </h1>
           <div className="flex items-center gap-3 pt-1">
             {/* Email notice */}
-            <span className="flex items-center gap-1.5 text-[12px] text-[#6E9625] font-medium">
+            {/* <span className="flex items-center gap-1.5 text-[12px] text-[#6E9625] font-medium">
               <AlertCircle size={13} />
               To post a job — an email address is required
-            </span>
-            <button className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-200 bg-white text-[13px] font-semibold text-[#1C2C1C] hover:bg-gray-50 transition-colors">
-              <Users size={14} />
-              Find a Trader
-            </button>
+            </span> */}
+            <Link href="/directory-listing/search">
+              <button className="flex items-center gap-2 px-5 py-2.5 rounded-[12px] border border-gray-200 cursor-pointer bg-white text-[14px] font-bold text-[#1C2C1C] hover:bg-gray-50 transition-colors shadow-sm">
+                <Users size={16} />
+                Find a Trader
+              </button>
+            </Link>
             <Link
               href={`/customer-dashboard/leave-review${selectedJob
                 ? `?jobId=${selectedJob.id}${selectedJob.selectedTrader ? `&traderId=${selectedJob.selectedTrader.id}` : ''}`
                 : ''
                 }`}
             >
-              <button className="flex items-center gap-1.5 px-4 py-2 rounded-full border border-gray-200 bg-white text-[13px] font-semibold text-[#1C2C1C] hover:bg-gray-50 transition-colors">
-                <Star size={14} />
+              <button className="flex items-center gap-2 px-5 py-2.5 rounded-[12px] border border-gray-200 bg-white cursor-pointer text-[14px] font-bold text-[#1C2C1C] hover:bg-gray-50 transition-colors shadow-sm">
+                <Star size={16} />
                 Leave a Review
               </button>
             </Link>
             <Link href="/customer-dashboard/post-job">
-              <button className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-[#6E9625] text-white text-[13px] font-bold hover:bg-[#58791C] transition-colors">
-                + Post a Job
+              <button className="flex items-center gap-2 px-5 py-2.5 rounded-[12px] bg-[#6E9625] text-white text-[14px] cursor-pointer font-bold hover:bg-[#58791C] transition-colors shadow-sm">
+                <PlusCircle size={18} strokeWidth={2} />
+                Post a Job
               </button>
             </Link>
           </div>
@@ -765,17 +788,17 @@ ${isSelected
                               handleCompleteJob();
                               setJobMenuOpen(false);
                             }}
-                            className="w-full text-center py-2.5 px-3 text-[14px] rounded-xl bg-[#B2D8B2] hover:bg-[#a1cca1] transition-colors text-[#001D3D]"
+                            className="w-full text-center py-2.5 px-3 text-[14px] rounded-xl bg-[#B2D8B2] hover:bg-[#a1cca1] cursor-pointer transition-colors text-[#001D3D]"
                           >
                             Job complete
                           </button>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleCancelJob();
+                              handleCloseJob();
                               setJobMenuOpen(false);
                             }}
-                            className="w-full text-center py-2.5 px-3 text-[14px] bg-[#E8E8E8] rounded-xl hover:bg-[#d6d6d6] transition-colors text-[#001D3D]"
+                            className="w-full text-center py-2.5 px-3 text-[14px] bg-[#E8E8E8] rounded-xl hover:bg-[#d6d6d6] cursor-pointer transition-colors text-[#001D3D]"
                           >
                             Close job
                           </button>

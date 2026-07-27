@@ -22,20 +22,13 @@ export default function TermsLayout() {
     const tab = searchParams?.get('tab');
     if (tab && tab !== activeTab) {
       setActiveTab(tab);
-      if (contentRef.current) {
-        const y = contentRef.current.getBoundingClientRect().top + window.scrollY - 40;
-        window.scrollTo({ top: y, behavior: 'smooth' });
-      }
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   }, [searchParams]);
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
-    if (contentRef.current) {
-      // 40px offset matches the top-10 spacing of the sticky sidebar
-      const y = contentRef.current.getBoundingClientRect().top + window.scrollY - 40;
-      window.scrollTo({ top: y, behavior: 'smooth' });
-    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   // Map of tab keys to their display titles
@@ -57,7 +50,7 @@ export default function TermsLayout() {
       <div className="relative w-full h-[320px] md:h-[433px] flex flex-col justify-center px-6 lg:px-20 overflow-hidden">
         {/* Background Image */}
         <img
-          src="/laptop.jpg"
+          src="/legalimage.jfif"
           alt="Terms & Conditions"
           className="object-cover w-full h-full absolute inset-0"
         />

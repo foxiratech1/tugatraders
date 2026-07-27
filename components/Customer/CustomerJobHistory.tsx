@@ -20,6 +20,7 @@ import {
   ArrowUpDown,
   ExternalLink,
   MoreHorizontal,
+  PlusCircle,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -58,6 +59,13 @@ interface SelectedTrader {
   fullName: string;
   email: string;
   profileImage?: string | null;
+  traderProfile?: {
+    companyName?: string | null;
+  } | null;
+  traderMetrics?: {
+    averageRating: number;
+    totalReviews: number;
+  } | null;
 }
 
 interface Job {
@@ -436,14 +444,15 @@ export default function CustomerJobHistory() {
           </div>
           <div className="flex items-center gap-3">
             <Link href="/customer-dashboard/jobs">
-              <button className="flex items-center gap-1.5 px-4 py-2.5 rounded-full border border-gray-200 bg-white text-[13px] font-semibold text-[#1C2C1C] hover:bg-gray-50 transition-colors shadow-sm">
-                <Briefcase size={14} />
+              <button className="flex items-center gap-2 px-5 py-2.5 rounded-[12px] border border-gray-200 cursor-pointer bg-white text-[14px] font-bold text-[#1C2C1C] hover:bg-gray-50 transition-colors shadow-sm">
+                <Briefcase size={16} />
                 Job Dashboard
               </button>
             </Link>
             <Link href="/customer-dashboard/post-job">
-              <button className="flex items-center gap-1.5 px-5 py-2.5 rounded-full bg-[#6E9625] text-white text-[13px] font-bold hover:bg-[#58791C] transition-colors shadow-sm">
-                + Post a Job
+              <button className="flex items-center gap-2 px-5 py-2.5 rounded-[12px] bg-[#6E9625] cursor-pointer text-white text-[14px] font-bold hover:bg-[#58791C] transition-colors shadow-sm">
+                <PlusCircle size={18} strokeWidth={2} />
+                Post a Job
               </button>
             </Link>
           </div>

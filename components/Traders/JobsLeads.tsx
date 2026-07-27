@@ -2,8 +2,9 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { authApi } from "@/app/api/authApi";
-import { Search, MapPin, Tag, MoreHorizontal, Calendar, Star, Send, MessageCircle, ArrowRight, X, DollarSign, Clock } from "lucide-react";
+import { Search, MapPin, Tag, MoreHorizontal, Calendar, Star, Send, MessageCircle, ArrowRight, X, DollarSign, Clock, FileText } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 
 // Type definitions based on typical job structures and screenshot
@@ -42,6 +43,17 @@ const formatTimeAgo = (iso: string) => {
   return `${diffDays}d ago`;
 };
 
+const getImageUrl = (path: string | null | undefined) => {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+
+  const rawBase = process.env.NEXT_PUBLIC_API_URL || '';
+  const baseUrl = rawBase.endsWith('/') ? rawBase.slice(0, -1) : rawBase;
+  const imagePath = path.startsWith('/') ? path : `/${path}`;
+
+  return `${baseUrl}${imagePath}`;
+};
+
 const formatPostedDate = (iso: string) => {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -70,6 +82,7 @@ function getUIStatus(item: any): string {
 }
 
 export default function JobsLeads() {
+  const router = useRouter();
   const [jobs, setJobs] = useState<JobLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -77,6 +90,7 @@ export default function JobsLeads() {
   const [selectedJob, setSelectedJob] = useState<JobLead | null>(null);
   const [isSendingQuote, setIsSendingQuote] = useState(false);
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [quoteForm, setQuoteForm] = useState({
     price: "",
     estimatedDays: "",
@@ -99,8 +113,9 @@ export default function JobsLeads() {
         estimatedDays: Number(quoteForm.estimatedDays),
         message: quoteForm.message,
       });
-      toast.success("Job quote sent successfully!");
+      // toast.success("Job quote sent successfully!");
       setIsQuoteModalOpen(false);
+      setShowSuccessModal(true);
       setJobs((prevJobs) =>
         prevJobs.map((j) =>
           j.id === selectedJob.id ? { ...j, hasQuoted: true, status: "Contacted" } : j
@@ -371,11 +386,12 @@ export default function JobsLeads() {
                     <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 flex items-center justify-center">
                       {selectedJob.customer?.avatar ? (
                         <Image
-                          src={selectedJob.customer.avatar}
+                          src={getImageUrl(selectedJob.customer.avatar)}
                           alt={selectedJob.customer?.name ?? ''}
                           width={48}
                           height={48}
                           className="w-full h-full object-cover"
+                          unoptimized
                         />
                       ) : (
                         <span className="text-[16px] font-bold text-gray-500">
@@ -405,8 +421,8 @@ export default function JobsLeads() {
                     onClick={openQuoteModal}
                     disabled={selectedJob.hasQuoted}
                     className={`w-full h-[48px] rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 transition-colors ${selectedJob.hasQuoted
-                        ? "bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300"
-                        : "bg-[#1C2C1C] hover:bg-[#2A412A] text-white"
+                      ? "bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300"
+                      : "bg-[#1C2C1C] hover:bg-[#2A412A] text-white"
                       }`}
                   >
                     <Send size={16} />
@@ -530,6 +546,31 @@ export default function JobsLeads() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 🎉 Success Modal 🎉 */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowSuccessModal(false)} />
+          <div className="bg-white rounded-3xl p-8 w-full max-w-[400px] relative flex flex-col items-center text-center z-10 shadow-xl">
+            <div className="w-16 h-16 rounded-full bg-[#E6F5E9] flex items-center justify-center mb-6">
+              <FileText size={28} className="text-[#32C850]" />
+            </div>
+            <h2 className="text-[20px] font-extrabold text-[#002E1B] mb-2">Quote Submitted</h2>
+            <p className="text-[14px] text-gray-500 mb-8">
+              The customer has received your quote.
+            </p>
+            <button
+              onClick={() => {
+                setShowSuccessModal(false);
+                router.push("/trader/quote");
+              }}
+              className="w-full h-[48px] rounded-xl border border-gray-200 bg-[#F9FAFB] hover:bg-gray-100 text-[#1C2C1C] text-[14px] font-bold flex items-center justify-center transition-colors cursor-pointer"
+            >
+              View Submitted Quotes
+            </button>
           </div>
         </div>
       )}

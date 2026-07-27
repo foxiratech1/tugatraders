@@ -24,6 +24,13 @@ interface QuoteTrader {
   fullName: string;
   email: string;
   profileImage?: string;
+  traderProfile?: {
+    companyName?: string;
+  };
+  traderMetrics?: {
+    averageRating?: number;
+    totalReviews?: number;
+  };
 }
 
 interface QuoteJob {
@@ -131,11 +138,13 @@ function QuoteStatusBadge({ status }: { status: string }) {
 // ─── Quote Card ───────────────────────────────────────────────────────────────
 
 function QuoteCard({ quote }: { quote: Quote }) {
-  const traderName = quote.trader?.fullName || (quote as any).traderName || (quote as any).fullName || "Unknown Trader";
+  const traderName = quote.trader?.traderProfile?.companyName || quote.trader?.fullName || (quote as any).traderName || (quote as any).fullName || "Unknown Trader";
   const traderInitial = traderName.charAt(0).toUpperCase();
   const jobTitle = quote.job?.title || (quote as any).jobTitle || (quote as any).title || "Job";
   const jobPostcode = quote.job?.postcode || (quote as any).postcode || (quote as any).postCode || "";
   const profileImage = quote.trader?.profileImage || (quote as any).profileImage || (quote as any).avatar;
+  const avgRating = quote.trader?.traderMetrics?.averageRating || 0;
+  const reviewCount = quote.trader?.traderMetrics?.totalReviews || 0;
 
   return (
     <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm p-5 hover:shadow-md hover:border-[#C8D9A8] transition-all duration-200 group cursor-pointer">
@@ -160,14 +169,16 @@ function QuoteCard({ quote }: { quote: Quote }) {
 
           {/* Details */}
           <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <p className="text-[14px] font-bold text-[#1C2C1C] truncate">
+            <div className="flex flex-col gap-1.5 mb-1.5">
+              <h3 className="text-[16px] font-bold text-[#1C2C1C] truncate">
                 {traderName}
-              </p>
-              <span className="flex items-center gap-0.5 text-[11px] text-gray-500">
-                <Star size={10} fill="#F59E0B" className="text-[#F59E0B]" />
-                <span className="font-semibold text-[#1C2C1C]">—</span>
-              </span>
+              </h3>
+              <div className="flex items-center gap-2 text-[13px] text-[#6B7280]">
+                <span className="flex items-center gap-1 bg-[#FFF9E5] text-[#D97706] px-2 py-0.5 rounded-[6px] font-bold border border-[#FEF08A]/50">
+                  <Star size={12} fill="currentColor" className="mb-0.5" /> {avgRating.toFixed(1)}
+                </span>
+                <span>({reviewCount} reviews)</span>
+              </div>
             </div>
 
             <p className="text-[12px] text-gray-500 mt-0.5 truncate">

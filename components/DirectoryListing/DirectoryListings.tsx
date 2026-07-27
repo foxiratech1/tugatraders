@@ -176,23 +176,34 @@ const DirectoryListings = () => {
   // pending trader ID is persisted in localStorage across navigation
   // we keep a state for UI consistency (optional)
   const [pendingTraderId, setPendingTraderId] = useState<string | null>(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [paginationData, setPaginationData] = useState<{ total: number; page: number; limit: number; totalPages: number } | null>(null);
+
+  const fetchProfessionals = async (pageNum = 1) => {
+    setLoading(true);
+    try {
+      const res = await authApi.searchTraders({ page: pageNum, limit: 6 });
+      setProfessionals(Array.isArray(res) ? res : res.data || []);
+      if (res?.pagination) {
+        setPaginationData(res.pagination);
+        setCurrentPage(res.pagination.page);
+      } else {
+        setPaginationData(null);
+      }
+    } catch (err) {
+      console.error('Failed to fetch professionals', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProfessionals = async () => {
-      try {
-        const res = await authApi.searchTraders();
-        setProfessionals(Array.isArray(res) ? res : res.data || []);
-      } catch (err) {
-        console.error('Failed to fetch professionals', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProfessionals();
+    fetchProfessionals(1);
   }, []);
 
-  const [visibleCount, setVisibleCount] = useState(3);
-  const displayedProfessionals = professionals.slice(0, visibleCount);
+  const displayedProfessionals = professionals;
 
   const handleToggleSave = async (traderId: string) => {
     const token = localStorage.getItem('accessToken');
@@ -269,9 +280,8 @@ const DirectoryListings = () => {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
           <div>
             <h2 className="text-[24px] font-bold text-[#064E3B] mb-2" style={{ fontFamily: 'var(--font-bricolage)' }}>
-              {loading ? "..." : professionals.length} Professionals in Indore
+              Showing {paginationData ? (paginationData.page - 1) * paginationData.limit + 1 : (displayedProfessionals.length > 0 ? 1 : 0)}-{paginationData ? Math.min(paginationData.page * paginationData.limit, paginationData.total) : displayedProfessionals.length} of {paginationData ? paginationData.total : displayedProfessionals.length} Verified professionals matching your search.
             </h2>
-            <p className="text-[#6B7280] text-[14px]">Verified professionals matching your search.</p>
           </div>
 
           <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-start">
@@ -370,7 +380,7 @@ const DirectoryListings = () => {
                   </div>
 
                   <p className="text-[#4B5563] text-sm leading-relaxed mb-6 line-clamp-2">
-                    {pro.bio || pro.description || 'No description provided.'}
+                    {pro.about || pro.aboutUs || pro.bio || pro.description || 'No description provided.'}
                   </p>
 
                   <div className="flex gap-3">
@@ -389,25 +399,38 @@ const DirectoryListings = () => {
           </div>
         )}
 
-        {/* Load More / Load Less Section */}
-        {professionals.length > 3 && (
-          <div className="flex flex-wrap justify-center items-center gap-4 mt-12">
-            {visibleCount < professionals.length && (
-              <button
-                onClick={() => setVisibleCount((prev) => prev + 3)}
-                className="w-full sm:w-auto px-6 sm:px-10 py-3 sm:py-4 border border-[#D1D5DB] rounded-xl text-[#4B5563] font-bold hover:bg-gray-50 transition-colors text-sm sm:text-base text-center cursor-pointer shadow-sm"
-              >
-                Load More Professionals
-              </button>
-            )}
-            {visibleCount > 3 && (
-              <button
-                onClick={() => setVisibleCount((prev) => Math.max(3, prev - 3))}
-                className="w-full sm:w-auto px-6 sm:px-10 py-3 sm:py-4 border border-[#D1D5DB] rounded-xl text-[#4B5563] font-bold hover:bg-gray-50 transition-colors text-sm sm:text-base text-center cursor-pointer shadow-sm"
-              >
-                Load Less Professionals
-              </button>
-            )}
+        {/* Pagination Controls */}
+        {paginationData && paginationData.totalPages > 1 && (
+          <div className="mt-12 flex justify-center items-center gap-4">
+            <button
+              onClick={() => fetchProfessionals(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-5 py-2.5 rounded-[12px] border border-gray-200 bg-white text-[14px] font-bold text-[#1C2C1C] hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            >
+              Previous
+            </button>
+            <div className="flex items-center gap-2">
+              {[...Array(paginationData.totalPages)].map((_, i) => (
+                <button
+                  key={i + 1}
+                  onClick={() => fetchProfessionals(i + 1)}
+                  className={`w-10 h-10 flex items-center justify-center rounded-[12px] text-[14px] font-bold transition-colors cursor-pointer ${
+                    currentPage === i + 1
+                      ? 'bg-[#243A24] text-white shadow-md'
+                      : 'bg-white border border-gray-200 text-[#1C2C1C] hover:bg-gray-50'
+                  }`}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => fetchProfessionals(currentPage + 1)}
+              disabled={currentPage === paginationData.totalPages}
+              className="px-5 py-2.5 rounded-[12px] border border-gray-200 bg-white text-[14px] font-bold text-[#1C2C1C] hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+            >
+              Next
+            </button>
           </div>
         )}
       </div>

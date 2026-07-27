@@ -188,7 +188,7 @@ export default function TraderSignupPage() {
       !/[0-9]/.test(formData.password) ||
       !/[^A-Za-z0-9]/.test(formData.password)
     ) {
-      e.password = "Requires 8-64 chars, 1 uppercase, 1 lowercase, 1 number, and 1 special char.";
+      e.password = "Minimum 8 characters, including 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.";
     }
 
     if (!formData.confirmPassword) {

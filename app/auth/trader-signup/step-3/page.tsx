@@ -683,7 +683,7 @@ export default function Step3Page() {
                                     const selectedPlan = plans.find(p => p.id === selectedPlanId);
                                     const maxCats = selectedPlan?.unlimitedTrades ? 9999 : (selectedPlan?.maxTrades || 1);
                                     if (ids.length > maxCats) {
-                                        toast.error(`Your plan allows a maximum of ${maxCats === 9999 ? 'Unlimited' : maxCats} Categories.`);
+                                        toast.error(`Your plan allows a maximum of ${maxCats === 9999 ? 'Unlimited' : maxCats} Categories.`, { id: "max-cats-error" });
                                         return;
                                     }
 

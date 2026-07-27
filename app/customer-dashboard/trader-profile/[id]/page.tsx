@@ -5,15 +5,20 @@ import { useParams, useRouter } from "next/navigation";
 import { authApi } from "@/app/api/authApi";
 import {
   Star, MapPin, Phone, Briefcase, Wrench, ShieldCheck,
-  Mail, ArrowLeft, CheckCircle, FileText
+  Mail, ArrowLeft, CheckCircle, FileText, Heart, MessageSquare, Image as ImageIcon,
+  ThumbsUp, Award,
+  CheckCircle2,
+  MessageCircle,
+  HeartIcon,
+  Check
 } from "lucide-react";
 import toast from "react-hot-toast";
-import AuthGuard from "@/components/Guards/AuthGuard";
-
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://api.tugatraders.server24.in";
+import Image from "next/image";
+import VettingModal from "@/components/modal/VettingModal";
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 function getImageUrl(path: string | null | undefined): string {
   if (!path) return "/placeholder.png";
-  if (path.startsWith("http")) return path;
+  if (path.startsWith("http") || path.startsWith("data:")) return path;
   const baseUrl = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
   let imagePath = path.startsWith('/') ? path : `/${path}`;
   imagePath = imagePath.replace(/\/\//g, '/');
@@ -27,6 +32,9 @@ export default function CustomerTraderProfilePage() {
 
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isSaved, setIsSaved] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isVettingModalOpen, setIsVettingModalOpen] = useState(false);
 
   useEffect(() => {
     if (!traderId) return;
@@ -39,6 +47,7 @@ export default function CustomerTraderProfilePage() {
         // Handle nested data structures gracefully
         const data = res?.data || res;
         setProfile(data);
+        setIsSaved(data?.isSaved || false);
       } catch (error: any) {
         console.error("Failed to load trader profile", error);
         toast.error("Failed to load professional profile.");
@@ -52,7 +61,7 @@ export default function CustomerTraderProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-[70vh] bg-[#F8F9F5] flex items-center justify-center">
+      <div className="min-h-[70vh] bg-[#F9FAFB] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-[#243A24]/20 border-t-[#243A24] rounded-full animate-spin" />
           <p className="text-[#243A24] font-semibold tracking-wide animate-pulse">Loading Profile...</p>
@@ -63,7 +72,7 @@ export default function CustomerTraderProfilePage() {
 
   if (!profile) {
     return (
-      <div className="min-h-[70vh] bg-[#F8F9F5] flex flex-col items-center justify-center gap-6 px-4">
+      <div className="min-h-[70vh] bg-[#F9FAFB] flex flex-col items-center justify-center gap-6 px-4">
         <div className="w-24 h-24 bg-red-100 text-red-500 rounded-full flex items-center justify-center">
           <ShieldCheck size={48} />
         </div>
@@ -84,223 +93,300 @@ export default function CustomerTraderProfilePage() {
 
   // Extract variables defensively
   const tp = profile?.profile || profile?.traderProfile || profile;
-  const user = profile?.user || profile;
+
+  const handleSaveTrader = async () => {
+    try {
+      setIsSaving(true);
+      await authApi.toggleSaveTrader(traderId);
+      setIsSaved((prev) => !prev);
+      toast.success(isSaved ? "Trader removed from saved." : "Trader saved successfully.");
+    } catch (error) {
+      console.error("Failed to toggle save status", error);
+      toast.error("Failed to update saved status.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const user = profile?.user || profile || {};
   const metrics = profile?.metrics || {};
 
   const fullName = user?.fullName || tp?.fullName || "Professional";
-  const title = tp?.professionalTitle || tp?.title || "Specialist";
   const companyName = tp?.companyName || tp?.businessName;
   const avatarUrl = getImageUrl(user?.profileImage || tp?.logo || tp?.profileImage);
-  const location = tp?.location || tp?.workLocation || user?.city || "Location not specified";
-  const bio = tp?.about || tp?.bio || tp?.description || "No description provided.";
+  const location = tp?.location || tp?.workLocation || user?.city || user?.location || "Location not specified";
+  const bio = tp?.about || tp?.aboutUs || tp?.bio || tp?.description || "No description provided.";
+
+  // Rating logic
   const rating = metrics?.averageRating || tp?.ratingAvg || user?.ratingAvg || 0;
   const reviewCount = metrics?.totalReviews || tp?.reviewCount || user?.reviewCount || 0;
 
+  const jobsCompleted = metrics?.completedJobs || tp?.jobsCompleted || 0;
+  const responseRate = metrics?.responseRate ? `${Math.round(metrics.responseRate * 100)}%` : 'N/A';
+
   const isVerified = (tp?.verificationStatus === "APPROVED") || tp?.isVerified || user?.isVerified || false;
-  const workRadius = tp?.workRadius ? `${tp.workRadius} miles` : null;
+
+  const email = user?.email || "Email not specified";
+  const phone = user?.phone || "Phone not specified";
+
+  const portfolio = tp?.portfolio || [];
+  const featuredImage = portfolio.length > 0 ? getImageUrl(portfolio[0].fileUrl) : "/placeholder.png";
 
   return (
-    <div className="bg-[#F8F9F5] font-sans selection:bg-[#6E9625]/20 selection:text-[#1C2C1C] min-h-[calc(100vh-96px)] py-8">
-      <main className="max-w-[1320px] mx-auto px-6">
+    <div className="bg-[#F9FAFB] font-sans selection:bg-[#6E9625]/20 selection:text-[#1C2C1C] min-h-[calc(100vh-96px)] py-8 pb-16">
+      <main className="max-w-[1440px] mx-auto px-6">
 
         {/* Back Button */}
         <button
-          onClick={() => router.push("/customer-dashboard/jobs")}
-          className="flex items-center gap-2 text-gray-500 hover:text-[#243A24] font-medium transition-colors mb-6 lg:mb-8"
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-gray-500 hover:text-[#243A24] text-[14px] font-semibold transition-colors mb-6 cursor-pointer"
         >
-          <ArrowLeft size={18} />
+          <ArrowLeft size={16} />
           Back to Dashboard
         </button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 items-start">
 
           {/* ── Left Sidebar (Overview) ── */}
-          <div className="lg:col-span-4 flex flex-col gap-6">
-
-            <div className="bg-white rounded-3xl p-8 shadow-[0_8px_40px_rgba(36,58,36,0.04)] border border-[#243A240A] flex flex-col items-center text-center relative overflow-hidden">
-              {/* Decorative top shape */}
-              <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-[#6E9625]/10 to-transparent pointer-events-none" />
-
+          <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+            <div className="p-8 flex flex-col items-center relative">
               {/* Avatar */}
-              <div className="relative w-36 h-36 rounded-full border-4 border-white shadow-lg overflow-hidden mb-5 bg-gray-100 z-10 flex items-center justify-center text-gray-400">
-                <img src={avatarUrl} alt={fullName} className="w-full h-full object-cover" />
+              <div className="relative w-[130px] h-[130px] rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.08)] overflow-hidden mb-4 bg-gray-100 flex items-center justify-center">
+                <Image src={avatarUrl} alt={fullName} fill className="object-cover" unoptimized />
+                {/* <div className="absolute bottom-0 w-full h-8 bg-[#1A5CBA] flex items-center justify-center bg-opacity-95">
+                  <span className="text-white text-[11px] font-bold tracking-widest flex items-center gap-1">
+                    <span className="w-2.5 h-2.5 rounded-full bg-white flex items-center justify-center">
+                      <span className="w-1 h-1 rounded-full bg-[#1A5CBA]" />
+                    </span>
+                    PIMIO
+                  </span>
+                </div> */}
               </div>
 
-              <h1 className="text-2xl font-extrabold text-[#1C2C1C] tracking-tight mb-1" style={{ fontFamily: 'var(--font-bricolage), sans-serif' }}>
+              <h1 className="text-[22px] font-extrabold text-[#1C2C1C] tracking-tight mb-1 text-center">
                 {fullName}
               </h1>
 
-              <p className="text-[#6E9625] font-bold text-sm tracking-wide uppercase mb-4">
-                {title}
-              </p>
-
               {isVerified && (
-                <div className="inline-flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1 rounded-full text-[12px] font-bold tracking-wide uppercase mb-6">
-                  <ShieldCheck size={14} className="stroke-[2.5]" />
-                  Verified Professional
+                <div className="flex items-center gap-1.5 text-[#1C2C1C] font-semibold text-[13px] mb-4">
+                  <CheckCircle2 size={16} className="text-[#1C2C1C]" />
+                  Vetted Trader
                 </div>
               )}
 
-              {/* Stats Row */}
-              <div className="flex items-center justify-center gap-6 w-full pt-6 border-t border-gray-100">
-                <div className="flex flex-col items-center">
-                  <div className="flex items-center gap-1 text-[#F59E0B]">
-                    <Star size={16} className="fill-current" />
-                    <span className="font-bold text-[#1C2C1C]">{rating || 'New'}</span>
-                  </div>
-                  <span className="text-[11px] text-gray-500 font-medium uppercase tracking-wider mt-1">
-                    {reviewCount} Reviews
-                  </span>
+              {/* Rating */}
+              <div className="flex items-center gap-1.5 mb-6">
+                <div className="flex text-[#F59E0B]">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} size={16} className={i < Math.max(1, rating) ? "fill-current" : "text-gray-300 fill-gray-300"} />
+                  ))}
                 </div>
-                <div className="w-[1px] h-8 bg-gray-200" />
-                <div className="flex flex-col items-center">
-                  <div className="flex items-center gap-1 text-[#6E9625]">
-                    <MapPin size={16} />
-                    <span className="font-bold text-[#1C2C1C] truncate max-w-[100px]">{location.split(',')[0]}</span>
+                <span className="text-[#6B7280] text-[13px] font-medium ml-1">
+                  <span className="text-[#1C2C1C] font-bold">{rating.toFixed(1)}</span> ({reviewCount} reviews)
+                </span>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="w-full flex flex-col gap-3 mb-8">
+                <button 
+                  onClick={() => router.push("/customer-dashboard/inbox")}
+                  className="w-full h-[46px] bg-[#1C2C1C] text-white rounded-xl font-bold text-[14px] flex items-center justify-center gap-2 hover:bg-[#2A412A] transition-colors cursor-pointer"
+                >
+                  <MessageCircle size={16} />
+                  Send Message
+                </button>
+                <button 
+                  onClick={handleSaveTrader}
+                  disabled={isSaving}
+                  className={`w-full h-[46px] rounded-xl font-bold text-[14px] flex items-center justify-center gap-2 transition-colors ${
+                    isSaved 
+                      ? "bg-[#E5F0DA] text-[#6E9625] hover:bg-[#D4E6C5]" 
+                      : "bg-[#F4F7F1] text-[#1C2C1C] hover:bg-[#E5F0DA] cursor-pointer"
+                  }`}
+                >
+                  <HeartIcon size={16} className={isSaved ? "fill-[#6E9625]" : ""} />
+                  {isSaved ? "Saved" : "Save Trader"}
+                </button>
+              </div>
+
+              {/* Contact Info */}
+              <div className="w-full flex flex-col gap-5 border-t border-gray-100 pt-6">
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-full bg-[#F4F7F1] flex items-center justify-center text-[#6E9625] flex-shrink-0">
+                    <Mail size={16} />
                   </div>
-                  <span className="text-[11px] text-gray-500 font-medium uppercase tracking-wider mt-1">
-                    Location
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Email</span>
+                    <a href={`mailto:${email}`} className="text-[14px] font-bold text-[#6E9625] hover:underline break-all">
+                      {email}
+                    </a>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 rounded-full bg-[#F4F7F1] flex items-center justify-center text-[#6E9625] flex-shrink-0">
+                    <Phone size={16} />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Phone</span>
+                    <a href={`tel:${phone}`} className="text-[14px] font-bold text-[#6E9625] hover:underline">
+                      {phone}
+                    </a>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Quick Contact & Info */}
-            <div className="bg-white rounded-3xl p-8 shadow-[0_8px_40px_rgba(36,58,36,0.04)] border border-[#243A240A]">
-              <h3 className="text-[13px] font-extrabold text-[#1C2C1C] tracking-widest uppercase mb-5">At a Glance</h3>
-              <div className="flex flex-col gap-4">
-
-                {companyName && (
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#6E9625]/10 flex items-center justify-center text-[#6E9625] flex-shrink-0">
-                      <Briefcase size={14} />
-                    </div>
-                    <div>
-                      <p className="text-[12px] text-gray-500 font-medium">Company</p>
-                      <p className="text-[14px] font-semibold text-[#1C2C1C]">{companyName}</p>
-                      {tp?.companyType && <p className="text-[12px] text-gray-500">{tp.companyType}</p>}
-                      {tp?.registrationNumber && <p className="text-[12px] text-gray-400">Reg: {tp.registrationNumber}</p>}
-                    </div>
-                  </div>
-                )}
-
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 rounded-full bg-[#6E9625]/10 flex items-center justify-center text-[#6E9625] flex-shrink-0">
-                    <MapPin size={14} />
-                  </div>
-                  <div>
-                    <p className="text-[12px] text-gray-500 font-medium">Service Area</p>
-                    <p className="text-[14px] font-semibold text-[#1C2C1C]">
-                      {location} {workRadius && <span className="text-gray-400">({workRadius} radius)</span>}
-                    </p>
-                  </div>
+              {/* Meta Info */}
+              <div className="w-full flex flex-col gap-4 border-t border-gray-100 pt-6 mt-6">
+                <div className="flex flex-col">
+                  <span className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Company</span>
+                  <span className="text-[14px] font-bold text-[#1C2C1C]">{companyName || "Independent"}</span>
                 </div>
-
-                {user?.email && (
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#6E9625]/10 flex items-center justify-center text-[#6E9625] flex-shrink-0">
-                      <Mail size={14} />
-                    </div>
-                    <div>
-                      <p className="text-[12px] text-gray-500 font-medium">Email</p>
-                      <a href={`mailto:${user.email}`} className="text-[14px] font-semibold text-[#6E9625] hover:underline">
-                        {user.email}
-                      </a>
-                    </div>
-                  </div>
-                )}
-
-                {user?.phone && (
-                  <div className="flex items-start gap-3">
-                    <div className="w-8 h-8 rounded-full bg-[#6E9625]/10 flex items-center justify-center text-[#6E9625] flex-shrink-0">
-                      <Phone size={14} />
-                    </div>
-                    <div>
-                      <p className="text-[12px] text-gray-500 font-medium">Phone</p>
-                      <a href={`tel:${user.phone}`} className="text-[14px] font-semibold text-[#6E9625] hover:underline">
-                        {user.phone}
-                      </a>
-                    </div>
-                  </div>
-                )}
-
+                <div className="flex flex-col">
+                  <span className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Location</span>
+                  <span className="text-[14px] font-bold text-[#1C2C1C]">{location}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Jobs Completed</span>
+                  <span className="text-[14px] font-bold text-[#1C2C1C]">{jobsCompleted}</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Response Rate</span>
+                  <span className="text-[14px] font-bold text-[#1C2C1C]">{responseRate}</span>
+                </div>
               </div>
-            </div>
 
+            </div>
           </div>
 
-          {/* ── Right Content (Details) ── */}
-          <div className="lg:col-span-8 flex flex-col gap-6">
+          {/* ── Right Content ── */}
+          <div className="flex flex-col gap-6">
 
-            {/* Performance Metrics */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="bg-white rounded-3xl p-6 shadow-[0_8px_40px_rgba(36,58,36,0.04)] border border-[#243A240A] flex flex-col items-center text-center">
-                <span className="text-3xl font-black text-[#1C2C1C] mb-1">{metrics?.completedJobs || 0}</span>
-                <span className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">Completed Jobs</span>
+            {/* Vetting Checks Bar */}
+            <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 p-6 flex flex-wrap lg:flex-nowrap items-center justify-between gap-6">
+              <div className="flex flex-wrap gap-8">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#6E9625] flex items-center justify-center text-white">
+                    <Check size={16} strokeWidth={3} />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[14px] font-extrabold text-[#1C2C1C]">Individual Checks</span>
+                    <span className="text-[12px] text-gray-500 font-medium">Verified</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#6E9625] flex items-center justify-center text-white">
+                    <Check size={16} strokeWidth={3} />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="text-[14px] font-extrabold text-[#1C2C1C]">Trade Checks</span>
+                    <span className="text-[12px] text-gray-500 font-medium">Verified</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <ShieldCheck size={28} className="text-[#6E9625]" strokeWidth={2} />
+                  <div className="flex flex-col">
+                    <span className="text-[14px] font-extrabold text-[#1C2C1C]">Insured</span>
+                    <span className="text-[12px] text-gray-500 font-medium">Up to date</span>
+                  </div>
+                </div>
               </div>
-              <div className="bg-white rounded-3xl p-6 shadow-[0_8px_40px_rgba(36,58,36,0.04)] border border-[#243A240A] flex flex-col items-center text-center">
-                <span className="text-3xl font-black text-[#1C2C1C] mb-1">{metrics?.responseRate ? `${Math.round(metrics.responseRate * 100)}%` : 'N/A'}</span>
-                <span className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">Response Rate</span>
-              </div>
-              <div className="bg-white rounded-3xl p-6 shadow-[0_8px_40px_rgba(36,58,36,0.04)] border border-[#243A240A] flex flex-col items-center text-center">
-                <span className="text-3xl font-black text-[#1C2C1C] mb-1">{metrics?.totalMatchedJobs || 0}</span>
-                <span className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">Matched Jobs</span>
-              </div>
-              <div className="bg-white rounded-3xl p-6 shadow-[0_8px_40px_rgba(36,58,36,0.04)] border border-[#243A240A] flex flex-col items-center text-center">
-                <span className="text-3xl font-black text-[#6E9625] mb-1">{tp?.insured ? 'Yes' : 'No'}</span>
-                <span className="text-[11px] text-gray-500 font-bold uppercase tracking-widest">Fully Insured</span>
-              </div>
+              <button onClick={() => setIsVettingModalOpen(true)} className="text-[13px] text-gray-500 font-medium hover:underline whitespace-nowrap cursor-pointer">
+                Learn more about traders <span className="font-bold text-[#6E9625]">Vetting & badges.</span>
+              </button>
             </div>
 
-            {/* About Section */}
-            <div className="bg-white rounded-3xl p-8 lg:p-10 shadow-[0_8px_40px_rgba(36,58,36,0.04)] border border-[#243A240A]">
-              <h3 className="text-xl font-bold text-[#1C2C1C] mb-6 flex items-center gap-3">
-                <FileText className="text-[#6E9625]" size={24} />
-                About {fullName.split(' ')[0]}
-              </h3>
-              <div className="prose prose-sm sm:prose-base prose-green max-w-none text-[#1C2C1C]/70 font-medium leading-relaxed">
-                {bio.split('\n').map((paragraph: string, idx: number) => (
-                  <p key={idx} className="mb-4 last:mb-0">{paragraph}</p>
-                ))}
-              </div>
-            </div>
-
-            {/* Skills & Services */}
-            {((tp?.tradeCategories && tp.tradeCategories.length > 0) || (tp?.skillsServices && tp.skillsServices.length > 0)) && (
-              <div className="bg-white rounded-3xl p-8 lg:p-10 shadow-[0_8px_40px_rgba(36,58,36,0.04)] border border-[#243A240A]">
-                <h3 className="text-xl font-bold text-[#1C2C1C] mb-6 flex items-center gap-3">
-                  <Wrench className="text-[#6E9625]" size={24} />
+            {/* Services & Expertise */}
+            <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="flex flex-col">
+                <h3 className="text-[18px] font-extrabold text-[#1C2C1C] mb-6 flex items-center gap-2">
+                  <Wrench className="text-[#6E9625]" size={20} />
                   Services & Expertise
                 </h3>
-
                 <div className="flex flex-wrap gap-2.5">
-                  {/* Render Categories */}
                   {tp?.tradeCategories?.map((cat: any, i: number) => (
-                    <span key={`cat-${i}`} className="inline-flex items-center gap-1.5 bg-[#243A24] text-white px-4 py-2 rounded-xl text-[13px] font-bold tracking-wide">
+                    <span key={`cat-${i}`} className="inline-flex items-center justify-center bg-[#1C2C1C] text-white px-4 py-2 rounded-xl text-[13px] font-bold tracking-wide">
                       {typeof cat === 'object' ? cat.name : cat}
                     </span>
                   ))}
-
-                  {/* Render Skills */}
                   {tp?.skillsServices?.map((skill: any, i: number) => (
-                    <span key={`skill-${i}`} className="inline-flex items-center gap-1.5 bg-[#6E9625]/10 text-[#243A24] px-4 py-2 rounded-xl text-[13px] font-bold tracking-wide border border-[#6E9625]/20">
+                    <span key={`skill-${i}`} className="inline-flex items-center justify-center bg-[#F4F7F1] text-[#243A24] px-4 py-2 rounded-xl text-[13px] font-bold tracking-wide border border-transparent">
                       {typeof skill === 'object' ? skill.name : skill}
                     </span>
                   ))}
-                  
-                  {/* Render Sub Categories */}
                   {tp?.subCategories?.map((sub: any, i: number) => (
-                    <span key={`sub-${i}`} className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-700 px-4 py-2 rounded-xl text-[13px] font-bold tracking-wide border border-gray-200">
+                    <span key={`sub-${i}`} className="inline-flex items-center justify-center bg-[#F3F4F6] text-[#4B5563] px-4 py-2 rounded-xl text-[13px] font-bold tracking-wide border border-transparent">
                       {typeof sub === 'object' ? sub.name : sub}
                     </span>
                   ))}
                 </div>
               </div>
-            )}
+              <div className="rounded-[16px] overflow-hidden h-[300px] bg-gray-100 w-full relative border border-gray-100">
+                <Image src={featuredImage} alt="Featured Work" fill className="object-cover" unoptimized />
+              </div>
+            </div>
+
+            {/* Bottom Row Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+
+              {/* About Section */}
+              <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 p-8 flex flex-col">
+                <h3 className="text-[18px] font-extrabold text-[#1C2C1C] mb-4 flex items-center gap-2">
+                  <div className="w-6 h-6 rounded-full border-[1.5px] border-[#1C2C1C] flex items-center justify-center opacity-70">
+                    <div className="w-2.5 h-2.5 rounded-full bg-transparent border-[1.5px] border-[#1C2C1C] mt-[-6px]" />
+                  </div>
+                  About {fullName.split(' ')[0]}
+                </h3>
+                <div className="text-[14px] text-gray-500 leading-relaxed font-medium mb-8 whitespace-pre-wrap">
+                  {bio}
+                </div>
+                <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-6 border-t border-gray-100 mt-auto">
+                  <div className="flex flex-col items-center text-center gap-1.5">
+                    <Award size={28} className="text-[#6E9625]" strokeWidth={1.5} />
+                    <span className="text-[12px] font-extrabold text-[#1C2C1C]">10+</span>
+                    <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Years Experience</span>
+                  </div>
+                  <div className="flex flex-col items-center text-center gap-1.5">
+                    <ThumbsUp size={28} className="text-[#6E9625]" strokeWidth={1.5} />
+                    <span className="text-[12px] font-extrabold text-[#1C2C1C]">High</span>
+                    <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Customer Satisfaction</span>
+                  </div>
+                  <div className="flex flex-col items-center text-center gap-1.5">
+                    <ShieldCheck size={28} className="text-[#6E9625]" strokeWidth={1.5} />
+                    <span className="text-[12px] font-extrabold text-[#1C2C1C]">Fully</span>
+                    <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Insured</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Gallery Section */}
+              <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 p-8 flex flex-col">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-[18px] font-extrabold text-[#1C2C1C] flex items-center gap-2">
+                    <ImageIcon className="text-[#6E9625]" size={20} />
+                    Gallery
+                  </h3>
+                  <a href="#" className="text-[13px] font-bold text-[#6E9625] hover:underline cursor-pointer">View all</a>
+                </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                  {portfolio.slice(0, 4).map((img: any, i: number) => (
+                    <div key={i} className="aspect-square rounded-[16px] overflow-hidden bg-gray-100 relative group cursor-pointer border border-gray-100">
+                      <Image src={getImageUrl(img.fileUrl)} alt="Portfolio" fill className="object-cover group-hover:scale-105 transition-transform duration-300" unoptimized />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
 
           </div>
         </div>
       </main>
+      
+      <VettingModal 
+        isOpen={isVettingModalOpen} 
+        onClose={() => setIsVettingModalOpen(false)} 
+      />
     </div>
   );
 }

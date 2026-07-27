@@ -1,16 +1,69 @@
 "use client";
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { authApi } from '@/app/api/authApi';
 import {
   Star, MapPin, Phone, ShieldCheck, BadgeCheck, Building,
-  Wrench, List, ChevronDown,
+  Wrench, List, ChevronDown, Check, ChevronRight, Filter, Search,
+  CheckCircle, Heart, Award, Briefcase, MessageSquare, Camera, LogIn, X, Target, Layers
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getAccessToken, getUserRole, parseJwt, clearTokens } from '@/utils/auth';
 import { Role } from '@/utils/role';
-import { LogIn, X } from 'lucide-react';
+
+const FilterDropdown = ({ value, onChange, options, disabled, placeholder, icon: Icon }: any) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find((o: any) => o.id === value) || null;
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none z-10"><Icon size={16} /></div>
+      <div 
+        className={`w-full bg-[#F3F4F6] text-[14px] font-medium rounded-xl py-3 pl-10 pr-10 outline-none flex items-center justify-between transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-[#E5E7EB]'} ${selectedOption ? 'text-[#243A24]' : 'text-[#4B5563]'}`}
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+      >
+        <span className="truncate">{selectedOption ? selectedOption.name : placeholder}</span>
+        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none"><ChevronDown size={16} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} /></div>
+      </div>
+
+      {isOpen && (
+        <div className="absolute top-full left-0 mt-2 w-full bg-white rounded-xl shadow-[0_15px_60px_rgba(0,0,0,0.12)] border border-gray-100 z-50 max-h-[250px] overflow-y-auto py-2 text-left [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
+          <div 
+            className="px-4 py-2.5 hover:bg-[#F4F7F1] text-[13px] font-semibold text-[#6B7280] cursor-pointer transition-colors"
+            onClick={(e) => { e.stopPropagation(); onChange(''); setIsOpen(false); }}
+          >
+            {placeholder}
+          </div>
+          {options.map((opt: any) => (
+            <div 
+              key={opt.id}
+              className={`px-4 py-2.5 hover:bg-[#F4F7F1] text-[13px] cursor-pointer transition-colors flex items-center justify-between ${value === opt.id ? 'bg-[#F4F7F1] text-[#6E9625] font-bold' : 'text-[#243A24] font-medium'}`}
+              onClick={(e) => { e.stopPropagation(); onChange(opt.id); setIsOpen(false); }}
+            >
+              <span className="truncate">{opt.name}</span>
+              {value === opt.id && (
+                <div className="w-1.5 h-1.5 rounded-full bg-[#6E9625] flex-shrink-0"></div>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
 
 // Define the shape of the trader data returned by the API.
 interface Trader {
@@ -20,21 +73,40 @@ interface Trader {
   isVerified?: boolean;
   companyName?: string;
   location?: string;
+  phone?: string;
   logo?: string;
   ratingAvg?: number;
   reviewCount?: number;
   workRadius?: number;
   subscriptionTier?: string;
+  portfolio?: string[];
+  tradeCategories?: any[];
+  skillsServices?: any[];
+  subCategories?: any[];
+  tradeCategoryName?: string;
+  tradeCategoryNames?: string[];
+  skillServiceName?: string;
+  skillServiceNames?: string[];
+  subCategoryName?: string;
+  subCategoryNames?: string[];
+  about?: string;
+  aboutUs?: string;
+  completedJobs?: number;
+  minimumExperience?: boolean;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-const getImageUrl = (path?: string | null) => {
+const getImageUrl = (path?: any) => {
   if (!path) return "/placeholder.png";
-  if (path.startsWith("http")) return path;
+
+  let p = typeof path === 'string' ? path : (path?.fileUrl || path?.url || path?.path || path?.src);
+  if (!p || typeof p !== 'string') return "/placeholder.png";
+
+  if (p.startsWith("http")) return p;
 
   const baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
-  const imagePath = path.startsWith('/') ? path : `/${path}`;
+  const imagePath = p.startsWith('/') ? p : `/${p}`;
 
   return `${baseUrl}${imagePath}`;
 };
@@ -178,6 +250,9 @@ const DirectorySearchResults = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialCategoryId = searchParams?.get('categoryId') || '';
+  const initialSkillId = searchParams?.get('skillService') || '';
+  const initialSubCategoryId = searchParams?.get('subCategory') || '';
+  const initialLocation = searchParams?.get('location') || '';
 
   const [categories, setCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedCategory, setSelectedCategory] = useState(initialCategoryId);
@@ -185,24 +260,50 @@ const DirectorySearchResults = () => {
 
   const [skillServices, setSkillServices] = useState<Array<{ id: string; name: string }>>([]);
   const [loadingSkills, setLoadingSkills] = useState(false);
-  const [selectedSkill, setSelectedSkill] = useState('');
+  const [selectedSkill, setSelectedSkill] = useState(initialSkillId);
 
   const [subCategories, setSubCategories] = useState<Array<{ id: string; name: string }>>([]);
   const [loadingSub, setLoadingSub] = useState(false);
-  const [selectedSubCategory, setSelectedSubCategory] = useState('');
+  const [selectedSubCategory, setSelectedSubCategory] = useState(initialSubCategoryId);
+
+  // Search Input for location
+  const [searchTerm, setSearchTerm] = useState(initialLocation);
+
+  // Work radius state
+  const [workRadius, setWorkRadius] = useState(20);
+
+  // Rating filter state
+  const [minRating, setMinRating] = useState<number | null>(null);
+  const [appliedMinRating, setAppliedMinRating] = useState<number | null>(null);
 
   // Search results state
   const [traderResults, setTraderResults] = useState<Trader[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState('');
 
-  // Pagination state – show first 3 items, load more on demand
-  const [displayCount, setDisplayCount] = useState(3);
+  // Pagination state – show first 15 items, load more on demand
+  const [displayCount, setDisplayCount] = useState(15);
 
   // Login-prompt modal state
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [pendingTraderId, setPendingTraderId] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<"leave-review" | "view-profile" | "contact-trader">("leave-review");
+
+  // Track expanded skills state per trader card
+  const [expandedSkills, setExpandedSkills] = useState<Record<string, boolean>>({});
+  const toggleSkills = (traderId: string) => {
+    setExpandedSkills(prev => ({ ...prev, [traderId]: !prev[traderId] }));
+  };
+
+  // Image gallery states per trader card
+  const [activeImageIndex, setActiveImageIndex] = useState<Record<string, number>>({});
+  const [expandedGallery, setExpandedGallery] = useState<Record<string, boolean>>({});
+
+  // Track revealed phone numbers per trader card
+  const [revealedPhones, setRevealedPhones] = useState<Record<string, boolean>>({});
+  const togglePhone = (traderId: string) => {
+    setRevealedPhones(prev => ({ ...prev, [traderId]: true }));
+  };
 
   const handleLoginSuccess = async () => {
     setShowLoginModal(false);
@@ -234,7 +335,7 @@ const DirectorySearchResults = () => {
   };
 
   const handleLoadMore = () => {
-    setDisplayCount((prev) => Math.min(prev + 3, traderResults.length));
+    setDisplayCount((prev) => Math.min(prev + 15, traderResults.length));
   };
 
   const handleProtectedAction = async (e: React.MouseEvent, traderId: string, actionType: "leave-review" | "view-profile" | "contact-trader") => {
@@ -373,14 +474,17 @@ const DirectorySearchResults = () => {
   }, [selectedSkill]);
 
   // Fetch traders based on filter criteria
-  const fetchTraders = async () => {
+  const fetchTraders = async (clearAll = false) => {
     setSearchLoading(true);
     setSearchError('');
     try {
       const params: Record<string, any> = {};
-      if (selectedCategory) params.categoryId = selectedCategory;
-      if (selectedSkill) params.skillService = selectedSkill;
-      if (selectedSubCategory) params.subCategory = selectedSubCategory;
+      if (!clearAll) {
+        if (selectedCategory) params.categoryId = selectedCategory;
+        if (selectedSkill) params.skillService = selectedSkill;
+        if (selectedSubCategory) params.subCategory = selectedSubCategory;
+        if (workRadius > 0) params.radius = workRadius;
+      }
 
       const data = await authApi.searchTraders(params);
       console.log("Search Traders API Response:", data);
@@ -397,11 +501,13 @@ const DirectorySearchResults = () => {
     }
   };
 
-  // Trigger search on mount and when filters change
+  // Trigger search on mount only (Apply Filters button handles manual searches)
   useEffect(() => {
     fetchTraders();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCategory, selectedSkill, selectedSubCategory]);
+  }, []);
+
+  const filteredResults = traderResults.filter(t => appliedMinRating === null || (t.ratingAvg || 0) >= appliedMinRating);
 
   return (
     <>
@@ -415,82 +521,177 @@ const DirectorySearchResults = () => {
                 {/* Category */}
                 <div>
                   <label className="block text-[14px] font-medium text-[#4B5563] mb-2">Category</label>
-                  <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]"><Wrench size={16} /></div>
-                    <select
-                      className="w-full bg-[#F3F4F6] text-[#243A24] text-[14px] font-medium rounded-xl py-3 pl-10 pr-10 appearance-none outline-none"
-                      value={selectedCategory}
-                      onChange={(e) => setSelectedCategory(e.target.value)}
-                      disabled={loading}
-                    >
-                      <option value="">All Categories</option>
-                      {categories.map((cat) => (
-                        <option key={cat.id} value={cat.id}>{cat.name}</option>
-                      ))}
-                    </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none"><ChevronDown size={16} /></div>
-                  </div>
+                  <FilterDropdown
+                    icon={Wrench}
+                    value={selectedCategory}
+                    onChange={setSelectedCategory}
+                    disabled={loading}
+                    placeholder="All Categories"
+                    options={categories.map((cat) => ({ id: cat.id, name: cat.name }))}
+                  />
                 </div>
                 {/* Skills / Services */}
                 <div>
                   <label className="block text-[13px] font-medium text-[#4B5563] mb-2">Skills / Services</label>
-                  <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]"><List size={16} /></div>
-                    <select
-                      className="w-full bg-[#F3F4F6] text-[#4B5563] text-[14px] font-medium rounded-xl py-3 pl-10 pr-4 appearance-none outline-none"
-                      disabled={loadingSkills}
-                      value={selectedSkill}
-                      onChange={(e) => setSelectedSkill(e.target.value)}
-                    >
-                      <option value="">Select Service</option>
-                      {skillServices.map((svc) => (
-                        <option key={svc.id} value={svc.id}>{svc.name}</option>
-                      ))}
-                    </select>
-                  </div>
+                  <FilterDropdown
+                    icon={List}
+                    value={selectedSkill}
+                    onChange={setSelectedSkill}
+                    disabled={loadingSkills}
+                    placeholder="Select Service"
+                    options={skillServices.map((svc) => ({ id: svc.id, name: svc.name }))}
+                  />
                 </div>
                 {/* Sub‑category */}
                 <div>
                   <label className="block text-[13px] font-medium text-[#4B5563] mb-2">Sub‑category</label>
-                  <div className="relative">
-                    <select
-                      className="w-full bg-[#F3F4F6] text-[#4B5563] text-[14px] font-medium rounded-xl py-3 px-4 pr-10 appearance-none outline-none"
-                      disabled={loadingSub}
-                      value={selectedSubCategory}
-                      onChange={(e) => setSelectedSubCategory(e.target.value)}
-                    >
-                      <option value="">Select Sub‑category</option>
-                      {subCategories.map((sub) => (
-                        <option key={sub.id} value={sub.id}>{sub.name}</option>
-                      ))}
-                    </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none"><ChevronDown size={16} /></div>
-                  </div>
+                  <FilterDropdown
+                    icon={Layers}
+                    value={selectedSubCategory}
+                    onChange={setSelectedSubCategory}
+                    disabled={loadingSub}
+                    placeholder="Select Sub‑category"
+                    options={subCategories.map((sub) => ({ id: sub.id, name: sub.name }))}
+                  />
                 </div>
                 {/* Location */}
                 <div>
                   <label className="block text-[13px] font-medium text-[#4B5563] mb-2">Location</label>
                   <div className="relative">
                     <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]"><MapPin size={16} /></div>
-                    <input type="text" placeholder="Enter Postcode" className="w-full bg-[#F3F4F6] text-[#4B5563] text-[14px] font-medium rounded-xl py-3 pl-10 pr-4 outline-none placeholder-[#9CA3AF]" />
+                    <input type="text" placeholder="Enter Location" className="w-full bg-[#F3F4F6] text-[#4B5563] text-[14px] font-medium rounded-xl py-3 pl-10 pr-10 outline-none placeholder-[#9CA3AF]" />
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9CA3AF] cursor-pointer"><Target size={16} /></div>
                   </div>
                 </div>
-                {/* Min Rating */}
-                <div>
-                  <label className="block text-[13px] font-medium text-[#4B5563] mb-2">Min. Rating</label>
-                  <div className="relative">
-                    <div className="absolute left-4 top-1/2 -translate-y-1/2 flex gap-1">
-                      {[...Array(4)].map((_, i) => <Star key={i} size={14} className="text-[#EAB308]" fill="currentColor" />)}
-                      <Star size={14} className="text-[#D1D5DB]" />
-                    </div>
-                    <select className="w-full bg-[#F3F4F6] text-transparent text-[14px] font-medium rounded-xl py-3 pl-24 pr-10 appearance-none outline-none">
-                      <option>4 Stars</option>
-                    </select>
-                    <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none"><ChevronDown size={16} /></div>
+                {/* Work Radius */}
+                <div className="mt-2">
+                  <div className="flex justify-between items-center mb-4">
+                    <label className="text-[13px] font-medium text-[#4B5563]">Work Radius</label>
+                    <span className="text-[12px] text-[#4B5563]">{workRadius} miles</span>
+                  </div>
+                  <style>
+                    {`
+                      .radius-slider {
+                        -webkit-appearance: none;
+                        appearance: none;
+                        width: 100%;
+                        height: 6px;
+                        border-radius: 8px;
+                        background: linear-gradient(to right, #A1B072 0%, #A1B072 ${workRadius}%, #F4F7F1 ${workRadius}%, #F4F7F1 100%);
+                        outline: none;
+                      }
+                      .radius-slider::-webkit-slider-thumb {
+                        -webkit-appearance: none;
+                        appearance: none;
+                        width: 16px;
+                        height: 16px;
+                        border-radius: 50%;
+                        background: #ffffff;
+                        border: 2px solid #A1B072;
+                        cursor: pointer;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                      }
+                      .radius-slider::-moz-range-thumb {
+                        width: 16px;
+                        height: 16px;
+                        border-radius: 50%;
+                        background: #ffffff;
+                        border: 2px solid #A1B072;
+                        cursor: pointer;
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                      }
+                    `}
+                  </style>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    value={workRadius}
+                    onChange={(e) => setWorkRadius(Number(e.target.value))}
+                    className="radius-slider"
+                  />
+                </div>
+                {/* Rating */}
+                <div className="mt-2">
+                  <label className="block text-[13px] font-medium text-[#4B5563] mb-4">Rating</label>
+                  <div className="flex flex-col gap-3.5">
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={minRating === 5}
+                        onChange={() => setMinRating(minRating === 5 ? null : 5)}
+                        className="w-4 h-4 rounded border-gray-300 text-[#243A24] focus:ring-[#243A24]"
+                      />
+                      <div className="flex items-center gap-1">
+                        {[...Array(5)].map((_, i) => <Star key={i} size={14} fill="#9CA3AF" className="text-[#9CA3AF]" />)}
+                      </div>
+                      <span className="text-[13px] font-medium text-[#4B5563] ml-1">5.0</span>
+                    </label>
+
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={minRating === 4}
+                        onChange={() => setMinRating(minRating === 4 ? null : 4)}
+                        className="w-4 h-4 rounded border-gray-300 text-[#243A24] focus:ring-[#243A24]"
+                      />
+                      <div className="flex items-center gap-1">
+                        {[...Array(4)].map((_, i) => <Star key={i} size={14} fill="#9CA3AF" className="text-[#9CA3AF]" />)}
+                        <Star size={14} className="text-[#D1D5DB]" />
+                      </div>
+                      <span className="text-[13px] font-medium text-[#4B5563] ml-1">& up 4.0</span>
+                    </label>
+
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={minRating === 3}
+                        onChange={() => setMinRating(minRating === 3 ? null : 3)}
+                        className="w-4 h-4 rounded border-gray-300 text-[#243A24] focus:ring-[#243A24]"
+                      />
+                      <div className="flex items-center gap-1">
+                        {[...Array(3)].map((_, i) => <Star key={i} size={14} fill="#9CA3AF" className="text-[#9CA3AF]" />)}
+                        {[...Array(2)].map((_, i) => <Star key={i} size={14} className="text-[#D1D5DB]" />)}
+                      </div>
+                      <span className="text-[13px] font-medium text-[#4B5563] ml-1">& up 3.0</span>
+                    </label>
+
+                    <label className="flex items-center gap-3 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={minRating === 2}
+                        onChange={() => setMinRating(minRating === 2 ? null : 2)}
+                        className="w-4 h-4 rounded border-gray-300 text-[#243A24] focus:ring-[#243A24]"
+                      />
+                      <div className="flex items-center gap-1">
+                        {[...Array(2)].map((_, i) => <Star key={i} size={14} fill="#9CA3AF" className="text-[#9CA3AF]" />)}
+                        {[...Array(3)].map((_, i) => <Star key={i} size={14} className="text-[#D1D5DB]" />)}
+                      </div>
+                      <span className="text-[13px] font-medium text-[#4B5563] ml-1">& up 2.0</span>
+                    </label>
                   </div>
                 </div>
-                {/* Search Button */}
-                <button className="w-full bg-[#243A24] text-white font-bold py-3.5 rounded-xl hover:bg-[#1A301A] transition-colors mt-2">Search</button>
+                {/* Action Buttons */}
+                <div className="flex flex-col gap-3 mt-4">
+                  <button
+                    onClick={() => {
+                      setAppliedMinRating(minRating);
+                      fetchTraders();
+                    }}
+                    className="w-full bg-[#243A24] text-white font-bold text-[14px] py-3.5 rounded-xl hover:bg-[#1A301A] transition-colors cursor-pointer"
+                  >
+                    Apply Filters
+                  </button>
+                  <button onClick={() => {
+                    setSelectedCategory('');
+                    setSelectedSkill('');
+                    setSelectedSubCategory('');
+                    setWorkRadius(20);
+                    setMinRating(null);
+                    setAppliedMinRating(null);
+                    fetchTraders(true);
+                  }} className="w-full bg-white text-[#4B5563] font-bold text-[14px] py-3.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer">Clear Filters</button>
+                </div>
               </div>
             </div>
             <p className="text-[12px] text-[#6B7280] leading-relaxed px-2">
@@ -501,8 +702,8 @@ const DirectorySearchResults = () => {
           <div className="flex-1">
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 sm:mb-6">
-              <h2 className="text-[20px] sm:text-[24px] font-bold text-[#243A24] leading-tight" style={{ fontFamily: 'var(--font-bricolage)' }}>
-                {traderResults.length} Professionals found in Manchester
+              <h2 className="text-[20px] sm:text-[24px] font-extrabold text-[#1C2C1C]">
+                {filteredResults.length} Professional{filteredResults.length !== 1 && 's'} found in Manchester
               </h2>
               <div className="flex items-center gap-2 mt-4 sm:mt-0 text-[14px]">
                 <span className="text-[#4B5563]">Sort by:</span>
@@ -516,131 +717,260 @@ const DirectorySearchResults = () => {
               <p>Loading traders...</p>
             ) : searchError ? (
               <p className="text-red-600">{searchError}</p>
-            ) : traderResults.length === 0 ? (
-              <p>No traders found.</p>
+            ) : filteredResults.length === 0 && !searchLoading ? (
+              <div className="bg-white rounded-[24px] p-12 text-center shadow-sm border border-gray-100 flex flex-col items-center justify-center min-h-[400px]">
+                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
+                  <Search size={32} className="text-gray-300" />
+                </div>
+                <h3 className="text-xl font-bold text-[#1C2C1C] mb-2">No professionals found</h3>
+                <p className="text-[#4B5563] text-[14px] max-w-md mx-auto">
+                  Try adjusting your filters, expanding your work radius, or searching in a different category to find what you&apos;re looking for.
+                </p>
+                <button
+                  onClick={() => {
+                    setSelectedCategory('');
+                    setSelectedSkill('');
+                    setSelectedSubCategory('');
+                    setWorkRadius(20);
+                    setMinRating(null);
+                    setAppliedMinRating(null);
+                    fetchTraders(true);
+                  }}
+                  className="mt-8 bg-white border border-[#243A24] text-[#243A24] px-6 py-2.5 rounded-xl font-bold hover:bg-gray-50 transition-colors cursor-pointer"
+                >
+                  Clear all filters
+                </button>
+              </div>
             ) : (
-              <div className="flex flex-col gap-4">
-                {traderResults.slice(0, displayCount).map((trader) => (
-
+              <div className="flex flex-col gap-6">
+                {filteredResults.slice(0, displayCount).map((trader) => (
                   <div
                     key={trader.id}
-                    className="bg-white rounded-[12px] p-5 shadow-sm border border-[#E5E7EB] flex flex-col sm:flex-row gap-4"
+                    className="bg-white rounded-3xl p-6 shadow-sm border border-[#E5E7EB] flex flex-col md:flex-row gap-8"
                   >
-                    {/* ── Left: Profile Image ── */}
-                    <div className="w-full h-[180px] sm:w-[110px] sm:h-[110px] rounded-[10px] overflow-hidden shrink-0 relative bg-[#F3F4F6]">
+                    {/* ── Left: Image Gallery ── */}
+                    <div className="w-full md:w-[320px] shrink-0 flex flex-col gap-2">
+                      <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden relative bg-gray-100">
+                        <Image
+                          src={
+                            trader.portfolio && trader.portfolio.length > 0
+                              ? getImageUrl(trader.portfolio[activeImageIndex[trader.id] || 0])
+                              : getImageUrl(trader.profileImage || trader.logo)
+                          }
+                          alt={trader.fullName || 'Trader'}
+                          fill
+                          sizes="(max-width: 768px) 100vw, 320px"
+                          className="object-cover"
+                          unoptimized
+                        />
+                      </div>
 
-                      <Image
-                        src={
-                          trader.profileImage
-                            ? getImageUrl(trader.profileImage)
-                            : getImageUrl(trader.logo)
-                        }
+                      {trader.portfolio && trader.portfolio.length > 1 && (
+                        <div className="grid grid-cols-4 gap-2">
+                          {trader.portfolio.slice(0, expandedGallery[trader.id] ? undefined : 4).map((img: any, actualIndex: number) => {
+                            const isLastThumb = !expandedGallery[trader.id] && actualIndex === 3 && trader.portfolio!.length > 4;
+                            const isActive = (activeImageIndex[trader.id] || 0) === actualIndex;
 
-                        alt={trader.fullName || 'Trader'}
-                        fill
-                        className="object-cover"
-                        unoptimized
-                      />
+                            return (
+                              <div
+                                key={actualIndex}
+                                className={`aspect-[4/3] rounded-xl overflow-hidden relative bg-gray-100 cursor-pointer transition-all ${isActive ? 'ring-2 ring-[#6E9625] ring-offset-1 opacity-100' : 'opacity-70 hover:opacity-100'}`}
+                                onClick={() => {
+                                  if (isLastThumb) {
+                                    setExpandedGallery(prev => ({ ...prev, [trader.id]: true }));
+                                  }
+                                  setActiveImageIndex(prev => ({ ...prev, [trader.id]: actualIndex }));
+                                }}
+                              >
+                                <Image src={getImageUrl(img)} alt="" fill sizes="(max-width: 768px) 25vw, 80px" className="object-cover" unoptimized />
+                                {isLastThumb && (
+                                  <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-bold text-[15px]">
+                                    +{trader.portfolio!.length - 3}
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+
+                      {expandedGallery[trader.id] && trader.portfolio && trader.portfolio.length > 4 && (
+                        <button
+                          onClick={() => setExpandedGallery(prev => ({ ...prev, [trader.id]: false }))}
+                          className="text-[#6E9625] text-[12px] font-bold hover:underline mt-1 text-center w-full"
+                        >
+                          Show less photos
+                        </button>
+                      )}
+                      <div className="text-center text-gray-500 text-[13px] font-medium mt-1 flex justify-center items-center gap-1.5">
+                        <Camera size={14} /> {trader.portfolio?.length || 0} Photos
+                      </div>
                     </div>
 
                     {/* ── Middle: Info ── */}
-                    <div className="flex-1 min-w-0">
-                      {/* Name + Vetted badge */}
-                      <div className="flex flex-wrap items-center gap-2 mb-0.5">
-                        <h3 className="text-[17px] font-bold text-[#1F2937]">{trader.fullName}</h3>
-                        {trader.isVerified && (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#6E9625] bg-[#F0F9F1] border border-[#c6e29c] px-2.5 py-0.5 rounded-full whitespace-nowrap">
-                            <BadgeCheck size={12} /> Vetted Trader
-                          </span>
-                        )}
+                    <div className="flex-1 min-w-0 flex flex-col relative">
+
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <div className="flex items-center gap-3 mb-1">
+                            <h3 className="text-[22px] font-bold text-[#1C2C1C]">{trader.fullName}</h3>
+                            {trader.isVerified && (
+                              <span className="flex items-center gap-1 text-[#6E9625] bg-[#F4F7F1] border border-[#6E9625]/20 px-3 py-1 rounded-full text-[12px] font-bold">
+                                <CheckCircle size={14} /> Vetted Trader
+                              </span>
+                            )}
+                          </div>
+
+                          <div className="flex items-center gap-1.5 mb-4">
+                            <div className="flex items-center">
+                              {[...Array(5)].map((_, i) => (
+                                <Star key={i} size={16} fill={i < Math.round(trader.ratingAvg || 0) ? '#F59E0B' : 'none'} className={i < Math.round(trader.ratingAvg || 0) ? 'text-[#F59E0B]' : 'text-gray-200'} />
+                              ))}
+                            </div>
+                            <span className="font-bold text-[#1C2C1C] text-[14px]">{trader.ratingAvg?.toFixed(1) || '0.0'}</span>
+                            <span className="text-gray-400 text-[13px] font-medium">({trader.reviewCount || 0} reviews)</span>
+                          </div>
+
+                        </div>
                       </div>
 
-                      {/* Specialty / company */}
-                      <p className="text-[#6E9625] text-[13px] font-semibold mb-2">{trader.companyName}</p>
+                      {/* Checks */}
+                      <div className="flex flex-wrap gap-4 sm:gap-6 mb-5">
+                        <span className="flex items-center gap-1.5 text-[13px] font-medium text-gray-500"><CheckCircle size={16} className="text-[#6E9625]" /> Individual Check</span>
+                        <span className="flex items-center gap-1.5 text-[13px] font-medium text-gray-500"><CheckCircle size={16} className="text-[#6E9625]" /> Trade Check</span>
+                        <span className="flex items-center gap-1.5 text-[13px] font-medium text-gray-500"><CheckCircle size={16} className="text-[#6E9625]" /> Insurance Verified</span>
+                      </div>
 
-                      {/* Subscription tier (optional badge) */}
-                      {trader.subscriptionTier && (
-                        <span className="inline-block bg-[#E0F2FE] text-[#0369A1] text-[10px] font-medium px-2 py-0.5 rounded mb-2">
-                          {trader.subscriptionTier}
-                        </span>
-                      )}
+                      {/* Categories / Skills */}
+                      <div className="flex flex-col gap-2 mb-5">
+                        <div className="flex flex-wrap gap-2">
+                          {trader.tradeCategories?.map((cat: any, i: number) => (
+                            <span key={`cat-${i}`} className="bg-[#F4F7F1] text-[#6E9625] px-3.5 py-1.5 rounded-full text-[12px] font-bold">{cat.name}</span>
+                          ))}
+                        </div>
+                        {(() => {
+                          const combinedSkills = [...(trader.skillsServices || []), ...(trader.subCategories || [])];
+                          const isExpanded = expandedSkills[trader.id];
+                          const visibleSkills = isExpanded ? combinedSkills : combinedSkills.slice(0, 4);
 
-                      {/* Description placeholder */}
-                      <p className="text-[#6B7280] text-[13px] leading-relaxed mb-3">
-                        {/* Description field not supplied – can be added later */}
+                          return (
+                            <div className="flex flex-wrap gap-2">
+                              {visibleSkills.map((item: any, i: number) => (
+                                <span key={`skill-sub-${i}`} className="bg-[#F3F4F6] text-[#4B5563] px-3.5 py-1.5 rounded-full text-[12px] font-bold">{item.name}</span>
+                              ))}
+                              {!isExpanded && combinedSkills.length > 4 && (
+                                <button
+                                  onClick={(e) => { e.preventDefault(); toggleSkills(trader.id); }}
+                                  className="bg-[#F4F7F1] text-[#6E9625] px-3.5 py-1.5 rounded-full text-[12px] font-bold cursor-pointer hover:bg-[#E5F0DA] transition-colors"
+                                >
+                                  +{combinedSkills.length - 4} more
+                                </button>
+                              )}
+                              {isExpanded && combinedSkills.length > 4 && (
+                                <button
+                                  onClick={(e) => { e.preventDefault(); toggleSkills(trader.id); }}
+                                  className="bg-[#F4F7F1] text-[#6E9625] px-3.5 py-1.5 rounded-full text-[12px] font-bold cursor-pointer hover:bg-[#E5F0DA] transition-colors"
+                                >
+                                  Show less
+                                </button>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </div>
+
+
+                      {/* Bio */}
+                      <p className="text-[#4B5563] text-[13px] leading-relaxed line-clamp-2 sm:line-clamp-3 mb-6">
+                        {trader.about || trader.aboutUs || "No description provided."}
                       </p>
 
-                      {/* Badges row: Insurance, ID Check, Trade Check */}
-                      <div className="flex flex-wrap items-center gap-3 mb-3 text-[12px] text-[#4B5563]">
-                        <span className="flex items-center gap-1">
-                          <ShieldCheck size={13} className="text-[#6E9625]" /> Insurance
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <BadgeCheck size={13} className="text-[#6E9625]" /> ID Check
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <Wrench size={13} className="text-[#6E9625]" /> Trade Check
-                        </span>
-                      </div>
+                      <div className="mt-auto">
+                        {/* Stats */}
+                        <div className="flex items-center justify-start gap-4 sm:gap-8 lg:gap-12 mb-4 whitespace-nowrap overflow-hidden text-ellipsis">
+                          {trader.minimumExperience && (
+                            <div className="flex items-center gap-3">
+                              <div className="flex items-center justify-center shrink-0">
+                                <Award size={24} className="text-[#6E9625]" />
+                              </div>
+                              <div>
+                                <div className="font-extrabold text-[#1C2C1C] text-[15px]">1+</div>
+                                <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Years Experience</div>
+                              </div>
+                            </div>
+                          )}
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center justify-center shrink-0">
+                              <Briefcase size={24} className="text-[#6E9625]" />
+                            </div>
+                            <div>
+                              <div className="font-extrabold text-[#1C2C1C] text-[15px]">{trader.completedJobs || 0}</div>
+                              <div className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Jobs Completed</div>
+                            </div>
+                          </div>
+                        </div>
 
-                      {/* Location */}
-                      <div className="flex items-center gap-1.5 text-[#6B7280] text-[12px]">
-                        <MapPin size={13} className="text-[#6B7280]" />
-                        {trader.location}
-                        {trader.workRadius ? ` (Work radius: ${trader.workRadius} miles)` : ''}
+                        {/* Location */}
+                        <div className="flex items-center gap-3 text-[13px] font-semibold text-gray-500">
+                          <span className="flex items-center gap-1.5 text-[#1C2C1C]"><MapPin size={15} className="text-gray-400" /> {trader.location || "Unknown"}</span>
+                          <span className="text-gray-300">•</span>
+                          <span>Working within {trader.workRadius || 0} miles</span>
+                        </div>
                       </div>
                     </div>
 
-                    {/* ── Right: Actions panel ── */}
-                    <div className="flex flex-col items-stretch sm:items-end justify-between sm:min-w-[170px] border-t sm:border-t-0 sm:border-l border-[#F3F4F6] pt-3 sm:pt-0 sm:pl-5">
-                      {/* Top: Leave a Review + stars + phone */}
-                      <div className="flex flex-col items-start sm:items-end gap-1 mb-3">
-                        <a
-                          href="#"
-                          onClick={(e) => handleProtectedAction(e, String(trader.id), "leave-review")}
-                          className="text-[#6E9625] text-[12px] font-semibold hover:underline"
-                        >
-                          Leave a Review
-                        </a>
-                        <div className="flex items-center gap-1">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              size={13}
-                              fill={i < Math.round(trader.ratingAvg ?? 0) ? '#FACC15' : 'none'}
-                              className={i < Math.round(trader.ratingAvg ?? 0) ? 'text-[#FACC15]' : 'text-[#D1D5DB]'}
-                            />
-                          ))}
-                          <span className="font-bold text-[#1F2937] text-[13px] ml-1">
-                            {trader.ratingAvg?.toFixed(1) || '0.0'}
-                          </span>
-                          <span className="text-[#6B7280] text-[12px]">({trader.reviewCount || 0})</span>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={(e) => handleProtectedAction(e, String(trader.id), "contact-trader")}
-                          className="flex items-center gap-1.5 text-[#4B5563] text-[12px] hover:text-[#6E9625] cursor-pointer transition-colors"
-                        >
-                          <Phone size={13} className="text-[#4B5563]" /> Click to view
-                        </button>
-                      </div>
+                    {/* ── Right: Action Buttons ── */}
+                    <div className="w-full md:w-[180px] shrink-0 flex flex-col justify-center gap-3 pt-6 md:pt-0 md:pl-6 md:border-l border-gray-100">
 
-                      {/* Bottom: action buttons */}
-                      <div className="flex flex-col gap-2 w-full sm:w-auto">
-                        <Link
-                          href={`/profile/${trader.id}`}
-                          className="w-full text-center border border-[#243A24] text-[#243A24] text-[13px] font-semibold py-2.5 px-5 rounded-[8px] hover:bg-[#f5f7f5] transition-colors"
+                      {/* Leave a Review */}
+                      <button
+                        onClick={() => {
+                          const storedUser = localStorage.getItem('user');
+                          if (!storedUser) {
+                            setPendingTraderId(trader.id);
+                            setPendingAction("leave-review");
+                            setShowLoginModal(true);
+                          } else {
+                            router.push(`/profile/${trader.id}?review=true`);
+                          }
+                        }}
+                        className="text-[#6E9625] text-[14px] font-semibold underline underline-offset-2 hover:text-[#52701b] transition-colors text-center"
+                      >
+                        Leave a Review
+                      </button>
+
+                      {/* Click to view (Phone) */}
+                      {!revealedPhones[trader.id] ? (
+                        <button
+                          onClick={() => togglePhone(trader.id)}
+                          className="flex items-center justify-center gap-2 w-full bg-white border border-[#E0E0E0] rounded-xl py-3 text-[#4B5563] text-[14px] font-bold hover:bg-gray-50 transition-colors"
                         >
-                          View Profile
-                        </Link>
-                      </div>
+                          <Phone size={16} fill="currentColor" className="text-[#4B5563] shrink-0" />
+                          <span>Click to view</span>
+                        </button>
+                      ) : (
+                        <a
+                          href={`tel:${trader.phone || ""}`}
+                          className="flex items-center justify-center gap-2 w-full bg-[#F4F7F1] border border-[#6E9625] rounded-xl py-3 text-[#6E9625] text-[14px] font-bold hover:bg-[#E5F0DA] transition-colors whitespace-nowrap px-2"
+                        >
+                          <Phone size={16} fill="currentColor" className="text-[#6E9625] shrink-0" />
+                          <span>{trader.phone || "No phone"}</span>
+                        </a>
+                      )}
+
+                      <Link href={`/profile/${trader.id}`} className="w-full text-center bg-[#1C2C1C] text-white py-3.5 rounded-xl font-bold text-[14px] hover:bg-black transition-colors">
+                        View Profile
+                      </Link>
+                      <button className="w-full bg-white text-[#1C2C1C] border border-[#1C2C1C] py-3.5 rounded-xl font-bold text-[14px] hover:bg-gray-50 transition-colors cursor-pointer">
+                        Get Quote
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
             )}
             {/* Load More Button */}
-            {displayCount < traderResults.length && (
+            {displayCount < filteredResults.length && (
               <div className="mt-8 flex justify-center">
                 <button
                   onClick={handleLoadMore}

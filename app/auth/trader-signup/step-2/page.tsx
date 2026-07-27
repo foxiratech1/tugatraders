@@ -479,154 +479,154 @@ export default function Step2Page() {
     };
 
     return (
-            <main className="min-h-screen bg-[#F0EDE8] pt-32 pb-20 px-4 flex justify-center font-sans">
-                <div className="w-full max-w-[760px] bg-white rounded-[28px] shadow-[0_12px_48px_rgba(36,58,36,0.07)] border border-[#243A240A] p-8 sm:p-12 relative overflow-hidden">
+        <main className="min-h-screen bg-[#F0EDE8] pt-32 pb-20 px-4 flex justify-center font-sans">
+            <div className="w-full max-w-[760px] bg-white rounded-[28px] shadow-[0_12px_48px_rgba(36,58,36,0.07)] border border-[#243A240A] p-8 sm:p-12 relative overflow-hidden">
 
-                    {/* Top Right Decorative Icon */}
-                    <div className="absolute top-8 right-8 w-12 h-12 bg-[#6E9625]/10 rounded-full flex items-center justify-center">
-                        <ShieldCheck className="text-[#6E9625]" size={24} />
-                    </div>
+                {/* Top Right Decorative Icon */}
+                <div className="absolute top-8 right-8 w-12 h-12 bg-[#6E9625]/10 rounded-full flex items-center justify-center">
+                    <ShieldCheck className="text-[#6E9625]" size={24} />
+                </div>
 
-                    {/* Header */}
-                    <h1
-                        className="text-[26px] sm:text-[30px] font-bold text-[#1C2C1C] tracking-tight leading-tight mb-2"
-                        style={{ fontFamily: "var(--font-bricolage), sans-serif" }}
-                    >
-                        Business Verification
-                    </h1>
-                    <p className="text-[14px] text-[#1C2C1C]/55 font-medium mb-10">
-                        Provide your credentials to unlock the full marketplace access.
-                    </p>
+                {/* Header */}
+                <h1
+                    className="text-[26px] sm:text-[30px] font-bold text-[#1C2C1C] tracking-tight leading-tight mb-2"
+                    style={{ fontFamily: "var(--font-bricolage), sans-serif" }}
+                >
+                    Business Verification
+                </h1>
+                <p className="text-[14px] text-[#1C2C1C]/55 font-medium mb-10">
+                    Provide your credentials to unlock the full marketplace access.
+                </p>
 
-                    {/* File Uploads */}
-                    <div className={`grid grid-cols-1 gap-6 mb-10 ${showProofOfIdentity ? 'sm:grid-cols-2' : ''}`}>
-                        {/* Proof of Identity */}
-                        {showProofOfIdentity && (
-                            <div className="border border-dashed border-[#1C2C1C]/20 rounded-2xl p-6 flex flex-col items-center justify-center text-center hover:border-[#6E9625] hover:bg-[#6E9625]/5 transition-all bg-[#FAFAFA]">
-                                <div className="w-10 h-10 bg-[#6E9625] rounded-full flex items-center justify-center text-white mb-4">
-                                    <IdCard size={18} />
-                                </div>
-                                <h3 className="text-[13px] font-bold text-[#1C2C1C] mb-1">Proof of Identity</h3>
-                                <p className="text-[10px] text-[#1C2C1C]/40 mb-5 max-w-[200px]">
-                                    (Upload a valid ID/Passport. Formats .PDF, .JPG)
-                                </p>
-                                <label className="bg-[#1C2C1C] text-white text-[11px] font-bold py-2.5 px-6 rounded-full cursor-pointer hover:bg-[#2C4A2C] transition-colors shadow-sm">
-                                    {idFile ? "Change File" : "Choose File"}
-                                    <input
-                                        type="file"
-                                        className="hidden"
-                                        accept=".pdf,.jpg,.jpeg,.png"
-                                        onChange={(e) => setIdFile(e.target.files?.[0] || null)}
-                                    />
-                                </label>
-                                {idFile && (
-                                    <div className="mt-3 inline-flex items-center gap-1.5 bg-[#6E9625]/12 border border-[#6E9625]/25 text-[#1C2C1C] text-[11px] font-semibold px-3 py-1 rounded-full max-w-full shadow-2xs">
-                                        <span className="truncate max-w-[160px]">{idFile.name}</span>
-                                        <button
-                                            type="button"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setIdFile(null);
-                                            }}
-                                            className="p-0.5 text-[#1C2C1C]/50 hover:text-red-600 hover:bg-black/10 rounded-full transition-colors flex items-center justify-center"
-                                            title="Remove file"
-                                        >
-                                            <X size={12} strokeWidth={2.5} />
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-
-                        {/* Profile / Logo */}
+                {/* File Uploads */}
+                <div className={`grid grid-cols-1 gap-6 mb-10 ${showProofOfIdentity ? 'sm:grid-cols-2' : ''}`}>
+                    {/* Proof of Identity */}
+                    {showProofOfIdentity && (
                         <div className="border border-dashed border-[#1C2C1C]/20 rounded-2xl p-6 flex flex-col items-center justify-center text-center hover:border-[#6E9625] hover:bg-[#6E9625]/5 transition-all bg-[#FAFAFA]">
-                            {logoFile ? (
-                                <div className="relative w-20 h-20 mb-3">
-                                    <img
-                                        src={URL.createObjectURL(logoFile)}
-                                        alt="Profile preview"
-                                        className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md ring-2 ring-[#6E9625]"
-                                    />
+                            <div className="w-10 h-10 bg-[#6E9625] rounded-full flex items-center justify-center text-white mb-4">
+                                <IdCard size={18} />
+                            </div>
+                            <h3 className="text-[13px] font-bold text-[#1C2C1C] mb-1">Proof of Identity</h3>
+                            <p className="text-[10px] text-[#1C2C1C]/40 mb-5 max-w-[200px]">
+                                (Upload a valid ID/Passport. Formats .PDF, .JPG)
+                            </p>
+                            <label className="bg-[#1C2C1C] text-white text-[11px] font-bold py-2.5 px-6 rounded-full cursor-pointer hover:bg-[#2C4A2C] transition-colors shadow-sm">
+                                {idFile ? "Change File" : "Choose File"}
+                                <input
+                                    type="file"
+                                    className="hidden"
+                                    accept=".pdf,.jpg,.jpeg,.png"
+                                    onChange={(e) => setIdFile(e.target.files?.[0] || null)}
+                                />
+                            </label>
+                            {idFile && (
+                                <div className="mt-3 inline-flex items-center gap-1.5 bg-[#6E9625]/12 border border-[#6E9625]/25 text-[#1C2C1C] text-[11px] font-semibold px-3 py-1 rounded-full max-w-full shadow-2xs">
+                                    <span className="truncate max-w-[160px]">{idFile.name}</span>
                                     <button
                                         type="button"
                                         onClick={(e) => {
                                             e.stopPropagation();
-                                            setLogoFile(null);
+                                            setIdFile(null);
                                         }}
-                                        className="absolute -top-1 -right-1 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition-colors flex items-center justify-center"
-                                        title="Remove image"
+                                        className="p-0.5 text-[#1C2C1C]/50 hover:text-red-600 hover:bg-black/10 rounded-full transition-colors flex items-center justify-center"
+                                        title="Remove file"
                                     >
                                         <X size={12} strokeWidth={2.5} />
                                     </button>
                                 </div>
-                            ) : (
-                                <div className="w-10 h-10 bg-[#6E9625] rounded-full flex items-center justify-center text-white mb-4">
-                                    <ImageIcon size={18} />
-                                </div>
                             )}
-                            <h3 className="text-[13px] font-bold text-[#1C2C1C] mb-1">Profile / Logo</h3>
-                            <p className="text-[10px] text-[#1C2C1C]/40 mb-4 max-w-[200px]">
-                                (A high-quality business image for your public profile)
-                            </p>
-                            <label className="bg-[#1C2C1C] text-white text-[11px] font-bold py-2.5 px-6 rounded-full cursor-pointer hover:bg-[#2C4A2C] transition-colors shadow-sm">
-                                {logoFile ? "Change Image" : "Upload Profile"}
-                                <input
-                                    type="file"
-                                    className="hidden"
-                                    accept="image/*"
-                                    onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
-                                />
-                            </label>
                         </div>
-                    </div>
+                    )}
 
-                    {/* Business Details Divider */}
-                    <div className="flex items-center justify-center mb-8 relative">
-                        <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-[#1C2C1C]/10"></div>
-                        </div>
-                        <span className="relative bg-white px-4 text-[10px] font-extrabold text-[#6E9625] tracking-widest uppercase">
-                            Business Details
+                    {/* Profile / Logo */}
+                    <div className="border border-dashed border-[#1C2C1C]/20 rounded-2xl p-6 flex flex-col items-center justify-center text-center hover:border-[#6E9625] hover:bg-[#6E9625]/5 transition-all bg-[#FAFAFA]">
+                        {logoFile ? (
+                            <div className="relative w-20 h-20 mb-3">
+                                <img
+                                    src={URL.createObjectURL(logoFile)}
+                                    alt="Profile preview"
+                                    className="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md ring-2 ring-[#6E9625]"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setLogoFile(null);
+                                    }}
+                                    className="absolute -top-1 -right-1 bg-red-500 text-white p-1 rounded-full shadow-md hover:bg-red-600 transition-colors flex items-center justify-center"
+                                    title="Remove image"
+                                >
+                                    <X size={12} strokeWidth={2.5} />
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="w-10 h-10 bg-[#6E9625] rounded-full flex items-center justify-center text-white mb-4">
+                                <ImageIcon size={18} />
+                            </div>
+                        )}
+                        <h3 className="text-[13px] font-bold text-[#1C2C1C] mb-1">Profile / Logo</h3>
+                        <p className="text-[10px] text-[#1C2C1C]/40 mb-4 max-w-[200px]">
+                            (A high-quality business image for your public profile)
+                        </p>
+                        <label className="bg-[#1C2C1C] text-white text-[11px] font-bold py-2.5 px-6 rounded-full cursor-pointer hover:bg-[#2C4A2C] transition-colors shadow-sm">
+                            {logoFile ? "Change Image" : "Upload Profile"}
+                            <input
+                                type="file"
+                                className="hidden"
+                                accept="image/*"
+                                onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
+                            />
+                        </label>
+                    </div>
+                </div>
+
+                {/* Business Details Divider */}
+                <div className="flex items-center justify-center mb-8 relative">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-[#1C2C1C]/10"></div>
+                    </div>
+                    <span className="relative bg-white px-4 text-[10px] font-extrabold text-[#6E9625] tracking-widest uppercase">
+                        Business Details
+                    </span>
+                </div>
+
+                {/* Business Details Inputs */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
+                    <input
+                        type="text"
+                        placeholder="Registered Company Name *"
+                        value={formData.companyName}
+                        onChange={(e) => field("companyName", e.target.value)}
+                        className={inputCls}
+                    />
+                    <div className="relative">
+                        <select
+                            value={formData.companyType}
+                            onChange={(e) => field("companyType", e.target.value)}
+                            className={`${inputCls} appearance-none pr-10 cursor-pointer bg-white ${!formData.companyType ? "text-[#1C2C1C]/40" : "text-[#1C2C1C]"
+                                }`}
+                        >
+                            <option value="" disabled>
+                                Company Type *
+                            </option>
+                            <option value="Sole Trader">Sole Trader</option>
+                            <option value="Limited Company">Limited Company</option>
+                            <option value="Partnership">Limited Liability Partnership</option>
+                        </select>
+                        <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#1C2C1C]/40">
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="6 9 12 15 18 9" />
+                            </svg>
                         </span>
                     </div>
-
-                    {/* Business Details Inputs */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8">
-                        <input
-                            type="text"
-                            placeholder="Registered Company Name *"
-                            value={formData.companyName}
-                            onChange={(e) => field("companyName", e.target.value)}
-                            className={inputCls}
-                        />
-                        <div className="relative">
-                            <select
-                                value={formData.companyType}
-                                onChange={(e) => field("companyType", e.target.value)}
-                                className={`${inputCls} appearance-none pr-10 cursor-pointer bg-white ${!formData.companyType ? "text-[#1C2C1C]/40" : "text-[#1C2C1C]"
-                                    }`}
-                            >
-                                <option value="" disabled>
-                                    Company Type *
-                                </option>
-                                <option value="Sole Trader">Sole Trader</option>
-                                <option value="Limited Company">Limited Company</option>
-                                <option value="Partnership">Partnership</option>
-                            </select>
-                            <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-[#1C2C1C]/40">
-                                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="6 9 12 15 18 9" />
-                                </svg>
-                            </span>
-                        </div>
-                        <input
-                            type="text"
-                            placeholder="NIF / Registration Number *"
-                            value={formData.registrationNumber}
-                            onChange={(e) => field("registrationNumber", e.target.value)}
-                            className={inputCls}
-                        />
-                        {/* <MultiSelect
+                    <input
+                        type="text"
+                        placeholder="NIF / Registration Number *"
+                        value={formData.registrationNumber}
+                        onChange={(e) => field("registrationNumber", e.target.value)}
+                        className={inputCls}
+                    />
+                    {/* <MultiSelect
                         options={skillServices}
                         selectedIds={selectedSkillServices}
                         onChange={setSelectedSkillServices}
@@ -639,79 +639,79 @@ export default function Step2Page() {
                         placeholder="Select Sub Categories *"
                         disabled={selectedSkillServices.length === 0}
                     /> */}
-                        <input
-                            type="text"
-                            placeholder="Location *"
-                            value={formData.location}
-                            onChange={(e) => field("location", e.target.value)}
-                            className={inputCls}
-                        />
-                        <textarea
-                            placeholder="About your business *"
-                            value={formData.about}
-                            onChange={(e) => field("about", e.target.value)}
-                            className={`${inputCls} sm:col-span-2 min-h-[80px] py-3 resize-none`}
-                        />
-                    </div>
-
-                    {/* First Checkbox Group */}
-                    <div className="flex flex-col gap-3.5 mb-8">
-                        <Checkbox
-                            checked={formData.expMin1Year}
-                            onChange={() => field("expMin1Year", !formData.expMin1Year)}
-                            label="Minimum 1-year experience in trade."
-                        />
-                        <Checkbox
-                            checked={formData.authorized}
-                            onChange={() => field("authorized", !formData.authorized)}
-                            label="I confirm I am authorized to operate this business."
-                        />
-                        <Checkbox
-                            checked={formData.vettingTerms}
-                            onChange={() => field("vettingTerms", !formData.vettingTerms)}
-                            label="I understand that vetting is based on the information I provide and does not guarantee approval, profile visibility, or job leads."
-                        />
-                    </div>
-
-                    {/* Second Checkbox Group */}
-                    <div className="mb-10">
-                        <h4 className="text-[13px] font-extrabold text-[#1C2C1C] mb-4">Agree to:</h4>
-                        <div className="flex flex-col gap-3.5">
-                            <Checkbox
-                                checked={formData.traderAgreement}
-                                onChange={() => field("traderAgreement", !formData.traderAgreement)}
-                                label="Terms & Conditions and Trader Agreement"
-                            />
-                            <Checkbox
-                                checked={formData.privacyCookies}
-                                onChange={() => field("privacyCookies", !formData.privacyCookies)}
-                                label="Privacy & Cookies"
-                            />
-                        </div>
-                    </div>
-
-                    {/* Footer actions */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-[#1C2C1C]/10 pt-8 gap-6">
-                        <div className="flex items-center gap-2.5">
-                            <div className="w-[18px] h-[18px] bg-[#6E9625] rounded-full flex items-center justify-center flex-shrink-0">
-                                <Lock size={10} className="text-white" />
-                            </div>
-                            <p className="text-[11px] text-[#1C2C1C]/50 font-medium leading-tight">
-                                All information is processed securely <br className="hidden sm:block" /> under GDPR regulations.
-                            </p>
-                        </div>
-
-                        <button
-                            onClick={handleSubmit}
-                            disabled={loading}
-                            className="bg-[#1C2C1C] text-white text-[14px] font-bold py-3.5 px-8 rounded-[12px] flex items-center justify-center gap-2 hover:bg-[#2C4A2C] transition-all shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
-                        >
-                            {loading ? "Processing..." : "Save and Next"}
-                            {!loading && <ChevronRight size={16} />}
-                        </button>
-                    </div>
-
+                    <input
+                        type="text"
+                        placeholder="Location *"
+                        value={formData.location}
+                        onChange={(e) => field("location", e.target.value)}
+                        className={inputCls}
+                    />
+                    <textarea
+                        placeholder="About your business *"
+                        value={formData.about}
+                        onChange={(e) => field("about", e.target.value)}
+                        className={`${inputCls} sm:col-span-2 min-h-[80px] py-3 resize-none`}
+                    />
                 </div>
-            </main>
-        );
+
+                {/* First Checkbox Group */}
+                <div className="flex flex-col gap-3.5 mb-8">
+                    <Checkbox
+                        checked={formData.expMin1Year}
+                        onChange={() => field("expMin1Year", !formData.expMin1Year)}
+                        label="Minimum 1-year experience in trade."
+                    />
+                    <Checkbox
+                        checked={formData.authorized}
+                        onChange={() => field("authorized", !formData.authorized)}
+                        label="I confirm I am authorized to operate this business."
+                    />
+                    <Checkbox
+                        checked={formData.vettingTerms}
+                        onChange={() => field("vettingTerms", !formData.vettingTerms)}
+                        label="I understand that vetting is based on the information I provide and does not guarantee approval, profile visibility, or job leads."
+                    />
+                </div>
+
+                {/* Second Checkbox Group */}
+                <div className="mb-10">
+                    <h4 className="text-[13px] font-extrabold text-[#1C2C1C] mb-4">Agree to:</h4>
+                    <div className="flex flex-col gap-3.5">
+                        <Checkbox
+                            checked={formData.traderAgreement}
+                            onChange={() => field("traderAgreement", !formData.traderAgreement)}
+                            label="Terms & Conditions and Trader Agreement"
+                        />
+                        <Checkbox
+                            checked={formData.privacyCookies}
+                            onChange={() => field("privacyCookies", !formData.privacyCookies)}
+                            label="Privacy & Cookies"
+                        />
+                    </div>
+                </div>
+
+                {/* Footer actions */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between border-t border-[#1C2C1C]/10 pt-8 gap-6">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-[18px] h-[18px] bg-[#6E9625] rounded-full flex items-center justify-center flex-shrink-0">
+                            <Lock size={10} className="text-white" />
+                        </div>
+                        <p className="text-[11px] text-[#1C2C1C]/50 font-medium leading-tight">
+                            All information is processed securely <br className="hidden sm:block" /> under GDPR regulations.
+                        </p>
+                    </div>
+
+                    <button
+                        onClick={handleSubmit}
+                        disabled={loading}
+                        className="bg-[#1C2C1C] text-white text-[14px] font-bold py-3.5 px-8 rounded-[12px] flex items-center justify-center gap-2 hover:bg-[#2C4A2C] transition-all shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
+                    >
+                        {loading ? "Processing..." : "Save and Next"}
+                        {!loading && <ChevronRight size={16} />}
+                    </button>
+                </div>
+
+            </div>
+        </main>
+    );
 }
