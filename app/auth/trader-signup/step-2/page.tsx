@@ -205,7 +205,7 @@ export default function Step2Page() {
     // Guard to prevent non-traders, unverified users, or completed step-2 traders from accessing step-2
     useEffect(() => {
         const checkStep2Guard = async () => {
-            const { getUserRole, getAccessToken, parseJwt } = await import("@/utils/auth");
+            const { getUserRole, getAccessToken, parseJwt, getUser } = await import("@/utils/auth");
             const role = getUserRole();
             if (role === "customer") {
                 router.replace("/customer-dashboard/jobs");
@@ -218,8 +218,9 @@ export default function Step2Page() {
             const token = getAccessToken();
             if (token) {
                 const decoded = parseJwt(token);
-                const isEmailVerified = decoded?.isEmailVerified ?? decoded?.user?.isEmailVerified;
-                if (isEmailVerified === false) {
+                const user = getUser();
+                const isEmailVerified = decoded?.isEmailVerified ?? decoded?.user?.isEmailVerified ?? user?.isEmailVerified;
+                if (isEmailVerified !== true) {
                     router.replace("/auth/verify-otp");
                     return;
                 }
@@ -273,7 +274,7 @@ export default function Step2Page() {
         companyName: "",
         companyType: "",
         registrationNumber: "",
-        location: "",
+        // location: "",
         about: "",
         expMin1Year: false,
         authorized: false,
@@ -310,7 +311,7 @@ export default function Step2Page() {
                     companyName: unwrapped.traderData.companyName || "",
                     companyType: unwrapped.traderData.companyType || "",
                     registrationNumber: unwrapped.traderData.registrationNumber || "",
-                    location: unwrapped.traderData.location || "",
+                    // location: unwrapped.traderData.location || "",
                     about: unwrapped.traderData.about || "",
                     expMin1Year: true,
                     authorized: true,
@@ -407,15 +408,15 @@ export default function Step2Page() {
         //     return;
         // }
 
-        if (!formData.location.trim()) {
-            toast.error("Please enter Business Location.", { id: "step2-validation-error" });
-            return;
-        }
+        // if (!formData.location.trim()) {
+        //     toast.error("Please enter Business Location.", { id: "step2-validation-error" });
+        //     return;
+        // }
 
-        if (!formData.about.trim()) {
-            toast.error("Please provide information about your business.", { id: "step2-validation-error" });
-            return;
-        }
+        // if (!formData.about.trim()) {
+        //     toast.error("Please provide information about your business.", { id: "step2-validation-error" });
+        //     return;
+        // }
 
         // 3. Confirmations & Terms Checkboxes Validation
         if (!formData.expMin1Year) {
@@ -454,7 +455,7 @@ export default function Step2Page() {
             // selectedSubCategories.forEach(id => payload.append("subCategoryIds", id));
 
             payload.append("about", formData.about);
-            payload.append("location", formData.location);
+            // payload.append("location", formData.location);
             payload.append("minimumExperience", String(formData.expMin1Year));
             payload.append("authorisedBusiness", String(formData.authorized));
             payload.append("understandVettingPolicy", String(formData.vettingTerms));
@@ -639,15 +640,15 @@ export default function Step2Page() {
                         placeholder="Select Sub Categories *"
                         disabled={selectedSkillServices.length === 0}
                     /> */}
-                    <input
+                    {/* <input
                         type="text"
                         placeholder="Location *"
                         value={formData.location}
                         onChange={(e) => field("location", e.target.value)}
                         className={inputCls}
-                    />
+                    /> */}
                     <textarea
-                        placeholder="About your business *"
+                        placeholder="About your business "
                         value={formData.about}
                         onChange={(e) => field("about", e.target.value)}
                         className={`${inputCls} sm:col-span-2 min-h-[80px] py-3 resize-none`}

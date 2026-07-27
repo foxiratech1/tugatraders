@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { LayoutDashboard } from "lucide-react";
 import {
   Mail,
   Briefcase,
@@ -28,6 +29,7 @@ import { clearTokens } from "@/utils/auth";
 
 // Base navLinks
 const navLinks = [
+  { label: "Dashboard", href: "/trader", icon: LayoutDashboard },
   { label: "Inbox", href: "/trader/inbox", icon: Mail },
   { label: "Jobs & Leads", href: "/trader/jobs", icon: Briefcase },
   { label: "Reviews", href: "/trader/reviews", icon: Star },
@@ -315,7 +317,7 @@ export default function TraderNavbar() {
         <div className="max-w-[1280px] mx-auto px-4 h-[60px] flex items-center gap-6">
 
           {/* Logo */}
-          <Link href="/trader" onClick={(e) => handleRestrictedNav(e, "Dashboard")} className="flex items-center gap-2.5 flex-shrink-0 mr-4">
+          <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 mr-4">
             <div className="relative h-8 w-[140px] sm:h-9 sm:w-[177px] overflow-hidden rounded-xl">
               <Image
                 src="/logo.png"

@@ -387,9 +387,20 @@ export default function TraderProfilePage() {
           subMap[sub.skillServiceId].push({ id: sub.id, name: sub.name });
         });
 
-        // Convert skillServiceId-based map to generic ID-based map for UI compatibility
-        // In the UI we lookup subcategories by skillServiceId
         setSubCategoriesMap(subMap);
+
+        // Fetch the full list of options from API asynchronously so they are available when editing
+        cDetails.forEach((c: any) => {
+          authApi.getSkillServices(c.id).then((res: any) => {
+            setSkillServicesMap(m => ({ ...m, [c.id]: Array.isArray(res) ? res : res?.data || [] }));
+          }).catch(() => {});
+        });
+        
+        sDetails.forEach((s: any) => {
+          authApi.getSubCategories(s.id).then((res: any) => {
+            setSubCategoriesMap(m => ({ ...m, [s.id]: Array.isArray(res) ? res : res?.data || [] }));
+          }).catch(() => {});
+        });
 
         // Subscription limits
         const plan = tp?.subscription?.plan;
@@ -672,8 +683,9 @@ export default function TraderProfilePage() {
             });
           }
         });
-        // We just clear subcategories when skills change to enforce re-selection and avoid orphaned subcategories
-        return { ...g, selectedSkillServices: newSkills, selectedSubCategories: [] };
+        // Do NOT clear selected subcategories when they add/remove a skill service, 
+        // as this prevents selecting multiple skill services without losing subcategories!
+        return { ...g, selectedSkillServices: newSkills };
       }
 
       return { ...g, [field]: value };
@@ -1267,7 +1279,13 @@ export default function TraderProfilePage() {
                         );
 
                         const skillServicesOptions = skillServicesMap[group.categoryId] || [];
-                        const subCategoriesOptions = group.selectedSkillServices.flatMap(skillId => subCategoriesMap[skillId] || []);
+                        const subCategoriesOptions = group.selectedSkillServices.flatMap(skillId => {
+                          const skillName = skillServicesOptions.find(s => s.id === skillId)?.name || '';
+                          return (subCategoriesMap[skillId] || []).map(sub => ({
+                            id: sub.id,
+                            name: `${sub.name} (${skillName})`
+                          }));
+                        });
 
                         return (
                           <div key={group.id} className="relative bg-[#FAFAFA] border border-[#1C2C1C]/10 rounded-[20px] p-6 sm:p-8">

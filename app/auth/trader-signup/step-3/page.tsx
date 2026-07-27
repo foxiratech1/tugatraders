@@ -177,7 +177,7 @@ export default function Step3Page() {
     // Guard to prevent non-traders, unverified users, or incomplete step-2 traders from accessing step-3
     useEffect(() => {
         const checkStep3Guard = async () => {
-            const { getUserRole, getAccessToken, parseJwt } = await import("@/utils/auth");
+            const { getUserRole, getAccessToken, parseJwt, getUser } = await import("@/utils/auth");
             const role = getUserRole();
             if (role === "customer") {
                 router.replace("/customer-dashboard/jobs");
@@ -190,7 +190,8 @@ export default function Step3Page() {
             const token = getAccessToken();
             if (token) {
                 const decoded = parseJwt(token);
-                const isEmailVerified = decoded?.isEmailVerified ?? decoded?.user?.isEmailVerified;
+                const user = getUser();
+                const isEmailVerified = decoded?.isEmailVerified ?? decoded?.user?.isEmailVerified ?? user?.isEmailVerified;
                 if (isEmailVerified === false) {
                     router.replace("/auth/verify-otp");
                     return;

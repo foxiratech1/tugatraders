@@ -54,7 +54,7 @@ const ContactLayout = () => {
 
       const response = await authApi.submitContactForm(formData);
 
-      setSuccessMsg(response?.message || "Your message has been submitted successfully.We Will be get back to you soon");
+      setSuccessMsg(response?.message || "We've received your messgae and will get back to you as soon as possible.");
       setFullName("");
       setEmail("");
       setSubject("");
@@ -424,7 +424,7 @@ const ContactLayout = () => {
               </div>
             </div>
             <h3 className="text-[22px] font-bold text-[#111111] mb-2" style={{ fontFamily: "var(--font-bricolage)" }}>
-              Success!
+              Thanks for contacting us!
             </h3>
             <p className="text-[14px] text-[#555555] font-medium leading-relaxed mb-8">
               {successMsg}

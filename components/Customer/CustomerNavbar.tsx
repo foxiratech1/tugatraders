@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Inbox, Briefcase, Bookmark, User, Star, Settings, Bell, FileText, Mail } from "lucide-react";
+import { Inbox, Briefcase, Bookmark, User, Star, Settings, Bell, FileText, Mail, LayoutDashboard } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { authApi } from "@/app/api/authApi";
 import { ChevronDown, LogOut } from "lucide-react";
@@ -36,6 +36,7 @@ export default function CustomerNavbar() {
 
   // Navigation items mapping
   const navLinks = [
+    { name: "Dashboard", href: "/customer-dashboard/jobs", icon: LayoutDashboard },
     { name: "Inbox", href: "/customer-dashboard/inbox", icon: Inbox },
     { name: "Jobs", href: "/customer-dashboard/job-history", icon: Briefcase },
     // { name: "Quotes", href: "/customer-dashboard/quotes", icon: FileText },
@@ -118,7 +119,7 @@ export default function CustomerNavbar() {
     <header className="sticky top-0 z-50 w-full bg-white border-b border-[#F0EDE8] py-4 px-6 md:px-10 flex items-center justify-between">
 
       {/* Left: Logo */}
-      <Link href="/customer-dashboard/jobs" className="flex items-center flex-shrink-0">
+      <Link href="/" className="flex items-center flex-shrink-0">
         <Image
           src="/customerNavLogo.png"
           alt="TugaTrades Customer Logo"

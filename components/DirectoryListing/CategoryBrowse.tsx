@@ -147,7 +147,16 @@ const CategoryBrowse = () => {
                 <div className="transition-all duration-500 group-hover:-translate-x-2">
                   <div className="w-14 h-14 rounded-2xl bg-[#F4F7F1] flex items-center justify-center overflow-hidden mb-5 transition-all duration-500 group-hover:bg-[#6E9625]/10 group-hover:scale-105">
                     {cat.image ? (
-                      <img src={cat.image} alt={cat.name} className="w-8 h-8 object-contain" />
+                      <img
+                        src={
+                          cat.image.startsWith("http")
+                            ? cat.image
+                            : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "")}${cat.image.startsWith("/") ? cat.image : `/${cat.image}`}`
+                        }
+                        alt={cat.name}
+                        className="w-8 h-8 object-contain"
+                        crossOrigin="anonymous"
+                      />
                     ) : (
                       <Icon className="text-[#064E3B]" size={24} />
                     )}

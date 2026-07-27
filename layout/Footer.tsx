@@ -2,8 +2,8 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useAuth } from '@/hooks/useAuth';
 import { getUserRole } from '@/utils/auth';
-import { Role } from '@/utils/role';
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { FaFacebookF, FaInstagram, FaTiktok } from "react-icons/fa6";
@@ -13,12 +13,14 @@ import VettingModal from "@/components/modal/VettingModal";
 export default function Footer() {
   const pathname = usePathname();
   const [mounted, setMounted] = useState(false);
-  const [role, setRole] = useState<string | null>(null);
   const [isVettingModalOpen, setIsVettingModalOpen] = useState(false);
+  const { role: authRole } = useAuth();
+  // getUserRole() reads synchronously from localStorage, so the role is available
+  // immediately on the first client render (no waiting for useEffect).
+  const role = authRole || (mounted ? getUserRole() : null);
 
   useEffect(() => {
     setMounted(true);
-    setRole(getUserRole());
   }, []);
 
   // Avoid hydration mismatch by matching server/client initial render
@@ -79,80 +81,84 @@ export default function Footer() {
           </div>
 
           {/* LINKS GRID */}
-          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-3 gap-12 lg:gap-8">
+          <div className={`lg:col-span-7 ${role === "trader" ? "flex justify-end" : `grid grid-cols-1 ${role === "customer" ? "sm:grid-cols-2" : "sm:grid-cols-3"}`} gap-12 lg:gap-8`}>
 
             {/* CUSTOMERS */}
-            <div>
-              <h3 className="text-[18px] font-[800] text-[#243A24] mb-6">Customers</h3>
-              <ul className="flex flex-col gap-4">
-                {["Post a job", "Find a tradesperson", "How it works", "Vetting & badges", "FAQs"].map((link) => (
-                  <li key={link}>
-                    <Link
-                      href={link === "FAQs" ? "/faq" : link === "Find a tradesperson" ? "/directory-listing" : link === "Post a job" ? "/post-job" : link === "How it works" ? "/#how-it-works" : "#"}
-                      scroll={link === "How it works" ? true : false}
-                      onClick={(e) => {
-                        if (link === "How it works") {
-                          const el = document.getElementById('how-it-works');
-                          if (el) {
+            {role !== "trader" && (
+              <div>
+                <h3 className="text-[18px] font-[800] text-[#243A24] mb-6">Customers</h3>
+                <ul className="flex flex-col gap-4">
+                  {["Post a job", "Find a tradesperson", "How it works", "Vetting & badges", "FAQs"].map((link) => (
+                    <li key={link}>
+                      <Link
+                        href={link === "FAQs" ? "/faq" : link === "Find a tradesperson" ? "/directory-listing" : link === "Post a job" ? "/post-job" : link === "How it works" ? "/#how-it-works" : "#"}
+                        scroll={link === "How it works" ? true : false}
+                        onClick={(e) => {
+                          if (link === "How it works") {
+                            const el = document.getElementById('how-it-works');
+                            if (el) {
+                              e.preventDefault();
+                              const y = el.getBoundingClientRect().top + window.scrollY - 80;
+                              window.scrollTo({ top: y, behavior: 'smooth' });
+                            }
+                          } else if (link === "Vetting & badges") {
                             e.preventDefault();
-                            const y = el.getBoundingClientRect().top + window.scrollY - 80;
-                            window.scrollTo({ top: y, behavior: 'smooth' });
+                            setIsVettingModalOpen(true);
+                          } else {
+                            scrollToTop();
                           }
-                        } else if (link === "Vetting & badges") {
-                          e.preventDefault();
-                          setIsVettingModalOpen(true);
-                        } else {
-                          scrollToTop();
-                        }
-                      }}
-                      className="text-[15px] font-medium text-[#6F736C] hover:text-[#4a8c3f] transition-colors"
-                    >
-                      {link}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+                        }}
+                        className="text-[15px] font-medium text-[#6F736C] hover:text-[#4a8c3f] transition-colors"
+                      >
+                        {link}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {/* TRADESPERSON */}
-            <div>
-              <h3 className="text-[18px] font-[800] text-[#243A24] mb-6">Tradesperson</h3>
-              <ul className="flex flex-col gap-4">
-                {["Join as a tradesperson", "How it works", "How vetting works", "Trader Agreement", "FAQs"].map((link) => (
-                  <li key={link}>
-                    <Link
-                      href={
-                        link === "FAQs"
-                          ? "/faq?tab=traders"
-                          : link === "Join as a tradesperson"
-                            ? "/trader-signup"
-                            : link === "How vetting works"
-                              ? "/trader-signup#vetting-section"
-                              : link === "Trader Agreement"
-                                ? "/terms?tab=traderAgreement"
-                                : "#"
-                      }
-                      scroll={link === "How vetting works" ? true : false}
-                      onClick={(e) => {
-                        if (link === "How vetting works") {
-                          const el = document.getElementById('vetting-section');
-                          if (el) {
-                            e.preventDefault();
-                            const y = el.getBoundingClientRect().top + window.scrollY - 80;
-                            window.scrollTo({ top: y, behavior: 'smooth' });
-                          }
-                        } else {
-                          scrollToTop();
+            {role !== "customer" && role !== "trader" && (
+              <div>
+                <h3 className="text-[18px] font-[800] text-[#243A24] mb-6">Tradesperson</h3>
+                <ul className="flex flex-col gap-4">
+                  {["Join as a tradesperson", "How it works", "How vetting works", "Trader Agreement", "FAQs"].map((link) => (
+                    <li key={link}>
+                      <Link
+                        href={
+                          link === "FAQs"
+                            ? "/faq?tab=traders"
+                            : link === "Join as a tradesperson"
+                              ? "/trader-signup"
+                              : link === "How vetting works"
+                                ? "/trader-signup#vetting-section"
+                                : link === "Trader Agreement"
+                                  ? "/terms?tab=traderAgreement"
+                                  : "#"
                         }
-                      }}
-                      className="text-[15px] font-medium text-[#6F736C] hover:text-[#4a8c3f] transition-colors"
-                    >
-                      {link}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+                        scroll={link === "How vetting works" ? true : false}
+                        onClick={(e) => {
+                          if (link === "How vetting works") {
+                            const el = document.getElementById('vetting-section');
+                            if (el) {
+                              e.preventDefault();
+                              const y = el.getBoundingClientRect().top + window.scrollY - 80;
+                              window.scrollTo({ top: y, behavior: 'smooth' });
+                            }
+                          } else {
+                            scrollToTop();
+                          }
+                        }}
+                        className="text-[15px] font-medium text-[#6F736C] hover:text-[#4a8c3f] transition-colors"
+                      >
+                        {link}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
 
             {/* TUGATRADES */}
             <div>

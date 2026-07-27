@@ -7,22 +7,37 @@ import SafetySection from "@/components/HomePage/SafetySection";
 import ReviewSection from "@/components/HomePage/ReviewSection";
 import PlatformRoleSection from "@/components/HomePage/PlatformRoleSection";
 import FinalCTASection from "@/components/HomePage/FinalCTASection";
-import PublicGuard from "@/components/Guards/PublicGuard";
+import ConditionalSection from "@/components/ConditionalSection";
 
 export default function Home() {
   return (
-    <PublicGuard>
-      <main className="min-h-screen bg-white">
-        <Hero />
-        <TrustSection />
+    <main className="min-h-screen bg-white">
+      <Hero />
+      <TrustSection />
+      
+      <ConditionalSection hideForRole="trader">
         <CategorySection />
+      </ConditionalSection>
+      
+      <ConditionalSection hideForRole="trader">
         <HowItWorks />
-        <SafetySection />
-        <PlatformRoleSection />
+      </ConditionalSection>
+      
+      <SafetySection />
+      <PlatformRoleSection />
+      
+      <ConditionalSection hideForRole="trader">
         <MapSearchSection />
+      </ConditionalSection>
+      
+      <ConditionalSection hideForRole="trader">
         <ReviewSection />
+      </ConditionalSection>
+      
+      <ConditionalSection hideForRole="trader">
         <FinalCTASection />
-      </main>
-    </PublicGuard>
+      </ConditionalSection>
+    </main>
   );
 }
+

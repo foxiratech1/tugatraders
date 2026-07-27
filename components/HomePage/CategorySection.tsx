@@ -48,8 +48,21 @@ const CategoryCard = ({ cat }: { cat: any }) => {
     >
       {/* LEFT CONTENT */}
       <div className="flex items-center gap-5 transition-all duration-500 group-hover:-translate-x-2">
-        <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-[#243A24] group-hover:bg-[#89b341]/20 group-hover:text-[#89b341] transition-all duration-500">
-          <Icon size={28} strokeWidth={1.7} />
+        <div className="w-14 h-14 rounded-full bg-white flex items-center justify-center text-[#243A24] group-hover:bg-[#89b341]/20 group-hover:text-[#89b341] transition-all duration-500 overflow-hidden">
+          {cat.image ? (
+            <img
+              src={
+                cat.image.startsWith("http")
+                  ? cat.image
+                  : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "")}${cat.image.startsWith("/") ? cat.image : `/${cat.image}`}`
+              }
+              alt={name}
+              className="w-7 h-7 object-contain"
+              crossOrigin="anonymous"
+            />
+          ) : (
+            <Icon size={28} strokeWidth={1.7} />
+          )}
         </div>
 
         <div className="flex flex-col">

@@ -558,9 +558,10 @@ export default function JobsLeads() {
             <div className="w-16 h-16 rounded-full bg-[#E6F5E9] flex items-center justify-center mb-6">
               <FileText size={28} className="text-[#32C850]" />
             </div>
-            <h2 className="text-[20px] font-extrabold text-[#002E1B] mb-2">Quote Submitted</h2>
+            <h2 className="text-[20px] font-extrabold text-[#002E1B] mb-2">Thank you for submitting your quote request.
+            </h2>
             <p className="text-[14px] text-gray-500 mb-8">
-              The customer has received your quote.
+              It has been forwarded to the customer for review.
             </p>
             <button
               onClick={() => {

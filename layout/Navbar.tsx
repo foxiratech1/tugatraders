@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -11,15 +11,42 @@ import {
   FiMenu,
   FiX,
   FiUserPlus,
+  FiGrid,
+  FiUser,
+  FiLogOut,
 } from "react-icons/fi";
+import { useAuth } from "@/hooks/useAuth";
+import { clearTokens } from "@/utils/auth";
+import { authApi } from "@/app/api/authApi";
 
 export default function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { isAuthenticated, role, user } = useAuth();
+  const isCustomer = role === "customer";
+  const isTrader = role === "trader";
 
   const [isOpen, setIsOpen] = useState(false);
   const [loginOpen, setLoginOpen] = useState(false);
   const [signupOpen, setSignupOpen] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
+  const [profile, setProfile] = useState<any>(null);
+
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fetch profile when authenticated user visits public pages
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const loadProfile = async () => {
+      try {
+        const res = await authApi.getMyProfile();
+        setProfile(res?.data || res);
+      } catch (error) {
+        console.error("Failed to load profile for navbar", error);
+      }
+    };
+    loadProfile();
+  }, [isAuthenticated]);
 
   // Hide navbar on auth screens
   if (pathname?.startsWith("/auth")) {
@@ -32,14 +59,33 @@ export default function Navbar() {
     setIsOpen(false);
     setLoginOpen(false);
     setSignupOpen(false);
+    setProfileOpen(false);
+  };
+
+  const handleLogout = async () => {
+    closeMenu();
+    try {
+      await authApi.logout();
+    } catch (err) {
+      console.error("Logout API error", err);
+    }
+    localStorage.removeItem("user");
+    clearTokens();
+    window.location.replace("/");
   };
 
   const navLinks = [
-    { href: "/post-job", label: "POST A JOB" },
-    { href: "/directory-listing/search", label: "FIND A TRADER" },
-    { href: "/trader-signup", label: "JOIN AS A TRADESPERSON" },
-    { href: "/review", label: "LEAVE A REVIEW" },
+    ...(isTrader ? [] : [{ href: "/post-job", label: "POST A JOB" }]),
+    ...(isTrader ? [] : [{ href: "/directory-listing/search", label: "FIND A TRADER" }]),
+    ...(isCustomer || isTrader ? [] : [{ href: "/trader-signup", label: "JOIN AS A TRADESPERSON" }]),
+    ...(isTrader ? [] : [{ href: "/review", label: "LEAVE A REVIEW" }]),
   ];
+
+  // Build profile image URL — prefer API-fetched profile, then localStorage user
+  const profileData = profile || user;
+  const imageUrl = profileData?.profileImage
+    ? new URL(profileData.profileImage, process.env.NEXT_PUBLIC_API_URL).toString()
+    : "/customerNavLogo.png";
 
   return (
     <nav className="fixed top-4 sm:top-6 left-0 right-0 z-50 flex justify-center px-4">
@@ -76,83 +122,157 @@ export default function Navbar() {
 
         {/* DESKTOP ACTIONS */}
         <div className="hidden items-center gap-4 xl:gap-6 lg:flex">
-          {/* LOGIN DROPDOWN */}
-          <div className="relative">
-            <button
-              onClick={() => {
-                setLoginOpen(!loginOpen);
-                setSignupOpen(false);
-              }}
-              className="flex items-center gap-2 rounded-[12px] bg-[#1d3321] px-5 py-2 xl:px-6 xl:py-2.5 text-[14px] font-bold text-white shadow-lg shadow-[#1d3321]/20 hover:bg-[#28462d] transition-all duration-300"
-            >
-              <FiLogIn size={18} />
-              Log in
-              <FiChevronDown size={14} />
-            </button>
+          {isAuthenticated ? (
+            <>
+              {/* DASHBOARD BUTTON */}
+              <Link
+                href={isTrader ? "/trader" : "/customer-dashboard/jobs"}
+                className="flex items-center gap-2 rounded-[12px] bg-[#1d3321] px-5 py-2 xl:px-6 xl:py-2.5 text-[14px] font-bold text-white shadow-lg shadow-[#1d3321]/20 hover:bg-[#28462d] transition-all duration-300"
+              >
+                <FiGrid size={18} />
+                {isTrader ? "Trader Dashboard" : "Dashboard"}
+              </Link>
 
-            {loginOpen && (
-              <div className="absolute right-0 mt-2 w-52 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
+              {/* PROFILE DROPDOWN */}
+              <div className="relative" ref={profileDropdownRef}>
                 <button
                   onClick={() => {
-                    router.push("/auth/login?role=CUSTOMER");
+                    setProfileOpen(!profileOpen);
                     setLoginOpen(false);
-                  }}
-                  className="block w-full px-4 py-3 text-left text-sm font-medium hover:bg-gray-100"
-                >
-                  Customer
-                </button>
-
-                <button
-                  onClick={() => {
-                    router.push("/auth/login?role=TRADER");
-                    setLoginOpen(false);
-                  }}
-                  className="block w-full px-4 py-3 text-left text-sm font-medium hover:bg-gray-100"
-                >
-                  Trader
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* SIGNUP DROPDOWN */}
-          <div className="relative">
-            <button
-              onClick={() => {
-                setSignupOpen(!signupOpen);
-                setLoginOpen(false);
-              }}
-              className="flex items-center gap-2 rounded-[12px] border border-[#C60C03] bg-[#C60C03] px-5 py-2 xl:px-6 xl:py-2.5 text-[14px] font-bold text-white hover:bg-[#d93b33] hover:border-[#d93b33] transition-all duration-300"
-            >
-              <FiUserPlus size={18} />
-              Sign up
-              <FiChevronDown size={14} />
-            </button>
-
-            {signupOpen && (
-              <div className="absolute right-0 mt-2 w-52 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
-                <button
-                  onClick={() => {
-                    router.push("/auth/signup");
                     setSignupOpen(false);
                   }}
-                  className="block w-full px-4 py-3 text-left text-sm font-medium hover:bg-gray-100"
+                  className="flex items-center gap-3 group"
                 >
-                  Customer
+                  <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-200 border-2 border-[#E5E7EB]">
+                    <img
+                      src={imageUrl}
+                      crossOrigin="anonymous"
+                      loading="eager"
+                      referrerPolicy="no-referrer"
+                      alt={profileData?.fullName || "User"}
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  </div>
+                  <span className="text-[13px] font-bold text-[#1d3321] hidden xl:inline">
+                    {profileData?.fullName?.split(" ")[0] || "Account"}
+                  </span>
+                  <FiChevronDown
+                    size={14}
+                    className={`text-[#1d3321] transition-transform duration-200 ${profileOpen ? "rotate-180" : ""}`}
+                  />
                 </button>
 
+                {profileOpen && (
+                  <div className="absolute right-0 mt-2 w-52 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
+                    <Link
+                      href={isTrader ? "/trader" : "/customer-dashboard/jobs"}
+                      onClick={() => setProfileOpen(false)}
+                      className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium hover:bg-gray-100 text-[#1d3321]"
+                    >
+                      <FiGrid size={16} />
+                      My Dashboard
+                    </Link>
+                    <Link
+                      href={isTrader ? "/trader/profile" : "/customer-dashboard/profile"}
+                      onClick={() => setProfileOpen(false)}
+                      className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium hover:bg-gray-100 text-[#1d3321]"
+                    >
+                      <FiUser size={16} />
+                      My Profile
+                    </Link>
+                    <div className="h-[1px] bg-gray-100" />
+                    <button
+                      onClick={handleLogout}
+                      className="flex items-center gap-3 w-full px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50"
+                    >
+                      <FiLogOut size={16} />
+                      Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <>
+              {/* LOGIN DROPDOWN */}
+              <div className="relative">
                 <button
                   onClick={() => {
-                    router.push("/auth/trader-signup");
+                    setLoginOpen(!loginOpen);
                     setSignupOpen(false);
                   }}
-                  className="block w-full px-4 py-3 text-left text-sm font-medium hover:bg-gray-100"
+                  className="flex items-center gap-2 rounded-[12px] bg-[#1d3321] px-5 py-2 xl:px-6 xl:py-2.5 text-[14px] font-bold text-white shadow-lg shadow-[#1d3321]/20 hover:bg-[#28462d] transition-all duration-300"
                 >
-                  Trader
+                  <FiLogIn size={18} />
+                  Log in
+                  <FiChevronDown size={14} />
                 </button>
+
+                {loginOpen && (
+                  <div className="absolute right-0 mt-2 w-52 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
+                    <button
+                      onClick={() => {
+                        router.push("/auth/login?role=CUSTOMER");
+                        setLoginOpen(false);
+                      }}
+                      className="block w-full px-4 py-3 text-left text-sm font-medium hover:bg-gray-100"
+                    >
+                      Customer
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        router.push("/auth/login?role=TRADER");
+                        setLoginOpen(false);
+                      }}
+                      className="block w-full px-4 py-3 text-left text-sm font-medium hover:bg-gray-100"
+                    >
+                      Trader
+                    </button>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+
+              {/* SIGNUP DROPDOWN */}
+              <div className="relative">
+                <button
+                  onClick={() => {
+                    setSignupOpen(!signupOpen);
+                    setLoginOpen(false);
+                  }}
+                  className="flex items-center gap-2 rounded-[12px] border border-[#C60C03] bg-[#C60C03] px-5 py-2 xl:px-6 xl:py-2.5 text-[14px] font-bold text-white hover:bg-[#d93b33] hover:border-[#d93b33] transition-all duration-300"
+                >
+                  <FiUserPlus size={18} />
+                  Sign up
+                  <FiChevronDown size={14} />
+                </button>
+
+                {signupOpen && (
+                  <div className="absolute right-0 mt-2 w-52 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
+                    <button
+                      onClick={() => {
+                        router.push("/auth/signup");
+                        setSignupOpen(false);
+                      }}
+                      className="block w-full px-4 py-3 text-left text-sm font-medium hover:bg-gray-100"
+                    >
+                      Customer
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        router.push("/auth/trader-signup");
+                        setSignupOpen(false);
+                      }}
+                      className="block w-full px-4 py-3 text-left text-sm font-medium hover:bg-gray-100"
+                    >
+                      Trader
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
 
           {/* LANGUAGE */}
           <button className="flex items-center gap-1.5 text-[14px] font-bold text-[#1d3321] hover:opacity-70 transition-opacity">
@@ -191,51 +311,108 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* LOGIN */}
-          <div className="border-t border-[#1d3321]/10 pt-4">
-            <h3 className="mb-3 font-bold text-[#1d3321]">Login</h3>
+          {isAuthenticated ? (
+            <>
+              {/* AUTHENTICATED USER — MOBILE */}
+              <div className="border-t border-[#1d3321]/10 pt-4">
+                {/* Profile summary */}
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 border-2 border-[#1d3321]/10">
+                    <img
+                      src={imageUrl}
+                      crossOrigin="anonymous"
+                      loading="eager"
+                      referrerPolicy="no-referrer"
+                      alt={profileData?.fullName || "User"}
+                      className="w-full h-full object-cover rounded-full"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-[14px] font-bold text-[#1d3321]">
+                      {profileData?.fullName || (isTrader ? "Trader" : "Customer")}
+                    </p>
+                    <p className="text-[12px] text-[#1d3321]/50 capitalize">{role || "User"}</p>
+                  </div>
+                </div>
 
-            <div className="flex flex-col gap-2">
-              <Link
-                href="/auth/login?role=CUSTOMER"
-                onClick={closeMenu}
-                className="rounded-lg bg-white px-4 py-3 text-sm font-medium"
-              >
-                For Customer
-              </Link>
+                <div className="flex flex-col gap-2">
+                  <Link
+                    href={isTrader ? "/trader" : "/customer-dashboard/jobs"}
+                    onClick={closeMenu}
+                    className="flex items-center gap-3 rounded-lg bg-[#1d3321] px-4 py-3 text-sm font-bold text-white"
+                  >
+                    <FiGrid size={16} />
+                    My Dashboard
+                  </Link>
 
-              <Link
-                href="/auth/login?role=TRADER"
-                onClick={closeMenu}
-                className="rounded-lg bg-white px-4 py-3 text-sm font-medium"
-              >
-                For Trader
-              </Link>
-            </div>
-          </div>
+                  <Link
+                    href={isTrader ? "/trader/profile" : "/customer-dashboard/profile"}
+                    onClick={closeMenu}
+                    className="flex items-center gap-3 rounded-lg bg-white px-4 py-3 text-sm font-medium text-[#1d3321]"
+                  >
+                    <FiUser size={16} />
+                    My Profile
+                  </Link>
 
-          {/* SIGNUP */}
-          <div>
-            <h3 className="mb-3 font-bold text-[#1d3321]">Sign Up</h3>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center gap-3 rounded-lg bg-white px-4 py-3 text-sm font-medium text-red-600"
+                  >
+                    <FiLogOut size={16} />
+                    Logout
+                  </button>
+                </div>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* LOGIN */}
+              <div className="border-t border-[#1d3321]/10 pt-4">
+                <h3 className="mb-3 font-bold text-[#1d3321]">Login</h3>
 
-            <div className="flex flex-col gap-2">
-              <Link
-                href="/auth/signup"
-                onClick={closeMenu}
-                className="rounded-lg bg-white px-4 py-3 text-sm font-medium"
-              >
-                For Customer
-              </Link>
+                <div className="flex flex-col gap-2">
+                  <Link
+                    href="/auth/login?role=CUSTOMER"
+                    onClick={closeMenu}
+                    className="rounded-lg bg-white px-4 py-3 text-sm font-medium"
+                  >
+                    For Customer
+                  </Link>
 
-              <Link
-                href="/auth/trader-signup"
-                onClick={closeMenu}
-                className="rounded-lg bg-white px-4 py-3 text-sm font-medium"
-              >
-                For Trader
-              </Link>
-            </div>
-          </div>
+                  <Link
+                    href="/auth/login?role=TRADER"
+                    onClick={closeMenu}
+                    className="rounded-lg bg-white px-4 py-3 text-sm font-medium"
+                  >
+                    For Trader
+                  </Link>
+                </div>
+              </div>
+
+              {/* SIGNUP */}
+              <div>
+                <h3 className="mb-3 font-bold text-[#1d3321]">Sign Up</h3>
+
+                <div className="flex flex-col gap-2">
+                  <Link
+                    href="/auth/signup"
+                    onClick={closeMenu}
+                    className="rounded-lg bg-white px-4 py-3 text-sm font-medium"
+                  >
+                    For Customer
+                  </Link>
+
+                  <Link
+                    href="/auth/trader-signup"
+                    onClick={closeMenu}
+                    className="rounded-lg bg-white px-4 py-3 text-sm font-medium"
+                  >
+                    For Trader
+                  </Link>
+                </div>
+              </div>
+            </>
+          )}
 
           {/* LANGUAGE */}
           <div className="border-t border-[#1d3321]/10 pt-4">

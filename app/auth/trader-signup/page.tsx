@@ -31,6 +31,39 @@ const ChevronDown = () => (
   </svg>
 );
 
+// ─── Password Validation Helper ───────────────────────────────────────────────
+const getPasswordError = (pass: string) => {
+  const missing = [];
+  if (pass.length < 8 || pass.length > 64) missing.push("Minimum 8 characters");
+  if (!/[A-Z]/.test(pass)) missing.push("1 uppercase letter");
+  if (!/[a-z]/.test(pass)) missing.push("1 lowercase letter");
+  if (!/[0-9]/.test(pass)) missing.push("1 number");
+  if (!/[^A-Za-z0-9]/.test(pass)) missing.push("1 special character");
+
+  if (missing.length === 0) return undefined;
+
+  if (missing.length === 5) {
+    return "Minimum 8 characters, including 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.";
+  }
+
+  const hasMin = missing[0] === "Minimum 8 characters";
+  const reqs = hasMin ? missing.slice(1) : missing;
+
+  let msg = hasMin ? "Minimum 8 characters" : "Requires";
+
+  if (reqs.length > 0) {
+    msg += hasMin ? ", including " : " ";
+    if (reqs.length === 1) {
+      msg += reqs[0];
+    } else if (reqs.length === 2) {
+      msg += `${reqs[0]} and ${reqs[1]}`;
+    } else {
+      msg += `${reqs.slice(0, -1).join(", ")}, and ${reqs[reqs.length - 1]}`;
+    }
+  }
+  return msg + ".";
+};
+
 // ─── Page ─────────────────────────────────────────────────────────────────────
 export default function TraderSignupPage() {
   const router = useRouter();
@@ -180,15 +213,9 @@ export default function TraderSignupPage() {
     }
     if (!formData.password) {
       e.password = "Password is required";
-    } else if (
-      formData.password.length < 8 ||
-      formData.password.length > 64 ||
-      !/[A-Z]/.test(formData.password) ||
-      !/[a-z]/.test(formData.password) ||
-      !/[0-9]/.test(formData.password) ||
-      !/[^A-Za-z0-9]/.test(formData.password)
-    ) {
-      e.password = "Minimum 8 characters, including 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.";
+    } else {
+      const passErr = getPasswordError(formData.password);
+      if (passErr) e.password = passErr;
     }
 
     if (!formData.confirmPassword) {
@@ -218,6 +245,18 @@ export default function TraderSignupPage() {
       const next = { ...p, [key]: value };
       setErrors((errs) => {
         const nextErrs = { ...errs, [key]: undefined };
+        
+        if (key === "password") {
+          const pass = value as string;
+          const passErr = getPasswordError(pass);
+          
+          if (passErr && errs.password) {
+            nextErrs.password = passErr;
+          } else if (!passErr) {
+            nextErrs.password = undefined;
+          }
+        }
+
         if (key === "password" || key === "confirmPassword") {
           if (next.password && next.confirmPassword && next.password !== next.confirmPassword) {
             nextErrs.confirmPassword = "Passwords do not match";
@@ -276,6 +315,7 @@ export default function TraderSignupPage() {
         longitude: 75.7569,
         isCheckedTermsCondition: formData.agreeTerms,
         contactNumber: formData.contactNumber,
+        location: formData.baseLocation,
       };
       console.log('Submitting payload:', payload);
       const res = await traderRegister(payload);
@@ -437,7 +477,7 @@ export default function TraderSignupPage() {
                 {/* Work Radius + Base Location */}
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">Work Radius (Miles)</label>
+                    <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">Work Radius (KM)</label>
                     <input
                       type="number"
                       placeholder="e.g. 25"

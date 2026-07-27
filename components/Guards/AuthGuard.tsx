@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { getAccessToken, parseJwt, getUserRole, getUser } from "@/utils/auth";
 import { Role } from "@/utils/role";
@@ -91,24 +91,6 @@ export default function AuthGuard({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("pageshow", handlePageShow);
   }, [router, pathname]);
 
-  // Prevent browser back/forward navigation from leaving customer dashboard
-  useEffect(() => {
-    if (authorized) {
-      window.history.pushState(null, "", window.location.href);
-
-      const handlePopState = () => {
-        if (!window.location.pathname.startsWith("/customer-dashboard")) {
-          window.history.pushState(null, "", window.location.href);
-          router.replace("/customer-dashboard/jobs");
-        }
-      };
-
-      window.addEventListener("popstate", handlePopState);
-      return () => {
-        window.removeEventListener("popstate", handlePopState);
-      };
-    }
-  }, [authorized, router]);
 
   if (!authorized) {
     return (

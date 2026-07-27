@@ -5,8 +5,10 @@ import Link from "next/link";
 import { FiArrowRight, FiUserPlus } from "react-icons/fi";
 import { motion } from "framer-motion";
 import { slideFromLeft, slideFromRight } from "./animationVariants";
+import { useAuth } from "@/hooks/useAuth";
 
 export default function Hero() {
+  const { role } = useAuth();
   return (
     <motion.section
       initial="hidden"
@@ -72,10 +74,12 @@ export default function Hero() {
                 Quickly connect with a local, trusted tradespeople to get the job done.
               </p>
             </div>
-            <Link href="/directory-listing" className="inline-flex items-center justify-between w-full rounded-[16px] bg-[#1d3321] px-6 py-4 text-[15px] font-bold text-white hover:bg-[#152719] transition-all">
-              <span>Browse Trade Services</span>
-              <FiArrowRight size={20} className="" />
-            </Link>
+            {role !== "trader" && (
+              <Link href="/directory-listing" className="inline-flex items-center justify-between w-full rounded-[16px] bg-[#1d3321] px-6 py-4 text-[15px] font-bold text-white hover:bg-[#152719] transition-all">
+                <span>Browse Trade Services</span>
+                <FiArrowRight size={20} className="" />
+              </Link>
+            )}
           </div>
 
           {/* POST JOB CARD */}
@@ -88,10 +92,12 @@ export default function Hero() {
                 We connect you with vetted and reliable tradespeople so you don&apos;t have to search.
               </p>
             </div>
-            <Link href="/post-job" className="inline-flex items-center justify-between w-full rounded-[16px] bg-[#7ca13a] px-6 py-4 text-[15px] font-bold text-white hover:bg-[#6c8d32] transition-all">
-              <span>Get Free Quotes</span>
-              <FiArrowRight size={20} />
-            </Link>
+            {role !== "trader" && (
+              <Link href="/post-job" className="inline-flex items-center justify-between w-full rounded-[16px] bg-[#7ca13a] px-6 py-4 text-[15px] font-bold text-white hover:bg-[#6c8d32] transition-all">
+                <span>Get Free Quotes</span>
+                <FiArrowRight size={20} />
+              </Link>
+            )}
           </div>
 
         </motion.div>
@@ -123,10 +129,12 @@ export default function Hero() {
             <p className="text-[20px] font-bold text-white text-center lg:text-right">
               Your Next Job Is Just One Click Away
             </p>
-            <Link href="/trader-signup" className="inline-flex items-center gap-3 rounded-[16px] bg-[#d91e1e] px-8 py-4 text-[15px] font-bold text-white hover:bg-[#b81919] transition-all shadow-xl shadow-red-900/20">
-              <FiUserPlus size={20} />
-              <span>Join as a Tradesperson</span>
-            </Link>
+            {role !== "customer" && role !== "trader" && (
+              <Link href="/trader-signup" className="inline-flex items-center gap-3 rounded-[16px] bg-[#d91e1e] px-8 py-4 text-[15px] font-bold text-white hover:bg-[#b81919] transition-all shadow-xl shadow-red-900/20">
+                <FiUserPlus size={20} />
+                <span>Join as a Tradesperson</span>
+              </Link>
+            )}
             <p className="text-[11px] font-bold tracking-[2px] text-[#89b341] uppercase">
               First 3 Months Free!*
             </p>
