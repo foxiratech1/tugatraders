@@ -284,8 +284,8 @@ export default function PostJobPage() {
       formData.append('title', title);
       formData.append('description', description);
       formData.append('timescale', timescale);
-      formData.append('latitude', 22.7196.toString());
-      formData.append('longitude', 75.8577.toString());
+      formData.append('latitude', 22.5630.toString());
+      formData.append('longitude', 75.7669.toString());
       // formData.append('radiusKm', '9');
       if (budgetRange) formData.append('budgetRange', budgetRange);
       formData.append('emergency', String(emergency));

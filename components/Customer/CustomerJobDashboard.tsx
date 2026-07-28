@@ -25,6 +25,7 @@ import {
   MessageSquare,
   MoreVertical,
   PlusCircle,
+  Paperclip,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import Link from "next/link";
@@ -83,6 +84,14 @@ interface Quote {
   createdAt: string;
   updatedAt: string;
   trader: SelectedTrader;
+  attachments?: {
+    id: string;
+    url: string;
+    file: string;
+    filename: string;
+    mimeType: string;
+    size: number;
+  }[];
 }
 
 interface Job {
@@ -240,6 +249,13 @@ function QuotesModal({
   const formatPrice = (p: string) =>
     isNaN(Number(p)) ? p : `£${Number(p).toLocaleString()}`;
 
+  const getAttachmentUrl = (url: string | undefined, file: string) => {
+    if (url && !url.startsWith("undefined")) return url;
+    const base = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000").replace(/\/+$/, "");
+    const cleanPath = file.replace(/^\/+/, "");
+    return `${base}/${cleanPath}`;
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       {/* Backdrop */}
@@ -324,6 +340,37 @@ function QuotesModal({
                   <MessageSquare size={13} className="text-gray-400 mt-0.5 flex-shrink-0" />
                   <p className="text-[12px] text-gray-600 leading-relaxed">{quote.message}</p>
                 </div>
+
+                {/* Attachments */}
+                {quote.attachments && quote.attachments.length > 0 && (
+                  <div className="mb-3">
+                    <p className="text-[11px] font-semibold text-gray-500 mb-2 flex items-center gap-1">
+                      <Paperclip size={12} />
+                      Attachments
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {quote.attachments.map((att) => (
+                        <a
+                          key={att.id}
+                          href={getAttachmentUrl(att.url, att.file)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-[#8BC34A] transition-colors max-w-full"
+                          title={att.filename}
+                        >
+                          {att.mimeType?.startsWith("image/") ? (
+                            <ImageIcon size={13} className="text-[#6E9625] flex-shrink-0" />
+                          ) : (
+                            <FileText size={13} className="text-gray-400 flex-shrink-0" />
+                          )}
+                          <span className="text-[11px] text-[#1C2C1C] truncate max-w-[120px]">
+                            {att.filename}
+                          </span>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Date */}
                 <p className="text-[10px] text-gray-400 mb-3">Received: {formatDate(quote.createdAt)}</p>

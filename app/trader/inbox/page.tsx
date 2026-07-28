@@ -36,12 +36,14 @@ interface Conversation {
     budget?: string;
     status?: string;
   };
+  type?: string;
   lastMessage?: {
     message?: string;
     createdAt: string;
     senderId: string;
   };
   unreadCount?: number;
+  messages?: any[];
 }
 
 function TraderInboxContent() {
@@ -73,10 +75,19 @@ function TraderInboxContent() {
       const convsRes = await authApi.getConversations();
       const list = convsRes?.data || convsRes || [];
       if (Array.isArray(list)) {
-        const mappedList = list.map((c: any) => ({
-          ...c,
-          id: c.id || c._id,
-        }));
+        const mappedList = list.map((c: any) => {
+          // Derive lastMessage from the messages array if not already present
+          const latestMsg = c.messages?.[0];
+          return {
+            ...c,
+            id: c.id || c._id,
+            lastMessage: c.lastMessage || (latestMsg ? {
+              message: latestMsg.message,
+              createdAt: latestMsg.createdAt,
+              senderId: latestMsg.senderId,
+            } : undefined),
+          };
+        });
         setConversations(mappedList);
       }
     } catch (error) {
@@ -159,6 +170,15 @@ function TraderInboxContent() {
     }
   };
 
+  // Helper to build a proper image URL, avoiding double-slash issues
+  const getImageUrl = (path?: string | null): string | null => {
+    if (!path) return null;
+    if (path.startsWith("http")) return path;
+    const base = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000").replace(/\/+$/, "");
+    const cleanPath = path.replace(/^\/+/, "");
+    return `${base}/${cleanPath}`;
+  };
+
   return (
     <div className="flex-1 flex bg-[#F0EDE8] p-6 h-[calc(100vh-96px)] overflow-hidden">
       <div className="flex-1 flex gap-6 max-w-7xl mx-auto w-full h-full overflow-hidden">
@@ -220,11 +240,12 @@ function TraderInboxContent() {
                       >
                         {/* Partner Avatar */}
                         <div className="relative w-11 h-11 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center font-bold text-emerald-800 text-[14px] overflow-hidden flex-shrink-0">
-                          {partner?.profileImage ? (
+                          {getImageUrl(partner?.profileImage) ? (
                             <img
-                              src={partner.profileImage.startsWith("http") ? partner.profileImage : `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/${partner.profileImage}`}
-                              alt={partner.fullName}
+                              src={getImageUrl(partner?.profileImage)!}
+                              alt={partner?.fullName || ""}
                               className="w-full h-full object-cover"
+                              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
                             />
                           ) : (
                             partner?.fullName?.charAt(0) || "U"

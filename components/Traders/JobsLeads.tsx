@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { authApi } from "@/app/api/authApi";
-import { Search, MapPin, Tag, MoreHorizontal, Calendar, Star, Send, MessageCircle, ArrowRight, X, DollarSign, Clock, FileText } from "lucide-react";
+import { Search, MapPin, Tag, MoreHorizontal, Calendar, Star, Send, MessageCircle, ArrowRight, X, DollarSign, Clock, FileText, Paperclip, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -96,11 +96,28 @@ export default function JobsLeads() {
     estimatedDays: "",
     message: "",
   });
+  const [quoteAttachments, setQuoteAttachments] = useState<File[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const openQuoteModal = () => {
     if (!selectedJob) return;
     setQuoteForm({ price: "", estimatedDays: "", message: "" });
+    setQuoteAttachments([]);
     setIsQuoteModalOpen(true);
+  };
+
+  const handleAttachmentSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files && files.length > 0) {
+      const newFiles = Array.from(files);
+      setQuoteAttachments((prev) => [...prev, ...newFiles]);
+    }
+    // Clear the input value so the same file can be selected again
+    e.target.value = "";
+  };
+
+  const removeAttachment = (index: number) => {
+    setQuoteAttachments((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSendQuote = async (e: React.FormEvent) => {
@@ -108,11 +125,16 @@ export default function JobsLeads() {
     if (!selectedJob) return;
     try {
       setIsSendingQuote(true);
-      await authApi.sendJobQuote(selectedJob.id, {
-        price: Number(quoteForm.price),
-        estimatedDays: Number(quoteForm.estimatedDays),
-        message: quoteForm.message,
+
+      const formData = new FormData();
+      formData.append("price", quoteForm.price);
+      formData.append("estimatedDays", quoteForm.estimatedDays);
+      formData.append("message", quoteForm.message);
+      quoteAttachments.forEach((file) => {
+        formData.append("attachments", file);
       });
+
+      await authApi.sendJobQuote(selectedJob.id, formData);
       // toast.success("Job quote sent successfully!");
       setIsQuoteModalOpen(false);
       setShowSuccessModal(true);
@@ -525,6 +547,56 @@ export default function JobsLeads() {
                   onChange={(e) => setQuoteForm((f) => ({ ...f, message: e.target.value }))}
                   className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] placeholder:text-gray-400 focus:outline-none focus:border-[#8BC34A] focus:ring-2 focus:ring-[#8BC34A]/20 transition-all resize-none"
                 />
+              </div>
+
+              {/* Attachments */}
+              <div>
+                <label className="block text-[12px] font-semibold text-[#1C2C1C] mb-1.5">
+                  Attachments <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                  onChange={handleAttachmentSelect}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-gray-300 text-[13px] text-gray-500 hover:border-[#8BC34A] hover:text-[#6E9625] transition-colors"
+                >
+                  <Paperclip size={15} />
+                  Add Files
+                </button>
+
+                {/* File previews */}
+                {quoteAttachments.length > 0 && (
+                  <div className="mt-2 flex flex-col gap-1.5 max-h-[120px] overflow-y-auto">
+                    {quoteAttachments.map((file, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center gap-2 bg-[#F9FAFB] rounded-lg px-3 py-1.5 border border-gray-100"
+                      >
+                        <FileText size={14} className="text-gray-400 flex-shrink-0" />
+                        <span className="text-[12px] text-[#1C2C1C] truncate flex-1">
+                          {file.name}
+                        </span>
+                        <span className="text-[10px] text-gray-400 flex-shrink-0">
+                          {(file.size / 1024).toFixed(0)} KB
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeAttachment(idx)}
+                          className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Actions */}

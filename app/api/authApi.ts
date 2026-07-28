@@ -290,7 +290,13 @@ export const authApi = {
   },
 
   // Send a job quote
-  sendJobQuote: async (jobId: string, payload: { price: number; estimatedDays: number; message: string }) => {
+  sendJobQuote: async (jobId: string, payload: FormData | { price: number; estimatedDays: number; message: string }) => {
+    if (payload instanceof FormData) {
+      const { data } = await api.post(`/api/quotes/${jobId}`, payload, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return data;
+    }
     const { data } = await api.post(`/api/quotes/${jobId}`, payload);
     return data;
   },
