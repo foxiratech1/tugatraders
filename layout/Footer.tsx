@@ -81,7 +81,7 @@ export default function Footer() {
           </div>
 
           {/* LINKS GRID */}
-          <div className={`lg:col-span-7 ${role === "trader" ? "flex justify-end" : `grid grid-cols-1 ${role === "customer" ? "sm:grid-cols-2" : "sm:grid-cols-3"}`} gap-12 lg:gap-8`}>
+          <div className={`lg:col-span-7 grid grid-cols-1 ${role ? "sm:grid-cols-2" : "sm:grid-cols-3"} gap-12 lg:gap-8`}>
 
             {/* CUSTOMERS */}
             {role !== "trader" && (
@@ -119,11 +119,13 @@ export default function Footer() {
             )}
 
             {/* TRADESPERSON */}
-            {role !== "customer" && role !== "trader" && (
+            {role !== "customer" && (
               <div>
                 <h3 className="text-[18px] font-[800] text-[#243A24] mb-6">Tradesperson</h3>
                 <ul className="flex flex-col gap-4">
-                  {["Join as a tradesperson", "How it works", "How vetting works", "Trader Agreement", "FAQs"].map((link) => (
+                  {["Join as a tradesperson", "How it works", "How vetting works", "Trader Agreement", "FAQs"]
+                    .filter((link) => !(role?.toLowerCase() === "trader" && link === "Join as a tradesperson"))
+                    .map((link) => (
                     <li key={link}>
                       <Link
                         href={

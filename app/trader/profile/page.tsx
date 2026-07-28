@@ -244,6 +244,7 @@ const TABS = [
   { id: "personal", label: "Personal Info", icon: User },
   { id: "business", label: "Business Details", icon: Briefcase },
   { id: "portfolio", label: "Portfolio", icon: ImageIcon },
+  { id: "document", label: "Document", icon: FileText },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -393,13 +394,13 @@ export default function TraderProfilePage() {
         cDetails.forEach((c: any) => {
           authApi.getSkillServices(c.id).then((res: any) => {
             setSkillServicesMap(m => ({ ...m, [c.id]: Array.isArray(res) ? res : res?.data || [] }));
-          }).catch(() => {});
+          }).catch(() => { });
         });
-        
+
         sDetails.forEach((s: any) => {
           authApi.getSubCategories(s.id).then((res: any) => {
             setSubCategoriesMap(m => ({ ...m, [s.id]: Array.isArray(res) ? res : res?.data || [] }));
-          }).catch(() => {});
+          }).catch(() => { });
         });
 
         // Subscription limits
@@ -501,12 +502,12 @@ export default function TraderProfilePage() {
   const handleProfileFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    
+
     // Update personal details profile image
     setSelectedProfileFile(file);
     const objectUrl = URL.createObjectURL(file);
     setPreviewUrl(objectUrl);
-    
+
     // Sync with Business Profile / Logo
     setLogoFile(file);
     setLogoPreview(objectUrl);
@@ -517,7 +518,7 @@ export default function TraderProfilePage() {
     setPreviewUrl(null);
     setPersonalForm((prev) => ({ ...prev, profileImage: null }));
     if (profileInputRef.current) profileInputRef.current.value = "";
-    
+
     // Sync with Business Profile / Logo
     setLogoFile(null);
     setLogoPreview(null);
@@ -568,7 +569,7 @@ export default function TraderProfilePage() {
 
   const removePortfolioItem = (index: number) => {
     setPortfolioPreviews((prev) => prev.filter((_, i) => i !== index));
-    
+
     if (index < existingPortfolio.length) {
       // Removed an existing item
       setExistingPortfolio((prev) => prev.filter((_, i) => i !== index));
@@ -794,10 +795,10 @@ export default function TraderProfilePage() {
       const updateRes = await authApi.updateProfile(fd);
 
       // --- NEW: Update Assets ---
-      if (traderStatus !== "MANUAL_CHECK") {
+      if (traderStatus !== "MANUAL_CHECK" && businessForm.planName) {
         const assetsFd = new FormData();
         assetsFd.append("aboutUs", personalForm.bio || " ");
-        
+
         if (portfolioFiles && portfolioFiles.length > 0) {
           portfolioFiles.forEach((file) => {
             assetsFd.append("portfolioImages", file);
@@ -815,21 +816,21 @@ export default function TraderProfilePage() {
             assetsFd.append("insuranceDocuments", file);
           });
         }
-        
+
         await authApi.updateTraderAssets(assetsFd);
       }
       // --------------------------
 
       const backendMessage = updateRes?.message;
-      const finalMessage = categoriesChanged 
-        ? "Profile updated successfully! Your category changes are pending approval." 
+      const finalMessage = categoriesChanged
+        ? "Profile updated successfully! Your category changes are pending approval."
         : (backendMessage || "Profile updated successfully!");
 
-      ThemeSwal.fire({ 
-        icon: categoriesChanged ? 'info' : 'success', 
-        iconColor: '#6E9625', 
-        title: categoriesChanged ? 'Notice' : 'Success', 
-        text: finalMessage 
+      ThemeSwal.fire({
+        icon: categoriesChanged ? 'info' : 'success',
+        iconColor: '#6E9625',
+        title: categoriesChanged ? 'Notice' : 'Success',
+        text: finalMessage
       });
 
       const searchParams = new URLSearchParams(window.location.search);
@@ -891,7 +892,11 @@ export default function TraderProfilePage() {
 
             {/* ── Left sidebar ── */}
             <div className="w-48 flex-shrink-0 space-y-1">
-              {TABS.filter(tab => tab.id !== "portfolio" || businessForm.planName).map(({ id, label, icon: Icon }) => (
+              {TABS.filter(tab => {
+                if (tab.id === "portfolio") return !!businessForm.planName;
+                if (tab.id === "document") return !businessForm.planName;
+                return true;
+              }).map(({ id, label, icon: Icon }) => (
                 <button
                   key={id}
                   type="button"
@@ -1103,43 +1108,7 @@ export default function TraderProfilePage() {
 
                   {/* Identity & Logo uploads */}
                   <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm px-6 py-6">
-                    <div className={`grid gap-5 ${traderStatus === "APPROVED" ? "grid-cols-1" : "grid-cols-2"}`}>
-
-                      {/* Proof of Identity */}
-                      {traderStatus !== "APPROVED" && (
-                        <div className="border border-dashed border-[#C8D8B0] rounded-xl p-5 flex flex-col items-center text-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-[#6E9625]/10 flex items-center justify-center">
-                            <FileText size={18} className="text-[#6E9625]" />
-                          </div>
-                          <div>
-                            <p className="text-[13px] font-bold text-[#1C2C1C]">
-                              Proof of Identity
-                            </p>
-                            <p className="text-[11px] text-gray-400 mt-0.5">
-                              Upload a valid National ID or Driving Licence PDF / JPG
-                            </p>
-                            {idFileName && (
-                              <p className="text-[11px] text-[#6E9625] mt-1 truncate max-w-[180px]">
-                                {idFileName}
-                              </p>
-                            )}
-                          </div>
-                          <button
-                            type="button"
-                            onClick={() => idInputRef.current?.click()}
-                            className="px-4 py-1.5 bg-[#1C2C1C] text-white rounded-lg text-[12px] font-semibold hover:bg-[#2c3e2c] transition-colors"
-                          >
-                            Browse Files
-                          </button>
-                          <input
-                            ref={idInputRef}
-                            type="file"
-                            accept=".pdf,.jpg,.jpeg,.png"
-                            className="hidden"
-                            onChange={handleIdFileSelect}
-                          />
-                        </div>
-                      )}
+                    <div className="grid gap-5 grid-cols-1">
 
                       {/* Profile / Logo */}
                       <div className="border border-dashed border-[#C8D8B0] rounded-xl p-5 flex flex-col items-center text-center gap-3">
@@ -1264,169 +1233,42 @@ export default function TraderProfilePage() {
                     )}
                   </div>
 
-                  {/* Trade Categories & Skill Services */}
-                  <div className="border-t border-[#E8E8E8] pt-5 mt-5">
-                    <h3 className="text-[14px] font-bold text-[#1C2C1C] mb-1">
-                      Trade Categories & Skill Services
-                    </h3>
-
-
-                    <div className="flex flex-col gap-6">
-                      {categoryGroups.map((group, index) => {
-                        // Filter out categories already selected in other groups
-                        const availableCategories = tradeCategories.filter(cat =>
-                          cat.id === group.categoryId || !categoryGroups.some(g => g.categoryId === cat.id)
-                        );
-
-                        const skillServicesOptions = skillServicesMap[group.categoryId] || [];
-                        const subCategoriesOptions = group.selectedSkillServices.flatMap(skillId => {
-                          const skillName = skillServicesOptions.find(s => s.id === skillId)?.name || '';
-                          return (subCategoriesMap[skillId] || []).map(sub => ({
-                            id: sub.id,
-                            name: `${sub.name} (${skillName})`
-                          }));
-                        });
-
-                        return (
-                          <div key={group.id} className="relative bg-[#FAFAFA] border border-[#1C2C1C]/10 rounded-[20px] p-6 sm:p-8">
-                            <div className="flex justify-between items-center mb-6">
-                              <h4 className="text-[14px] font-bold text-[#1C2C1C]">Category {index + 1}</h4>
-                              <div className="flex items-center gap-2">
-                                {group.isCollapsed && traderStatus !== "MANUAL_CHECK" && (
-                                  <button
-                                    type="button"
-                                    onClick={() => handleCategoryGroupChange(group.id, 'isCollapsed', false)}
-                                    className="w-8 h-8 flex items-center justify-center rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors"
-                                  >
-                                    <Edit2 size={14} strokeWidth={2.5} />
-                                  </button>
-                                )}
-                                {traderStatus !== "MANUAL_CHECK" && categoryGroups.length > 1 && (
-                                  <button
-                                    type="button"
-                                    onClick={() => removeCategoryGroup(group.id)}
-                                    className="w-8 h-8 flex items-center justify-center rounded-full bg-red-50 text-red-500 hover:bg-red-100 transition-colors"
-                                  >
-                                    <X size={16} strokeWidth={2.5} />
-                                  </button>
-                                )}
-                              </div>
-                            </div>
-
-                            {group.isCollapsed ? (
-                              <div className="flex flex-col gap-3">
-                                <div className="flex items-center gap-3">
-                                  <span className="text-[16px] font-bold text-[#1C2C1C]">
-                                    {availableCategories.find(c => c.id === group.categoryId)?.name || "Unknown Category"}
-                                  </span>
-                                </div>
-                                <div className="flex flex-col gap-4 mt-2">
-                                  {group.selectedSkillServices.length > 0 && (
-                                    <div className="flex flex-col gap-2">
-                                      <span className="text-[12px] font-bold text-[#1C2C1C]/50 uppercase tracking-wider">Skill Services</span>
-                                      <div className="flex flex-wrap gap-2">
-                                        {group.selectedSkillServices.map(id => {
-                                          // Use pre-fetched map or global state as fallback
-                                          const name = skillServicesOptions.find(s => s.id === id)?.name;
-                                          if (!name) return null;
-                                          return (
-                                            <span key={id} className="bg-[#6E9625]/10 text-[#6E9625] px-3 py-1.5 rounded-md text-[13px] font-semibold">
-                                              {name}
-                                            </span>
-                                          );
-                                        })}
-                                      </div>
-                                    </div>
-                                  )}
-                                  {group.selectedSubCategories.length > 0 && (
-                                    <div className="flex flex-col gap-2">
-                                      <span className="text-[12px] font-bold text-[#1C2C1C]/50 uppercase tracking-wider">Sub Categories</span>
-                                      <div className="flex flex-wrap gap-2">
-                                        {group.selectedSubCategories.map(id => {
-                                          const name = subCategoriesOptions.find(s => s.id === id)?.name;
-                                          if (!name) return null;
-                                          return (
-                                            <span key={id} className="bg-[#F5F5F5] text-[#1C2C1C]/70 border border-[#1C2C1C]/10 px-3 py-1.5 rounded-md text-[13px] font-semibold">
-                                              {name}
-                                            </span>
-                                          );
-                                        })}
-                                      </div>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="grid grid-cols-1 gap-5">
-                                <div className="relative">
-                                  <select
-                                    value={group.categoryId}
-                                    onChange={(e) => handleCategoryGroupChange(group.id, 'categoryId', e.target.value)}
-                                    className="w-full h-[44px] rounded-[12px] border bg-white px-4 text-[14px] text-[#1C2C1C] placeholder-[#1C2C1C]/40 outline-none transition-all font-medium border-[#243A241F] focus:border-[#6E9625] focus:ring-1 focus:ring-[#6E9625] appearance-none cursor-pointer"
-                                  >
-                                    <option value="" disabled>Select a Category *</option>
-                                    {availableCategories.map(cat => (
-                                      <option key={cat.id} value={cat.id}>{cat.name}</option>
-                                    ))}
-                                  </select>
-                                  <ChevronDown />
-                                </div>
-
-                                <MultiSelect
-                                  options={skillServicesOptions}
-                                  selectedIds={group.selectedSkillServices}
-                                  onChange={(ids) => handleCategoryGroupChange(group.id, 'selectedSkillServices', ids)}
-                                  placeholder="Select Skill Services *"
-                                  disabled={!group.categoryId}
-                                />
-
-                                <MultiSelect
-                                  options={subCategoriesOptions}
-                                  selectedIds={group.selectedSubCategories}
-                                  onChange={(ids) => handleCategoryGroupChange(group.id, 'selectedSubCategories', ids)}
-                                  placeholder="Select Sub Categories *"
-                                  disabled={group.selectedSkillServices.length === 0}
-                                />
-
-                                <div className="mt-2 flex justify-end">
-                                  <button
-                                    type="button"
-                                    onClick={() => handleCategoryGroupChange(group.id, 'isCollapsed', true)}
-                                    disabled={!group.categoryId || group.selectedSkillServices.length === 0 || group.selectedSubCategories.length === 0}
-                                    className="bg-[#6E9625] text-white text-[13px] font-bold py-2.5 px-6 rounded-full hover:bg-[#5C7D1F] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                                  >
-                                    Save Category
-                                  </button>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-
-                      {traderStatus !== "MANUAL_CHECK" && (() => {
-                        const maxCats = unlimitedTrades ? 9999 : (maxTrades || 1);
-                        const canAddMore = categoryGroups.length < maxCats;
-
-                        return (
-                          <button
-                            type="button"
-                            onClick={addCategoryGroup}
-                            disabled={!canAddMore}
-                            className={`flex items-center justify-center gap-2 py-4 rounded-[16px] border-2 border-dashed font-bold text-[14px] transition-all
-                                        ${canAddMore
-                                ? "border-[#6E9625]/40 text-[#6E9625] hover:bg-[#6E9625]/5"
-                                : "border-[#1C2C1C]/10 text-[#1C2C1C]/30 cursor-not-allowed bg-[#FAFAFA]"
-                              }
-                                    `}
-                          >
-                            <Plus size={18} strokeWidth={2.5} />
-                            {canAddMore ? "Add Another Category" : `Maximum ${maxCats === 9999 ? 'Unlimited' : maxCats} Categories Reached`}
-                          </button>
-                        );
-                      })()}
+                  {/* Proof of Identity */}
+                  {traderStatus !== "APPROVED" && (
+                    <div className="mt-6 border border-dashed border-[#C8D8B0] rounded-xl p-5 flex flex-col items-center text-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-[#6E9625]/10 flex items-center justify-center">
+                        <FileText size={18} className="text-[#6E9625]" />
+                      </div>
+                      <div>
+                        <p className="text-[13px] font-bold text-[#1C2C1C]">
+                          Proof of Identity
+                        </p>
+                        <p className="text-[11px] text-gray-400 mt-0.5">
+                          Upload a valid National ID or Driving Licence PDF / JPG
+                        </p>
+                        {idFileName && (
+                          <p className="text-[11px] text-[#6E9625] mt-1 truncate max-w-[180px]">
+                            {idFileName}
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => idInputRef.current?.click()}
+                        className="px-4 py-1.5 bg-[#1C2C1C] text-white rounded-lg text-[12px] font-semibold hover:bg-[#2c3e2c] transition-colors"
+                      >
+                        Browse Files
+                      </button>
+                      <input
+                        ref={idInputRef}
+                        type="file"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        className="hidden"
+                        onChange={handleIdFileSelect}
+                      />
                     </div>
-                  </div>
+                  )}
+
                 </div>
               )}
 
@@ -1505,9 +1347,160 @@ export default function TraderProfilePage() {
                       </button>
                     </div>
                   )}
+                  <hr className="my-8 border-[#E8E8E8]" />
+
+                  {/* ════ CERTIFICATES ════ */}
+                  <h2 className="text-[14px] font-bold text-[#1C2C1C] mb-1">
+                    Certificates
+                  </h2>
+                  <p className="text-[12px] text-gray-400 mb-5">
+                    Upload your professional certificates.
+                  </p>
+
+                  <div
+                    onDrop={handleCertDrop}
+                    onDragOver={handleCertDragOver}
+                    onDragLeave={handleCertDragLeave}
+                    onClick={() => certInputRef.current?.click()}
+                    className={`border-2 border-dashed rounded-xl flex flex-col items-center justify-center py-12 cursor-pointer transition-colors ${isCertDragging
+                      ? "border-[#6E9625] bg-[#6E9625]/5"
+                      : "border-[#C8D8B0] hover:border-[#6E9625] hover:bg-[#6E9625]/5"
+                      }`}
+                  >
+                    <div className="w-12 h-12 rounded-full bg-[#6E9625]/10 flex items-center justify-center mb-3">
+                      <Upload size={20} className="text-[#6E9625]" />
+                    </div>
+                    <p className="text-[13px] font-semibold text-[#1C2C1C]">
+                      Click to upload or drag and drop
+                    </p>
+                    <p className="text-[12px] text-gray-400 mt-1">
+                      PNG, JPG, PDF up to 10 MB each
+                    </p>
+                    <input
+                      ref={certInputRef}
+                      type="file"
+                      accept="image/*,application/pdf"
+                      multiple
+                      className="hidden"
+                      onChange={handleCertificateSelect}
+                    />
+                  </div>
+
+                  {certificatePreviews.length > 0 && (
+                    <div className="grid grid-cols-3 gap-3 mt-5">
+                      {certificatePreviews.map((src, i) => (
+                        <div
+                          key={i}
+                          className="relative group rounded-xl overflow-hidden aspect-square bg-gray-100 flex items-center justify-center"
+                        >
+                          <img
+                            src={src}
+                            alt={`Certificate ${i + 1}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => { e.currentTarget.src = "/pdf-icon.png"; }}
+                          />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeCertificateItem(i);
+                            }}
+                            className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X size={12} className="text-white" />
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => certInputRef.current?.click()}
+                        className="aspect-square rounded-xl border-2 border-dashed border-[#C8D8B0] flex items-center justify-center hover:border-[#6E9625] hover:bg-[#6E9625]/5 transition-colors"
+                      >
+                        <Plus size={20} className="text-[#6E9625]" />
+                      </button>
+                    </div>
+                  )}
 
                   <hr className="my-8 border-[#E8E8E8]" />
 
+                  {/* ════ INSURANCE ════ */}
+                  <h2 className="text-[14px] font-bold text-[#1C2C1C] mb-1">
+                    Insurance Documents
+                  </h2>
+                  <p className="text-[12px] text-gray-400 mb-5">
+                    Upload your insurance policies.
+                  </p>
+
+                  <div
+                    onDrop={handleInsDrop}
+                    onDragOver={handleInsDragOver}
+                    onDragLeave={handleInsDragLeave}
+                    onClick={() => insInputRef.current?.click()}
+                    className={`border-2 border-dashed rounded-xl flex flex-col items-center justify-center py-12 cursor-pointer transition-colors ${isInsDragging
+                      ? "border-[#6E9625] bg-[#6E9625]/5"
+                      : "border-[#C8D8B0] hover:border-[#6E9625] hover:bg-[#6E9625]/5"
+                      }`}
+                  >
+                    <div className="w-12 h-12 rounded-full bg-[#6E9625]/10 flex items-center justify-center mb-3">
+                      <Upload size={20} className="text-[#6E9625]" />
+                    </div>
+                    <p className="text-[13px] font-semibold text-[#1C2C1C]">
+                      Click to upload or drag and drop
+                    </p>
+                    <p className="text-[12px] text-gray-400 mt-1">
+                      PNG, JPG, PDF up to 10 MB each
+                    </p>
+                    <input
+                      ref={insInputRef}
+                      type="file"
+                      accept="image/*,application/pdf"
+                      multiple
+                      className="hidden"
+                      onChange={handleInsuranceSelect}
+                    />
+                  </div>
+
+                  {insurancePreviews.length > 0 && (
+                    <div className="grid grid-cols-3 gap-3 mt-5">
+                      {insurancePreviews.map((src, i) => (
+                        <div
+                          key={i}
+                          className="relative group rounded-xl overflow-hidden aspect-square bg-gray-100 flex items-center justify-center"
+                        >
+                          <img
+                            src={src}
+                            alt={`Insurance ${i + 1}`}
+                            className="w-full h-full object-cover"
+                            onError={(e) => { e.currentTarget.src = "/pdf-icon.png"; }}
+                          />
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              removeInsuranceItem(i);
+                            }}
+                            className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          >
+                            <X size={12} className="text-white" />
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => insInputRef.current?.click()}
+                        className="aspect-square rounded-xl border-2 border-dashed border-[#C8D8B0] flex items-center justify-center hover:border-[#6E9625] hover:bg-[#6E9625]/5 transition-colors"
+                      >
+                        <Plus size={20} className="text-[#6E9625]" />
+                      </button>
+                    </div>
+                  )}
+
+                </div>
+              )}
+
+              {/* ════ DOCUMENT ════ */}
+              {activeTab === "document" && (
+                <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm px-6 py-6">
                   {/* ════ CERTIFICATES ════ */}
                   <h2 className="text-[14px] font-bold text-[#1C2C1C] mb-1">
                     Certificates

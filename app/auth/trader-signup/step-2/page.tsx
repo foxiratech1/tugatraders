@@ -288,6 +288,8 @@ export default function Step2Page() {
 
     const [idFile, setIdFile] = useState<File | null>(null);
     const [logoFile, setLogoFile] = useState<File | null>(null);
+    const [certFile, setCertFile] = useState<File | null>(null);
+    const [insFile, setInsFile] = useState<File | null>(null);
     // const [categoryId, setCategoryId] = useState<string | null>(null);
     // const [skillServices, setSkillServices] = useState<Array<{ id: string; name: string }>>([]);
     // const [subCategories, setSubCategories] = useState<Array<{ id: string; name: string }>>([]);
@@ -460,9 +462,12 @@ export default function Step2Page() {
             payload.append("authorisedBusiness", String(formData.authorized));
             payload.append("understandVettingPolicy", String(formData.vettingTerms));
             payload.append("acceptedPrivacyPolicy", String(formData.privacyCookies));
+            payload.append("acceptedTermsConditions", String(formData.traderAgreement));
 
             if (logoFile) payload.append("logo", logoFile);
             if (idFile && showProofOfIdentity) payload.append("document", idFile);
+            if (certFile) payload.append("certificates", certFile);
+            if (insFile) payload.append("insuranceDocuments", insFile);
 
             await traderRegisterStep2(payload);
             toast.success("Business verification submitted!");
@@ -578,6 +583,76 @@ export default function Step2Page() {
                                 onChange={(e) => setLogoFile(e.target.files?.[0] || null)}
                             />
                         </label>
+                    </div>
+
+                    {/* Certificate */}
+                    <div className="border border-dashed border-[#1C2C1C]/20 rounded-2xl p-6 flex flex-col items-center justify-center text-center hover:border-[#6E9625] hover:bg-[#6E9625]/5 transition-all bg-[#FAFAFA]">
+                        <div className="w-10 h-10 bg-[#6E9625] rounded-full flex items-center justify-center text-white mb-4">
+                            <IdCard size={18} />
+                        </div>
+                        <h3 className="text-[13px] font-bold text-[#1C2C1C] mb-1">Certificate</h3>
+                        <p className="text-[10px] text-[#1C2C1C]/40 mb-5 max-w-[200px]">
+                            (Upload a valid professional certificate. Formats .PDF, .JPG)
+                        </p>
+                        <label className="bg-[#1C2C1C] text-white text-[11px] font-bold py-2.5 px-6 rounded-full cursor-pointer hover:bg-[#2C4A2C] transition-colors shadow-sm">
+                            {certFile ? "Change File" : "Choose File"}
+                            <input
+                                type="file"
+                                className="hidden"
+                                accept=".pdf,.jpg,.jpeg,.png"
+                                onChange={(e) => setCertFile(e.target.files?.[0] || null)}
+                            />
+                        </label>
+                        {certFile && (
+                            <div className="mt-3 inline-flex items-center gap-1.5 bg-[#6E9625]/12 border border-[#6E9625]/25 text-[#1C2C1C] text-[11px] font-semibold px-3 py-1 rounded-full max-w-full shadow-2xs">
+                                <span className="truncate max-w-[160px]">{certFile.name}</span>
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCertFile(null);
+                                    }}
+                                    className="p-0.5 text-[#1C2C1C]/50 hover:text-red-600 hover:bg-black/10 rounded-full transition-colors flex items-center justify-center"
+                                >
+                                    <X size={12} strokeWidth={2.5} />
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Insurance Document */}
+                    <div className="border border-dashed border-[#1C2C1C]/20 rounded-2xl p-6 flex flex-col items-center justify-center text-center hover:border-[#6E9625] hover:bg-[#6E9625]/5 transition-all bg-[#FAFAFA]">
+                        <div className="w-10 h-10 bg-[#6E9625] rounded-full flex items-center justify-center text-white mb-4">
+                            <ShieldCheck size={18} />
+                        </div>
+                        <h3 className="text-[13px] font-bold text-[#1C2C1C] mb-1">Insurance Document</h3>
+                        <p className="text-[10px] text-[#1C2C1C]/40 mb-5 max-w-[200px]">
+                            (Upload a valid insurance document. Formats .PDF, .JPG)
+                        </p>
+                        <label className="bg-[#1C2C1C] text-white text-[11px] font-bold py-2.5 px-6 rounded-full cursor-pointer hover:bg-[#2C4A2C] transition-colors shadow-sm">
+                            {insFile ? "Change File" : "Choose File"}
+                            <input
+                                type="file"
+                                className="hidden"
+                                accept=".pdf,.jpg,.jpeg,.png"
+                                onChange={(e) => setInsFile(e.target.files?.[0] || null)}
+                            />
+                        </label>
+                        {insFile && (
+                            <div className="mt-3 inline-flex items-center gap-1.5 bg-[#6E9625]/12 border border-[#6E9625]/25 text-[#1C2C1C] text-[11px] font-semibold px-3 py-1 rounded-full max-w-full shadow-2xs">
+                                <span className="truncate max-w-[160px]">{insFile.name}</span>
+                                <button
+                                    type="button"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setInsFile(null);
+                                    }}
+                                    className="p-0.5 text-[#1C2C1C]/50 hover:text-red-600 hover:bg-black/10 rounded-full transition-colors flex items-center justify-center"
+                                >
+                                    <X size={12} strokeWidth={2.5} />
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
 

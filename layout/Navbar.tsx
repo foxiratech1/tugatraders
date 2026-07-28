@@ -124,14 +124,7 @@ export default function Navbar() {
         <div className="hidden items-center gap-4 xl:gap-6 lg:flex">
           {isAuthenticated ? (
             <>
-              {/* DASHBOARD BUTTON */}
-              <Link
-                href={isTrader ? "/trader" : "/customer-dashboard/jobs"}
-                className="flex items-center gap-2 rounded-[12px] bg-[#1d3321] px-5 py-2 xl:px-6 xl:py-2.5 text-[14px] font-bold text-white shadow-lg shadow-[#1d3321]/20 hover:bg-[#28462d] transition-all duration-300"
-              >
-                <FiGrid size={18} />
-                {isTrader ? "Trader Dashboard" : "Dashboard"}
-              </Link>
+
 
               {/* PROFILE DROPDOWN */}
               <div className="relative" ref={profileDropdownRef}>
