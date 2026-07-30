@@ -59,7 +59,7 @@ const topFeatures = [
 ];
 
 function getImageUrl(path: string | null | undefined): string {
-  if (!path) return "/Contact Support.png";
+  if (!path) return "/avt.png";
   if (path.startsWith("http")) return path;
   const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000").replace(/\/+$/, "");
   const cleanPath = path.replace(/^\/+/, "");

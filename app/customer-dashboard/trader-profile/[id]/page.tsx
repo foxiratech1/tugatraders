@@ -17,7 +17,7 @@ import Image from "next/image";
 import VettingModal from "@/components/modal/VettingModal";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 function getImageUrl(path: string | null | undefined): string {
-  if (!path) return "/placeholder.png";
+  if (!path) return "/avt.png";
   if (path.startsWith("http") || path.startsWith("data:")) return path;
   const baseUrl = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
   let imagePath = path.startsWith('/') ? path : `/${path}`;

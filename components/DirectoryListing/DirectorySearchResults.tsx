@@ -93,12 +93,13 @@ interface Trader {
   aboutUs?: string;
   completedJobs?: number;
   minimumExperience?: boolean;
+  isSaved?: boolean;
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 const getImageUrl = (path?: any) => {
-  if (!path) return "/placeholder.png";
+  if (!path) return "/avt.png";
 
   let p = typeof path === 'string' ? path : (path?.fileUrl || path?.url || path?.path || path?.src);
   if (!p || typeof p !== 'string') return "/placeholder.png";
@@ -120,7 +121,7 @@ const LoginModal = ({
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  action: "leave-review" | "view-profile" | "contact-trader";
+  action: "leave-review" | "view-profile" | "contact-trader" | "save-trader";
 }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -156,12 +157,16 @@ const LoginModal = ({
     ? "Login to leave a review"
     : action === "contact-trader"
       ? "Login to contact trader"
-      : "Login to view profile";
+      : action === "save-trader"
+        ? "Login to save trader"
+        : "Login to view profile";
   const desc = action === "leave-review"
     ? "Please log in to share your experience with this trader."
     : action === "contact-trader"
       ? "Please log in to view contact info and chat with this trader."
-      : "Please log in to view this trader's full profile.";
+      : action === "save-trader"
+        ? "Please log in to save this professional to your list."
+        : "Please log in to view this trader's full profile.";
   const btnText = loading ? 'Logging in…' : 'Log In & Continue';
 
   return (
@@ -287,7 +292,7 @@ const DirectorySearchResults = () => {
   // Login-prompt modal state
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [pendingTraderId, setPendingTraderId] = useState<string | null>(null);
-  const [pendingAction, setPendingAction] = useState<"leave-review" | "view-profile" | "contact-trader">("leave-review");
+  const [pendingAction, setPendingAction] = useState<"leave-review" | "view-profile" | "contact-trader" | "save-trader">("leave-review");
 
   // Track expanded skills state per trader card
   const [expandedSkills, setExpandedSkills] = useState<Record<string, boolean>>({});
@@ -308,6 +313,19 @@ const DirectorySearchResults = () => {
   const handleLoginSuccess = async () => {
     setShowLoginModal(false);
     if (!pendingTraderId) return;
+
+    if (pendingAction === "save-trader") {
+      const id = pendingTraderId;
+      setPendingTraderId(null);
+      setTraderResults(prev => prev.map(t => t.id === id ? { ...t, isSaved: true } : t));
+      try {
+        await authApi.toggleSaveTrader(id);
+      } catch (err) {
+        console.error("Failed to toggle save after login", err);
+        setTraderResults(prev => prev.map(t => t.id === id ? { ...t, isSaved: false } : t));
+      }
+      return;
+    }
 
     if (pendingAction === "contact-trader") {
       const id = pendingTraderId;
@@ -508,6 +526,24 @@ const DirectorySearchResults = () => {
   }, []);
 
   const filteredResults = traderResults.filter(t => appliedMinRating === null || (t.ratingAvg || 0) >= appliedMinRating);
+
+  const handleToggleSave = async (traderId: string) => {
+    const token = getAccessToken();
+    if (!token) {
+      setPendingTraderId(traderId);
+      setPendingAction("save-trader");
+      setShowLoginModal(true);
+      return;
+    }
+    
+    setTraderResults(prev => prev.map(t => t.id === traderId ? { ...t, isSaved: !t.isSaved } : t));
+    try {
+      await authApi.toggleSaveTrader(traderId);
+    } catch (err) {
+      console.error('Failed to toggle save', err);
+      setTraderResults(prev => prev.map(t => t.id === traderId ? { ...t, isSaved: !t.isSaved } : t));
+    }
+  };
 
   return (
     <>
@@ -920,24 +956,18 @@ const DirectorySearchResults = () => {
                     </div>
 
                     {/* ── Right: Action Buttons ── */}
-                    <div className="w-full md:w-[180px] shrink-0 flex flex-col justify-center gap-3 pt-6 md:pt-0 md:pl-6 md:border-l border-gray-100">
+                    <div className="w-full md:w-[180px] shrink-0 flex flex-col justify-start gap-3 pt-6 md:pt-0 md:pl-6 md:border-l border-gray-100">
 
-                      {/* Leave a Review */}
-                      <button
-                        onClick={() => {
-                          const storedUser = localStorage.getItem('user');
-                          if (!storedUser) {
-                            setPendingTraderId(trader.id);
-                            setPendingAction("leave-review");
-                            setShowLoginModal(true);
-                          } else {
-                            router.push(`/profile/${trader.id}?review=true`);
-                          }
-                        }}
-                        className="text-[#6E9625] text-[14px] font-semibold underline underline-offset-2 hover:text-[#52701b] transition-colors text-center"
-                      >
-                        Leave a Review
-                      </button>
+                      {/* Save Button */}
+                      <div className="flex justify-end mb-2">
+                        <button 
+                          onClick={() => handleToggleSave(trader.id)}
+                          className="flex items-center gap-1.5 text-gray-500 hover:text-[#6E9625] transition-colors font-medium text-[14px] cursor-pointer"
+                        >
+                          <Heart size={18} className={trader.isSaved ? "fill-[#6E9625] text-[#6E9625]" : ""} />
+                          <span>Save</span>
+                        </button>
+                      </div>
 
                       {/* Click to view (Phone) */}
                       {!revealedPhones[trader.id] ? (
@@ -958,12 +988,32 @@ const DirectorySearchResults = () => {
                         </a>
                       )}
 
-                      <Link href={`/profile/${trader.id}`} className="w-full text-center bg-[#1C2C1C] text-white py-3.5 rounded-xl font-bold text-[14px] hover:bg-black transition-colors">
+                      <Link href={`/profile/${trader.id}`} className="w-full text-center bg-[#1C2C1C] text-white py-3.5 rounded-xl font-bold text-[14px] hover:bg-black transition-colors block">
                         View Profile
                       </Link>
-                      <button className="w-full bg-white text-[#1C2C1C] border border-[#1C2C1C] py-3.5 rounded-xl font-bold text-[14px] hover:bg-gray-50 transition-colors cursor-pointer">
+                      
+                      <button className="w-full bg-[#B91C1C] text-white py-3.5 rounded-xl font-bold text-[14px] hover:bg-[#991B1B] transition-colors cursor-pointer block">
                         Get Quote
                       </button>
+
+                      {/* Leave a Review */}
+                      <div className="mt-2 text-center">
+                        <button
+                          onClick={() => {
+                            const storedUser = localStorage.getItem('user');
+                            if (!storedUser) {
+                              setPendingTraderId(trader.id);
+                              setPendingAction("leave-review");
+                              setShowLoginModal(true);
+                            } else {
+                              router.push(`/profile/${trader.id}?review=true`);
+                            }
+                          }}
+                          className="text-gray-500 text-[14px] font-semibold underline underline-offset-4 hover:text-gray-700 transition-colors cursor-pointer"
+                        >
+                          Leave a review
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))}

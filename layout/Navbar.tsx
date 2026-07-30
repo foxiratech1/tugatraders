@@ -83,9 +83,10 @@ export default function Navbar() {
 
   // Build profile image URL — prefer API-fetched profile, then localStorage user
   const profileData = profile || user;
+  const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(profileData?.fullName || (isTrader ? "Trader" : "Customer"))}&background=1d3321&color=fff&bold=true`;
   const imageUrl = profileData?.profileImage
     ? new URL(profileData.profileImage, process.env.NEXT_PUBLIC_API_URL).toString()
-    : "/customerNavLogo.png";
+    : fallbackAvatar;
 
   return (
     <nav className="fixed top-4 sm:top-6 left-0 right-0 z-50 flex justify-center px-4">
@@ -139,9 +140,6 @@ export default function Navbar() {
                   <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-200 border-2 border-[#E5E7EB]">
                     <img
                       src={imageUrl}
-                      crossOrigin="anonymous"
-                      loading="eager"
-                      referrerPolicy="no-referrer"
                       alt={profileData?.fullName || "User"}
                       className="w-full h-full object-cover rounded-full"
                     />
@@ -313,9 +311,6 @@ export default function Navbar() {
                   <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 border-2 border-[#1d3321]/10">
                     <img
                       src={imageUrl}
-                      crossOrigin="anonymous"
-                      loading="eager"
-                      referrerPolicy="no-referrer"
                       alt={profileData?.fullName || "User"}
                       className="w-full h-full object-cover rounded-full"
                     />

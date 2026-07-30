@@ -9,7 +9,7 @@ import { Star, MapPin, Wrench, Search, ChevronDown, BookmarkX, Bookmark } from "
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://api.tugatraders.server24.in";
 
 function getImageUrl(path: string | null | undefined): string {
-  if (!path) return "/logo.png";
+  if (!path) return "/avt.png";
   if (path.startsWith("http")) return path;
 
   const baseUrl = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
@@ -53,9 +53,8 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
-function TraderCard({ trader }: { trader: SavedTrader }) {
+function TraderCard({ trader, onRemove }: { trader: SavedTrader; onRemove: (id: string) => void }) {
   const [imgError, setImgError] = useState(false);
-  const [isSaved, setIsSaved] = useState(true);
   const [isToggling, setIsToggling] = useState(false);
   const src = imgError ? "/logo.png" : getImageUrl(trader.profileImage || trader.logo);
 
@@ -70,10 +69,9 @@ function TraderCard({ trader }: { trader: SavedTrader }) {
     setIsToggling(true);
     try {
       await authApi.toggleSaveTrader(trader.id);
-      setIsSaved(!isSaved);
+      onRemove(trader.id);
     } catch (err) {
       console.error("Failed to toggle save", err);
-    } finally {
       setIsToggling(false);
     }
   };
@@ -85,7 +83,7 @@ function TraderCard({ trader }: { trader: SavedTrader }) {
         disabled={isToggling}
         className="absolute top-4 right-4 z-10 w-9 h-9 rounded-[10px] bg-[#F8F9F5] flex items-center justify-center hover:bg-[#F0EDE8] transition-colors disabled:opacity-50"
       >
-        <Bookmark size={18} className={isSaved ? "text-[#1C2C1C] fill-[#1C2C1C]" : "text-[#1C2C1C]"} />
+        <Bookmark size={18} className="text-[#1C2C1C] fill-[#1C2C1C]" />
       </button>
 
       {/* Avatar */}
@@ -194,6 +192,10 @@ export default function SavedTradersPage() {
     fetchSaved();
   }, []);
 
+  const handleRemoveTrader = (id: string) => {
+    setTraders((prev) => prev.filter((t) => t.id !== id));
+  };
+
   const sortLabel = {
     recent: "Recently Added",
     rating: "Highest Rated",
@@ -298,7 +300,7 @@ export default function SavedTradersPage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {filtered.map((trader) => (
-              <TraderCard key={trader.id} trader={trader} />
+              <TraderCard key={trader.id} trader={trader} onRemove={handleRemoveTrader} />
             ))}
           </div>
         )}

@@ -106,12 +106,13 @@ export default function CustomerNavbar() {
     };
   }, []);
 
+  const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.fullName || "Customer")}&background=1d3321&color=fff&bold=true`;
   const imageUrl = profile?.profileImage
     ? new URL(
       profile.profileImage,
       process.env.NEXT_PUBLIC_API_URL
     ).toString()
-    : "/customerNavLogo.png";
+    : fallbackAvatar;
 
   console.log("Image URL:", imageUrl);
 
@@ -231,9 +232,6 @@ export default function CustomerNavbar() {
               <img
                 key={imageUrl}
                 src={imageUrl}
-                crossOrigin="anonymous"
-                loading="eager"
-                referrerPolicy="no-referrer"
                 alt={profile?.fullName || "User"}
                 className="w-full h-full object-cover rounded-full"
               />

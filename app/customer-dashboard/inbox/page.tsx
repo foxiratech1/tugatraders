@@ -10,7 +10,7 @@ import { useSocket } from "@/hooks/useSocket";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 function getImageUrl(path: string | null | undefined): string | null {
-  if (!path) return null;
+  if (!path) return "/avt.png";
   if (path.startsWith("http")) return path;
   
   const baseUrl = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;

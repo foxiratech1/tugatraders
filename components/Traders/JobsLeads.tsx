@@ -44,7 +44,7 @@ const formatTimeAgo = (iso: string) => {
 };
 
 const getImageUrl = (path: string | null | undefined) => {
-  if (!path) return '';
+  if (!path) return "/avt.png";
   if (path.startsWith('http')) return path;
 
   const rawBase = process.env.NEXT_PUBLIC_API_URL || '';

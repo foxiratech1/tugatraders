@@ -44,7 +44,7 @@ export default function Hero() {
           className="text-[36px] sm:text-[48px] md:text-[72px] font-bold text-white tracking-tight leading-[1.1] mb-4 max-w-[1000px]"
         >
           Portugal&apos;s Smarter Way to <br className="hidden md:block" />
-          Find Local <span className="text-[#89b341]">Tradespeople</span>
+          Find Local <span className="text-[#7ca13a]">Tradespeople</span>
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 20 }}

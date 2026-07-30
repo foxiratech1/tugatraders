@@ -15,6 +15,7 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
   const jobId = searchParams.get('jobId');
   const editReviewId = searchParams.get('editReviewId');
   const reviewCreatedAt = searchParams.get("createdAt");
+  const hideWorkCarriedOut = searchParams.get('hideWorkCarriedOut') === 'true';
 
   const [workCarriedOut, setWorkCarriedOut] = useState<boolean>(searchParams.has('workCarriedOut') ? searchParams.get('workCarriedOut') === 'true' : true);
   const [rating, setRating] = useState<number>(parseInt(searchParams.get('rating') || '0'));
@@ -24,7 +25,7 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
   const initialRecommend = recommendParam === 'true' ? true : recommendParam === 'false' ? false : null;
   const [recommend, setRecommend] = useState<boolean | null>(initialRecommend);
 
-  const [selectedReason, setSelectedReason] = useState<string>('');
+  const [selectedReason, setSelectedReason] = useState<string>(searchParams.get('noWorkReason') || '');
   const initialReviewType = searchParams.get('reviewType') || reviewTypeProp || (jobId ? 'JOB' : 'DIRECTORY');
   const [reviewType, setReviewType] = useState<string>(initialReviewType);
   const [interactionSource, setInteractionSource] = useState<string>(searchParams.get('interactionSource') || '');
@@ -62,6 +63,9 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
     if (searchParams.get('review')) {
       setReview(searchParams.get('review') || '');
     }
+    if (searchParams.get('noWorkReason')) {
+      setSelectedReason(searchParams.get('noWorkReason') || '');
+    }
   }, [searchParams]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,14 +75,14 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
   };
 
   const reasons = [
-    { id: 'no_response', label: "Trader didn't respond", desc: "I reached out but never heard back from them." },
-    { id: 'declined', label: "Trader declined the job", desc: "They responded but were unavailable." },
-    { id: 'missed_appt', label: "Missed appointment", desc: "Professional failed to show up for the visit." },
-    { id: 'over_budget', label: "Quote over budget", desc: "The pricing was higher than anticipated." },
-    { id: 'wanted_quote', label: "Wanted a quote", desc: "Just getting rough prices." },
-    { id: 'changed_mind', label: "No longer needed/changed my mind", desc: "Plans have changed." },
-    { id: 'hired_elsewhere', label: "Hired elsewhere", desc: "Found another professional for the work." },
-    { id: 'other', label: "Other reason", desc: "None of the above apply." }
+    { id: 'TRADER_DIDNT_RESPOND', label: "Trader didn't respond", desc: "I reached out but never heard back from them." },
+    { id: 'TRADER_DECLINED_JOB', label: "Trader declined the job", desc: "They responded but were unavailable." },
+    { id: 'TRADER_MISSED_APPOINTMENT', label: "Missed appointment", desc: "Professional failed to show up for the visit." },
+    { id: 'QUOTE_OVER_BUDGET', label: "Quote over budget", desc: "The pricing was higher than anticipated." },
+    { id: 'WANTED_QUOTE_ONLY', label: "Wanted a quote", desc: "Just getting rough prices." },
+    { id: 'JOB_NO_LONGER_NEEDED', label: "No longer needed/changed my mind", desc: "Plans have changed." },
+    { id: 'BETTER_PRICE_ELSEWHERE', label: "Hired elsewhere", desc: "Found another professional for the work." },
+    { id: 'OTHER', label: "Other reason", desc: "None of the above apply." }
   ];
 
   const canEditReview = React.useMemo(() => {
@@ -111,9 +115,8 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
       const payload = new FormData();
 
       if (!editReviewId) {
-        if (traderId && traderId !== '00000000-0000-0000-0000-000000000000') {
-          payload.append("traderId", traderId);
-        }
+        const finalTraderId = traderId && traderId !== '00000000-0000-0000-0000-000000000000' ? traderId : '00000000-0000-0000-0000-000000000000';
+        payload.append("traderId", finalTraderId);
         const finalJobId = jobId || propJobId;
         if (finalJobId && finalJobId !== '00000000-0000-0000-0000-000000000000') {
           payload.append("jobId", finalJobId);
@@ -123,9 +126,9 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
       }
 
       payload.append("wasWorkCompleted", String(workCarriedOut));
-      payload.append("rating", String(workCarriedOut ? rating : 0));
-
+      
       if (workCarriedOut) {
+        payload.append("rating", String(rating));
         if (completionDate) {
           payload.append("workCompletedDate", new Date(completionDate).toISOString());
         }
@@ -138,6 +141,7 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
         }
       } else {
         if (selectedReason) payload.append("noWorkReason", selectedReason);
+        if (rating > 0) payload.append("rating", String(rating));
       }
 
       if (editReviewId) {
@@ -214,32 +218,34 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
         </div>
 
 
-        <div className="mb-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="font-semibold text-[#1C2C1C] text-[15px]">Was the work carried out? <span className="text-red-500">*</span></h3>
-              <p className="text-[13px] text-gray-500 mt-1">Confirm if any work was started or completed.</p>
-            </div>
-            <div className="flex bg-gray-50 p-1 rounded-full border border-gray-200">
-              <button
-                type="button"
-                onClick={() => setWorkCarriedOut(true)}
-                className={`px-5 py-2 text-[14px] font-semibold rounded-full transition-colors ${workCarriedOut ? 'bg-white text-[#1C2C1C] shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                  }`}
-              >
-                Yes
-              </button>
-              <button
-                type="button"
-                onClick={() => setWorkCarriedOut(false)}
-                className={`px-5 py-2 text-[14px] font-semibold rounded-full transition-colors ${!workCarriedOut ? 'bg-white text-[#1C2C1C] shadow-sm' : 'text-gray-500 hover:text-gray-700'
-                  }`}
-              >
-                No
-              </button>
+        {!hideWorkCarriedOut && (
+          <div className="mb-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-[#1C2C1C] text-[15px]">Was the work carried out? <span className="text-red-500">*</span></h3>
+                <p className="text-[13px] text-gray-500 mt-1">Confirm if any work was started or completed.</p>
+              </div>
+              <div className="flex bg-gray-50 p-1 rounded-full border border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => setWorkCarriedOut(true)}
+                  className={`px-5 py-2 text-[14px] font-semibold rounded-full transition-colors ${workCarriedOut ? 'bg-white text-[#1C2C1C] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                  Yes
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setWorkCarriedOut(false)}
+                  className={`px-5 py-2 text-[14px] font-semibold rounded-full transition-colors ${!workCarriedOut ? 'bg-white text-[#1C2C1C] shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                  No
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         <hr className="border-gray-100 mb-8" />
 
@@ -422,6 +428,35 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
                   </div>
                 </button>
               ))}
+            </div>
+
+            <div className="bg-gray-50/50 rounded-xl p-8 text-center border border-gray-100">
+              <h3 className="text-[15px] font-semibold text-[#1C2C1C] mb-4">How would you rate the professional?</h3>
+              <div className="flex justify-center gap-2 mb-3">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onMouseEnter={() => setHoverRating(star)}
+                    onMouseLeave={() => setHoverRating(0)}
+                    onClick={() => setRating(star)}
+                    className="focus:outline-none"
+                  >
+                    <Star
+                      size={32}
+                      className={`${star <= (hoverRating || rating)
+                        ? 'text-[#6E9625] fill-[#6E9625]'
+                        : 'text-[#E5E7EB] fill-[#E5E7EB]'
+                        } transition-colors`}
+                    />
+                  </button>
+                ))}
+              </div>
+              {rating > 0 && (
+                <p className="text-[13px] font-bold text-[#6E9625]">
+                  {rating.toFixed(1)} {rating >= 4 ? 'Excellent Quality' : rating >= 3 ? 'Good Quality' : 'Poor Quality'}
+                </p>
+              )}
             </div>
 
             <div className="pt-4">

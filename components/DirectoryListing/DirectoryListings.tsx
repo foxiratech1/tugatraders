@@ -8,7 +8,7 @@ import { Star, MapPin, Bookmark, List, Map as MapIcon } from 'lucide-react';
 import { authApi } from '@/app/api/authApi';
 
 const getImageUrl = (path: string | null | undefined) => {
-  if (!path) return '/logo.png';
+  if (!path) return "/avt.png";
   if (path.startsWith('http')) return path;
 
   const rawBase = process.env.NEXT_PUBLIC_API_URL || '';
@@ -176,7 +176,7 @@ const DirectoryListings = () => {
   // pending trader ID is persisted in localStorage across navigation
   // we keep a state for UI consistency (optional)
   const [pendingTraderId, setPendingTraderId] = useState<string | null>(null);
-  
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [paginationData, setPaginationData] = useState<{ total: number; page: number; limit: number; totalPages: number } | null>(null);
@@ -277,40 +277,32 @@ const DirectoryListings = () => {
       />
       <div className="max-w-[1440px] mx-auto">
         {/* Header Section */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-4">
-          <div>
-            <h2 className="text-[24px] font-bold text-[#064E3B] mb-2" style={{ fontFamily: 'var(--font-bricolage)' }}>
-              Showing {paginationData ? (paginationData.page - 1) * paginationData.limit + 1 : (displayedProfessionals.length > 0 ? 1 : 0)}-{paginationData ? Math.min(paginationData.page * paginationData.limit, paginationData.total) : displayedProfessionals.length} of {paginationData ? paginationData.total : displayedProfessionals.length} Verified professionals matching your search.
-            </h2>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full sm:w-auto justify-between sm:justify-start">
-            <div className="flex bg-[#F3F4F6] rounded-xl p-1">
-              <button
-                onClick={() => setActiveTab('list')}
-                className={`flex items-center gap-2 px-4 sm:px-6 py-1.5 sm:py-2 rounded-lg font-bold text-sm transition-all cursor-pointer ${activeTab === 'list'
-                  ? 'bg-white text-[#064E3B] shadow-sm'
-                  : 'text-[#6B7280] hover:text-[#243A24]'
-                  }`}
-              >
-                <List size={18} />
-                List
-              </button>
-              <button
-                onClick={() => setActiveTab('map')}
-                className={`flex items-center gap-2 px-4 sm:px-6 py-1.5 sm:py-2 rounded-lg font-bold text-sm transition-all cursor-pointer ${activeTab === 'map'
-                  ? 'bg-white text-[#064E3B] shadow-sm'
-                  : 'text-[#6B7280] hover:text-[#243A24]'
-                  }`}
-              >
-                <MapIcon size={18} />
-                Map
-              </button>
-            </div>
-            <button className="flex items-center gap-2 px-4 py-2 sm:px-6 sm:py-3 bg-white border border-[#E5E7EB] rounded-xl sm:rounded-2xl text-[#064E3B] font-bold text-sm sm:text-lg shadow-sm hover:bg-gray-50 transition-colors cursor-pointer">
-              Top Rated
+        <div className="flex flex-col md:flex-row justify-end items-start md:items-center mb-10 gap-4">
+          <div className="flex bg-[#F3F4F6] rounded-xl p-1">
+            <button
+              onClick={() => setActiveTab('list')}
+              className={`flex items-center gap-2 px-4 sm:px-6 py-1.5 sm:py-2 rounded-lg font-bold text-sm transition-all cursor-pointer ${activeTab === 'list'
+                ? 'bg-white text-[#064E3B] shadow-sm'
+                : 'text-[#6B7280] hover:text-[#243A24]'
+                }`}
+            >
+              <List size={18} />
+              List
+            </button>
+            <button
+              onClick={() => setActiveTab('map')}
+              className={`flex items-center gap-2 px-4 sm:px-6 py-1.5 sm:py-2 rounded-lg font-bold text-sm transition-all cursor-pointer ${activeTab === 'map'
+                ? 'bg-white text-[#064E3B] shadow-sm'
+                : 'text-[#6B7280] hover:text-[#243A24]'
+                }`}
+            >
+              <MapIcon size={18} />
+              Map
             </button>
           </div>
+          <button className="flex items-center gap-2 px-4 py-2 sm:px-6 sm:py-3 bg-white border border-[#E5E7EB] rounded-xl sm:rounded-2xl text-[#064E3B] font-bold text-sm sm:text-lg shadow-sm hover:bg-gray-50 transition-colors cursor-pointer">
+            Top Rated
+          </button>
         </div>
 
         {/* Listings Grid */}
@@ -414,11 +406,10 @@ const DirectoryListings = () => {
                 <button
                   key={i + 1}
                   onClick={() => fetchProfessionals(i + 1)}
-                  className={`w-10 h-10 flex items-center justify-center rounded-[12px] text-[14px] font-bold transition-colors cursor-pointer ${
-                    currentPage === i + 1
+                  className={`w-10 h-10 flex items-center justify-center rounded-[12px] text-[14px] font-bold transition-colors cursor-pointer ${currentPage === i + 1
                       ? 'bg-[#243A24] text-white shadow-md'
                       : 'bg-white border border-gray-200 text-[#1C2C1C] hover:bg-gray-50'
-                  }`}
+                    }`}
                 >
                   {i + 1}
                 </button>

@@ -28,6 +28,17 @@ import toast from "react-hot-toast";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
+const getAttachmentUrl = (path: string | null | undefined) => {
+  if (!path) return "";
+  let cleanPath = path;
+  if (cleanPath.startsWith("undefined")) {
+    cleanPath = cleanPath.replace("undefined", "");
+  }
+  if (cleanPath.startsWith("http")) return cleanPath;
+  const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
+  return `${baseUrl}${cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`}`;
+};
+
 interface Attachment {
   id: string;
   jobId: string;
@@ -321,7 +332,7 @@ function ExpandedDetail({
                         className="aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200"
                       >
                         <img
-                          src={att.url?.startsWith("undefined") ? `/${att.file}` : att.url}
+                          src={getAttachmentUrl(att.url || att.file)}
                           alt="Attachment"
                           className="w-full h-full object-cover"
                         />

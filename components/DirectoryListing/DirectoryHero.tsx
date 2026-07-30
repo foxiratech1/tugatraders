@@ -200,17 +200,6 @@ const DirectoryHero = () => {
               disabled={!selectedCategory}
             />
 
-            {/* Sub Category */}
-            <CustomDropdown
-              label="Sub Category"
-              icon={FaLayerGroup}
-              value={selectedSubCategory}
-              onChange={setSelectedSubCategory}
-              options={subCategories.map(sc => ({ id: sc.id || sc._id, name: sc.name }))}
-              placeholder="Select Sub Category"
-              disabled={!selectedSkill}
-            />
-
             {/* Location */}
             <div className="flex-[0.8] flex items-center justify-center lg:justify-start gap-2 lg:gap-4 px-4 md:px-2 lg:px-4 py-4 min-w-0">
               <FaLocationDot className="text-[#243A24] flex-shrink-0 w-5 h-5 lg:w-6 lg:h-6" />

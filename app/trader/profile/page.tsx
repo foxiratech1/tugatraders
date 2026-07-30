@@ -263,6 +263,7 @@ export default function TraderProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [traderStatus, setTraderStatus] = useState("PENDING");
+  const [isStep2Done, setIsStep2Done] = useState(false);
 
   /* profile photo */
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -321,11 +322,13 @@ export default function TraderProfilePage() {
 
   const [categoryGroups, setCategoryGroups] = useState<CategoryGroup[]>([]);
   const [initialCategoryGroups, setInitialCategoryGroups] = useState<CategoryGroup[]>([]);
+  const [isCategoriesDirty, setIsCategoriesDirty] = useState<boolean>(false);
   const [skillServicesMap, setSkillServicesMap] = useState<Record<string, { id: string; name: string }[]>>({});
   const [subCategoriesMap, setSubCategoriesMap] = useState<Record<string, { id: string; name: string }[]>>({});
 
   const [maxTrades, setMaxTrades] = useState<number>(1);
   const [unlimitedTrades, setUnlimitedTrades] = useState<boolean>(false);
+  const [isCategoryChangePending, setIsCategoryChangePending] = useState<boolean>(false);
   /* ── load profile ── */
   useEffect(() => {
     async function load() {
@@ -410,6 +413,8 @@ export default function TraderProfilePage() {
           setUnlimitedTrades(plan.unlimitedTrades || false);
         }
 
+        setIsCategoryChangePending(!!tp?.hasPendingCategoryChange || tp?.categoryChangeStatus === 'PENDING' || tp?.isCategoryChangePending === true);
+
         const categories = await authApi.getCategories();
 
         setTradeCategories(
@@ -420,7 +425,9 @@ export default function TraderProfilePage() {
 
         const regRes = await getRegistrationStatus();
         const unwrappedReg = regRes?.data || regRes;
-        setTraderStatus(unwrappedReg?.verificationStatus ?? unwrappedReg?.status ?? "PENDING");
+        const vStatus = unwrappedReg?.verificationStatus ?? unwrappedReg?.status ?? "PENDING";
+        setTraderStatus(vStatus);
+        setIsStep2Done(unwrappedReg?.step2Completed === true || unwrappedReg?.currentStep === 3 || vStatus === "MANUAL_CHECK" || vStatus === "APPROVED");
 
 
 
@@ -448,30 +455,33 @@ export default function TraderProfilePage() {
         if (logo) setLogoPreview(getFullUrl(logo));
 
         // Load existing portfolio items
-        const portfolio = tp?.portfolioItems || tp?.portfolio || [];
+        const rawPortfolio = tp?.portfolioItems || tp?.portfolio;
+        const portfolio = Array.isArray(rawPortfolio) ? rawPortfolio : (rawPortfolio ? [rawPortfolio] : []);
         setExistingPortfolio(portfolio);
         const pPreviews = portfolio.map((item: any) => {
           let url = typeof item === 'object' ? item.url || item.path || item.fileUrl : item;
           return url ? getFullUrl(url) : null;
-        }).filter(Boolean);
+        }).filter(Boolean) as string[];
         setPortfolioPreviews(pPreviews);
 
         // Load existing certificates
-        const certs = tp?.certificates || [];
+        const rawCerts = tp?.certificates;
+        const certs = Array.isArray(rawCerts) ? rawCerts : (rawCerts ? [rawCerts] : []);
         setExistingCertificates(certs);
         const cPreviews = certs.map((item: any) => {
           let url = typeof item === 'object' ? item.url || item.path || item.fileUrl : item;
           return url ? getFullUrl(url) : null;
-        }).filter(Boolean);
+        }).filter(Boolean) as string[];
         setCertificatePreviews(cPreviews);
 
         // Load existing insurance
-        const ins = tp?.insuranceDocuments || [];
+        const rawIns = tp?.insuranceDocuments || tp?.insurance;
+        const ins = Array.isArray(rawIns) ? rawIns : (rawIns ? [rawIns] : []);
         setExistingInsurance(ins);
         const iPreviews = ins.map((item: any) => {
           let url = typeof item === 'object' ? item.url || item.path || item.fileUrl : item;
           return url ? getFullUrl(url) : null;
-        }).filter(Boolean);
+        }).filter(Boolean) as string[];
         setInsurancePreviews(iPreviews);
 
       } catch (e) {
@@ -730,8 +740,8 @@ export default function TraderProfilePage() {
       ThemeSwal.fire({ icon: 'warning', iconColor: '#F59E0B', title: 'Validation Error', text: 'Please enter a valid phone number (e.g. +351 912 345 678).' }); return;
     }
 
-    if (!businessForm.companyName.trim()) { ThemeSwal.fire({ icon: 'warning', iconColor: '#F59E0B', title: 'Validation Error', text: 'Company Name is required.' }); return; }
-    if (!businessForm.companyType.trim()) { ThemeSwal.fire({ icon: 'warning', iconColor: '#F59E0B', title: 'Validation Error', text: 'Company Type is required.' }); return; }
+    // if (!businessForm.companyName.trim()) { ThemeSwal.fire({ icon: 'warning', iconColor: '#F59E0B', title: 'Validation Error', text: 'Company Name is required.' }); return; }
+    // if (!businessForm.companyType.trim()) { ThemeSwal.fire({ icon: 'warning', iconColor: '#F59E0B', title: 'Validation Error', text: 'Company Type is required.' }); return; }
 
 
 
@@ -760,9 +770,9 @@ export default function TraderProfilePage() {
           .sort((a, b) => a.categoryId.localeCompare(b.categoryId));
       };
 
-      const categoriesChanged = JSON.stringify(normalizeGroups(categoryGroups)) !== JSON.stringify(normalizeGroups(initialCategoryGroups));
+      const categoriesChanged = isCategoriesDirty && JSON.stringify(normalizeGroups(categoryGroups)) !== JSON.stringify(normalizeGroups(initialCategoryGroups));
 
-      if (traderStatus !== "MANUAL_CHECK" && categoriesChanged) {
+      if (traderStatus !== "MANUAL_CHECK" && categoriesChanged && !isCategoryChangePending) {
         const validGroups = categoryGroups.filter(g => g.categoryId && g.selectedSkillServices.length > 0 && g.selectedSubCategories.length > 0);
 
         const tradeCategories = validGroups.map(g => g.categoryId);
@@ -790,20 +800,15 @@ export default function TraderProfilePage() {
       if (selectedProfileFile) fd.append("profileImage", selectedProfileFile);
       if (idFile) fd.append("document", idFile);
       if (logoFile) fd.append("logo", logoFile);
-      // portfolio files are sent to a separate endpoint
+
+      // portfolio, certificates, and insurance files are sent to a separate endpoint
 
       const updateRes = await authApi.updateProfile(fd);
 
       // --- NEW: Update Assets ---
-      if (traderStatus !== "MANUAL_CHECK" && businessForm.planName) {
+      if (traderStatus !== "MANUAL_CHECK") {
         const assetsFd = new FormData();
         assetsFd.append("aboutUs", personalForm.bio || " ");
-
-        if (portfolioFiles && portfolioFiles.length > 0) {
-          portfolioFiles.forEach((file) => {
-            assetsFd.append("portfolioImages", file);
-          });
-        }
 
         if (certificateFiles && certificateFiles.length > 0) {
           certificateFiles.forEach((file) => {
@@ -814,6 +819,13 @@ export default function TraderProfilePage() {
         if (insuranceFiles && insuranceFiles.length > 0) {
           insuranceFiles.forEach((file) => {
             assetsFd.append("insuranceDocuments", file);
+          });
+        }
+
+        // Only send portfolio if they have a plan (subscription)
+        if (businessForm.planName && portfolioFiles && portfolioFiles.length > 0) {
+          portfolioFiles.forEach((file) => {
+            assetsFd.append("portfolioImages", file);
           });
         }
 
@@ -843,6 +855,10 @@ export default function TraderProfilePage() {
       const errorMessage = err?.response?.data?.message || "Failed to update profile";
       // If it's a specific logic error, we use a softer icon. Otherwise standard error.
       const isLogicError = errorMessage.toLowerCase().includes("pending");
+
+      if (isLogicError) {
+        setIsCategoryChangePending(true);
+      }
 
       ThemeSwal.fire({
         icon: isLogicError ? 'info' : 'error',
@@ -893,6 +909,7 @@ export default function TraderProfilePage() {
             {/* ── Left sidebar ── */}
             <div className="w-48 flex-shrink-0 space-y-1">
               {TABS.filter(tab => {
+                if (tab.id === "business" && !isStep2Done) return false;
                 if (tab.id === "portfolio") return !!businessForm.planName;
                 if (tab.id === "document") return !businessForm.planName;
                 return true;
@@ -1106,11 +1123,10 @@ export default function TraderProfilePage() {
                     </div>
                   </div>
 
-                  {/* Identity & Logo uploads */}
+                  {/* Identity & Logo uploads 
                   <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm px-6 py-6">
                     <div className="grid gap-5 grid-cols-1">
 
-                      {/* Profile / Logo */}
                       <div className="border border-dashed border-[#C8D8B0] rounded-xl p-5 flex flex-col items-center text-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-[#6E9625]/10 flex items-center justify-center overflow-hidden">
                           {logoPreview ? (
@@ -1148,6 +1164,7 @@ export default function TraderProfilePage() {
                       </div>
                     </div>
                   </div>
+                  */}
                 </>
               )}
 
@@ -1172,9 +1189,9 @@ export default function TraderProfilePage() {
                         type="text"
                         name="companyName"
                         value={businessForm.companyName}
-                        onChange={handleBusinessChange}
+                        readOnly
                         placeholder="e.g. Santos Electrical Ltd"
-                        className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
+                        className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none transition-all bg-gray-50 cursor-not-allowed"
                       />
                     </div>
 
@@ -1187,8 +1204,8 @@ export default function TraderProfilePage() {
                         id="tp-companyType"
                         name="companyType"
                         value={businessForm.companyType}
-                        onChange={handleBusinessChange}
-                        className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all bg-white"
+                        disabled
+                        className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] focus:outline-none transition-all bg-gray-50 cursor-not-allowed"
                       >
                         <option value="">Select type</option>
                         {COMPANY_TYPES.map((t) => (
@@ -1209,9 +1226,9 @@ export default function TraderProfilePage() {
                         type="text"
                         name="niNumber"
                         value={businessForm.niNumber}
-                        onChange={handleBusinessChange}
+                        readOnly
                         placeholder="e.g. AB 12 34 56 C"
-                        className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
+                        className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none transition-all bg-gray-50 cursor-not-allowed"
                       />
                     </div>
 
@@ -1231,6 +1248,141 @@ export default function TraderProfilePage() {
                         />
                       </div>
                     )}
+                  </div>
+
+                  {/* ════ TRADE CATEGORIES ════ */}
+                  <div className="mt-8 mb-4">
+                    <h2 className="text-[14px] font-bold text-[#1C2C1C]">
+                      Trade Categories
+                    </h2>
+                    <p className="text-[12px] text-gray-400 mt-1">
+                      Define your trade categories, skill services, and sub-categories so customers can find you.
+                    </p>
+                  </div>
+
+                  {isCategoryChangePending && (
+                    <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-start gap-3">
+                      <AlertCircle size={18} className="text-amber-500 flex-shrink-0 mt-0.5" />
+                      <p className="text-[13px] text-amber-800 font-medium leading-relaxed">
+                        Your Trade Category change request is pending approval. You cannot make further category changes until the current request is processed.
+                      </p>
+                    </div>
+                  )}
+
+                  <div className="bg-[#FAFAFA] border border-[#E8E8E8] rounded-2xl p-6 mb-6">
+                    <h4 className="text-[13px] font-bold text-[#1C2C1C] mb-3">Select Trade Categories</h4>
+                    <MultiSelect
+                      options={tradeCategories}
+                      selectedIds={categoryGroups.map(g => g.categoryId).filter(Boolean)}
+                      disabled={isCategoryChangePending}
+                      onChange={(ids) => {
+                        setIsCategoriesDirty(true);
+                        const maxCats = unlimitedTrades ? 9999 : maxTrades;
+                        if (ids.length > maxCats) {
+                          toast.error(`Your plan allows a maximum of ${maxCats === 9999 ? 'Unlimited' : maxCats} Categories.`, { id: "max-cats-error" });
+                          return;
+                        }
+
+                        setCategoryGroups(prev => {
+                          const next = prev.filter(g => ids.includes(g.categoryId));
+
+                          ids.forEach(id => {
+                            if (!next.find(g => g.categoryId === id)) {
+                              next.push({
+                                id: Date.now().toString() + Math.random().toString(),
+                                categoryId: id,
+                                selectedSkillServices: [],
+                                selectedSubCategories: [],
+                                isCollapsed: false
+                              });
+
+                              if (!skillServicesMap[id]) {
+                                authApi.getSkillServices(id).then((res: any) => {
+                                  const skillsArray = Array.isArray(res) ? res : res?.data || res?.services || [];
+                                  setSkillServicesMap(m => ({ ...m, [id]: skillsArray }));
+                                }).catch((err: any) => console.error(err));
+                              }
+                            }
+                          });
+                          return next;
+                        });
+                      }}
+                      placeholder="Select Categories *"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-5 mb-8">
+                    {categoryGroups.map((group, index) => {
+                      const categoryName = tradeCategories.find(c => c.id === group.categoryId)?.name || "Category";
+                      const skillServices = skillServicesMap[group.categoryId] || [];
+                      const subCategories = group.selectedSkillServices.flatMap(skillId => subCategoriesMap[skillId] || []);
+
+                      return (
+                        <div key={group.id} className="relative bg-white border border-[#E8E8E8] rounded-2xl p-6 shadow-sm">
+                          <div className="flex justify-between items-center mb-5 border-b border-[#E8E8E8] pb-3">
+                            <h4 className="text-[14px] font-bold text-[#1C2C1C]">{categoryName} Services</h4>
+                          </div>
+
+                          <div className="grid grid-cols-1 gap-5">
+                            <div>
+                              <label className="block text-[12px] font-medium text-gray-500 mb-2 uppercase tracking-wide">
+                                Select {categoryName} Skill Services *
+                              </label>
+                              <MultiSelect
+                                options={skillServices}
+                                selectedIds={group.selectedSkillServices}
+                                disabled={isCategoryChangePending}
+                                onChange={(ids) => {
+                                  setIsCategoriesDirty(true);
+                                  handleCategoryGroupChange(group.id, 'selectedSkillServices', ids);
+                                }}
+                                placeholder="Choose Skill Services..."
+                              />
+                            </div>
+
+                            {group.selectedSkillServices.length === 0 ? (
+                              <div>
+                                <label className="block text-[12px] font-medium text-gray-500 mb-2 uppercase tracking-wide">
+                                  Select Sub Categories *
+                                </label>
+                                <MultiSelect
+                                  options={[]}
+                                  selectedIds={[]}
+                                  onChange={() => { }}
+                                  placeholder="Choose Sub Categories..."
+                                  disabled={true}
+                                />
+                              </div>
+                            ) : (
+                              group.selectedSkillServices.map(skillId => {
+                                const skillName = skillServices.find(s => s.id === skillId)?.name || "Skill Service";
+                                const skillSubCats = subCategoriesMap[skillId] || [];
+
+                                if (skillSubCats.length === 0) return null;
+
+                                return (
+                                  <div key={skillId} className="mt-2">
+                                    <label className="block text-[12px] font-medium text-gray-500 mb-2 uppercase tracking-wide">
+                                      Select {skillName} Sub Categories *
+                                    </label>
+                                    <MultiSelect
+                                      options={skillSubCats}
+                                      selectedIds={group.selectedSubCategories}
+                                      disabled={isCategoryChangePending}
+                                      onChange={(ids) => {
+                                        setIsCategoriesDirty(true);
+                                        handleCategoryGroupChange(group.id, 'selectedSubCategories', ids);
+                                      }}
+                                      placeholder="Choose Sub Categories..."
+                                    />
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
 
                   {/* Proof of Identity */}

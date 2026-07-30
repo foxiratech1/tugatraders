@@ -138,7 +138,7 @@ const CategoryBrowse = () => {
             <Link
               href={`/directory-listing/search?categoryId=${cat.id}`}
               key={index}
-              className="group relative block min-w-[250px] h-[220px] bg-white rounded-[34px] p-7 overflow-hidden flex-shrink-0 shadow-2xl cursor-pointer transition-all duration-500 hover:bg-[#F5F8F2] hover:-translate-y-1"
+              className="group relative block min-w-[220px] h-[190px] bg-white rounded-[30px] p-6 overflow-hidden flex-shrink-0 shadow-2xl cursor-pointer transition-all duration-500 hover:bg-[#F5F8F2] hover:-translate-y-1"
             >
               {/* CONTENT */}
               <div className="relative z-10 h-full flex flex-col justify-between">
@@ -169,10 +169,6 @@ const CategoryBrowse = () => {
 
                 {/* HOVER CONTENT */}
                 <div className="opacity-0 translate-y-6 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500">
-                  <p className="text-[#4B5563] text-[14px] leading-relaxed mb-5">
-                    Find the best {cat.name.toLowerCase()}s for your project.
-                  </p>
-
                   <div className="flex items-center gap-2 text-[#6E9625] font-semibold text-[14px]">
                     View trades
                     <ArrowRight

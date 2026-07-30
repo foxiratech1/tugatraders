@@ -77,7 +77,7 @@ function timeAgo(dateString: string) {
 }
 
 function getImageUrl(path: string | undefined) {
-  if (!path) return undefined;
+  if (!path) return "/avt.png";
   if (path.startsWith("http")) return path;
   const base = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
   const cleanPath = path.replace(/^\/+/, "");

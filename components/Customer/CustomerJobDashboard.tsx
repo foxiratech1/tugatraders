@@ -118,6 +118,17 @@ interface Job {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+const getAttachmentUrl = (path: string | null | undefined) => {
+  if (!path) return "";
+  let cleanPath = path;
+  if (cleanPath.startsWith("undefined")) {
+    cleanPath = cleanPath.replace("undefined", "");
+  }
+  if (cleanPath.startsWith("http")) return cleanPath;
+  const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
+  return `${baseUrl}${cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`}`;
+};
+
 const formatDate = (iso: string) => {
   if (!iso) return "—";
   const d = new Date(iso);
@@ -137,6 +148,7 @@ const formatBudget = (b: string) =>
 // Status badge config
 const statusConfig: Record<string, { label: string; bg: string; text: string; dot: string }> = {
   OPEN: { label: "Open", bg: "bg-[#E8F5E9]", text: "text-[#2E7D32]", dot: "bg-[#2E7D32]" },
+  POSTED: { label: "Live", bg: "bg-[#E8F5E9]", text: "text-[#2E7D32]", dot: "bg-[#2E7D32]" },
   QUOTE_RECEIVED: {
     label: "Quote Received",
     bg: "bg-[#FFF8E1]",
@@ -541,6 +553,7 @@ export default function CustomerJobDashboard() {
   const [savedTradersLoading, setSavedTradersLoading] = useState(true);
   const [quotesModalOpen, setQuotesModalOpen] = useState(false);
   const [jobMenuOpen, setJobMenuOpen] = useState(false);
+  const [isCloseJobModalOpen, setIsCloseJobModalOpen] = useState(false);
 
   const handleOpenChat = async (traderId: string, jobId?: string) => {
     try {
@@ -626,7 +639,7 @@ export default function CustomerJobDashboard() {
     }
   };
 
-  const handleCloseJob = async () => {
+  const handleCloseJobSubmit = async () => {
     if (!selectedJob) return;
     try {
       await authApi.closeJob(selectedJob.id);
@@ -707,7 +720,7 @@ export default function CustomerJobDashboard() {
         {/* ── Page Header ───────────────────────────────────────────────── */}
         <div className="flex items-start justify-between mb-8">
           <h1 className="text-[2rem] font-bold text-[#1C2C1C] leading-tight">
-            DashBoard
+            Dashboard
           </h1>
           <div className="flex items-center gap-3 pt-1">
             {/* Email notice */}
@@ -765,18 +778,19 @@ export default function CustomerJobDashboard() {
               <div className="space-y-3">
                 {jobs.map((job) => {
                   const isSelected = selectedJob?.id === job.id;
+                  const isClosed = job.status === "CLOSED";
                   return (
                     <button
                       key={job.id}
                       onClick={() => setSelectedJob(job)}
-                      className={`w-full p-4 rounded-xl border transition-all
+                      className={`w-full p-4 rounded-xl border transition-all text-left
 ${isSelected
-                          ? "border-[#8BC34A] bg-white"
-                          : "border-transparent bg-white hover:border-gray-200"
+                          ? `border-[#8BC34A] ${isClosed ? 'bg-gray-50' : 'bg-white'}`
+                          : `${isClosed ? 'border-gray-200 bg-gray-50 opacity-70 hover:bg-gray-100' : 'border-transparent bg-white hover:border-gray-200'}`
                         }`}
                     >
                       <div className="flex items-start justify-between gap-1.5 mb-1">
-                        <p className="text-[12px] font-semibold text-[#1C2C1C] leading-snug line-clamp-2">
+                        <p className={`text-[12px] font-semibold leading-snug line-clamp-2 ${isClosed && !isSelected ? 'text-gray-500' : 'text-[#1C2C1C]'}`}>
                           {job.title}
                         </p>
                       </div>
@@ -795,13 +809,15 @@ ${isSelected
           {/* ── Right: Selected Job Detail ────────────────────────────── */}
           {selectedJob ? (
             <div className="flex flex-col gap-5 min-h-[265px]">
+              {(() => {
+                const isSelectedClosed = selectedJob.status === "CLOSED";
+                return (
+                  <>
+                    {/* Top Card: Job Header + Trader Quotes */}
+                    <div className="space-y-4">
 
-              {/* Top Card: Job Header + Trader Quotes */}
-              <div className="space-y-4">
-
-                {/* Header Card */}
-
-                <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm px-6 py-5">
+                      {/* Header Card */}
+                      <div className={`rounded-2xl border border-[#E8E8E8] shadow-sm px-6 py-5 ${isSelectedClosed ? 'bg-gray-50 opacity-90' : 'bg-white'}`}>
                   <div className="flex items-start justify-between">
                     <div>
                       <div className="flex items-center gap-3">
@@ -818,12 +834,34 @@ ${isSelected
                       </div>
                     </div>
 
-                    <div className="relative">
-                      <button
-                        onClick={() => setJobMenuOpen(!jobMenuOpen)}
-                        onBlur={() => setTimeout(() => setJobMenuOpen(false), 200)}
-                        className="w-8 h-8 flex items-center justify-center text-[#223321]"
-                      >
+                    <div className="flex items-center gap-1">
+                      {(() => {
+                        const createdAt = new Date(selectedJob.createdAt).getTime();
+                        const now = new Date().getTime();
+                        const hoursDiff = (now - createdAt) / (1000 * 60 * 60);
+                        if (hoursDiff <= 48 && selectedJob.status !== "CLOSED" && selectedJob.status !== "CANCELLED" && selectedJob.status !== "COMPLETED") {
+                          return (
+                            <button
+                              onClick={() => {
+                                // @todo: Add actual edit navigation or modal logic when ready
+                                toast("Edit job functionality coming soon", { icon: "🚧" });
+                              }}
+                              className="w-8 h-8 flex items-center justify-center text-[#223321] hover:bg-gray-100 rounded-full transition-colors"
+                              title="Edit Job"
+                            >
+                              <Edit2 size={16} />
+                            </button>
+                          );
+                        }
+                        return null;
+                      })()}
+
+                      <div className="relative">
+                        <button
+                          onClick={() => setJobMenuOpen(!jobMenuOpen)}
+                          onBlur={() => setTimeout(() => setJobMenuOpen(false), 200)}
+                          className="w-8 h-8 flex items-center justify-center text-[#223321] hover:bg-gray-100 rounded-full transition-colors"
+                        >
                         <MoreVertical size={20} />
                       </button>
 
@@ -842,7 +880,7 @@ ${isSelected
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleCloseJob();
+                              setIsCloseJobModalOpen(true);
                               setJobMenuOpen(false);
                             }}
                             className="w-full text-center py-2.5 px-3 text-[14px] bg-[#E8E8E8] rounded-xl hover:bg-[#d6d6d6] cursor-pointer transition-colors text-[#001D3D]"
@@ -852,12 +890,13 @@ ${isSelected
                         </div>
                       )}
                     </div>
+                    </div>
                   </div>
                 </div>
 
                 {/* Trader Quotes Card */}
 
-                <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm p-5">
+                <div className={`rounded-2xl border border-[#E8E8E8] shadow-sm p-5 ${isSelectedClosed ? 'bg-gray-50 opacity-90' : 'bg-white'}`}>
                   <div className="flex items-center justify-between mb-5">
                     <h3 className="text-[15px] font-bold text-[#223321]">
                       Trader Quotes ({quotesLoading ? "..." : Math.max(quotes.length, quotesCount)})
@@ -933,7 +972,7 @@ ${isSelected
               <div className="grid grid-cols-[3fr_1.4fr] gap-5">
 
                 {/* Job Details Accordion Card */}
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-5">
+                <div className={`rounded-2xl border border-gray-200 shadow-sm px-5 ${isSelectedClosed ? 'bg-gray-50 opacity-90' : 'bg-white'}`}>
                   <h3 className="text-[14px] font-bold text-[#1C2C1C] py-4 border-b border-gray-100">
                     Job Details
                   </h3>
@@ -1021,7 +1060,7 @@ ${isSelected
                             className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0"
                           >
                             <img
-                              src={att.url?.startsWith("undefined") ? `/${att.file}` : att.url}
+                              src={getAttachmentUrl(att.url || att.file)}
                               alt="Job attachment"
                               className="w-full h-full object-cover"
                             />
@@ -1035,7 +1074,7 @@ ${isSelected
                 </div>
 
                 {/* Saved Traders Card */}
-                <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 h-fit">
+                <div className={`rounded-2xl border border-gray-200 shadow-sm p-4 h-fit ${isSelectedClosed ? 'bg-gray-50 opacity-90' : 'bg-white'}`}>
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
                       <Bookmark size={14} className="text-[#4CAF50]" />
@@ -1086,6 +1125,9 @@ ${isSelected
                   </Link>
                 </div>
               </div>
+                  </>
+                );
+              })()}
             </div>
           ) : !loading ? (
             <div className="bg-white rounded-2xl border border-gray-200 flex items-center justify-center p-16 text-[14px] text-gray-400">
@@ -1096,6 +1138,49 @@ ${isSelected
       </div>
 
       {/* Quotes Modal */}
+      
+      {/* Close Job Modal */}
+      {isCloseJobModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl relative">
+            <button 
+              onClick={() => setIsCloseJobModalOpen(false)} 
+              className="absolute top-4 right-4 text-gray-400 hover:bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center transition-colors"
+            >
+              <X size={20} />
+            </button>
+            
+            <h2 className="text-xl font-bold text-[#1C2C1C] mb-4">
+              Was any work carried out?
+            </h2>
+            
+            <div className="flex flex-col gap-3 mt-6">
+              <button 
+                onClick={async () => {
+                  setIsCloseJobModalOpen(false);
+                  await handleCloseJobSubmit();
+                  const traderId = selectedJob?.selectedTrader?.id || '';
+                  router.push(`/customer-dashboard/leave-review?jobId=${selectedJob?.id}&traderId=${traderId}&workCarriedOut=true&hideWorkCarriedOut=true`);
+                }}
+                className="w-full py-3 bg-[#4CAF50] text-white rounded-xl font-bold hover:bg-[#43A047] transition-colors cursor-pointer"
+              >
+                Yes
+              </button>
+              <button 
+                onClick={async () => {
+                  setIsCloseJobModalOpen(false);
+                  await handleCloseJobSubmit();
+                  const traderId = selectedJob?.selectedTrader?.id || '';
+                  router.push(`/customer-dashboard/leave-review?jobId=${selectedJob?.id}&traderId=${traderId}&workCarriedOut=false&hideWorkCarriedOut=true`);
+                }}
+                className="w-full py-3 border border-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-colors cursor-pointer"
+              >
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {quotesModalOpen && (
         <QuotesModal
           quotes={quotes}

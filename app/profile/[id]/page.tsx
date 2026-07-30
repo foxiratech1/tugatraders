@@ -14,7 +14,7 @@ import VettingModal from "@/components/modal/VettingModal";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://api.tugatraders.server24.in";
 function getImageUrl(path: any): string {
-  if (!path) return "/placeholder.png";
+  if (!path) return "/avt.png";
 
   let stringPath = path;
   if (typeof path === 'object') {

@@ -51,7 +51,7 @@ export default function TrustSection() {
               className="inline-flex items-center gap-2 text-[#89b341] font-bold text-[16px]"
             >
               Learn how we protect you
-              <FiArrowRight size={20} />
+              {/* <FiArrowRight size={20} /> */}
             </p>
           </div>
 

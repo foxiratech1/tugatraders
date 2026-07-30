@@ -17,6 +17,7 @@ interface Review {
   workCompletedDate?: string;
   interactionSource?: string;
   wouldRecommendTrader?: boolean;
+  noWorkReason?: string;
   createdAt: string;
   trader?: {
     id?: string;
@@ -45,6 +46,17 @@ function StarRating({ rating }: { rating: number }) {
   );
 }
 
+const REASON_MAP: Record<string, string> = {
+  'TRADER_DIDNT_RESPOND': "Trader didn't respond",
+  'TRADER_DECLINED_JOB': "Trader declined the job",
+  'TRADER_MISSED_APPOINTMENT': "Missed appointment",
+  'QUOTE_OVER_BUDGET': "Quote over budget",
+  'WANTED_QUOTE_ONLY': "Wanted a quote",
+  'JOB_NO_LONGER_NEEDED': "No longer needed/changed my mind",
+  'BETTER_PRICE_ELSEWHERE': "Hired elsewhere",
+  'OTHER': "Other reason"
+};
+
 export default function CustomerReviews() {
   const router = useRouter();
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -70,9 +82,10 @@ export default function CustomerReviews() {
     if (r.interactionSource) params.set('interactionSource', r.interactionSource);
     if (r.workCompletedDate) params.set('completionDate', r.workCompletedDate.split('T')[0]);
     if (r.workCarriedOut !== undefined) params.set('workCarriedOut', r.workCarriedOut.toString());
+    if (r.noWorkReason) params.set('noWorkReason', r.noWorkReason);
     if (r.reviewType) params.set('reviewType', r.reviewType);
     if (r.createdAt) params.set('createdAt', r.createdAt);
-    
+
     router.push(`/customer-dashboard/leave-review?${params.toString()}`);
   };
 
@@ -147,16 +160,18 @@ export default function CustomerReviews() {
                     {/* Trader avatar */}
                     <div className="w-12 h-12 rounded-full overflow-hidden bg-[#E9F3DC] flex items-center justify-center flex-shrink-0">
                       {r.trader?.profileImage ? (
-                        <img 
-                          src={r.trader.profileImage.startsWith("http") ? r.trader.profileImage : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "")}${r.trader.profileImage.startsWith("/") ? r.trader.profileImage : `/${r.trader.profileImage}`}`} 
-                          alt={r.trader.fullName || "Trader"} 
-                          className="w-full h-full object-cover" 
-                          crossOrigin="anonymous" 
+                        <img
+                          src={r.trader.profileImage.startsWith("http") ? r.trader.profileImage : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "")}${r.trader.profileImage.startsWith("/") ? r.trader.profileImage : `/${r.trader.profileImage}`}`}
+                          alt={r.trader.fullName || "Trader"}
+                          className="w-full h-full object-cover"
+                          crossOrigin="anonymous"
                         />
                       ) : (
-                        <span className="text-[#6E9625] font-bold text-[16px]">
-                          {r.trader?.fullName?.charAt(0)?.toUpperCase() || "T"}
-                        </span>
+                        <img
+                          src="/avt.png"
+                          alt={r.trader?.fullName || "Trader"}
+                          className="w-full h-full object-cover"
+                        />
                       )}
                     </div>
 
@@ -174,11 +189,10 @@ export default function CustomerReviews() {
 
                   {/* Badge + Rating */}
                   <div className="flex flex-col items-end gap-1">
-                    <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
-                      r.reviewType === "JOB"
+                    <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${r.reviewType === "JOB"
                         ? "bg-[#E9F3DC] text-[#4A7C10]"
                         : "bg-blue-50 text-blue-600"
-                    }`}>
+                      }`}>
                       {r.reviewType === "JOB" ? "Job Review" : "Directory Review"}
                     </span>
                     {r.rating > 0 && <StarRating rating={r.rating} />}
@@ -194,6 +208,14 @@ export default function CustomerReviews() {
                 {r.review && (
                   <p className="text-[14px] text-gray-600 leading-relaxed mb-4 break-words">
                     &ldquo;{r.review}&rdquo;
+                  </p>
+                )}
+
+                {/* Reason (if no work carried out) */}
+                {!r.workCarriedOut && r.noWorkReason && (
+                  <p className="text-[14px] text-gray-600 leading-relaxed mb-4 break-words">
+                    <span className="font-semibold text-[#1C2C1C]">Reason: </span>
+                    {REASON_MAP[r.noWorkReason] || r.noWorkReason}
                   </p>
                 )}
 

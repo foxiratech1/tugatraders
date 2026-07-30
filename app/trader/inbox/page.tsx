@@ -172,7 +172,7 @@ function TraderInboxContent() {
 
   // Helper to build a proper image URL, avoiding double-slash issues
   const getImageUrl = (path?: string | null): string | null => {
-    if (!path) return null;
+    if (!path) return "/avt.png";
     if (path.startsWith("http")) return path;
     const base = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000").replace(/\/+$/, "");
     const cleanPath = path.replace(/^\/+/, "");

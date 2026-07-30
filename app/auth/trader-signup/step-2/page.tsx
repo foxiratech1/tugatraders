@@ -456,7 +456,7 @@ export default function Step2Page() {
             // selectedSkillServices.forEach(id => payload.append("skillServiceIds", id));
             // selectedSubCategories.forEach(id => payload.append("subCategoryIds", id));
 
-            payload.append("about", formData.about);
+            // payload.append("about", formData.about);
             // payload.append("location", formData.location);
             payload.append("minimumExperience", String(formData.expMin1Year));
             payload.append("authorisedBusiness", String(formData.authorized));
@@ -466,8 +466,8 @@ export default function Step2Page() {
 
             if (logoFile) payload.append("logo", logoFile);
             if (idFile && showProofOfIdentity) payload.append("document", idFile);
-            if (certFile) payload.append("certificates", certFile);
-            if (insFile) payload.append("insuranceDocuments", insFile);
+            // if (certFile) payload.append("certificates", certFile);
+            // if (insFile) payload.append("insuranceDocuments", insFile);
 
             await traderRegisterStep2(payload);
             toast.success("Business verification submitted!");
@@ -570,7 +570,7 @@ export default function Step2Page() {
                                 <ImageIcon size={18} />
                             </div>
                         )}
-                        <h3 className="text-[13px] font-bold text-[#1C2C1C] mb-1">Profile / Logo</h3>
+                        <h3 className="text-[13px] font-bold text-[#1C2C1C] mb-1">Profile photo / Company logo</h3>
                         <p className="text-[10px] text-[#1C2C1C]/40 mb-4 max-w-[200px]">
                             (A high-quality business image for your public profile)
                         </p>
@@ -585,7 +585,7 @@ export default function Step2Page() {
                         </label>
                     </div>
 
-                    {/* Certificate */}
+                    {/* Certificate 
                     <div className="border border-dashed border-[#1C2C1C]/20 rounded-2xl p-6 flex flex-col items-center justify-center text-center hover:border-[#6E9625] hover:bg-[#6E9625]/5 transition-all bg-[#FAFAFA]">
                         <div className="w-10 h-10 bg-[#6E9625] rounded-full flex items-center justify-center text-white mb-4">
                             <IdCard size={18} />
@@ -619,8 +619,9 @@ export default function Step2Page() {
                             </div>
                         )}
                     </div>
+                    */}
 
-                    {/* Insurance Document */}
+                    {/* Insurance Document 
                     <div className="border border-dashed border-[#1C2C1C]/20 rounded-2xl p-6 flex flex-col items-center justify-center text-center hover:border-[#6E9625] hover:bg-[#6E9625]/5 transition-all bg-[#FAFAFA]">
                         <div className="w-10 h-10 bg-[#6E9625] rounded-full flex items-center justify-center text-white mb-4">
                             <ShieldCheck size={18} />
@@ -654,6 +655,7 @@ export default function Step2Page() {
                             </div>
                         )}
                     </div>
+                    */}
                 </div>
 
                 {/* Business Details Divider */}
@@ -722,12 +724,12 @@ export default function Step2Page() {
                         onChange={(e) => field("location", e.target.value)}
                         className={inputCls}
                     /> */}
-                    <textarea
+                    {/* <textarea
                         placeholder="About your business "
                         value={formData.about}
                         onChange={(e) => field("about", e.target.value)}
                         className={`${inputCls} sm:col-span-2 min-h-[80px] py-3 resize-none`}
-                    />
+                    /> */}
                 </div>
 
                 {/* First Checkbox Group */}
