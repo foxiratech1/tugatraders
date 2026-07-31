@@ -228,7 +228,7 @@ export default function TraderNavbar() {
                 Settings
               </Link>
 
-              <div className="relative" ref={reportDropdownRef}>
+              {/* <div className="relative" ref={reportDropdownRef}>
                 <button
                   onClick={async () => {
                     if (!reportOpen) {
@@ -296,7 +296,7 @@ export default function TraderNavbar() {
                     </div>
                   </div>
                 )}
-              </div>
+              </div> */}
               <div className="relative" ref={reportDropdownRef}>
 
                 {/* <Link

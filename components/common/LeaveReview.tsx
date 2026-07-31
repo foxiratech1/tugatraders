@@ -37,6 +37,33 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
+  const [selectedTraderId, setSelectedTraderId] = useState<string>(searchParams.get('traderId') || '');
+  const [traders, setTraders] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchTraders = async () => {
+      try {
+        const res = await authApi.searchTraders({ page: 1, limit: 100 });
+        let tradersList = [];
+        if (Array.isArray(res)) {
+          tradersList = res;
+        } else if (res?.data && Array.isArray(res.data)) {
+          tradersList = res.data;
+        } else if (res?.content && Array.isArray(res.content)) {
+          tradersList = res.content;
+        } else if (res?.data?.content && Array.isArray(res.data.content)) {
+          tradersList = res.data.content;
+        } else if (res?.traders && Array.isArray(res.traders)) {
+          tradersList = res.traders;
+        }
+        setTraders(tradersList);
+      } catch (err) {
+        console.error("Failed to fetch traders", err);
+      }
+    };
+    fetchTraders();
+  }, []);
+
   useEffect(() => {
     if (searchParams.has('workCarriedOut')) {
       setWorkCarriedOut(searchParams.get('workCarriedOut') === 'true');
@@ -65,6 +92,9 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
     }
     if (searchParams.get('noWorkReason')) {
       setSelectedReason(searchParams.get('noWorkReason') || '');
+    }
+    if (searchParams.get('traderId')) {
+      setSelectedTraderId(searchParams.get('traderId') || '');
     }
   }, [searchParams]);
 
@@ -115,7 +145,7 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
       const payload = new FormData();
 
       if (!editReviewId) {
-        const finalTraderId = traderId && traderId !== '00000000-0000-0000-0000-000000000000' ? traderId : '00000000-0000-0000-0000-000000000000';
+        const finalTraderId = selectedTraderId && selectedTraderId !== '00000000-0000-0000-0000-000000000000' ? selectedTraderId : '00000000-0000-0000-0000-000000000000';
         payload.append("traderId", finalTraderId);
         const finalJobId = jobId || propJobId;
         if (finalJobId && finalJobId !== '00000000-0000-0000-0000-000000000000') {
@@ -126,7 +156,7 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
       }
 
       payload.append("wasWorkCompleted", String(workCarriedOut));
-      
+
       if (workCarriedOut) {
         payload.append("rating", String(rating));
         if (completionDate) {
@@ -196,6 +226,28 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
         </div>
       )}
       <form onSubmit={handleSubmit}>
+        <div className="mb-6">
+          <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Select Tradesperson / Company <span className="text-red-500">*</span></label>
+          <div className="relative">
+            <select
+              value={selectedTraderId}
+              onChange={(e) => setSelectedTraderId(e.target.value)}
+              className="w-full border border-gray-200 rounded-xl py-3 px-4 text-[14px] text-gray-700 outline-none focus:border-[#4CAF50] appearance-none"
+              required
+            >
+              <option value="">Select Tradesperson / Company</option>
+              {traders.map((t: any) => (
+                <option key={t.id} value={t.id}>
+                  {t.companyName || `${t.firstName || ''} ${t.lastName || ''}`.trim() || 'Unknown Company'}
+                </option>
+              ))}
+            </select>
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+              <ChevronDown size={16} />
+            </div>
+          </div>
+        </div>
+
         <div className="mb-6">
           <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Interaction Source</label>
           <div className="relative">

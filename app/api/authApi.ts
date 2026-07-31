@@ -120,6 +120,18 @@ export const authApi = {
     return data;
   },
 
+  // Fetch my subscription
+  getMySubscription: async () => {
+    const { data } = await api.get("/api/subscriptions/my-subscription");
+    return data;
+  },
+
+  // Change subscription plan
+  changePlan: async (payload: { planId: string }) => {
+    const { data } = await api.patch("/api/subscriptions/change-plan", payload);
+    return data;
+  },
+
   // Save trader's selected categories, skill services, and sub-categories
   saveTraderCategories: async (payload: {
     tradeCategories: string[];
@@ -252,9 +264,25 @@ export const authApi = {
     return data;
   },
 
+  // Fetch full details of a specific job by ID
+  getCustomerJobById: async (jobId: string) => {
+    const { data } = await api.get(`/api/customer/jobs/${jobId}`);
+    return data;
+  },
+
   // Post a new job
   postJob: async (formData: FormData) => {
     const { data } = await api.post("/api/jobs", formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+    return data;
+  },
+
+  // Update an existing job
+  updateJob: async (jobId: string, formData: FormData) => {
+    const { data } = await api.patch(`/api/jobs/${jobId}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
       },

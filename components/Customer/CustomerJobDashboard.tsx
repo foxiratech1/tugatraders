@@ -734,17 +734,19 @@ export default function CustomerJobDashboard() {
                 Find a Trader
               </button>
             </Link>
-            <Link
-              href={`/customer-dashboard/leave-review${selectedJob
-                ? `?jobId=${selectedJob.id}${selectedJob.selectedTrader ? `&traderId=${selectedJob.selectedTrader.id}` : ''}`
-                : ''
-                }`}
-            >
-              <button className="flex items-center gap-2 px-5 py-2.5 rounded-[12px] border border-gray-200 bg-white cursor-pointer text-[14px] font-bold text-[#1C2C1C] hover:bg-gray-50 transition-colors shadow-sm">
-                <Star size={16} />
-                Leave a Review
-              </button>
-            </Link>
+            {(!selectedJob || (selectedJob.status !== "CLOSED" && selectedJob.status !== "CANCELLED")) && (
+              <Link
+                href={`/customer-dashboard/leave-review${selectedJob
+                  ? `?jobId=${selectedJob.id}${selectedJob.selectedTrader ? `&traderId=${selectedJob.selectedTrader.id}` : ''}`
+                  : ''
+                  }`}
+              >
+                <button className="flex items-center gap-2 px-5 py-2.5 rounded-[12px] border border-gray-200 bg-white cursor-pointer text-[14px] font-bold text-[#1C2C1C] hover:bg-gray-50 transition-colors shadow-sm">
+                  <Star size={16} />
+                  Leave a Review
+                </button>
+              </Link>
+            )}
             <Link href="/customer-dashboard/post-job">
               <button className="flex items-center gap-2 px-5 py-2.5 rounded-[12px] bg-[#6E9625] text-white text-[14px] cursor-pointer font-bold hover:bg-[#58791C] transition-colors shadow-sm">
                 <PlusCircle size={18} strokeWidth={2} />
@@ -818,313 +820,313 @@ ${isSelected
 
                       {/* Header Card */}
                       <div className={`rounded-2xl border border-[#E8E8E8] shadow-sm px-6 py-5 ${isSelectedClosed ? 'bg-gray-50 opacity-90' : 'bg-white'}`}>
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <div className="flex items-center gap-3">
-                        <h2 className="text-[20px] font-bold text-[#223321]">
-                          {selectedJob.title}
-                        </h2>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <div className="flex items-center gap-3">
+                              <h2 className="text-[20px] font-bold text-[#223321]">
+                                {selectedJob.title}
+                              </h2>
 
-                        <ActiveBadge status={selectedJob.status} />
-                      </div>
+                              <ActiveBadge status={selectedJob.status} />
+                            </div>
 
-                      <div className="flex items-center gap-1 mt-2 text-[12px] text-[#8A8A8A]">
-                        <Calendar size={12} />
-                        Job posted {formatDate(selectedJob.createdAt)}
-                      </div>
-                    </div>
+                            <div className="flex items-center gap-1 mt-2 text-[12px] text-[#8A8A8A]">
+                              <Calendar size={12} />
+                              Job posted {formatDate(selectedJob.createdAt)}
+                            </div>
+                          </div>
 
-                    <div className="flex items-center gap-1">
-                      {(() => {
-                        const createdAt = new Date(selectedJob.createdAt).getTime();
-                        const now = new Date().getTime();
-                        const hoursDiff = (now - createdAt) / (1000 * 60 * 60);
-                        if (hoursDiff <= 48 && selectedJob.status !== "CLOSED" && selectedJob.status !== "CANCELLED" && selectedJob.status !== "COMPLETED") {
-                          return (
-                            <button
-                              onClick={() => {
-                                // @todo: Add actual edit navigation or modal logic when ready
-                                toast("Edit job functionality coming soon", { icon: "🚧" });
-                              }}
-                              className="w-8 h-8 flex items-center justify-center text-[#223321] hover:bg-gray-100 rounded-full transition-colors"
-                              title="Edit Job"
-                            >
-                              <Edit2 size={16} />
-                            </button>
-                          );
-                        }
-                        return null;
-                      })()}
+                          <div className="flex items-center gap-1">
+                            {(() => {
+                              const createdAt = new Date(selectedJob.createdAt).getTime();
+                              const now = new Date().getTime();
+                              const hoursDiff = (now - createdAt) / (1000 * 60 * 60);
+                              if (hoursDiff <= 48 && selectedJob.status !== "CLOSED" && selectedJob.status !== "CANCELLED" && selectedJob.status !== "COMPLETED" && !selectedJob.quotesReceived && !selectedJob.quotesCount) {
+                                return (
+                                  <button
+                                    onClick={() => {
+                                      sessionStorage.setItem('editJobData', JSON.stringify(selectedJob));
+                                      router.push(`/post-job?edit=true&jobId=${selectedJob.id}`);
+                                    }}
+                                    className="w-8 h-8 flex items-center justify-center text-[#223321] hover:bg-gray-100 rounded-full transition-colors"
+                                    title="Edit Job"
+                                  >
+                                    <Edit2 size={16} />
+                                  </button>
+                                );
+                              }
+                              return null;
+                            })()}
 
-                      <div className="relative">
-                        <button
-                          onClick={() => setJobMenuOpen(!jobMenuOpen)}
-                          onBlur={() => setTimeout(() => setJobMenuOpen(false), 200)}
-                          className="w-8 h-8 flex items-center justify-center text-[#223321] hover:bg-gray-100 rounded-full transition-colors"
-                        >
-                        <MoreVertical size={20} />
-                      </button>
+                            <div className="relative">
+                              <button
+                                onClick={() => setJobMenuOpen(!jobMenuOpen)}
+                                onBlur={() => setTimeout(() => setJobMenuOpen(false), 200)}
+                                className="w-8 h-8 flex items-center justify-center text-[#223321] hover:bg-gray-100 rounded-full transition-colors"
+                              >
+                                <MoreVertical size={20} />
+                              </button>
 
-                      {jobMenuOpen && (
-                        <div className="absolute right-0 top-full mt-1 w-[150px] bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.12)] border border-gray-100 p-3.5 z-10 flex flex-col gap-3">
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleCompleteJob();
-                              setJobMenuOpen(false);
-                            }}
-                            className="w-full text-center py-2.5 px-3 text-[14px] rounded-xl bg-[#B2D8B2] hover:bg-[#a1cca1] cursor-pointer transition-colors text-[#001D3D]"
-                          >
-                            Job complete
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setIsCloseJobModalOpen(true);
-                              setJobMenuOpen(false);
-                            }}
-                            className="w-full text-center py-2.5 px-3 text-[14px] bg-[#E8E8E8] rounded-xl hover:bg-[#d6d6d6] cursor-pointer transition-colors text-[#001D3D]"
-                          >
-                            Close job
-                          </button>
+                              {jobMenuOpen && (
+                                <div className="absolute right-0 top-full mt-1 w-[150px] bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.12)] border border-gray-100 p-3.5 z-10 flex flex-col gap-3">
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleCompleteJob();
+                                      setJobMenuOpen(false);
+                                    }}
+                                    className="w-full text-center py-2.5 px-3 text-[14px] rounded-xl bg-[#B2D8B2] hover:bg-[#a1cca1] cursor-pointer transition-colors text-[#001D3D]"
+                                  >
+                                    Job complete
+                                  </button>
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setIsCloseJobModalOpen(true);
+                                      setJobMenuOpen(false);
+                                    }}
+                                    className="w-full text-center py-2.5 px-3 text-[14px] bg-[#E8E8E8] rounded-xl hover:bg-[#d6d6d6] cursor-pointer transition-colors text-[#001D3D]"
+                                  >
+                                    Close job
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Trader Quotes Card */}
-
-                <div className={`rounded-2xl border border-[#E8E8E8] shadow-sm p-5 ${isSelectedClosed ? 'bg-gray-50 opacity-90' : 'bg-white'}`}>
-                  <div className="flex items-center justify-between mb-5">
-                    <h3 className="text-[15px] font-bold text-[#223321]">
-                      Trader Quotes ({quotesLoading ? "..." : Math.max(quotes.length, quotesCount)})
-                    </h3>
-
-                    <div className="flex items-center gap-3">
-                      {/* View Quotes button – shown when quotes are available */}
-                      {quotes.length > 0 && (
-                        <button
-                          onClick={() => setQuotesModalOpen(true)}
-                          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#6E9625] hover:bg-[#58791C] text-white rounded-lg text-[12px] font-bold transition-colors shadow-sm"
-                        >
-                          <Eye size={13} />
-                          View Quotes
-                        </button>
-                      )}
-                      <div className="text-[12px] text-[#7D7D7D]">
-                        Sort by:
-                        <span className="ml-1 font-semibold text-[#223321]">Highest Rated</span>
                       </div>
-                    </div>
-                  </div>
 
-                  {quotesLoading ? (
-                    <p className="text-center text-[13px] text-gray-400 py-8 animate-pulse">
-                      Loading quotes...
-                    </p>
-                  ) : quotes.length > 0 ? (
-                    <div className="space-y-4">
-                      {quotes.map((quote) => (
-                        <TraderQuoteCard
-                          key={quote.id}
-                          trader={quote.trader || quote}
-                          isAssigned={selectedJob?.selectedTrader?.id === (quote.trader?.id || quote.id)}
-                          quoteId={quote.id}
-                          onAccept={handleAcceptQuote}
-                          quoteStatus={quote.status}
-                          jobStatus={selectedJob?.status}
-                          onStartJob={handleStartJob}
-                          onCompleteJob={handleCompleteJob}
-                          onCancelJob={handleCancelJob}
-                          onOpenChat={(traderId) => handleOpenChat(traderId, selectedJob?.id)}
-                        />
-                      ))}
-                    </div>
-                  ) : selectedJob.selectedTrader ? (
-                    <>
-                      <TraderQuoteCard
-                        trader={selectedJob.selectedTrader}
-                        isAssigned
-                        jobStatus={selectedJob?.status}
-                        onStartJob={handleStartJob}
-                        onCompleteJob={handleCompleteJob}
-                        onCancelJob={handleCancelJob}
-                        onOpenChat={(traderId) => handleOpenChat(traderId, selectedJob?.id)}
-                      />
+                      {/* Trader Quotes Card */}
 
-                      {quotesCount <= 1 && (
-                        <p className="text-center text-[12px] text-gray-400 pt-4">
-                          No other trader quotes yet.
-                        </p>
-                      )}
-                    </>
-                  ) : (
-                    <p className="text-center text-[13px] text-gray-400 py-8">
-                      No trader quotes yet.
-                    </p>
-                  )}
-                </div>
-              </div>
+                      <div className={`rounded-2xl border border-[#E8E8E8] shadow-sm p-5 ${isSelectedClosed ? 'bg-gray-50 opacity-90' : 'bg-white'}`}>
+                        <div className="flex items-center justify-between mb-5">
+                          <h3 className="text-[15px] font-bold text-[#223321]">
+                            Trader Quotes ({quotesLoading ? "..." : Math.max(quotes.length, quotesCount)})
+                          </h3>
 
-              {/* Bottom Row: Job Details + Saved Traders */}
-              <div className="grid grid-cols-[3fr_1.4fr] gap-5">
+                          <div className="flex items-center gap-3">
+                            {/* View Quotes button – shown when quotes are available */}
+                            {quotes.length > 0 && (
+                              <button
+                                onClick={() => setQuotesModalOpen(true)}
+                                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#6E9625] hover:bg-[#58791C] text-white rounded-lg text-[12px] font-bold transition-colors shadow-sm"
+                              >
+                                <Eye size={13} />
+                                View Quotes
+                              </button>
+                            )}
+                            <div className="text-[12px] text-[#7D7D7D]">
+                              Sort by:
+                              <span className="ml-1 font-semibold text-[#223321]">Highest Rated</span>
+                            </div>
+                          </div>
+                        </div>
 
-                {/* Job Details Accordion Card */}
-                <div className={`rounded-2xl border border-gray-200 shadow-sm px-5 ${isSelectedClosed ? 'bg-gray-50 opacity-90' : 'bg-white'}`}>
-                  <h3 className="text-[14px] font-bold text-[#1C2C1C] py-4 border-b border-gray-100">
-                    Job Details
-                  </h3>
-
-                  {/* Location */}
-                  <AccordionRow
-                    icon={<MapPin size={15} className="text-[#4CAF50]" />}
-                    label="Location & Address"
-                  >
-                    <p className="text-[13px] text-gray-600">
-                      Postcode:{" "}
-                      <strong className="text-[#1C2C1C]">{selectedJob.postcode}</strong>
-                    </p>
-                    {selectedJob.latitude && selectedJob.longitude && (
-                      <p className="text-[11px] text-gray-400 mt-1">
-                        {selectedJob.latitude}, {selectedJob.longitude}
-                      </p>
-                    )}
-                  </AccordionRow>
-
-                  {/* Description & Timeline */}
-                  <AccordionRow
-                    defaultOpen
-                    icon={<FileText size={15} className="text-[#4CAF50]" />}
-                    label="Description & Timeline"
-                  >
-                    <p className="text-[13px] text-gray-600 leading-relaxed mb-4">
-                      {selectedJob.description}
-                    </p>
-                    <div className="flex items-start gap-0 divide-x divide-gray-200">
-                      <div className="pr-5">
-                        <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">
-                          Start Date
-                        </p>
-                        <p className="text-[13px] font-semibold text-[#1C2C1C]">
-                          {formatTimescale(selectedJob.timescale)}
-                        </p>
-                      </div>
-                      <div className="pl-5">
-                        <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">
-                          Budget
-                        </p>
-                        <p className="text-[13px] font-semibold text-[#1C2C1C]">
-                          {formatBudget(selectedJob.budgetRange)}
-                        </p>
-                      </div>
-                    </div>
-                    {selectedJob.emergency && (
-                      <div className="mt-3 flex items-center gap-1.5 text-[12px] font-semibold text-[#E53935]">
-                        <Zap size={12} fill="#E53935" />
-                        Emergency Job
-                      </div>
-                    )}
-                    {(selectedJob.category || selectedJob.skillService || selectedJob.subCategory) && (
-                      <div className="mt-3 flex flex-wrap gap-1.5">
-                        {selectedJob.category && (
-                          <span className="px-2.5 py-1 rounded-full bg-[#F0F5E8] text-[#4A6B0A] text-[11px] font-medium">
-                            {selectedJob.category.name}
-                          </span>
-                        )}
-                        {selectedJob.skillService && (
-                          <span className="px-2.5 py-1 rounded-full bg-[#F0F5E8] text-[#4A6B0A] text-[11px] font-medium">
-                            {selectedJob.skillService.name}
-                          </span>
-                        )}
-                        {selectedJob.subCategory && (
-                          <span className="px-2.5 py-1 rounded-full bg-[#F0F5E8] text-[#4A6B0A] text-[11px] font-medium">
-                            {selectedJob.subCategory.name}
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </AccordionRow>
-
-                  {/* Uploaded Images */}
-                  <AccordionRow
-                    icon={<ImageIcon size={15} className="text-[#4CAF50]" />}
-                    label={`Uploaded Images (${selectedJob.attachments?.length ?? 0})`}
-                  >
-                    {selectedJob.attachments?.length > 0 ? (
-                      <div className="flex flex-wrap gap-2">
-                        {selectedJob.attachments.map((att) => (
-                          <div
-                            key={att.id}
-                            className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0"
-                          >
-                            <img
-                              src={getAttachmentUrl(att.url || att.file)}
-                              alt="Job attachment"
-                              className="w-full h-full object-cover"
+                        {quotesLoading ? (
+                          <p className="text-center text-[13px] text-gray-400 py-8 animate-pulse">
+                            Loading quotes...
+                          </p>
+                        ) : quotes.length > 0 ? (
+                          <div className="space-y-4">
+                            {quotes.map((quote) => (
+                              <TraderQuoteCard
+                                key={quote.id}
+                                trader={quote.trader || quote}
+                                isAssigned={selectedJob?.selectedTrader?.id === (quote.trader?.id || quote.id)}
+                                quoteId={quote.id}
+                                onAccept={handleAcceptQuote}
+                                quoteStatus={quote.status}
+                                jobStatus={selectedJob?.status}
+                                onStartJob={handleStartJob}
+                                onCompleteJob={handleCompleteJob}
+                                onCancelJob={handleCancelJob}
+                                onOpenChat={(traderId) => handleOpenChat(traderId, selectedJob?.id)}
+                              />
+                            ))}
+                          </div>
+                        ) : selectedJob.selectedTrader ? (
+                          <>
+                            <TraderQuoteCard
+                              trader={selectedJob.selectedTrader}
+                              isAssigned
+                              jobStatus={selectedJob?.status}
+                              onStartJob={handleStartJob}
+                              onCompleteJob={handleCompleteJob}
+                              onCancelJob={handleCancelJob}
+                              onOpenChat={(traderId) => handleOpenChat(traderId, selectedJob?.id)}
                             />
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-[12px] text-gray-400">No images uploaded.</p>
-                    )}
-                  </AccordionRow>
-                </div>
 
-                {/* Saved Traders Card */}
-                <div className={`rounded-2xl border border-gray-200 shadow-sm p-4 h-fit ${isSelectedClosed ? 'bg-gray-50 opacity-90' : 'bg-white'}`}>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <Bookmark size={14} className="text-[#4CAF50]" />
-                      <h3 className="text-[13px] font-bold text-[#1C2C1C]">Saved Traders</h3>
-                    </div>
-                    <span className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-[11px] font-bold text-gray-500">
-                      {savedTradersLoading ? "..." : savedTraders.length}
-                    </span>
-                  </div>
-
-                  {savedTradersLoading ? (
-                    <p className="text-center text-[13px] text-gray-400 py-4 animate-pulse">
-                      Loading...
-                    </p>
-                  ) : savedTraders.length > 0 ? (
-                    <div className="flex flex-col divide-y divide-gray-100">
-                      {savedTraders.map((item) => {
-                        const t = item.trader || item;
-                        return (
-                          <div
-                            key={t.id || t._id || Math.random()}
-                            className="flex items-center gap-2.5 py-3 cursor-pointer group"
-                          >
-                            <div className="w-8 h-8 rounded-full bg-[#4CAF50] flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0">
-                              {t.fullName ? t.fullName[0].toUpperCase() : "T"}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-[12px] font-semibold text-[#1C2C1C] truncate">
-                                {t.fullName || "Unknown Trader"}
+                            {quotesCount <= 1 && (
+                              <p className="text-center text-[12px] text-gray-400 pt-4">
+                                No other trader quotes yet.
                               </p>
-                              <p className="text-[10px] text-gray-400">Saved Trader</p>
-                            </div>
-                            <ChevronRight size={13} className="text-gray-300 group-hover:text-gray-400 flex-shrink-0" />
-                          </div>
-                        );
-                      })}
+                            )}
+                          </>
+                        ) : (
+                          <p className="text-center text-[13px] text-gray-400 py-8">
+                            No trader quotes yet.
+                          </p>
+                        )}
+                      </div>
                     </div>
-                  ) : (
-                    <p className="text-center text-[13px] text-gray-400 py-4">
-                      No saved traders.
-                    </p>
-                  )}
 
-                  <Link href="/customer-dashboard/saved">
-                    <button className="mt-3 w-full text-center text-[12px] font-semibold text-[#6E9625] hover:underline">
-                      View all saved
-                    </button>
-                  </Link>
-                </div>
-              </div>
+                    {/* Bottom Row: Job Details + Saved Traders */}
+                    <div className="grid grid-cols-[3fr_1.4fr] gap-5">
+
+                      {/* Job Details Accordion Card */}
+                      <div className={`rounded-2xl border border-gray-200 shadow-sm px-5 ${isSelectedClosed ? 'bg-gray-50 opacity-90' : 'bg-white'}`}>
+                        <h3 className="text-[14px] font-bold text-[#1C2C1C] py-4 border-b border-gray-100">
+                          Job Details
+                        </h3>
+
+                        {/* Location */}
+                        <AccordionRow
+                          icon={<MapPin size={15} className="text-[#4CAF50]" />}
+                          label="Location & Address"
+                        >
+                          <p className="text-[13px] text-gray-600">
+                            Postcode:{" "}
+                            <strong className="text-[#1C2C1C]">{selectedJob.postcode}</strong>
+                          </p>
+                          {selectedJob.latitude && selectedJob.longitude && (
+                            <p className="text-[11px] text-gray-400 mt-1">
+                              {selectedJob.latitude}, {selectedJob.longitude}
+                            </p>
+                          )}
+                        </AccordionRow>
+
+                        {/* Description & Timeline */}
+                        <AccordionRow
+                          defaultOpen
+                          icon={<FileText size={15} className="text-[#4CAF50]" />}
+                          label="Description & Timeline"
+                        >
+                          <p className="text-[13px] text-gray-600 leading-relaxed mb-4">
+                            {selectedJob.description}
+                          </p>
+                          <div className="flex items-start gap-0 divide-x divide-gray-200">
+                            <div className="pr-5">
+                              <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">
+                                Start Date
+                              </p>
+                              <p className="text-[13px] font-semibold text-[#1C2C1C]">
+                                {formatTimescale(selectedJob.timescale)}
+                              </p>
+                            </div>
+                            <div className="pl-5">
+                              <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">
+                                Budget
+                              </p>
+                              <p className="text-[13px] font-semibold text-[#1C2C1C]">
+                                {formatBudget(selectedJob.budgetRange)}
+                              </p>
+                            </div>
+                          </div>
+                          {selectedJob.emergency && (
+                            <div className="mt-3 flex items-center gap-1.5 text-[12px] font-semibold text-[#E53935]">
+                              <Zap size={12} fill="#E53935" />
+                              Emergency Job
+                            </div>
+                          )}
+                          {(selectedJob.category || selectedJob.skillService || selectedJob.subCategory) && (
+                            <div className="mt-3 flex flex-wrap gap-1.5">
+                              {selectedJob.category && (
+                                <span className="px-2.5 py-1 rounded-full bg-[#F0F5E8] text-[#4A6B0A] text-[11px] font-medium">
+                                  {selectedJob.category.name}
+                                </span>
+                              )}
+                              {selectedJob.skillService && (
+                                <span className="px-2.5 py-1 rounded-full bg-[#F0F5E8] text-[#4A6B0A] text-[11px] font-medium">
+                                  {selectedJob.skillService.name}
+                                </span>
+                              )}
+                              {selectedJob.subCategory && (
+                                <span className="px-2.5 py-1 rounded-full bg-[#F0F5E8] text-[#4A6B0A] text-[11px] font-medium">
+                                  {selectedJob.subCategory.name}
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </AccordionRow>
+
+                        {/* Uploaded Images */}
+                        <AccordionRow
+                          icon={<ImageIcon size={15} className="text-[#4CAF50]" />}
+                          label={`Uploaded Images (${selectedJob.attachments?.length ?? 0})`}
+                        >
+                          {selectedJob.attachments?.length > 0 ? (
+                            <div className="flex flex-wrap gap-2">
+                              {selectedJob.attachments.map((att) => (
+                                <div
+                                  key={att.id}
+                                  className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0"
+                                >
+                                  <img
+                                    src={getAttachmentUrl(att.url || att.file)}
+                                    alt="Job attachment"
+                                    className="w-full h-full object-cover"
+                                  />
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-[12px] text-gray-400">No images uploaded.</p>
+                          )}
+                        </AccordionRow>
+                      </div>
+
+                      {/* Saved Traders Card */}
+                      <div className={`rounded-2xl border border-gray-200 shadow-sm p-4 h-fit ${isSelectedClosed ? 'bg-gray-50 opacity-90' : 'bg-white'}`}>
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-2">
+                            <Bookmark size={14} className="text-[#4CAF50]" />
+                            <h3 className="text-[13px] font-bold text-[#1C2C1C]">Saved Traders</h3>
+                          </div>
+                          <span className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-[11px] font-bold text-gray-500">
+                            {savedTradersLoading ? "..." : savedTraders.length}
+                          </span>
+                        </div>
+
+                        {savedTradersLoading ? (
+                          <p className="text-center text-[13px] text-gray-400 py-4 animate-pulse">
+                            Loading...
+                          </p>
+                        ) : savedTraders.length > 0 ? (
+                          <div className="flex flex-col divide-y divide-gray-100">
+                            {savedTraders.map((item) => {
+                              const t = item.trader || item;
+                              return (
+                                <div
+                                  key={t.id || t._id || Math.random()}
+                                  className="flex items-center gap-2.5 py-3 cursor-pointer group"
+                                >
+                                  <div className="w-8 h-8 rounded-full bg-[#4CAF50] flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0">
+                                    {t.fullName ? t.fullName[0].toUpperCase() : "T"}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className="text-[12px] font-semibold text-[#1C2C1C] truncate">
+                                      {t.fullName || "Unknown Trader"}
+                                    </p>
+                                    <p className="text-[10px] text-gray-400">Saved Trader</p>
+                                  </div>
+                                  <ChevronRight size={13} className="text-gray-300 group-hover:text-gray-400 flex-shrink-0" />
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <p className="text-center text-[13px] text-gray-400 py-4">
+                            No saved traders.
+                          </p>
+                        )}
+
+                        <Link href="/customer-dashboard/saved">
+                          <button className="mt-3 w-full text-center text-[12px] font-semibold text-[#6E9625] hover:underline">
+                            View all saved
+                          </button>
+                        </Link>
+                      </div>
+                    </div>
                   </>
                 );
               })()}
@@ -1138,24 +1140,24 @@ ${isSelected
       </div>
 
       {/* Quotes Modal */}
-      
+
       {/* Close Job Modal */}
       {isCloseJobModalOpen && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl relative">
-            <button 
-              onClick={() => setIsCloseJobModalOpen(false)} 
+            <button
+              onClick={() => setIsCloseJobModalOpen(false)}
               className="absolute top-4 right-4 text-gray-400 hover:bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center transition-colors"
             >
               <X size={20} />
             </button>
-            
+
             <h2 className="text-xl font-bold text-[#1C2C1C] mb-4">
               Was any work carried out?
             </h2>
-            
+
             <div className="flex flex-col gap-3 mt-6">
-              <button 
+              <button
                 onClick={async () => {
                   setIsCloseJobModalOpen(false);
                   await handleCloseJobSubmit();
@@ -1166,7 +1168,7 @@ ${isSelected
               >
                 Yes
               </button>
-              <button 
+              <button
                 onClick={async () => {
                   setIsCloseJobModalOpen(false);
                   await handleCloseJobSubmit();

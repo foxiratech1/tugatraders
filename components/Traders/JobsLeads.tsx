@@ -90,6 +90,8 @@ export default function JobsLeads() {
   const [selectedJob, setSelectedJob] = useState<JobLead | null>(null);
   const [isSendingQuote, setIsSendingQuote] = useState(false);
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [fullJobData, setFullJobData] = useState<any>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [quoteForm, setQuoteForm] = useState({
     price: "",
@@ -393,7 +395,21 @@ export default function JobsLeads() {
                     <p className="text-[14px] leading-relaxed text-gray-600 mb-4">
                       "{selectedJob.description}"
                     </p>
-                    <button className="text-[13px] font-bold text-[#6E9625] hover:text-[#58791C] flex items-center gap-1 transition-colors">
+                    <button
+                      onClick={async () => {
+                        try {
+                          toast.loading("Loading job details...", { id: "jobDetails" });
+                          const data = await authApi.getCustomerJobById(selectedJob.id);
+                          setFullJobData(data?.data || data);
+                          setIsDetailsModalOpen(true);
+                          toast.success("Job details loaded", { id: "jobDetails" });
+                        } catch (error) {
+                          console.error(error);
+                          toast.error("Failed to load full details", { id: "jobDetails" });
+                        }
+                      }}
+                      className="text-[13px] font-bold text-[#6E9625] hover:text-[#58791C] flex items-center gap-1 transition-colors"
+                    >
                       View full details <ArrowRight size={14} />
                     </button>
                   </div>
@@ -624,7 +640,7 @@ export default function JobsLeads() {
 
       {/* 🎉 Success Modal 🎉 */}
       {showSuccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowSuccessModal(false)} />
           <div className="bg-white rounded-3xl p-8 w-full max-w-[400px] relative flex flex-col items-center text-center z-10 shadow-xl">
             <div className="w-16 h-16 rounded-full bg-[#E6F5E9] flex items-center justify-center mb-6">
@@ -644,6 +660,169 @@ export default function JobsLeads() {
             >
               View Submitted Quotes
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* 📄 Full Details Modal 📄 */}
+      {isDetailsModalOpen && fullJobData && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsDetailsModalOpen(false)} />
+          <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col relative z-10 shadow-xl">
+            {/* Header */}
+            <div className="flex items-center justify-between p-6 border-b border-gray-100 shrink-0">
+              <h2 className="text-[18px] font-bold text-[#1C2C1C]">Job Details</h2>
+              <button
+                onClick={() => setIsDetailsModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Content */}
+            <div className="p-6 overflow-y-auto space-y-6">
+
+              {/* Customer Info Section */}
+              {fullJobData.customer && (
+                <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
+                  <div className="w-12 h-12 rounded-full bg-[#E6F5E9] flex items-center justify-center text-[#32C850] font-bold text-[18px]">
+                    {fullJobData.customer.fullName?.charAt(0) || "C"}
+                  </div>
+                  <div>
+                    <h4 className="text-[15px] font-bold text-[#1C2C1C]">Posted by {fullJobData.customer.fullName}</h4>
+                    <span className="text-[12px] text-gray-500">
+                      Member since {new Date(fullJobData.customer.createdAt).getFullYear()}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <div>
+                <h3 className="text-[20px] font-bold text-[#1C2C1C] mb-2">{fullJobData.title}</h3>
+                <div className="flex flex-wrap items-center gap-4 text-[13px] text-gray-500">
+                  <div className="flex items-center gap-1.5">
+                    <MapPin size={15} className="text-gray-400" />
+                    {fullJobData.postcode || selectedJob?.location}
+                  </div>
+                  {fullJobData.category?.name && (
+                    <>
+                      <span className="w-1 h-1 rounded-full bg-gray-300" />
+                      <div className="flex items-center gap-1.5 text-[#6E9625] font-medium bg-[#F3F8EC] px-2 py-0.5 rounded-md">
+                        {fullJobData.category.name}
+                      </div>
+                    </>
+                  )}
+                  {fullJobData.subCategory?.name && (
+                    <>
+                      <span className="w-1 h-1 rounded-full bg-gray-300" />
+                      <div className="flex items-center gap-1.5 text-[#6E9625] font-medium bg-[#F3F8EC] px-2 py-0.5 rounded-md">
+                        {fullJobData.subCategory.name}
+                      </div>
+                    </>
+                  )}
+                  {fullJobData.skillService?.name && (
+                    <>
+                      <span className="w-1 h-1 rounded-full bg-gray-300" />
+                      <div className="flex items-center gap-1.5 text-[#6E9625] font-medium bg-[#F3F8EC] px-2 py-0.5 rounded-md">
+                        {fullJobData.skillService.name}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                  <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Status</span>
+                  <span className="text-[13px] font-bold text-[#1C2C1C]">{fullJobData.status}</span>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                  <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Budget</span>
+                  <span className="text-[13px] font-bold text-[#1C2C1C]">
+                    {fullJobData.budgetRange?.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) || "—"}
+                  </span>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                  <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Timescale</span>
+                  <span className="text-[13px] font-bold text-[#1C2C1C]">
+                    {fullJobData.timescale?.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) || "—"}
+                  </span>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                  <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Emergency</span>
+                  <span className="text-[13px] font-bold text-[#1C2C1C]">{fullJobData.emergency ? "Yes" : "No"}</span>
+                </div>
+
+                {/* Additional Metadata */}
+                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                  <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Quotes Received</span>
+                  <span className="text-[13px] font-bold text-[#1C2C1C]">{fullJobData.quotesReceived || fullJobData._count?.quotes || 0}</span>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
+                  <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Posted</span>
+                  <span className="text-[13px] font-bold text-[#1C2C1C]">
+                    {fullJobData.createdAt ? new Date(fullJobData.createdAt).toLocaleDateString() : "—"}
+                  </span>
+                </div>
+                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 md:col-span-2">
+                  <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Expires</span>
+                  <span className="text-[13px] font-bold text-[#1C2C1C]">
+                    {fullJobData.expiresAt ? new Date(fullJobData.expiresAt).toLocaleDateString() : "—"}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <span className="block text-[12px] font-bold text-[#1C2C1C] uppercase tracking-wider mb-3">
+                  Description
+                </span>
+                <p className="text-[14px] leading-relaxed text-gray-600 whitespace-pre-wrap">
+                  {fullJobData.description}
+                </p>
+              </div>
+
+              {fullJobData.attachments && fullJobData.attachments.length > 0 && (
+                <div>
+                  <span className="block text-[12px] font-bold text-[#1C2C1C] uppercase tracking-wider mb-3">
+                    Attachments ({fullJobData.attachments.length})
+                  </span>
+                  <div className="flex flex-wrap gap-3">
+                    {fullJobData.attachments.map((att: any, idx: number) => {
+                      let cleanPath = att.url || att.file || "";
+                      if (cleanPath.startsWith("undefined")) {
+                        cleanPath = cleanPath.replace("undefined", "");
+                      }
+                      const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
+                      const fullUrl = cleanPath.startsWith("http") ? cleanPath : `${baseUrl}${cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`}`;
+
+                      const isImage = cleanPath.match(/\.(jpeg|jpg|gif|png)$/i);
+
+                      return (
+                        <a
+                          key={idx}
+                          href={fullUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center gap-2 p-2 rounded-lg border border-gray-200 hover:border-[#6E9625] transition-colors max-w-full"
+                        >
+                          {isImage ? (
+                            <img src={fullUrl} alt="attachment" className="w-10 h-10 object-cover rounded-md" />
+                          ) : (
+                            <div className="w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center">
+                              <FileText size={16} className="text-gray-400" />
+                            </div>
+                          )}
+                          <span className="text-[12px] text-[#1C2C1C] truncate max-w-[150px] font-medium">
+                            {att.filename || cleanPath.split('/').pop() || 'Attachment'}
+                          </span>
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

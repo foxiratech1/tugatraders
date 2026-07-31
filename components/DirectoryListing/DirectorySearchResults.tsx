@@ -31,7 +31,7 @@ const FilterDropdown = ({ value, onChange, options, disabled, placeholder, icon:
   return (
     <div className="relative" ref={dropdownRef}>
       <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none z-10"><Icon size={16} /></div>
-      <div 
+      <div
         className={`w-full bg-[#F3F4F6] text-[14px] font-medium rounded-xl py-3 pl-10 pr-10 outline-none flex items-center justify-between transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-[#E5E7EB]'} ${selectedOption ? 'text-[#243A24]' : 'text-[#4B5563]'}`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
       >
@@ -41,14 +41,14 @@ const FilterDropdown = ({ value, onChange, options, disabled, placeholder, icon:
 
       {isOpen && (
         <div className="absolute top-full left-0 mt-2 w-full bg-white rounded-xl shadow-[0_15px_60px_rgba(0,0,0,0.12)] border border-gray-100 z-50 max-h-[250px] overflow-y-auto py-2 text-left [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
-          <div 
+          <div
             className="px-4 py-2.5 hover:bg-[#F4F7F1] text-[13px] font-semibold text-[#6B7280] cursor-pointer transition-colors"
             onClick={(e) => { e.stopPropagation(); onChange(''); setIsOpen(false); }}
           >
             {placeholder}
           </div>
           {options.map((opt: any) => (
-            <div 
+            <div
               key={opt.id}
               className={`px-4 py-2.5 hover:bg-[#F4F7F1] text-[13px] cursor-pointer transition-colors flex items-center justify-between ${value === opt.id ? 'bg-[#F4F7F1] text-[#6E9625] font-bold' : 'text-[#243A24] font-medium'}`}
               onClick={(e) => { e.stopPropagation(); onChange(opt.id); setIsOpen(false); }}
@@ -535,7 +535,7 @@ const DirectorySearchResults = () => {
       setShowLoginModal(true);
       return;
     }
-    
+
     setTraderResults(prev => prev.map(t => t.id === traderId ? { ...t, isSaved: !t.isSaved } : t));
     try {
       await authApi.toggleSaveTrader(traderId);
@@ -960,7 +960,7 @@ const DirectorySearchResults = () => {
 
                       {/* Save Button */}
                       <div className="flex justify-end mb-2">
-                        <button 
+                        <button
                           onClick={() => handleToggleSave(trader.id)}
                           className="flex items-center gap-1.5 text-gray-500 hover:text-[#6E9625] transition-colors font-medium text-[14px] cursor-pointer"
                         >
@@ -991,7 +991,7 @@ const DirectorySearchResults = () => {
                       <Link href={`/profile/${trader.id}`} className="w-full text-center bg-[#1C2C1C] text-white py-3.5 rounded-xl font-bold text-[14px] hover:bg-black transition-colors block">
                         View Profile
                       </Link>
-                      
+
                       <button className="w-full bg-[#B91C1C] text-white py-3.5 rounded-xl font-bold text-[14px] hover:bg-[#991B1B] transition-colors cursor-pointer block">
                         Get Quote
                       </button>

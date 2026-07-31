@@ -29,6 +29,7 @@ const ThemeSwal = Swal.mixin({
     htmlContainer: 'text-[13px] text-gray-500 font-medium mt-1',
     actions: 'mt-6',
     confirmButton: 'px-12 py-3 rounded-xl bg-[#1C2C1C] hover:bg-[#2c3e2c] text-white text-[14px] font-bold transition-colors',
+    cancelButton: 'px-8 py-3 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 text-[14px] font-bold transition-colors ml-3',
   }
 });
 
@@ -244,7 +245,6 @@ const TABS = [
   { id: "personal", label: "Personal Info", icon: User },
   { id: "business", label: "Business Details", icon: Briefcase },
   { id: "portfolio", label: "Portfolio", icon: ImageIcon },
-  { id: "document", label: "Document", icon: FileText },
 ] as const;
 
 type TabId = (typeof TABS)[number]["id"];
@@ -524,15 +524,25 @@ export default function TraderProfilePage() {
   };
 
   const handleRemovePhoto = () => {
-    setSelectedProfileFile(null);
-    setPreviewUrl(null);
-    setPersonalForm((prev) => ({ ...prev, profileImage: null }));
-    if (profileInputRef.current) profileInputRef.current.value = "";
+    ThemeSwal.fire({
+      title: 'Remove Photo?',
+      text: "Are you sure you want to remove your profile photo?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, remove it!'
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setSelectedProfileFile(null);
+        setPreviewUrl(null);
+        setPersonalForm((prev) => ({ ...prev, profileImage: null }));
+        if (profileInputRef.current) profileInputRef.current.value = "";
 
-    // Sync with Business Profile / Logo
-    setLogoFile(null);
-    setLogoPreview(null);
-    if (logoInputRef.current) logoInputRef.current.value = "";
+        // Sync with Business Profile / Logo
+        setLogoFile(null);
+        setLogoPreview(null);
+        if (logoInputRef.current) logoInputRef.current.value = "";
+      }
+    });
   };
 
   /* ── handlers: proof of identity ── */
@@ -911,7 +921,6 @@ export default function TraderProfilePage() {
               {TABS.filter(tab => {
                 if (tab.id === "business" && !isStep2Done) return false;
                 if (tab.id === "portfolio") return !!businessForm.planName;
-                if (tab.id === "document") return !businessForm.planName;
                 return true;
               }).map(({ id, label, icon: Icon }) => (
                 <button
@@ -1108,7 +1117,7 @@ export default function TraderProfilePage() {
                       {/* About Us */}
                       <div className="col-span-2">
                         <label className="block text-[12px] font-medium text-gray-500 mb-1">
-                          About Us
+                          About Us (optional)
                         </label>
                         <textarea
                           id="tp-bio"
@@ -1121,9 +1130,8 @@ export default function TraderProfilePage() {
                         />
                       </div>
                     </div>
-                  </div>
 
-                  {/* Identity & Logo uploads 
+                    {/* Identity & Logo uploads 
                   <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm px-6 py-6">
                     <div className="grid gap-5 grid-cols-1">
 
@@ -1165,6 +1173,156 @@ export default function TraderProfilePage() {
                     </div>
                   </div>
                   */}
+
+                    <hr className="my-8 border-[#E8E8E8]" />
+
+                    {/* ════ CERTIFICATES ════ */}
+                    <h2 className="text-[14px] font-bold text-[#1C2C1C] mb-1">
+                      Certificates (optional)
+                    </h2>
+                    <p className="text-[12px] text-gray-400 mb-5">
+                      Upload your professional certificates.
+                    </p>
+
+                    <div
+                      onDrop={handleCertDrop}
+                      onDragOver={handleCertDragOver}
+                      onDragLeave={handleCertDragLeave}
+                      onClick={() => certInputRef.current?.click()}
+                      className={`border-2 border-dashed rounded-xl flex flex-col items-center justify-center py-12 cursor-pointer transition-colors ${isCertDragging
+                        ? "border-[#6E9625] bg-[#6E9625]/5"
+                        : "border-[#C8D8B0] hover:border-[#6E9625] hover:bg-[#6E9625]/5"
+                        }`}
+                    >
+                      <div className="w-12 h-12 rounded-full bg-[#6E9625]/10 flex items-center justify-center mb-3">
+                        <Upload size={20} className="text-[#6E9625]" />
+                      </div>
+                      <p className="text-[13px] font-semibold text-[#1C2C1C]">
+                        Click to upload or drag and drop
+                      </p>
+                      <p className="text-[12px] text-gray-400 mt-1">
+                        PNG, JPG, PDF up to 10 MB each
+                      </p>
+                      <input
+                        ref={certInputRef}
+                        type="file"
+                        accept="image/*,application/pdf"
+                        multiple
+                        className="hidden"
+                        onChange={handleCertificateSelect}
+                      />
+                    </div>
+
+                    {certificatePreviews.length > 0 && (
+                      <div className="grid grid-cols-3 gap-3 mt-5">
+                        {certificatePreviews.map((src, i) => (
+                          <div
+                            key={i}
+                            className="relative group rounded-xl overflow-hidden aspect-square bg-gray-100 flex items-center justify-center"
+                          >
+                            <img
+                              src={src}
+                              alt={`Certificate ${i + 1}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => { e.currentTarget.src = "/pdf-icon.png"; }}
+                            />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeCertificateItem(i);
+                              }}
+                              className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X size={12} className="text-white" />
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => certInputRef.current?.click()}
+                          className="aspect-square rounded-xl border-2 border-dashed border-[#C8D8B0] flex items-center justify-center hover:border-[#6E9625] hover:bg-[#6E9625]/5 transition-colors"
+                        >
+                          <Plus size={20} className="text-[#6E9625]" />
+                        </button>
+                      </div>
+                    )}
+
+                    <hr className="my-8 border-[#E8E8E8]" />
+
+                    {/* ════ INSURANCE ════ */}
+                    <h2 className="text-[14px] font-bold text-[#1C2C1C] mb-1">
+                      Insurance Documents (optional)
+                    </h2>
+                    <p className="text-[12px] text-gray-400 mb-5">
+                      Upload your insurance policies.
+                    </p>
+
+                    <div
+                      onDrop={handleInsDrop}
+                      onDragOver={handleInsDragOver}
+                      onDragLeave={handleInsDragLeave}
+                      onClick={() => insInputRef.current?.click()}
+                      className={`border-2 border-dashed rounded-xl flex flex-col items-center justify-center py-12 cursor-pointer transition-colors ${isInsDragging
+                        ? "border-[#6E9625] bg-[#6E9625]/5"
+                        : "border-[#C8D8B0] hover:border-[#6E9625] hover:bg-[#6E9625]/5"
+                        }`}
+                    >
+                      <div className="w-12 h-12 rounded-full bg-[#6E9625]/10 flex items-center justify-center mb-3">
+                        <Upload size={20} className="text-[#6E9625]" />
+                      </div>
+                      <p className="text-[13px] font-semibold text-[#1C2C1C]">
+                        Click to upload or drag and drop
+                      </p>
+                      <p className="text-[12px] text-gray-400 mt-1">
+                        PNG, JPG, PDF up to 10 MB each
+                      </p>
+                      <input
+                        ref={insInputRef}
+                        type="file"
+                        accept="image/*,application/pdf"
+                        multiple
+                        className="hidden"
+                        onChange={handleInsuranceSelect}
+                      />
+                    </div>
+
+                    {insurancePreviews.length > 0 && (
+                      <div className="grid grid-cols-3 gap-3 mt-5">
+                        {insurancePreviews.map((src, i) => (
+                          <div
+                            key={i}
+                            className="relative group rounded-xl overflow-hidden aspect-square bg-gray-100 flex items-center justify-center"
+                          >
+                            <img
+                              src={src}
+                              alt={`Insurance ${i + 1}`}
+                              className="w-full h-full object-cover"
+                              onError={(e) => { e.currentTarget.src = "/pdf-icon.png"; }}
+                            />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeInsuranceItem(i);
+                              }}
+                              className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <X size={12} className="text-white" />
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          onClick={() => insInputRef.current?.click()}
+                          className="aspect-square rounded-xl border-2 border-dashed border-[#C8D8B0] flex items-center justify-center hover:border-[#6E9625] hover:bg-[#6E9625]/5 transition-colors"
+                        >
+                          <Plus size={20} className="text-[#6E9625]" />
+                        </button>
+                      </div>
+                    )}
+
+                  </div>
                 </>
               )}
 
@@ -1416,10 +1574,11 @@ export default function TraderProfilePage() {
                         type="file"
                         accept=".pdf,.jpg,.jpeg,.png"
                         className="hidden"
-                        onChange={handleIdFileSelect}
                       />
                     </div>
                   )}
+
+
 
                 </div>
               )}
@@ -1499,306 +1658,6 @@ export default function TraderProfilePage() {
                       </button>
                     </div>
                   )}
-                  <hr className="my-8 border-[#E8E8E8]" />
-
-                  {/* ════ CERTIFICATES ════ */}
-                  <h2 className="text-[14px] font-bold text-[#1C2C1C] mb-1">
-                    Certificates
-                  </h2>
-                  <p className="text-[12px] text-gray-400 mb-5">
-                    Upload your professional certificates.
-                  </p>
-
-                  <div
-                    onDrop={handleCertDrop}
-                    onDragOver={handleCertDragOver}
-                    onDragLeave={handleCertDragLeave}
-                    onClick={() => certInputRef.current?.click()}
-                    className={`border-2 border-dashed rounded-xl flex flex-col items-center justify-center py-12 cursor-pointer transition-colors ${isCertDragging
-                      ? "border-[#6E9625] bg-[#6E9625]/5"
-                      : "border-[#C8D8B0] hover:border-[#6E9625] hover:bg-[#6E9625]/5"
-                      }`}
-                  >
-                    <div className="w-12 h-12 rounded-full bg-[#6E9625]/10 flex items-center justify-center mb-3">
-                      <Upload size={20} className="text-[#6E9625]" />
-                    </div>
-                    <p className="text-[13px] font-semibold text-[#1C2C1C]">
-                      Click to upload or drag and drop
-                    </p>
-                    <p className="text-[12px] text-gray-400 mt-1">
-                      PNG, JPG, PDF up to 10 MB each
-                    </p>
-                    <input
-                      ref={certInputRef}
-                      type="file"
-                      accept="image/*,application/pdf"
-                      multiple
-                      className="hidden"
-                      onChange={handleCertificateSelect}
-                    />
-                  </div>
-
-                  {certificatePreviews.length > 0 && (
-                    <div className="grid grid-cols-3 gap-3 mt-5">
-                      {certificatePreviews.map((src, i) => (
-                        <div
-                          key={i}
-                          className="relative group rounded-xl overflow-hidden aspect-square bg-gray-100 flex items-center justify-center"
-                        >
-                          <img
-                            src={src}
-                            alt={`Certificate ${i + 1}`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => { e.currentTarget.src = "/pdf-icon.png"; }}
-                          />
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeCertificateItem(i);
-                            }}
-                            className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <X size={12} className="text-white" />
-                          </button>
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() => certInputRef.current?.click()}
-                        className="aspect-square rounded-xl border-2 border-dashed border-[#C8D8B0] flex items-center justify-center hover:border-[#6E9625] hover:bg-[#6E9625]/5 transition-colors"
-                      >
-                        <Plus size={20} className="text-[#6E9625]" />
-                      </button>
-                    </div>
-                  )}
-
-                  <hr className="my-8 border-[#E8E8E8]" />
-
-                  {/* ════ INSURANCE ════ */}
-                  <h2 className="text-[14px] font-bold text-[#1C2C1C] mb-1">
-                    Insurance Documents
-                  </h2>
-                  <p className="text-[12px] text-gray-400 mb-5">
-                    Upload your insurance policies.
-                  </p>
-
-                  <div
-                    onDrop={handleInsDrop}
-                    onDragOver={handleInsDragOver}
-                    onDragLeave={handleInsDragLeave}
-                    onClick={() => insInputRef.current?.click()}
-                    className={`border-2 border-dashed rounded-xl flex flex-col items-center justify-center py-12 cursor-pointer transition-colors ${isInsDragging
-                      ? "border-[#6E9625] bg-[#6E9625]/5"
-                      : "border-[#C8D8B0] hover:border-[#6E9625] hover:bg-[#6E9625]/5"
-                      }`}
-                  >
-                    <div className="w-12 h-12 rounded-full bg-[#6E9625]/10 flex items-center justify-center mb-3">
-                      <Upload size={20} className="text-[#6E9625]" />
-                    </div>
-                    <p className="text-[13px] font-semibold text-[#1C2C1C]">
-                      Click to upload or drag and drop
-                    </p>
-                    <p className="text-[12px] text-gray-400 mt-1">
-                      PNG, JPG, PDF up to 10 MB each
-                    </p>
-                    <input
-                      ref={insInputRef}
-                      type="file"
-                      accept="image/*,application/pdf"
-                      multiple
-                      className="hidden"
-                      onChange={handleInsuranceSelect}
-                    />
-                  </div>
-
-                  {insurancePreviews.length > 0 && (
-                    <div className="grid grid-cols-3 gap-3 mt-5">
-                      {insurancePreviews.map((src, i) => (
-                        <div
-                          key={i}
-                          className="relative group rounded-xl overflow-hidden aspect-square bg-gray-100 flex items-center justify-center"
-                        >
-                          <img
-                            src={src}
-                            alt={`Insurance ${i + 1}`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => { e.currentTarget.src = "/pdf-icon.png"; }}
-                          />
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeInsuranceItem(i);
-                            }}
-                            className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <X size={12} className="text-white" />
-                          </button>
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() => insInputRef.current?.click()}
-                        className="aspect-square rounded-xl border-2 border-dashed border-[#C8D8B0] flex items-center justify-center hover:border-[#6E9625] hover:bg-[#6E9625]/5 transition-colors"
-                      >
-                        <Plus size={20} className="text-[#6E9625]" />
-                      </button>
-                    </div>
-                  )}
-
-                </div>
-              )}
-
-              {/* ════ DOCUMENT ════ */}
-              {activeTab === "document" && (
-                <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm px-6 py-6">
-                  {/* ════ CERTIFICATES ════ */}
-                  <h2 className="text-[14px] font-bold text-[#1C2C1C] mb-1">
-                    Certificates
-                  </h2>
-                  <p className="text-[12px] text-gray-400 mb-5">
-                    Upload your professional certificates.
-                  </p>
-
-                  <div
-                    onDrop={handleCertDrop}
-                    onDragOver={handleCertDragOver}
-                    onDragLeave={handleCertDragLeave}
-                    onClick={() => certInputRef.current?.click()}
-                    className={`border-2 border-dashed rounded-xl flex flex-col items-center justify-center py-12 cursor-pointer transition-colors ${isCertDragging
-                      ? "border-[#6E9625] bg-[#6E9625]/5"
-                      : "border-[#C8D8B0] hover:border-[#6E9625] hover:bg-[#6E9625]/5"
-                      }`}
-                  >
-                    <div className="w-12 h-12 rounded-full bg-[#6E9625]/10 flex items-center justify-center mb-3">
-                      <Upload size={20} className="text-[#6E9625]" />
-                    </div>
-                    <p className="text-[13px] font-semibold text-[#1C2C1C]">
-                      Click to upload or drag and drop
-                    </p>
-                    <p className="text-[12px] text-gray-400 mt-1">
-                      PNG, JPG, PDF up to 10 MB each
-                    </p>
-                    <input
-                      ref={certInputRef}
-                      type="file"
-                      accept="image/*,application/pdf"
-                      multiple
-                      className="hidden"
-                      onChange={handleCertificateSelect}
-                    />
-                  </div>
-
-                  {certificatePreviews.length > 0 && (
-                    <div className="grid grid-cols-3 gap-3 mt-5">
-                      {certificatePreviews.map((src, i) => (
-                        <div
-                          key={i}
-                          className="relative group rounded-xl overflow-hidden aspect-square bg-gray-100 flex items-center justify-center"
-                        >
-                          <img
-                            src={src}
-                            alt={`Certificate ${i + 1}`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => { e.currentTarget.src = "/pdf-icon.png"; }}
-                          />
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeCertificateItem(i);
-                            }}
-                            className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <X size={12} className="text-white" />
-                          </button>
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() => certInputRef.current?.click()}
-                        className="aspect-square rounded-xl border-2 border-dashed border-[#C8D8B0] flex items-center justify-center hover:border-[#6E9625] hover:bg-[#6E9625]/5 transition-colors"
-                      >
-                        <Plus size={20} className="text-[#6E9625]" />
-                      </button>
-                    </div>
-                  )}
-
-                  <hr className="my-8 border-[#E8E8E8]" />
-
-                  {/* ════ INSURANCE ════ */}
-                  <h2 className="text-[14px] font-bold text-[#1C2C1C] mb-1">
-                    Insurance Documents
-                  </h2>
-                  <p className="text-[12px] text-gray-400 mb-5">
-                    Upload your insurance policies.
-                  </p>
-
-                  <div
-                    onDrop={handleInsDrop}
-                    onDragOver={handleInsDragOver}
-                    onDragLeave={handleInsDragLeave}
-                    onClick={() => insInputRef.current?.click()}
-                    className={`border-2 border-dashed rounded-xl flex flex-col items-center justify-center py-12 cursor-pointer transition-colors ${isInsDragging
-                      ? "border-[#6E9625] bg-[#6E9625]/5"
-                      : "border-[#C8D8B0] hover:border-[#6E9625] hover:bg-[#6E9625]/5"
-                      }`}
-                  >
-                    <div className="w-12 h-12 rounded-full bg-[#6E9625]/10 flex items-center justify-center mb-3">
-                      <Upload size={20} className="text-[#6E9625]" />
-                    </div>
-                    <p className="text-[13px] font-semibold text-[#1C2C1C]">
-                      Click to upload or drag and drop
-                    </p>
-                    <p className="text-[12px] text-gray-400 mt-1">
-                      PNG, JPG, PDF up to 10 MB each
-                    </p>
-                    <input
-                      ref={insInputRef}
-                      type="file"
-                      accept="image/*,application/pdf"
-                      multiple
-                      className="hidden"
-                      onChange={handleInsuranceSelect}
-                    />
-                  </div>
-
-                  {insurancePreviews.length > 0 && (
-                    <div className="grid grid-cols-3 gap-3 mt-5">
-                      {insurancePreviews.map((src, i) => (
-                        <div
-                          key={i}
-                          className="relative group rounded-xl overflow-hidden aspect-square bg-gray-100 flex items-center justify-center"
-                        >
-                          <img
-                            src={src}
-                            alt={`Insurance ${i + 1}`}
-                            className="w-full h-full object-cover"
-                            onError={(e) => { e.currentTarget.src = "/pdf-icon.png"; }}
-                          />
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              removeInsuranceItem(i);
-                            }}
-                            className="absolute top-2 right-2 w-6 h-6 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
-                          >
-                            <X size={12} className="text-white" />
-                          </button>
-                        </div>
-                      ))}
-                      <button
-                        type="button"
-                        onClick={() => insInputRef.current?.click()}
-                        className="aspect-square rounded-xl border-2 border-dashed border-[#C8D8B0] flex items-center justify-center hover:border-[#6E9625] hover:bg-[#6E9625]/5 transition-colors"
-                      >
-                        <Plus size={20} className="text-[#6E9625]" />
-                      </button>
-                    </div>
-                  )}
-
                 </div>
               )}
 

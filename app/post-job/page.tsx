@@ -141,23 +141,52 @@ export default function PostJobPage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  const [isEdit, setIsEdit] = useState(false);
+  const [editJobId, setEditJobId] = useState<string | null>(null);
+
   // Load from sessionStorage if exists
   useEffect(() => {
-    const savedData = sessionStorage.getItem('pendingJobPost');
-    if (savedData) {
-      try {
-        const parsed = JSON.parse(savedData);
-        if (parsed.categoryId) setCategoryId(parsed.categoryId);
-        if (parsed.skillServiceId) setSkillServiceId(parsed.skillServiceId);
-        if (parsed.subCategoryId) setSubCategoryId(parsed.subCategoryId);
-        if (parsed.postcode) setPostcode(parsed.postcode);
-        if (parsed.title) setTitle(parsed.title);
-        if (parsed.description) setDescription(parsed.description);
-        if (parsed.timescale) setTimescale(parsed.timescale);
-        if (parsed.budgetRange) setBudgetRange(parsed.budgetRange);
-        if (parsed.emergency !== undefined) setEmergency(parsed.emergency);
-      } catch (e) {
-        console.error('Failed to parse pending job post data', e);
+    const params = new URLSearchParams(window.location.search);
+    const editMode = params.get('edit') === 'true';
+    const jobId = params.get('jobId');
+    setIsEdit(editMode);
+    setEditJobId(jobId);
+
+    if (editMode) {
+      const editDataStr = sessionStorage.getItem('editJobData');
+      if (editDataStr) {
+        try {
+          const parsed = JSON.parse(editDataStr);
+          if (parsed.category?.id || parsed.category?._id) setCategoryId(parsed.category.id || parsed.category._id);
+          if (parsed.skillService?.id || parsed.skillService?._id) setSkillServiceId(parsed.skillService.id || parsed.skillService._id);
+          if (parsed.subCategory?.id || parsed.subCategory?._id) setSubCategoryId(parsed.subCategory.id || parsed.subCategory._id);
+          if (parsed.postcode) setPostcode(parsed.postcode);
+          if (parsed.title) setTitle(parsed.title);
+          if (parsed.description) setDescription(parsed.description);
+          if (parsed.timescale) setTimescale(parsed.timescale);
+          if (parsed.budgetRange) setBudgetRange(parsed.budgetRange);
+          if (parsed.emergency !== undefined) setEmergency(parsed.emergency);
+        } catch (e) {
+          console.error('Failed to parse edit job data', e);
+        }
+      }
+    } else {
+      const savedData = sessionStorage.getItem('pendingJobPost');
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData);
+          if (parsed.categoryId) setCategoryId(parsed.categoryId);
+          if (parsed.skillServiceId) setSkillServiceId(parsed.skillServiceId);
+          if (parsed.subCategoryId) setSubCategoryId(parsed.subCategoryId);
+          if (parsed.postcode) setPostcode(parsed.postcode);
+          if (parsed.title) setTitle(parsed.title);
+          if (parsed.description) setDescription(parsed.description);
+          if (parsed.timescale) setTimescale(parsed.timescale);
+          if (parsed.budgetRange) setBudgetRange(parsed.budgetRange);
+          if (parsed.emergency !== undefined) setEmergency(parsed.emergency);
+        } catch (e) {
+          console.error('Failed to parse pending job post data', e);
+        }
       }
     }
   }, []);
@@ -294,10 +323,16 @@ export default function PostJobPage() {
         formData.append('files', file);
       });
 
-      await authApi.postJob(formData);
-
-      sessionStorage.removeItem('pendingJobPost'); // Clear after success
-      toast.success("Job posted successfully!");
+      if (isEdit && editJobId) {
+        await authApi.updateJob(editJobId, formData);
+        sessionStorage.removeItem('editJobData');
+        toast.success("Job updated successfully!");
+      } else {
+        await authApi.postJob(formData);
+        sessionStorage.removeItem('pendingJobPost'); // Clear after success
+        toast.success("Job posted successfully!");
+      }
+      
       setShowSuccessModal(true);
     } catch (error: any) {
       console.error("Failed to post job", error);
@@ -316,10 +351,10 @@ export default function PostJobPage() {
               <Megaphone className="text-[#32C850]" size={36} fill="#32C850" />
             </div>
             <h2 className="text-[22px] font-bold text-[#1C2C1C] mb-3">
-              Job Posted Successfully
+              {isEdit ? "Job Updated Successfully" : "Job Posted Successfully"}
             </h2>
             <p className="text-[#6B7280] text-[15px] mb-8">
-              Traders in your area have been notified.
+              {isEdit ? "Your job details have been updated." : "Traders in your area have been notified."}
             </p>
             <button
               onClick={() => router.push('/customer-dashboard/jobs')}
@@ -400,7 +435,7 @@ export default function PostJobPage() {
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-[28px] sm:text-[32px] font-bold text-[#243A24] mb-2" style={{ fontFamily: 'var(--font-bricolage)' }}>
-              Post Your Job Details
+              {isEdit ? "Update Your Job Details" : "Post Your Job Details"}
             </h1>
             <p className="text-[#243A2499]/60 text-[14px] font-medium">
               Tell us what you need and we'll find the perfect match.
@@ -629,7 +664,7 @@ export default function PostJobPage() {
                 disabled={isSubmitting}
                 className="bg-[#243A24] hover:bg-[#1a2b1a] text-white font-bold py-3.5 px-12 cursor-pointer rounded-[10px] text-[14px] transition-all flex items-center gap-2 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? 'Posting...' : 'Post your job'} <ArrowRight size={16} />
+                {isSubmitting ? (isEdit ? 'Updating...' : 'Posting...') : (isEdit ? 'Update your job' : 'Post your job')} <ArrowRight size={16} />
               </button>
             </div>
 
