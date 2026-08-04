@@ -278,10 +278,10 @@ export default function PostJobPage() {
       return;
     }
 
-    if (!subCategoryId) {
-      toast.error("Please select a Sub Category.");
-      return;
-    }
+    // if (!subCategoryId) {
+    //   toast.error("Please select a Sub Category.");
+    //   return;
+    // }
 
     if (!postcode.trim()) {
       toast.error("Please enter a Location or Postcode.");
@@ -332,7 +332,7 @@ export default function PostJobPage() {
         sessionStorage.removeItem('pendingJobPost'); // Clear after success
         toast.success("Job posted successfully!");
       }
-      
+
       setShowSuccessModal(true);
     } catch (error: any) {
       console.error("Failed to post job", error);

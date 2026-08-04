@@ -369,14 +369,14 @@ export default function PublicTraderProfilePage() {
   const insuranceDocuments = tp?.insuranceDocuments || [];
 
   return (
-    <div className="min-h-screen bg-[#F8F9F5] font-sans selection:bg-[#6E9625]/20 selection:text-[#1C2C1C]">
+    <div className="min-h-screen bg-white font-sans selection:bg-[#6E9625]/20 selection:text-[#1C2C1C]">
       {/* ── Navbar Spacer ── */}
       <div className="h-16 lg:h-24 bg-white" />
 
       <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
         <button
           onClick={() => router.push("/directory-listing/search")}
-          className="flex items-center gap-2 text-gray-500 hover:text-[#243A24] font-medium transition-colors mb-6 lg:mb-8"
+          className="flex items-center gap-2 text-gray-500 hover:text-[#243A24] font-medium cursor-pointer transition-colors mb-6 lg:mb-8"
         >
           <ArrowLeft size={18} />
           Back to Search Results
@@ -564,7 +564,7 @@ export default function PublicTraderProfilePage() {
 
               {/* Hero Image */}
               {portfolio && portfolio.length > 0 && (
-                <div className="bg-white rounded-3xl overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100 h-64 lg:h-auto min-h-[300px]">
+                <div className="bg-white rounded-3xl overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100 h-48 lg:h-auto max-h-[220px]">
                   <img
                     src={getImageUrl(portfolio[0]?.url || portfolio[0])}
                     alt="Trader Work"
