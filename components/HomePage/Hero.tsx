@@ -21,7 +21,7 @@ export default function Hero() {
       {/* BACKGROUND IMAGE */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/Homepageimage.png"
+          src="/homepagenew.png"
           alt="Tradespeople working"
           fill
           unoptimized
