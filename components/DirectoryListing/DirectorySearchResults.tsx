@@ -603,7 +603,7 @@ const DirectorySearchResults = () => {
                 <div className="mt-2">
                   <div className="flex justify-between items-center mb-4">
                     <label className="text-[13px] font-medium text-[#4B5563]">Work Radius</label>
-                    <span className="text-[12px] text-[#4B5563]">{workRadius} miles</span>
+                    <span className="text-[12px] text-[#4B5563]">{workRadius} KM</span>
                   </div>
                   <style>
                     {`
@@ -782,11 +782,11 @@ const DirectorySearchResults = () => {
                 {filteredResults.slice(0, displayCount).map((trader) => (
                   <div
                     key={trader.id}
-                    className="bg-white rounded-3xl p-6 shadow-sm border border-[#E5E7EB] flex flex-col md:flex-row gap-8"
+                    className="bg-white rounded-2xl p-5 shadow-sm border border-[#E5E7EB] flex flex-col md:flex-row gap-6"
                   >
                     {/* ── Left: Image Gallery ── */}
-                    <div className="w-full md:w-[320px] shrink-0 flex flex-col gap-2">
-                      <div className="w-full aspect-[4/3] rounded-2xl overflow-hidden relative bg-gray-100">
+                    <div className="w-full md:w-[280px] shrink-0 flex flex-col gap-2">
+                      <div className="w-full aspect-[4/3] rounded-xl overflow-hidden relative bg-gray-100">
                         <Image
                           src={
                             trader.portfolio && trader.portfolio.length > 0
@@ -872,7 +872,7 @@ const DirectorySearchResults = () => {
 
                       {/* Checks */}
                       <div className="flex flex-wrap gap-4 sm:gap-6 mb-5">
-                        <span className="flex items-center gap-1.5 text-[13px] font-medium text-gray-500"><CheckCircle size={16} className="text-[#6E9625]" /> Individual Check</span>
+                        <span className="flex items-center gap-1.5 text-[13px] font-medium text-gray-500"><CheckCircle size={16} className="text-[#6E9625]" /> ID Check</span>
                         <span className="flex items-center gap-1.5 text-[13px] font-medium text-gray-500"><CheckCircle size={16} className="text-[#6E9625]" /> Trade Check</span>
                         <span className="flex items-center gap-1.5 text-[13px] font-medium text-gray-500"><CheckCircle size={16} className="text-[#6E9625]" /> Insurance Verified</span>
                       </div>
@@ -921,8 +921,8 @@ const DirectorySearchResults = () => {
                         {trader.about || trader.aboutUs || "No description provided."}
                       </p>
 
-                      <div className="mt-auto">
-                        {/* Stats */}
+                      {/* <div className="mt-auto">
+                       
                         <div className="flex items-center justify-start gap-4 sm:gap-8 lg:gap-12 mb-4 whitespace-nowrap overflow-hidden text-ellipsis">
                           {trader.minimumExperience && (
                             <div className="flex items-center gap-3">
@@ -946,17 +946,17 @@ const DirectorySearchResults = () => {
                           </div>
                         </div>
 
-                        {/* Location */}
+                       
                         <div className="flex items-center gap-3 text-[13px] font-semibold text-gray-500">
                           <span className="flex items-center gap-1.5 text-[#1C2C1C]"><MapPin size={15} className="text-gray-400" /> {trader.location || "Unknown"}</span>
                           <span className="text-gray-300">•</span>
                           <span>Working within {trader.workRadius || 0} miles</span>
                         </div>
-                      </div>
+                      </div> */}
                     </div>
 
                     {/* ── Right: Action Buttons ── */}
-                    <div className="w-full md:w-[180px] shrink-0 flex flex-col justify-start gap-3 pt-6 md:pt-0 md:pl-6 md:border-l border-gray-100">
+                    <div className="w-full md:w-[200px] shrink-0 flex flex-col justify-start gap-3 pt-6 md:pt-0 md:pl-6 md:border-l border-gray-100">
 
                       {/* Save Button */}
                       <div className="flex justify-end mb-2">
@@ -981,10 +981,10 @@ const DirectorySearchResults = () => {
                       ) : (
                         <a
                           href={`tel:${trader.phone || ""}`}
-                          className="flex items-center justify-center gap-2 w-full bg-[#F4F7F1] border border-[#6E9625] rounded-xl py-3 text-[#6E9625] text-[14px] font-bold hover:bg-[#E5F0DA] transition-colors whitespace-nowrap px-2"
+                          className="flex items-center justify-center gap-2 w-full bg-[#F4F7F1] border border-[#6E9625] rounded-xl py-3 px-2 text-[#6E9625] text-[13px] font-bold hover:bg-[#E5F0DA] transition-colors"
                         >
-                          <Phone size={16} fill="currentColor" className="text-[#6E9625] shrink-0" />
-                          <span>{trader.phone || "No phone"}</span>
+                          <Phone size={15} fill="currentColor" className="text-[#6E9625] shrink-0" />
+                          <span className="whitespace-nowrap">{trader.phone || "No phone"}</span>
                         </a>
                       )}
 
@@ -992,8 +992,26 @@ const DirectorySearchResults = () => {
                         View Profile
                       </Link>
 
-                      <button className="w-full bg-[#B91C1C] text-white py-3.5 rounded-xl font-bold text-[14px] hover:bg-[#991B1B] transition-colors cursor-pointer block">
-                        Get Quote
+                      <button
+                        onClick={(e) => {
+                          const btn = e.currentTarget;
+                          if (btn.disabled) return;
+                          btn.disabled = true;
+
+                          const storedUser = localStorage.getItem('user');
+                          if (!storedUser) {
+                            setPendingTraderId(trader.id);
+                            setPendingAction("contact-trader");
+                            setShowLoginModal(true);
+                            btn.disabled = false;
+                          } else {
+                            router.push(`/customer-dashboard/inbox?traderId=${trader.id}`);
+                            setTimeout(() => { btn.disabled = false; }, 2000);
+                          }
+                        }}
+                        className="w-full bg-[#B91C1C] text-white py-3.5 rounded-xl font-bold text-[14px] hover:bg-[#991B1B] transition-colors cursor-pointer block disabled:opacity-70"
+                      >
+                        Send Message
                       </button>
 
                       {/* Leave a Review */}

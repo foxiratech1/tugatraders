@@ -28,10 +28,10 @@ export default function Hero() {
           className="object-cover object-center"
           priority
         />
-        <div
+        {/* <div
           className="absolute inset-0"
           style={{ background: "linear-gradient(180deg, rgba(36, 58, 36, 0.8) 0%, rgba(36, 58, 36, 0) 50%, #243A24 100%)" }}
-        />
+        /> */}
       </div>
 
       <div className="relative z-10 max-w-[1400px] mx-auto flex flex-col items-center text-center ">

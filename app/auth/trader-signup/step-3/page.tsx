@@ -202,7 +202,7 @@ export default function Step3Page() {
                 const statusRes = await getRegistrationStatus();
                 const data = statusRes?.data || statusRes;
                 const vStatus = data?.verificationStatus ?? data?.status;
-                const isStep2Done = data?.step2Completed === true || data?.currentStep === 3 || vStatus === "MANUAL_CHECK";
+                const isStep2Done = data?.step2Completed === true || data?.currentStep >= 3 || !!data?.traderData?.companyName;
 
                 if (data?.isRegistrationCompleted && vStatus === "APPROVED") {
                     router.replace("/trader");
@@ -441,7 +441,7 @@ export default function Step3Page() {
     return (
         <main className="min-h-screen bg-[#F0EDE8] pt-32 pb-20 px-4 flex justify-center font-sans relative">
 
-            {verificationStatus !== "APPROVED" && (
+            {verificationStatus !== "APPROVED" ? (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1C2C1C]/30 backdrop-blur-md">
                     <div className="relative w-full max-w-[480px] bg-white rounded-[32px] shadow-[0_32px_80px_rgba(28,44,28,0.15)] border border-[#243A240A] p-10 flex flex-col items-center text-center overflow-hidden">
                         {/* Icon */}
@@ -532,10 +532,8 @@ export default function Step3Page() {
                         )}
                     </div>
                 </div>
-            )}
-
-            <div className={`w-full max-w-[1000px] bg-white rounded-[28px] shadow-[0_12px_48px_rgba(36,58,36,0.07)] border border-[#243A240A] p-8 sm:p-12 relative overflow-hidden flex flex-col items-center transition-all ${verificationStatus !== "APPROVED" ? "pointer-events-none filter blur-[6px] opacity-60 select-none" : ""
-                }`}>
+            ) : (
+            <div className={`w-full max-w-[1000px] bg-white rounded-[28px] shadow-[0_12px_48px_rgba(36,58,36,0.07)] border border-[#243A240A] p-8 sm:p-12 relative overflow-hidden flex flex-col items-center transition-all`}>
 
                 {/* Top Right Decorative Icon */}
                 <div className="absolute top-8 right-8 w-12 h-12 bg-[#6E9625]/10 rounded-full flex items-center justify-center">
@@ -847,6 +845,7 @@ export default function Step3Page() {
                 </div>
 
             </div>
+            )}
         </main>
     );
 }

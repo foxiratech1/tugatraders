@@ -10,7 +10,7 @@ const DirectoryListingPage = () => {
     <main className="bg-[#F9FAFB] min-h-screen">
       <DirectoryHero />
       <CategoryBrowse />
-      <DirectoryListings />
+      {/* <DirectoryListings /> */}
       <ActionCards />
       <HowItWorks />
     </main>

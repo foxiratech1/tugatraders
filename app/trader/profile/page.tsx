@@ -780,7 +780,7 @@ export default function TraderProfilePage() {
           .sort((a, b) => a.categoryId.localeCompare(b.categoryId));
       };
 
-      const categoriesChanged = isCategoriesDirty && JSON.stringify(normalizeGroups(categoryGroups)) !== JSON.stringify(normalizeGroups(initialCategoryGroups));
+      const categoriesChanged = JSON.stringify(normalizeGroups(categoryGroups)) !== JSON.stringify(normalizeGroups(initialCategoryGroups));
 
       if (traderStatus !== "MANUAL_CHECK" && categoriesChanged && !isCategoryChangePending) {
         const validGroups = categoryGroups.filter(g => g.categoryId && g.selectedSkillServices.length > 0 && g.selectedSubCategories.length > 0);
@@ -1034,7 +1034,7 @@ export default function TraderProfilePage() {
                       </div>
 
                       {/* Professional Title */}
-                      <div>
+                      {/* <div>
                         <label className="block text-[12px] font-medium text-gray-500 mb-1">
                           Professional Title
                         </label>
@@ -1047,7 +1047,7 @@ export default function TraderProfilePage() {
                           placeholder="Senior Electrical Engineer"
                           className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
                         />
-                      </div>
+                      </div> */}
 
                       {/* Phone */}
                       <div>
@@ -1574,6 +1574,7 @@ export default function TraderProfilePage() {
                         type="file"
                         accept=".pdf,.jpg,.jpeg,.png"
                         className="hidden"
+                        onChange={handleIdFileSelect}
                       />
                     </div>
                   )}

@@ -10,7 +10,7 @@ import { useSocket } from "@/hooks/useSocket";
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 
 function getImageUrl(path: string | null | undefined): string | null {
-  if (!path) return "/avt.png";
+  if (!path) return null;
   if (path.startsWith("http")) return path;
   
   const baseUrl = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
@@ -75,6 +75,20 @@ function ChatDashboardContent() {
     try {
       setLoading(true);
 
+      // 0. If traderId is passed, ensure a conversation exists
+      const traderIdParam = searchParams.get("traderId");
+      if (traderIdParam && !activeConversationId) {
+        try {
+          const newOrExisting = await authApi.getOrCreateConversation(traderIdParam, fallbackJobId || undefined);
+          const convId = newOrExisting?.data?.id || newOrExisting?.data?._id || newOrExisting?.id || newOrExisting?._id;
+          if (convId) {
+            router.replace(`/customer-dashboard/inbox?conversationId=${convId}${fallbackJobId ? `&jobId=${fallbackJobId}` : ''}`);
+          }
+        } catch (e) {
+          console.error("Failed to get/create conversation for trader", e);
+        }
+      }
+
       // 1. Get profile to identify current customer ID
       const profileRes = await authApi.getMyProfile();
       const profile = profileRes?.data || profileRes;
@@ -100,7 +114,11 @@ function ChatDashboardContent() {
     }
   };
 
+  const initializingRef = React.useRef(false);
+
   useEffect(() => {
+    if (initializingRef.current) return;
+    initializingRef.current = true;
     loadData();
   }, []);
 

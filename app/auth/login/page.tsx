@@ -222,11 +222,15 @@ function LoginContent({ role }: { role?: string }) {
             // Extract data assuming it could be in statusResponse.data or just statusResponse
             const traderData = statusResponse?.data || statusResponse;
             const isCompleted = traderData?.isRegistrationCompleted;
-            const step2Done = traderData?.step2Completed === true || traderData?.currentStep === 3;
+            const vStatus = traderData?.verificationStatus ?? traderData?.status;
+            // Step 2 is done if explicitly marked, OR if there's a verificationStatus
+            // Note: we only check traderData?.verificationStatus because traderData?.status is often "PENDING" for new users
+            const hasVerificationStatus = traderData?.verificationStatus && traderData?.verificationStatus !== "NONE";
+            const step2Done = traderData?.step2Completed === true || traderData?.currentStep >= 3 || hasVerificationStatus;
 
-            if (isCompleted) {
+            if (isCompleted && vStatus === "APPROVED") {
               targetPath = "/trader"; // Dashboard
-            } else if (!step2Done && traderData?.verificationStatus !== "MANUAL_CHECK") {
+            } else if (!step2Done) {
               // Pass the categoryId to step 2 so it can load the skills
               const catId = traderData?.selectedCategories?.[0]?.id;
               targetPath = catId ? `/auth/trader-signup/step-2?categoryId=${catId}` : "/auth/trader-signup/step-2";

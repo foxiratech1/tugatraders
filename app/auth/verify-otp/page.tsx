@@ -58,8 +58,11 @@ function VerifyOtpContent() {
           const userRole = (user?.role || "").toLowerCase();
           const isCompleted = data?.isRegistrationCompleted;
           if (userRole === "trader" || data?.selectedCategories || data?.currentStep) {
+            const step2Done = data?.step2Completed === true || data?.currentStep >= 3;
             if (isCompleted) {
               window.location.replace("/trader");
+            } else if (step2Done) {
+              window.location.replace("/auth/trader-signup/step-3");
             } else {
               const catId = data?.selectedCategories?.[0]?.id || categoryId;
               window.location.replace(catId ? `/auth/trader-signup/step-2?categoryId=${catId}` : "/auth/trader-signup/step-2");
@@ -141,8 +144,11 @@ function VerifyOtpContent() {
         const isCompleted = data?.isRegistrationCompleted;
 
         if (userRole === "trader" || data?.selectedCategories || data?.currentStep) {
+          const step2Done = data?.step2Completed === true || data?.currentStep >= 3;
           if (isCompleted) {
             window.location.replace("/trader");
+          } else if (step2Done) {
+            window.location.replace("/auth/trader-signup/step-3");
           } else {
             const catId = data?.selectedCategories?.[0]?.id || categoryId;
             window.location.replace(catId ? `/auth/trader-signup/step-2?categoryId=${catId}` : "/auth/trader-signup/step-2");

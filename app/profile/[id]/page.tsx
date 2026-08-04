@@ -6,7 +6,7 @@ import { authApi } from "@/app/api/authApi";
 import { getAccessToken } from "@/utils/auth";
 import {
   Star, MapPin, Phone, Briefcase, Wrench, ShieldCheck,
-  Mail, ArrowLeft, CheckCircle, FileText, Check, Info, Image as ImageIcon, X, MessageSquare, Heart, ThumbsUp, Award, Shield, LogIn
+  Mail, ArrowLeft, CheckCircle, FileText, Check, Info, Image as ImageIcon, X, MessageSquare, Heart, ThumbsUp, Award, Shield, LogIn, ChevronLeft, ChevronRight
 } from "lucide-react";
 import toast from "react-hot-toast";
 import Link from "next/link";
@@ -161,6 +161,52 @@ const LoginModal = ({
   );
 };
 
+const LightboxModal = ({
+  images,
+  currentIndex,
+  onClose,
+  onNext,
+  onPrev
+}: {
+  images: any[];
+  currentIndex: number;
+  onClose: () => void;
+  onNext: () => void;
+  onPrev: () => void;
+}) => {
+  if (currentIndex === -1 || !images?.length) return null;
+
+  const currentImg = images[currentIndex];
+
+  return (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/95 backdrop-blur-md">
+      <button onClick={onClose} className="absolute top-6 right-6 w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer z-50">
+        <X size={24} />
+      </button>
+
+      <button onClick={onPrev} className="absolute left-6 top-1/2 -translate-y-1/2 w-14 h-14 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer z-50" disabled={images.length <= 1}>
+        <ChevronLeft size={36} />
+      </button>
+
+      <div className="relative max-w-[90vw] max-h-[85vh] w-full h-full flex items-center justify-center p-4">
+        <img
+          src={getImageUrl(currentImg)}
+          alt="Gallery Image"
+          className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+        />
+      </div>
+
+      <button onClick={onNext} className="absolute right-6 top-1/2 -translate-y-1/2 w-14 h-14 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer z-50" disabled={images.length <= 1}>
+        <ChevronRight size={36} />
+      </button>
+
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white font-semibold bg-black/60 px-5 py-2 rounded-full text-sm backdrop-blur-sm">
+        {currentIndex + 1} / {images.length}
+      </div>
+    </div>
+  );
+};
+
 export default function PublicTraderProfilePage() {
   const params = useParams();
   const router = useRouter();
@@ -173,6 +219,21 @@ export default function PublicTraderProfilePage() {
   const [isSaving, setIsSaving] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [pendingAction, setPendingAction] = useState<"message" | "save" | null>(null);
+  const [lightboxIndex, setLightboxIndex] = useState<number>(-1);
+  const [showAllGallery, setShowAllGallery] = useState(false);
+
+  const openLightbox = (index: number) => setLightboxIndex(index);
+  const closeLightbox = () => setLightboxIndex(-1);
+  const nextLightboxImage = () => {
+    if (portfolio?.length > 0) {
+      setLightboxIndex((prev) => (prev === portfolio.length - 1 ? 0 : prev + 1));
+    }
+  };
+  const prevLightboxImage = () => {
+    if (portfolio?.length > 0) {
+      setLightboxIndex((prev) => (prev === 0 ? portfolio.length - 1 : prev - 1));
+    }
+  };
 
   useEffect(() => {
     if (!traderId) return;
@@ -304,6 +365,8 @@ export default function PublicTraderProfilePage() {
   const isVerified = tp?.verificationStatus === "APPROVED";
   const isInsured = tp?.insured || false;
   const portfolio = tp?.portfolio || [];
+  const certificates = tp?.certificates || [];
+  const insuranceDocuments = tp?.insuranceDocuments || [];
 
   return (
     <div className="min-h-screen bg-[#F8F9F5] font-sans selection:bg-[#6E9625]/20 selection:text-[#1C2C1C]">
@@ -400,7 +463,7 @@ export default function PublicTraderProfilePage() {
             </div>
 
             {/* Stats Card */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-col gap-5 text-left">
+            <div className="bg-[#F4F7F1] rounded-3xl p-6 sm:p-8 shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-[#E9F0E1] flex flex-col gap-5 text-left">
               <div className="flex flex-col gap-1">
                 <span className="text-gray-500 font-medium text-[12px]">Company</span>
                 <span className="font-bold text-[#1C2C1C] text-[14px]">{companyName || '-'}</span>
@@ -491,11 +554,11 @@ export default function PublicTraderProfilePage() {
                   ))}
 
                   {/* Render Sub Categories */}
-                  {tp?.subCategories?.map((sub: any, i: number) => (
+                  {/* {tp?.subCategories?.map((sub: any, i: number) => (
                     <span key={`sub-${i}`} className="inline-flex items-center bg-[#F9FAFB] text-[#4B5563] px-5 py-2.5 rounded-[12px] text-[13px] font-bold border border-gray-100">
                       {typeof sub === 'object' ? sub.name : sub}
                     </span>
-                  ))}
+                  ))} */}
                 </div>
               </div>
 
@@ -527,7 +590,7 @@ export default function PublicTraderProfilePage() {
                 </div>
 
                 {/* About Badges */}
-                <div className="flex flex-wrap items-center gap-6 border-t border-gray-100 pt-6">
+                {/* <div className="flex flex-wrap items-center gap-6 border-t border-gray-100 pt-6">
                   <div className="flex items-center gap-3">
                     <Award size={32} className="text-[#6E9625] stroke-[1.5]" />
                     <div className="flex flex-col">
@@ -549,7 +612,7 @@ export default function PublicTraderProfilePage() {
                       <span className="text-[11px] font-medium text-gray-500">Insured</span>
                     </div>
                   </div>
-                </div>
+                </div> */}
               </div>
 
               {/* Gallery */}
@@ -559,16 +622,24 @@ export default function PublicTraderProfilePage() {
                     <ImageIcon className="text-[#6E9625]" size={20} />
                     Gallery
                   </h3>
-                  {portfolio && portfolio.length > 0 && (
-                    <button className="text-[#6E9625] font-bold text-[13px] hover:underline">View all</button>
+                  {portfolio && portfolio.length > 3 && (
+                    <button
+                      onClick={() => setShowAllGallery(!showAllGallery)}
+                      className="text-[#6E9625] font-bold text-[13px] hover:underline cursor-pointer"
+                    >
+                      {showAllGallery ? "Show less" : "View all"}
+                    </button>
                   )}
                 </div>
 
                 {portfolio && portfolio.length > 0 ? (
-                  <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-2 xl:grid-cols-4 gap-3 h-full">
-                    {portfolio.slice(0, 4).map((img: any, i: number) => (
-                      <div key={i} className="rounded-2xl bg-gray-50 overflow-hidden border border-gray-100 aspect-square">
-                        <img src={getImageUrl(img.url || img)} alt="Gallery Image" className="w-full h-full object-cover" />
+                  <div className="flex flex-wrap gap-4 h-full content-start">
+                    {portfolio.slice(0, showAllGallery ? portfolio.length : 3).map((img: any, i: number) => (
+                      <div key={i} className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gray-50 overflow-hidden border border-gray-100 relative group flex-shrink-0">
+                        <img src={getImageUrl(img)} alt="Gallery Image" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer" onClick={() => openLightbox(i)}>
+                          <button className="bg-white text-[#1C2C1C] px-3 py-1.5 rounded-lg text-sm font-bold">View</button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -580,6 +651,40 @@ export default function PublicTraderProfilePage() {
               </div>
 
             </div>
+
+            {/* Insurance & Certificates */}
+            {(certificates.length > 0 || insuranceDocuments.length > 0) && (
+              <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-col">
+                <h3 className="text-[17px] font-bold text-[#1C2C1C] flex items-center gap-3 mb-6">
+                  <ShieldCheck className="text-[#6E9625]" size={20} />
+                  Insurance & Certificates
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {insuranceDocuments.map((doc: any, i: number) => (
+                    <div key={`ins-${i}`} className="flex flex-col gap-2">
+                      <div className="rounded-2xl bg-gray-50 overflow-hidden border border-gray-100 aspect-[3/4] relative group">
+                        <img src={getImageUrl(doc)} alt="Insurance Document" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <a href={getImageUrl(doc)} target="_blank" rel="noreferrer" className="bg-white text-[#1C2C1C] px-3 py-1.5 rounded-lg text-sm font-bold">View</a>
+                        </div>
+                      </div>
+                      <span className="text-[13px] font-bold text-center text-[#1C2C1C]">Insurance</span>
+                    </div>
+                  ))}
+                  {certificates.map((cert: any, i: number) => (
+                    <div key={`cert-${i}`} className="flex flex-col gap-2">
+                      <div className="rounded-2xl bg-gray-50 overflow-hidden border border-gray-100 aspect-[3/4] relative group">
+                        <img src={getImageUrl(cert)} alt="Certificate" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <a href={getImageUrl(cert)} target="_blank" rel="noreferrer" className="bg-white text-[#1C2C1C] px-3 py-1.5 rounded-lg text-sm font-bold">View</a>
+                        </div>
+                      </div>
+                      <span className="text-[13px] font-bold text-center text-[#1C2C1C]">Certificate</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
           </div>
         </div>
@@ -595,6 +700,14 @@ export default function PublicTraderProfilePage() {
         onClose={() => { setShowLoginModal(false); setPendingAction(null); }}
         onSuccess={onLoginSuccess}
         action={pendingAction || "message"}
+      />
+
+      <LightboxModal
+        images={portfolio}
+        currentIndex={lightboxIndex}
+        onClose={closeLightbox}
+        onNext={nextLightboxImage}
+        onPrev={prevLightboxImage}
       />
     </div>
   );

@@ -407,8 +407,8 @@ const DirectoryListings = () => {
                   key={i + 1}
                   onClick={() => fetchProfessionals(i + 1)}
                   className={`w-10 h-10 flex items-center justify-center rounded-[12px] text-[14px] font-bold transition-colors cursor-pointer ${currentPage === i + 1
-                      ? 'bg-[#243A24] text-white shadow-md'
-                      : 'bg-white border border-gray-200 text-[#1C2C1C] hover:bg-gray-50'
+                    ? 'bg-[#243A24] text-white shadow-md'
+                    : 'bg-white border border-gray-200 text-[#1C2C1C] hover:bg-gray-50'
                     }`}
                 >
                   {i + 1}

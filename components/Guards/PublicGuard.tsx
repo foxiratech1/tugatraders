@@ -45,7 +45,10 @@ export default function PublicGuard({ children }: { children: React.ReactNode })
             getRegistrationStatus().then((res) => {
               const data = res?.data || res;
               const vStatus = data?.verificationStatus ?? data?.status;
-              const isStep2Done = data?.step2Completed === true || data?.currentStep === 3 || vStatus === "MANUAL_CHECK";
+              // Step 2 is done if explicitly marked, OR if there's a verificationStatus
+              // Note: we only check data?.verificationStatus because data?.status is often "PENDING" for new users
+              const hasVerificationStatus = data?.verificationStatus && data?.verificationStatus !== "NONE";
+              const isStep2Done = data?.step2Completed === true || data?.currentStep >= 3 || hasVerificationStatus;
 
               if (data?.isRegistrationCompleted && vStatus === "APPROVED") {
                 router.replace("/trader");

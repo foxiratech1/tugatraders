@@ -39,6 +39,8 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
 
   const [selectedTraderId, setSelectedTraderId] = useState<string>(searchParams.get('traderId') || '');
   const [traders, setTraders] = useState<any[]>([]);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get('serviceUsed') || '');
 
   useEffect(() => {
     const fetchTraders = async () => {
@@ -63,6 +65,58 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
     };
     fetchTraders();
   }, []);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await authApi.getCategories();
+        let list: any[] = [];
+        if (Array.isArray(res)) {
+          list = res;
+        } else if (res?.data && Array.isArray(res.data)) {
+          list = res.data;
+        } else if (res?.content && Array.isArray(res.content)) {
+          list = res.content;
+        } else if (res?.data?.content && Array.isArray(res.data.content)) {
+          list = res.data.content;
+        }
+        setCategories(list);
+      } catch (err) {
+        console.error("Failed to fetch categories", err);
+      }
+    };
+    fetchCategories();
+  }, []);
+
+  // Pre-fill tradesperson and service from job data
+  useEffect(() => {
+    if (!jobId) return;
+    const fetchJobDetails = async () => {
+      try {
+        const res = await authApi.getCustomerJobById(jobId);
+        const job = res?.data || res;
+        if (!job) return;
+
+        // Pre-fill trader if not already set from URL
+        if (!selectedTraderId && job.selectedTrader?.id) {
+          setSelectedTraderId(job.selectedTrader.id);
+        }
+
+        // Pre-fill category from job's category
+        if (!selectedCategory && job.category?.id) {
+          setSelectedCategory(job.category.id);
+        }
+
+        // Pre-fill interaction source to Job Chat if not set
+        if (!interactionSource) {
+          setInteractionSource("JOB_CHAT");
+        }
+      } catch (err) {
+        console.error("Failed to fetch job details for pre-fill", err);
+      }
+    };
+    fetchJobDetails();
+  }, [jobId]);
 
   useEffect(() => {
     if (searchParams.has('workCarriedOut')) {
@@ -317,11 +371,23 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
               </div>
               <div>
                 <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Services Used</label>
-                <input
-                  type="text"
-                  placeholder="Interior Architecture, Bespoke Kitchen"
-                  className="w-full border border-gray-200 rounded-xl py-3 px-4 text-[14px] text-gray-700 outline-none focus:border-[#4CAF50]"
-                />
+                <div className="relative">
+                  <select
+                    value={selectedCategory}
+                    onChange={(e) => setSelectedCategory(e.target.value)}
+                    className="w-full border border-gray-200 rounded-xl py-3 px-4 text-[14px] text-gray-700 outline-none focus:border-[#4CAF50] appearance-none"
+                  >
+                    <option value="">Select a service</option>
+                    {categories.map((cat: any) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
+                  </select>
+                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                    <ChevronDown size={16} />
+                  </div>
+                </div>
               </div>
             </div>
 

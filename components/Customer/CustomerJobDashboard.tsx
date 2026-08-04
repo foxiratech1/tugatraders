@@ -114,6 +114,7 @@ interface Job {
   skillService?: SkillService;
   subCategory?: SubCategory;
   selectedTrader?: SelectedTrader;
+  hasReviewed?: boolean;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -554,6 +555,8 @@ export default function CustomerJobDashboard() {
   const [quotesModalOpen, setQuotesModalOpen] = useState(false);
   const [jobMenuOpen, setJobMenuOpen] = useState(false);
   const [isCloseJobModalOpen, setIsCloseJobModalOpen] = useState(false);
+  const [reviewedJobIds, setReviewedJobIds] = useState<Set<string>>(new Set());
+  const [jobReviews, setJobReviews] = useState<Record<string, any>>({});
 
   const handleOpenChat = async (traderId: string, jobId?: string) => {
     try {
@@ -655,24 +658,60 @@ export default function CustomerJobDashboard() {
   };
 
   useEffect(() => {
-    async function fetchJobs() {
+    async function fetchJobsAndReviews() {
       try {
-        const res = await authApi.getMyJobs();
-        console.log(jobs);
-        const arr: Job[] = Array.isArray(res)
-          ? res
-          : Array.isArray(res?.data)
-            ? res.data
+        const [jobsRes, reviewsRes] = await Promise.all([
+          authApi.getMyJobs(),
+          authApi.getMyReviews().catch((e) => {
+             console.error("Failed to fetch reviews", e);
+             return [];
+          })
+        ]);
+        
+        const arr: Job[] = Array.isArray(jobsRes)
+          ? jobsRes
+          : Array.isArray(jobsRes?.data)
+            ? jobsRes.data
             : [];
         setJobs(arr);
         if (arr.length > 0) setSelectedJob(arr[0]);
+
+        const reviewsArr = Array.isArray(reviewsRes) 
+          ? reviewsRes 
+          : Array.isArray(reviewsRes?.data) 
+            ? reviewsRes.data 
+            : Array.isArray(reviewsRes?.content)
+              ? reviewsRes.content
+              : Array.isArray(reviewsRes?.data?.content)
+                ? reviewsRes.data.content
+                : [];
+        
+        const reviewedIds = new Set<string>();
+        const reviewsMap: Record<string, any> = {};
+        
+        reviewsArr.forEach((r: any) => {
+          if (r.jobId) {
+            reviewedIds.add(r.jobId);
+            reviewsMap[r.jobId] = r;
+          }
+          if (r.job?.id) {
+            reviewedIds.add(r.job?.id);
+            reviewsMap[r.job?.id] = r;
+          }
+        });
+        // Also check the hasReviewed flag on each job
+        arr.forEach((j: Job) => {
+          if (j.hasReviewed) reviewedIds.add(j.id);
+        });
+        setReviewedJobIds(reviewedIds);
+        setJobReviews(reviewsMap);
       } catch (e) {
         console.error("Failed to fetch customer jobs", e);
       } finally {
         setLoading(false);
       }
     }
-    fetchJobs();
+    fetchJobsAndReviews();
   }, []);
 
   useEffect(() => {
@@ -734,16 +773,16 @@ export default function CustomerJobDashboard() {
                 Find a Trader
               </button>
             </Link>
-            {(!selectedJob || (selectedJob.status !== "CLOSED" && selectedJob.status !== "CANCELLED")) && (
+            {selectedJob && !reviewedJobIds.has(selectedJob.id) && (selectedJob.status === "CLOSED" || selectedJob.status === "COMPLETED"
+              ? selectedJob.selectedTrader
+              : selectedJob.status !== "CANCELLED"
+            ) && (
               <Link
-                href={`/customer-dashboard/leave-review${selectedJob
-                  ? `?jobId=${selectedJob.id}${selectedJob.selectedTrader ? `&traderId=${selectedJob.selectedTrader.id}` : ''}`
-                  : ''
-                  }`}
+                href={`/customer-dashboard/leave-review?jobId=${selectedJob.id}${selectedJob.selectedTrader ? `&traderId=${selectedJob.selectedTrader.id}` : ''}`}
               >
                 <button className="flex items-center gap-2 px-5 py-2.5 rounded-[12px] border border-gray-200 bg-white cursor-pointer text-[14px] font-bold text-[#1C2C1C] hover:bg-gray-50 transition-colors shadow-sm">
                   <Star size={16} />
-                  Leave a Review
+                  {selectedJob.status === "CLOSED" || selectedJob.status === "COMPLETED" ? "Share Your Experience" : "Leave a Review"}
                 </button>
               </Link>
             )}
@@ -969,6 +1008,82 @@ ${isSelected
                         )}
                       </div>
                     </div>
+
+                    {/* Review CTA for closed/completed unreviewed jobs */}
+                    {(selectedJob.status === "CLOSED" || selectedJob.status === "COMPLETED") && !reviewedJobIds.has(selectedJob.id) && selectedJob.selectedTrader && (
+                      <div className="rounded-2xl border border-[#E9F0E1] bg-[#F4F7F1] p-5 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-[#6E9625]/15 flex items-center justify-center flex-shrink-0">
+                            <Star size={20} className="text-[#6E9625]" />
+                          </div>
+                          <div>
+                            <p className="text-[14px] font-bold text-[#1C2C1C]">Share Your Experience</p>
+                            <p className="text-[12px] text-gray-500">Help others by leaving a review for this trader.</p>
+                          </div>
+                        </div>
+                        <Link href={`/customer-dashboard/leave-review?jobId=${selectedJob.id}&traderId=${selectedJob.selectedTrader.id}`}>
+                          <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#6E9625] text-white text-[13px] font-bold hover:bg-[#58791C] transition-colors cursor-pointer shadow-sm">
+                            <Star size={14} />
+                            Write Review
+                          </button>
+                        </Link>
+                      </div>
+                    )}
+
+                    {/* Review completed indicator / details */}
+                    {(selectedJob.status === "CLOSED" || selectedJob.status === "COMPLETED") && reviewedJobIds.has(selectedJob.id) && (
+                      <div className="rounded-2xl border border-[#E9F0E1] bg-white p-5 shadow-sm">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-2 text-[#6E9625]">
+                            <CheckCircle size={18} className="flex-shrink-0" />
+                            <span className="text-[14px] font-bold">Review Submitted</span>
+                          </div>
+                          {jobReviews[selectedJob.id]?.createdAt && (
+                            <span className="text-[12px] text-gray-500">
+                              {formatDate(jobReviews[selectedJob.id].createdAt)}
+                            </span>
+                          )}
+                        </div>
+                        
+                        {jobReviews[selectedJob.id] ? (
+                          <div className="bg-[#F8F9F5] rounded-xl p-4 border border-[#E9F0E1]">
+                            {jobReviews[selectedJob.id].wasWorkCompleted === false ? (
+                              <div className="text-[13px] text-gray-700">
+                                <p className="font-semibold mb-1">Work not completed</p>
+                                <p>{jobReviews[selectedJob.id].noWorkReason || 'No reason provided'}</p>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="flex items-center gap-1 mb-2">
+                                  {[1, 2, 3, 4, 5].map((star) => (
+                                    <Star
+                                      key={star}
+                                      size={14}
+                                      className={star <= (jobReviews[selectedJob.id].rating || 0) ? "text-[#6E9625] fill-[#6E9625]" : "text-gray-300 fill-gray-300"}
+                                    />
+                                  ))}
+                                  <span className="ml-2 text-[13px] font-bold text-[#1C2C1C]">
+                                    {jobReviews[selectedJob.id].rating ? jobReviews[selectedJob.id].rating.toFixed(1) : ''}
+                                  </span>
+                                </div>
+                                {jobReviews[selectedJob.id].title && (
+                                  <h4 className="text-[14px] font-bold text-[#1C2C1C] mb-1">
+                                    {jobReviews[selectedJob.id].title}
+                                  </h4>
+                                )}
+                                {jobReviews[selectedJob.id].review && (
+                                  <p className="text-[13px] text-gray-600">
+                                    {jobReviews[selectedJob.id].review}
+                                  </p>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        ) : (
+                          <p className="text-[13px] text-gray-500 mt-2">You have already submitted a review for this job. Thank you!</p>
+                        )}
+                      </div>
+                    )}
 
                     {/* Bottom Row: Job Details + Saved Traders */}
                     <div className="grid grid-cols-[3fr_1.4fr] gap-5">

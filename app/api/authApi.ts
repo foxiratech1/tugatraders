@@ -127,7 +127,7 @@ export const authApi = {
   },
 
   // Change subscription plan
-  changePlan: async (payload: { planId: string }) => {
+  changePlan: async (payload: { planId: string; billingCycle?: string }) => {
     const { data } = await api.patch("/api/subscriptions/change-plan", payload);
     return data;
   },
@@ -577,6 +577,6 @@ export const traderRegisterStep3 = async (payload: { planId: string; priceId: st
 };
 
 export const getRegistrationStatus = async () => {
-  const { data } = await api.get('/api/auth/trader/registration-status');
+  const { data } = await api.get(`/api/auth/trader/registration-status?t=${Date.now()}`);
   return data;
 };

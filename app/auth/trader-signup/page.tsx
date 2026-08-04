@@ -763,8 +763,8 @@ export default function TraderSignupPage() {
               unoptimized
             />
 
-            {/* Dark green overlay */}
-            {/* <div className="absolute inset-0 bg-[#162716]/60 mix-blend-multiply z-10" /> */}
+            {/* Slight green overlay */}
+            <div className="absolute inset-0 bg-[#6E9625]/20 z-10" />
 
             {/* Animated canvas particles */}
             <canvas ref={canvasRef} className="absolute inset-0 w-full h-full z-20 pointer-events-none" />
@@ -772,10 +772,10 @@ export default function TraderSignupPage() {
             {/* Gradient fade from bottom */}
             <div
               className="absolute inset-0 z-30 flex flex-col justify-end p-10 xl:p-16 text-white"
-            // style={{
-            //   background:
-            //     "linear-gradient(to top, rgba(22,39,22,0.97) 0%, rgba(22,39,22,0.45) 55%, transparent 100%)",
-            // }}
+              style={{
+                background:
+                  "linear-gradient(to top, rgba(22,39,22,0.97) 0%, rgba(22,39,22,0.45) 55%, transparent 100%)",
+              }}
             >
               <div className="w-full max-w-[520px] flex flex-col gap-5">
 

@@ -230,7 +230,8 @@ export default function Step2Page() {
                 const statusRes = await getRegistrationStatus();
                 const data = statusRes?.data || statusRes;
                 const vStatus = data?.verificationStatus ?? data?.status;
-                const isStep2Done = data?.step2Completed === true || data?.currentStep === 3 || vStatus === "MANUAL_CHECK";
+                // Step 2 is done if explicitly marked, OR if there's a verificationStatus
+                const isStep2Done = data?.step2Completed === true || data?.currentStep >= 3 || !!data?.traderData?.companyName;
 
                 if (data?.isRegistrationCompleted && vStatus === "APPROVED") {
                     router.replace("/trader");
@@ -471,7 +472,7 @@ export default function Step2Page() {
 
             await traderRegisterStep2(payload);
             toast.success("Business verification submitted!");
-            router.replace("/auth/trader-signup/step-3");
+            router.replace("/auth/trader-signup/step-3?submitted=true");
         } catch (err: any) {
             const msg =
                 err.response?.data?.message?.[0] ||
