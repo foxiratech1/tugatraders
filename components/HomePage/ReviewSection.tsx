@@ -9,48 +9,7 @@ import { slideFromLeft, slideFromRight, staggerContainer } from "./animationVari
 import Link from "next/link";
 import { authApi } from "@/app/api/authApi";
 
-const DEFAULT_REVIEWS = [
-  {
-    id: "1",
-    name: "Maria Santos",
-    role: "ELECTRICIAN - PORTO",
-    stars: 5,
-    text: '"Maria was great. She explained everything clearly and the pricing was very fair. Will definitely use her again for any electrical needs."',
-    avatar: "/Contact Support.png",
-  },
-  {
-    id: "2",
-    name: "Ricardo Costa",
-    role: "CARPENTER - FARO",
-    stars: 4,
-    text: '"Excellent craftsmanship. Ricardo built a custom bookshelf for our office and it looks beautiful. Very tidy work and respectful of our space."',
-    avatar: "/Contact Support.png",
-  },
-  {
-    id: "3",
-    name: "Ana Oliveira",
-    role: "PAINTER - BRAGA",
-    stars: 5,
-    text: '"Ana did a fantastic job painting our living room. The attention to detail was top-notch. Highly satisfied with the result!"',
-    avatar: "/Contact Support.png",
-  },
-  {
-    id: "4",
-    name: "João Silva",
-    role: "PLUMBER - LISBON",
-    stars: 5,
-    text: '"João fixed our leak quickly and efficiently. Very professional service and reasonable price. Highly recommended!"',
-    avatar: "/Contact Support.png",
-  },
-  {
-    id: "5",
-    name: "Sofia Ferreira",
-    role: "GARDENER - COIMBRA",
-    stars: 4,
-    text: '"Our garden looks amazing thanks to Sofia. She is very knowledgeable and hard-working. Great experience overall."',
-    avatar: "/Contact Support.png",
-  },
-];
+
 
 const topFeatures = [
   "Verified reviews only",
@@ -67,7 +26,7 @@ function getImageUrl(path: string | null | undefined): string {
 }
 
 export default function ReviewSection() {
-  const [reviews, setReviews] = useState<any[]>(DEFAULT_REVIEWS);
+  const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [visibleCards, setVisibleCards] = useState(3);
@@ -180,8 +139,6 @@ export default function ReviewSection() {
         }
       } catch (error) {
         console.error("Failed to load public reviews:", error);
-        // Fallback to default reviews on error
-        setReviews(DEFAULT_REVIEWS);
       } finally {
         setLoading(false);
       }
@@ -259,6 +216,10 @@ export default function ReviewSection() {
           {loading ? (
             <div className="flex justify-center items-center py-16 text-gray-400 font-medium animate-pulse text-base">
               Loading approved reviews...
+            </div>
+          ) : reviews.length === 0 ? (
+            <div className="flex justify-center items-center py-16 text-gray-400 font-medium text-base">
+              No review found
             </div>
           ) : (
             <motion.div

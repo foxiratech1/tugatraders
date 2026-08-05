@@ -298,6 +298,12 @@ function LoginContent({ role }: { role?: string }) {
             </div>
             {/* FORM */}
             <form onSubmit={handleSubmit} className="flex flex-col gap-[16px]">
+              {/* ERROR BOX */}
+              {(errors.email || errors.password) && (
+                <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-[13.5px] text-red-600 font-medium">
+                  {errors.email || errors.password}
+                </div>
+              )}
               {/* EMAIL */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-[12px] font-extrabold text-[#1C2C1C] uppercase tracking-wider">Email Address</label>
@@ -309,9 +315,8 @@ function LoginContent({ role }: { role?: string }) {
                     setEmail(e.target.value);
                     if (errors.email) setErrors({ ...errors, email: undefined });
                   }}
-                  className={`h-[44px] w-full rounded-[12px] border bg-white px-4 text-[14px] text-[#1C2C1C] placeholder-[#1C2C1C]/30 outline-none transition-all font-medium ${errors.email ? "border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500" : "border-[#243A241F] focus:border-[#6E9625] focus:ring-1 focus:ring-[#6E9625]"}`}
+                  className="h-[44px] w-full rounded-[12px] border bg-white px-4 text-[14px] text-[#1C2C1C] placeholder-[#1C2C1C]/30 outline-none transition-all font-medium border-[#243A241F] focus:border-[#6E9625] focus:ring-1 focus:ring-[#6E9625]"
                 />
-                {errors.email && <p className="text-red-500 text-[11.5px] font-medium mt-0.5">{errors.email}</p>}
               </div>
               {/* PASSWORD */}
               <div className="flex flex-col gap-1.5">
@@ -327,7 +332,7 @@ function LoginContent({ role }: { role?: string }) {
                       setPassword(e.target.value);
                       if (errors.password) setErrors({ ...errors, password: undefined });
                     }}
-                    className={`h-[44px] w-full rounded-[12px] border bg-white px-4 pr-10 text-[14px] text-[#1C2C1C] placeholder-[#1C2C1C]/30 outline-none transition-all font-medium ${errors.password ? "border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500" : "border-[#243A241F] focus:border-[#6E9625] focus:ring-1 focus:ring-[#6E9625]"}`}
+                    className="h-[44px] w-full rounded-[12px] border bg-white px-4 pr-10 text-[14px] text-[#1C2C1C] placeholder-[#1C2C1C]/30 outline-none transition-all font-medium border-[#243A241F] focus:border-[#6E9625] focus:ring-1 focus:ring-[#6E9625]"
                   />
                   <button
                     ref={eyeBtnRef}
@@ -339,14 +344,7 @@ function LoginContent({ role }: { role?: string }) {
                     <AnimatedEye show={showPassword} isBlinking={isBlinking} mouseOffset={mouseOffset} />
                   </button>
                 </div>
-                <div className="flex items-center justify-between mt-1">
-                  <div className="flex-1">
-                    {errors.password && (
-                      <p className="text-red-500 text-[11.5px] font-medium">
-                        {errors.password}
-                      </p>
-                    )}
-                  </div>
+                <div className="flex justify-end mt-1">
                   <Link href="/auth/forgot-password" className="font-bold text-[11.5px] text-[#1C2C1C]/40 hover:text-[#6E9625] transition-colors">
                     Forgot password?
                   </Link>

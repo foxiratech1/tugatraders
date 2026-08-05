@@ -311,11 +311,11 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
               className="w-full border border-gray-200 rounded-xl py-3 px-4 text-[14px] text-gray-700 outline-none focus:border-[#4CAF50] appearance-none"
             >
               <option value="">Select source</option>
-              <option value="JOB_CHAT">Job Chat</option>
-              <option value="DIRECTORY_CHAT">Directory Chat</option>
+              <option value="JOB_CHAT">Post a Job</option>
+              <option value="DIRECTORY_CHAT">Online Chat</option>
               <option value="WHATSAPP">WhatsApp</option>
               <option value="PHONE">Phone</option>
-              <option value="MANUAL">Manual</option>
+              {/* <option value="MANUAL">Manual</option> */}
             </select>
             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
               <ChevronDown size={16} />

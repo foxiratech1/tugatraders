@@ -22,6 +22,9 @@ const wix = Wix_Madefor_Display({
 export const metadata: Metadata = {
   title: "TugaTrades",
   description: "Find trusted professionals for every job",
+  icons: {
+    icon: "/Tugatraderslogo.png",
+  },
 };
 
 export default function RootLayout({

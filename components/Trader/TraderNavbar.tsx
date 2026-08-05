@@ -313,7 +313,7 @@ export default function TraderNavbar() {
       </div>
 
       {/* ── Main navbar ─────────────────────────────────── */}
-      <div className="bg-white border-b border-[#E5E5E5] shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+      <div className="bg-[#FFFFFFCC]/80 border-b border-[#E5E7EB] shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
         <div className="max-w-[1280px] mx-auto px-4 h-[60px] flex items-center gap-6">
 
           {/* Logo */}

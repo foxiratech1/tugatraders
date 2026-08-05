@@ -663,11 +663,11 @@ export default function CustomerJobDashboard() {
         const [jobsRes, reviewsRes] = await Promise.all([
           authApi.getMyJobs(),
           authApi.getMyReviews().catch((e) => {
-             console.error("Failed to fetch reviews", e);
-             return [];
+            console.error("Failed to fetch reviews", e);
+            return [];
           })
         ]);
-        
+
         const arr: Job[] = Array.isArray(jobsRes)
           ? jobsRes
           : Array.isArray(jobsRes?.data)
@@ -676,19 +676,19 @@ export default function CustomerJobDashboard() {
         setJobs(arr);
         if (arr.length > 0) setSelectedJob(arr[0]);
 
-        const reviewsArr = Array.isArray(reviewsRes) 
-          ? reviewsRes 
-          : Array.isArray(reviewsRes?.data) 
-            ? reviewsRes.data 
+        const reviewsArr = Array.isArray(reviewsRes)
+          ? reviewsRes
+          : Array.isArray(reviewsRes?.data)
+            ? reviewsRes.data
             : Array.isArray(reviewsRes?.content)
               ? reviewsRes.content
               : Array.isArray(reviewsRes?.data?.content)
                 ? reviewsRes.data.content
                 : [];
-        
+
         const reviewedIds = new Set<string>();
         const reviewsMap: Record<string, any> = {};
-        
+
         reviewsArr.forEach((r: any) => {
           if (r.jobId) {
             reviewedIds.add(r.jobId);
@@ -777,15 +777,15 @@ export default function CustomerJobDashboard() {
               ? selectedJob.selectedTrader
               : selectedJob.status !== "CANCELLED"
             ) && (
-              <Link
-                href={`/customer-dashboard/leave-review?jobId=${selectedJob.id}${selectedJob.selectedTrader ? `&traderId=${selectedJob.selectedTrader.id}` : ''}`}
-              >
-                <button className="flex items-center gap-2 px-5 py-2.5 rounded-[12px] border border-gray-200 bg-white cursor-pointer text-[14px] font-bold text-[#1C2C1C] hover:bg-gray-50 transition-colors shadow-sm">
-                  <Star size={16} />
-                  {selectedJob.status === "CLOSED" || selectedJob.status === "COMPLETED" ? "Share Your Experience" : "Leave a Review"}
-                </button>
-              </Link>
-            )}
+                <Link
+                  href={`/customer-dashboard/leave-review?jobId=${selectedJob.id}${selectedJob.selectedTrader ? `&traderId=${selectedJob.selectedTrader.id}` : ''}`}
+                >
+                  <button className="flex items-center gap-2 px-5 py-2.5 rounded-[12px] border border-gray-200 bg-white cursor-pointer text-[14px] font-bold text-[#1C2C1C] hover:bg-gray-50 transition-colors shadow-sm">
+                    <Star size={16} />
+                    {selectedJob.status === "CLOSED" || selectedJob.status === "COMPLETED" ? "Share Your Experience" : "Leave a Review"}
+                  </button>
+                </Link>
+              )}
             <Link href="/customer-dashboard/post-job">
               <button className="flex items-center gap-2 px-5 py-2.5 rounded-[12px] bg-[#6E9625] text-white text-[14px] cursor-pointer font-bold hover:bg-[#58791C] transition-colors shadow-sm">
                 <PlusCircle size={18} strokeWidth={2} />
@@ -1044,7 +1044,7 @@ ${isSelected
                             </span>
                           )}
                         </div>
-                        
+
                         {jobReviews[selectedJob.id] ? (
                           <div className="bg-[#F8F9F5] rounded-xl p-4 border border-[#E9F0E1]">
                             {jobReviews[selectedJob.id].wasWorkCompleted === false ? (
@@ -1089,7 +1089,7 @@ ${isSelected
                     <div className="grid grid-cols-[3fr_1.4fr] gap-5">
 
                       {/* Job Details Accordion Card */}
-                      <div className={`rounded-2xl border border-gray-200 shadow-sm px-5 ${isSelectedClosed ? 'bg-gray-50 opacity-90' : 'bg-white'}`}>
+                      <div className={`min-w-0 rounded-2xl border border-gray-200 shadow-sm px-5 ${isSelectedClosed ? 'bg-gray-50 opacity-90' : 'bg-white'}`}>
                         <h3 className="text-[14px] font-bold text-[#1C2C1C] py-4 border-b border-gray-100">
                           Job Details
                         </h3>
@@ -1116,7 +1116,7 @@ ${isSelected
                           icon={<FileText size={15} className="text-[#4CAF50]" />}
                           label="Description & Timeline"
                         >
-                          <p className="text-[13px] text-gray-600 leading-relaxed mb-4">
+                          <p className="text-[13px] text-gray-600 leading-relaxed mb-4 whitespace-pre-wrap break-words">
                             {selectedJob.description}
                           </p>
                           <div className="flex items-start gap-0 divide-x divide-gray-200">

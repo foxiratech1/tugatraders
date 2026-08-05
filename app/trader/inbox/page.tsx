@@ -62,7 +62,7 @@ function TraderInboxContent() {
   const loadData = async () => {
     try {
       setLoading(true);
-      
+
       // 1. Get profile to identify current trader ID & sidebar scores
       const profileRes = await authApi.getMyProfile();
       const profile = profileRes?.data || profileRes;
@@ -180,12 +180,12 @@ function TraderInboxContent() {
   };
 
   return (
-    <div className="flex-1 flex bg-[#F0EDE8] p-6 h-[calc(100vh-96px)] overflow-hidden">
+    <div className="flex-1 flex bg-[#F7F7F5] p-6 h-[calc(100vh-96px)] overflow-hidden">
       <div className="flex-1 flex gap-6 max-w-7xl mx-auto w-full h-full overflow-hidden">
-        
+
         {/* Left Sidebar Layout */}
         <div className="w-[340px] flex flex-col gap-5 h-full flex-shrink-0">
-          
+
           {/* Sidebar - Recent Chats */}
           <div className="flex-1 flex flex-col bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden min-h-0">
             {/* Sidebar Header */}
@@ -196,7 +196,7 @@ function TraderInboxContent() {
                   {isConnected ? "Connected" : "Reconnecting"}
                 </span>
               </div>
-              
+
               <div className="relative flex items-center">
                 <Search size={16} className="absolute left-3 text-gray-400" />
                 <input
@@ -227,16 +227,15 @@ function TraderInboxContent() {
                     const partner = c.customer || c.trader;
                     const partnerId = partner?.id || partner?._id || "";
                     const isOnline = onlineUsers.has(partnerId);
-                    
+
                     return (
                       <div
                         key={c.id}
                         onClick={() => handleSelectConversation(c.id)}
-                        className={`flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all ${
-                          isSelected
-                            ? "bg-[#6E9625] text-white shadow-sm"
-                            : "hover:bg-[#F9FAFB] border border-transparent text-[#1C2C1C]"
-                        }`}
+                        className={`flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all ${isSelected
+                          ? "bg-[#6E9625] text-white shadow-sm"
+                          : "hover:bg-[#F9FAFB] border border-transparent text-[#1C2C1C]"
+                          }`}
                       >
                         {/* Partner Avatar */}
                         <div className="relative w-11 h-11 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center font-bold text-emerald-800 text-[14px] overflow-hidden flex-shrink-0">

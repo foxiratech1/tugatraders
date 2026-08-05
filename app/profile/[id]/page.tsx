@@ -581,7 +581,7 @@ export default function PublicTraderProfilePage() {
               <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-col justify-between">
                 <div>
                   <h3 className="text-[17px] font-bold text-[#1C2C1C] mb-5 flex items-center gap-3">
-                    <FileText className="text-[#6E9625]" size={20} />
+                    {/* <FileText className="text-[#6E9625]" size={20} /> */}
                     About {fullName.split(' ')[0]}
                   </h3>
                   <div className="text-gray-600 font-medium text-[14px] leading-relaxed mb-8 whitespace-pre-wrap">
@@ -590,29 +590,29 @@ export default function PublicTraderProfilePage() {
                 </div>
 
                 {/* About Badges */}
-                {/* <div className="flex flex-wrap items-center gap-6 border-t border-gray-100 pt-6">
+                <div className="flex flex-wrap items-center gap-6 border-t border-gray-100 pt-6">
                   <div className="flex items-center gap-3">
-                    <Award size={32} className="text-[#6E9625] stroke-[1.5]" />
+                    {/* <Award size={32} className="text-[#6E9625] stroke-[1.5]" /> */}
                     <div className="flex flex-col">
                       <span className="font-bold text-[#1C2C1C] text-[13px]">10+</span>
                       <span className="text-[11px] font-medium text-gray-500">Years Experience</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <ThumbsUp size={32} className="text-[#6E9625] stroke-[1.5]" />
+                    {/* <ThumbsUp size={32} className="text-[#6E9625] stroke-[1.5]" /> */}
                     <div className="flex flex-col">
                       <span className="font-bold text-[#1C2C1C] text-[13px]">High</span>
                       <span className="text-[11px] font-medium text-gray-500">Customer Satisfaction</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <Shield size={32} className="text-[#6E9625] stroke-[1.5]" />
+                    {/* <Shield size={32} className="text-[#6E9625] stroke-[1.5]" /> */}
                     <div className="flex flex-col">
                       <span className="font-bold text-[#1C2C1C] text-[13px]">Fully</span>
                       <span className="text-[11px] font-medium text-gray-500">Insured</span>
                     </div>
                   </div>
-                </div> */}
+                </div>
               </div>
 
               {/* Gallery */}

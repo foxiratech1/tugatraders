@@ -441,7 +441,7 @@ export default function CustomerJobHistory() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F8F9F5]">
+    <div className="min-h-screen bg-[#F7F7F5]">
       <div className="max-w-[1200px] mx-auto px-6 py-8">
         {/* ── Page Header ─────────────────────────────────────────────── */}
         <div className="flex items-start justify-between mb-8">

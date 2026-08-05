@@ -1,7 +1,9 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { CheckCircle2, Image as ImageIcon, ShieldCheck, Lightbulb, Star, ArrowRight } from "lucide-react";
+import { CheckCircle2, Image as ImageIcon, ShieldCheck, Lightbulb, Star, ArrowRight, Loader2 } from "lucide-react";
+import { getRegistrationStatus } from "@/app/api/authApi";
 
 // ─── Circular progress SVG ───────────────────────────────────────────────────
 function CircularProgress({ percent }: { percent: number }) {
@@ -12,48 +14,33 @@ function CircularProgress({ percent }: { percent: number }) {
   const offset = circumference - (percent / 100) * circumference;
 
   return (
-    <svg width="128" height="128" viewBox="0 0 128 128" className="flex-shrink-0">
-      {/* Track */}
-      <circle
-        cx={cx} cy={cy} r={r}
-        fill="none"
-        stroke="#E5E5E5"
-        strokeWidth="10"
-      />
-      {/* Progress */}
-      <circle
-        cx={cx} cy={cy} r={r}
-        fill="none"
-        stroke="#6E9625"
-        strokeWidth="10"
-        strokeLinecap="round"
-        strokeDasharray={circumference}
-        strokeDashoffset={offset}
-        transform={`rotate(-90 ${cx} ${cy})`}
-        style={{ transition: "stroke-dashoffset 0.6s ease" }}
-      />
-      {/* Label */}
-      <text
-        x={cx} y={cy - 4}
-        textAnchor="middle"
-        dominantBaseline="middle"
-        className="font-black"
-        fill="#1C2C1C"
-        fontSize="22"
-        fontWeight="800"
-      >
-        {percent}
-      </text>
-      <text
-        x={cx + 18} y={cy + 8}
-        textAnchor="middle"
-        fill="#1C2C1C"
-        fontSize="12"
-        fontWeight="600"
-      >
-        %
-      </text>
-    </svg>
+    <div className="relative flex items-center justify-center w-[128px] h-[128px]">
+      <svg width="128" height="128" viewBox="0 0 128 128" className="absolute inset-0 flex-shrink-0">
+        {/* Track */}
+        <circle
+          cx={cx} cy={cy} r={r}
+          fill="none"
+          stroke="#E5E5E5"
+          strokeWidth="12"
+        />
+        {/* Progress */}
+        <circle
+          cx={cx} cy={cy} r={r}
+          fill="none"
+          stroke="#6E9625"
+          strokeWidth="12"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          transform={`rotate(-90 ${cx} ${cy})`}
+          style={{ transition: "stroke-dashoffset 0.6s ease" }}
+        />
+      </svg>
+      <div className="relative z-10 flex items-baseline justify-center text-[#1C2C1C]">
+        <span className="text-[26px] font-black">{percent}</span>
+        <span className="text-[14px] font-bold ml-[1px]">%</span>
+      </div>
+    </div>
   );
 }
 
@@ -71,20 +58,20 @@ function ProgressRow({
 }) {
   const completed = percent === 100;
   return (
-    <div className="flex items-center gap-4 py-4 border-b border-[#F0EDE8] last:border-0">
-      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${completed ? "bg-[#6E9625]/15" : "bg-[#F5F5F5]"}`}>
+    <div className="flex items-start gap-4 py-4 border-b border-[#F5F5F5] last:border-0">
+      <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${completed ? "bg-[#6E9625]/15 text-[#6E9625]" : "bg-[#F5F5F5] text-[#1C2C1C]/40"}`}>
         {icon}
       </div>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center justify-between mb-1.5">
+      <div className="flex-1 flex flex-col gap-2.5 min-w-0">
+        <div className="flex items-center justify-between">
           <span className="text-[13px] font-semibold text-[#1C2C1C]">{label}</span>
           {completed ? (
             <span className="text-[12px] font-bold text-[#6E9625]">100%</span>
           ) : (
-            <span className="text-[12px] font-semibold text-[#F5792A]">{status}</span>
+            <span className="text-[12px] font-semibold text-[#F5792A]">{status || "Action Required"}</span>
           )}
         </div>
-        <div className="h-[5px] bg-[#F0EDE8] rounded-full overflow-hidden">
+        <div className="h-[5px] bg-[#E5E5E5] rounded-full overflow-hidden w-full">
           {completed && (
             <div className="h-full bg-[#6E9625] rounded-full w-full" />
           )}
@@ -107,21 +94,20 @@ function GuideMilestone({
   completed: boolean;
 }) {
   return (
-    <div className="flex gap-3 py-2.5">
+    <div className="flex gap-3 py-3 items-center">
       <div className="flex flex-col items-center pt-0.5">
         <div
-          className={`w-3.5 h-3.5 rounded-full border-2 flex-shrink-0 ${completed
-            ? "bg-[#6E9625] border-[#6E9625]"
-            : "bg-white border-[#D0D0D0]"
+          className={`w-3 h-3 rounded-full flex-shrink-0 ${completed
+            ? "bg-[#6E9625]"
+            : "bg-[#D0D0D0]"
             }`}
         />
       </div>
       <div>
-        <p className="text-[12px] font-bold text-[#1C2C1C]">
-          <span className="text-[#1C2C1C]/50 font-semibold mr-1">{range}</span>
+        <p className="text-[13px] font-bold text-[#1C2C1C]">
+          <span className="text-[#1C2C1C]/50 font-semibold mr-1.5">{range}</span>
           {title}
         </p>
-        <p className="text-[11px] text-[#1C2C1C]/50 mt-0.5">{description}</p>
       </div>
     </div>
   );
@@ -129,8 +115,38 @@ function GuideMilestone({
 
 // ─── Component ────────────────────────────────────────────────────────────────────
 export default function TraderDashboard() {
+  const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await getRegistrationStatus();
+        setData(res?.data || res);
+      } catch (err) {
+        console.error("Failed to fetch registration status", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-[50vh]">
+        <Loader2 className="animate-spin text-[#6E9625]" size={40} />
+      </div>
+    );
+  }
+
+  const overallPercentage = data?.profileCompletion?.overallPercentage || 0;
+  const stages = data?.profileCompletion?.stages || [];
+  const completedSteps = stages.filter((s: any) => s.isCompleted).length;
+  const totalSteps = stages.length;
+
   return (
-    <div className="max-w-[1100px] mx-auto">
+    <div className="max-w-[1100px] mx-auto ">
       {/* Page heading */}
       <h1 className="text-[22px] font-bold text-[#1C2C1C] mb-6">Trader Dashboard</h1>
 
@@ -142,7 +158,7 @@ export default function TraderDashboard() {
 
           {/* Complete Your Profile card */}
           <div className="bg-white rounded-[20px] shadow-[0_4px_24px_rgba(28,44,28,0.07)] border border-[#E5E5E5] p-6 sm:p-8 flex items-center gap-8">
-            <CircularProgress percent={75} />
+            <CircularProgress percent={overallPercentage} />
 
             <div className="flex-1 min-w-0">
               <h2 className="text-[24px] sm:text-[28px] font-black text-[#1C2C1C] leading-tight mb-2">
@@ -172,32 +188,21 @@ export default function TraderDashboard() {
 
           {/* Profile Strength Tracker card */}
           <div className="bg-white rounded-[20px] shadow-[0_4px_24px_rgba(28,44,28,0.07)] border border-[#E5E5E5] p-6 sm:p-8">
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-4">
               <h2 className="text-[16px] font-bold text-[#1C2C1C]">Profile Strength Tracker</h2>
-              <span className="text-[12px] font-semibold text-[#1C2C1C]/50">8 of 10 steps completed</span>
+              <span className="text-[13px] font-medium text-[#1C2C1C]/50">{completedSteps} of {totalSteps} steps completed</span>
             </div>
 
             <div className="mt-4">
-              <ProgressRow
-                icon={<CheckCircle2 size={16} className="text-[#6E9625]" />}
-                label="Business Details"
-                percent={100}
-              />
-              <ProgressRow
-                icon={<CheckCircle2 size={16} className="text-[#6E9625]" />}
-                label="Services & Skills"
-                percent={100}
-              />
-              <ProgressRow
-                icon={<ImageIcon size={16} className="text-[#1C2C1C]/40" />}
-                label="Portfolio Photos"
-                status="Action Required"
-              />
-              <ProgressRow
-                icon={<ShieldCheck size={16} className="text-[#1C2C1C]/40" />}
-                label="Identity Verification"
-                status="Action Required"
-              />
+              {stages.map((stage: any) => (
+                <ProgressRow
+                  key={stage.id}
+                  icon={stage.isCompleted ? <CheckCircle2 size={16} className="text-[#6E9625]" /> : <ShieldCheck size={16} className="text-[#1C2C1C]/40" />}
+                  label={stage.title}
+                  percent={stage.isCompleted ? 100 : 0}
+                  status={stage.isCompleted ? "Completed" : "Action Required"}
+                />
+              ))}
             </div>
           </div>
         </div>
@@ -209,36 +214,15 @@ export default function TraderDashboard() {
           <div className="bg-white rounded-[20px] shadow-[0_4px_24px_rgba(28,44,28,0.07)] border border-[#E5E5E5] p-6">
             <h2 className="text-[15px] font-bold text-[#1C2C1C] mb-1">Completion Guide</h2>
             <div className="mt-3 divide-y divide-[#F5F5F5]">
-              <GuideMilestone
-                range="0-25%"
-                title="Sign-up"
-                description="Basic account details provided."
-                completed={true}
-              />
-              <GuideMilestone
-                range="25-50%"
-                title="Requirements"
-                description="Business info and services added."
-                completed={true}
-              />
-              <GuideMilestone
-                range="50-65%"
-                title="Admin Approval"
-                description="Initial review completed."
-                completed={true}
-              />
-              <GuideMilestone
-                range="65-80%"
-                title="Portfolio"
-                description="Upload work examples."
-                completed={false}
-              />
-              <GuideMilestone
-                range="90-100%"
-                title="Verification"
-                description="Identity and documents verified."
-                completed={false}
-              />
+              {stages.map((stage: any) => (
+                <GuideMilestone
+                  key={stage.id}
+                  range={stage.range}
+                  title={stage.title}
+                  description=""
+                  completed={stage.isCompleted}
+                />
+              ))}
             </div>
           </div>
 

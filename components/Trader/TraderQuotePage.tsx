@@ -93,7 +93,7 @@ function QuoteCard({ quote }: { quote: Quote }) {
   const jobId = quote.job?.id || quote.jobId || "";
 
   return (
-    <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm p-5 hover:shadow-md hover:border-[#C8D9A8] transition-all duration-200 group cursor-pointer">
+    <div className="bg-[#F7F7F5] rounded-2xl border border-[#E8E8E8] shadow-sm p-5 hover:shadow-md hover:border-[#C8D9A8] transition-all duration-200 group cursor-pointer">
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <p className="text-[14px] font-bold text-[#1C2C1C] truncate">{jobTitle}</p>
@@ -132,8 +132,8 @@ export default function TraderQuotePage() {
       const arr: Quote[] = Array.isArray(possible)
         ? possible
         : Array.isArray(possible?.quotes)
-        ? possible?.quotes
-        : [];
+          ? possible?.quotes
+          : [];
       setQuotes(arr);
     } catch (e) {
       console.error("Failed to fetch trader quotes", e);

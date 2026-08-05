@@ -900,7 +900,7 @@ export default function TraderProfilePage() {
 
   /* ─────────────────────────────── render ───────────────────────────────── */
   return (
-    <div className="min-h-screen bg-[#F0EDE8]">
+    <div className="min-h-screen bg-[#F7F7F5]">
       <div className="max-w-5xl mx-auto px-6 py-10">
 
         {/* Page title */}
