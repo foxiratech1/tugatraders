@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { FiStar, FiChevronLeft, FiChevronRight, FiCheckCircle } from "react-icons/fi";
+import { FiStar, FiChevronLeft, FiChevronRight, FiCheckCircle, FiUser } from "react-icons/fi";
 import { FaQuoteRight } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { slideFromLeft, slideFromRight, staggerContainer } from "./animationVariants";
@@ -17,8 +17,8 @@ const topFeatures = [
   "Honest, transparent ratings",
 ];
 
-function getImageUrl(path: string | null | undefined): string {
-  if (!path) return "/avt.png";
+function getImageUrl(path: string | null | undefined): string | null {
+  if (!path || path === "null" || path === "undefined") return null;
   if (path.startsWith("http")) return path;
   const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000").replace(/\/+$/, "");
   const cleanPath = path.replace(/^\/+/, "");
@@ -242,14 +242,18 @@ export default function ReviewSection() {
                   <div className="relative bg-white rounded-[24px] sm:rounded-[36px] md:rounded-[45px] p-6 sm:p-8 md:p-10 h-full shadow-[0_15px_50px_rgba(0,0,0,0.02)] border border-[#C9CBC7] flex flex-col transition-transform hover:-translate-y-1">
                     <div className="flex items-start justify-between mb-6 sm:mb-8">
                       <div className="flex items-center gap-3 sm:gap-4">
-                        <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 border-[#6E96251A] flex-shrink-0 bg-gray-100 flex items-center justify-center">
-                          <Image
-                            src={review.avatar}
-                            alt={review.name}
-                            fill
-                            className="object-cover"
-                            unoptimized
-                          />
+                        <div className="relative w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden border-2 border-[#6E96251A] flex-shrink-0 bg-gray-100 flex items-center justify-center text-gray-400">
+                          {review.avatar ? (
+                            <Image
+                              src={review.avatar}
+                              alt={review.name}
+                              fill
+                              className="object-cover"
+                              unoptimized
+                            />
+                          ) : (
+                            <FiUser className="w-6 h-6 sm:w-8 sm:h-8" />
+                          )}
                         </div>
                         <div>
                           <div className="flex gap-0.5 mb-1">
