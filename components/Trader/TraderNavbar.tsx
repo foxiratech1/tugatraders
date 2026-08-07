@@ -213,13 +213,13 @@ export default function TraderNavbar() {
         <div className="max-w-[1280px] mx-auto px-4 h-9 flex items-center justify-end gap-6">
           {isApproved && (
             <>
-              <Link
+              {/* <Link
                 href="/trader/account"
                 className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors"
               >
                 <User2 size={12} />
                 Account
-              </Link>
+              </Link> */}
               <Link
                 href="/trader/settings"
                 className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors"

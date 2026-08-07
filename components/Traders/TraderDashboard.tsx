@@ -3,7 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { CheckCircle2, Image as ImageIcon, ShieldCheck, Lightbulb, Star, ArrowRight, Loader2 } from "lucide-react";
-import { getRegistrationStatus } from "@/app/api/authApi";
+import { getRegistrationStatus, authApi } from "@/app/api/authApi";
+import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 
 // ─── Circular progress SVG ───────────────────────────────────────────────────
 function CircularProgress({ percent }: { percent: number }) {
@@ -116,15 +118,22 @@ function GuideMilestone({
 // ─── Component ────────────────────────────────────────────────────────────────────
 export default function TraderDashboard() {
   const [data, setData] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [checking, setChecking] = useState(false);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await getRegistrationStatus();
-        setData(res?.data || res);
+        const [statusRes, profileRes] = await Promise.all([
+          getRegistrationStatus().catch(() => null),
+          import("@/app/api/authApi").then(mod => mod.authApi.getMyProfile()).catch(() => null)
+        ]);
+        setData(statusRes?.data || statusRes);
+        setProfile(profileRes?.data || profileRes);
       } catch (err) {
-        console.error("Failed to fetch registration status", err);
+        console.error("Failed to fetch dashboard data", err);
       } finally {
         setLoading(false);
       }
@@ -144,6 +153,12 @@ export default function TraderDashboard() {
   const stages = data?.profileCompletion?.stages || [];
   const completedSteps = stages.filter((s: any) => s.isCompleted).length;
   const totalSteps = stages.length;
+
+  const rawProfile = profile?.data?.data || profile?.data || profile;
+  
+  // The backend API `getPublicTraderProfileById` actually expects the User ID
+  // (which is `rawProfile?.id`), rather than the Trader Profile's internal ID.
+  const profileId = rawProfile?.id || rawProfile?._id || data?.id || rawProfile?.traderProfile?.userId || "";
 
   return (
     <div className="max-w-[1100px] mx-auto ">
@@ -176,12 +191,37 @@ export default function TraderDashboard() {
                   Continue Setup
                   <ArrowRight size={15} />
                 </Link>
-                <Link
-                  href=""
-                  className="text-[13px] font-semibold text-[#1C2C1C]/60 hover:text-[#1C2C1C] transition-colors"
-                >
-                  View Public Profile
-                </Link>
+                
+                {profileId ? (
+                  <button
+                    onClick={async () => {
+                      if (!profileId || profileId.trim() === "") {
+                        alert("Error: profileId is empty before calling API!");
+                        return;
+                      }
+                      try {
+                        setChecking(true);
+                        // Explicitly check the string value
+                        console.log("Calling getPublicTraderProfileById with:", profileId);
+                        await authApi.getPublicTraderProfileById(profileId.trim());
+                        router.push(`/profile/${profileId.trim()}`);
+                      } catch (err: any) {
+                        console.error("API error:", err);
+                        alert(`Failed to fetch public profile for ID: '${profileId}'. Error: ${err?.message || 'Unknown'}`);
+                      } finally {
+                        setChecking(false);
+                      }
+                    }}
+                    disabled={checking}
+                    className="text-[13px] font-semibold text-[#1C2C1C]/60 hover:text-[#1C2C1C] transition-colors disabled:opacity-50"
+                  >
+                    {checking ? "Checking..." : "View Public Profile"}
+                  </button>
+                ) : (
+                  <span className="text-[13px] font-semibold text-[#1C2C1C]/40">
+                    View Public Profile (ID missing)
+                  </span>
+                )}
               </div>
             </div>
           </div>

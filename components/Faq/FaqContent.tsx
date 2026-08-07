@@ -11,9 +11,14 @@ import { authApi } from "@/app/api/authApi";
 
 // Dummy FAQs have been removed. Using API responses exclusively.
 
-const FaqContent = () => {
+interface FaqContentProps {
+  role?: 'CUSTOMER' | 'TRADER';
+}
+
+const FaqContent: React.FC<FaqContentProps> = ({ role: propRole }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const searchParams = useSearchParams();
+  const [derivedRole, setDerivedRole] = useState<'CUSTOMER' | 'TRADER' | undefined>(propRole);
 
   const [activeTab, setActiveTab] = useState<'customers' | 'traders'>('customers');
   const [faqs, setFaqs] = useState<any[]>([]);
@@ -39,12 +44,30 @@ const FaqContent = () => {
   }, []);
 
   useEffect(() => {
-    setActiveTab(
-      searchParams.get("tab") === "traders"
-        ? "traders"
-        : "customers"
-    );
-  }, [searchParams]);
+    let currentRole = propRole;
+    if (!currentRole) {
+      try {
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          const userObj = JSON.parse(storedUser);
+          if (userObj.role === 'CUSTOMER' || userObj.role === 'TRADER') {
+            currentRole = userObj.role;
+            setDerivedRole(currentRole);
+          }
+        }
+      } catch (e) { }
+    }
+
+    if (currentRole) {
+      setActiveTab(currentRole === 'TRADER' ? 'traders' : 'customers');
+    } else {
+      setActiveTab(
+        searchParams.get("tab") === "traders"
+          ? "traders"
+          : "customers"
+      );
+    }
+  }, [searchParams, propRole]);
 
   useEffect(() => {
     setExpandedIndices([0]);
@@ -100,28 +123,30 @@ const FaqContent = () => {
         </div>
 
         {/* Tab Toggle */}
-        <div className="flex justify-center mb-10">
-          <div className="inline-flex items-center bg-white border border-[#243A241F] rounded-full p-1 shadow-sm">
-            <button
-              onClick={() => { setActiveTab('customers'); setSearchQuery(''); }}
-              className={`px-6 py-2.5 rounded-full text-[14px] font-semibold transition-all duration-200 ${activeTab === 'customers'
-                ? 'bg-[#243A24] text-white shadow-sm'
-                : 'text-[#243A24] hover:text-[#243A24]/70'
-                }`}
-            >
-              Customers
-            </button>
-            <button
-              onClick={() => { setActiveTab('traders'); setSearchQuery(''); }}
-              className={`px-6 py-2.5 rounded-full text-[14px] font-semibold transition-all duration-200 ${activeTab === 'traders'
-                ? 'bg-[#243A24] text-white shadow-sm'
-                : 'text-[#243A24] hover:text-[#243A24]/70'
-                }`}
-            >
-              Traders
-            </button>
+        {!derivedRole && (
+          <div className="flex justify-center mb-10">
+            <div className="inline-flex items-center bg-white border border-[#243A241F] rounded-full p-1 shadow-sm">
+              <button
+                onClick={() => { setActiveTab('customers'); setSearchQuery(''); }}
+                className={`px-6 py-2.5 rounded-full text-[14px] font-semibold transition-all duration-200 ${activeTab === 'customers'
+                  ? 'bg-[#243A24] text-white shadow-sm'
+                  : 'text-[#243A24] hover:text-[#243A24]/70'
+                  }`}
+              >
+                Customers
+              </button>
+              <button
+                onClick={() => { setActiveTab('traders'); setSearchQuery(''); }}
+                className={`px-6 py-2.5 rounded-full text-[14px] font-semibold transition-all duration-200 ${activeTab === 'traders'
+                  ? 'bg-[#243A24] text-white shadow-sm'
+                  : 'text-[#243A24] hover:text-[#243A24]/70'
+                  }`}
+              >
+                Traders
+              </button>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Section Heading */}
         <div className="mb-8 max-w-[540px]">
@@ -175,9 +200,10 @@ const FaqContent = () => {
                       </span>
                     </button>
                     {isOpen && (
-                      <p className="text-[16px] text-[#555555] mt-4 font-medium leading-relaxed animate-fade-in">
-                        {faq.answer}
-                      </p>
+                      <div
+                        className="text-[16px] text-[#555555] mt-4 font-medium leading-relaxed animate-fade-in"
+                        dangerouslySetInnerHTML={{ __html: faq.answer.replace(/&nbsp;/g, ' ') }}
+                      />
                     )}
                   </div>
                 );
@@ -210,9 +236,10 @@ const FaqContent = () => {
                       </span>
                     </button>
                     {isOpen && (
-                      <p className="text-[16px] text-[#555555] mt-4 font-medium leading-relaxed animate-fade-in">
-                        {faq.answer}
-                      </p>
+                      <div
+                        className="text-[16px] text-[#555555] mt-4 font-medium leading-relaxed animate-fade-in"
+                        dangerouslySetInnerHTML={{ __html: faq.answer.replace(/&nbsp;/g, ' ') }}
+                      />
                     )}
                   </div>
                 );

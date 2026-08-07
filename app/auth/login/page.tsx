@@ -377,7 +377,7 @@ function LoginContent({ role }: { role?: string }) {
               <div className="h-[1px] flex-1 bg-[#243A240D]" />
             </div>
             {/* SOCIAL BUTTONS */}
-            <div className="grid grid-cols-2 gap-4">
+            {/* <div className="grid grid-cols-2 gap-4">
               <button className="flex h-[44px] items-center justify-center gap-2 rounded-[12px] border border-[#243A241A] bg-white text-[13px] font-bold text-[#1C2C1C] hover:bg-gray-50 transition-all cursor-pointer px-2">
                 <Image src="https://www.svgrepo.com/show/475656/google-color.svg" alt="google" width={16} height={16} />
                 <span className="truncate">Google</span>
@@ -388,7 +388,7 @@ function LoginContent({ role }: { role?: string }) {
                 </svg>
                 <span className="truncate">Apple</span>
               </button>
-            </div>
+            </div> */}
             {/* REGISTER LINK */}
             <div className="text-center mt-1">
               <p className="text-[13px] text-[#1C2C1C]/60 font-medium">

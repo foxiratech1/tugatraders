@@ -206,11 +206,18 @@ export default function SavedTradersPage() {
     let list = [...traders];
     if (search.trim()) {
       const q = search.toLowerCase();
-      list = list.filter(
-        (t) =>
-          t.fullName?.toLowerCase().includes(q) ||
-          t.companyName?.toLowerCase().includes(q)
-      );
+      list = list.filter((t) => {
+        const searchableFields = [
+          t.fullName,
+          t.companyName,
+          t.location,
+          ...(t.tradeCategories || []),
+          ...(t.skillServices || []),
+          ...(t.subCategories || []),
+          ...(t.skills || [])
+        ];
+        return searchableFields.some(field => field?.toLowerCase().includes(q));
+      });
     }
     if (sort === "rating") list.sort((a, b) => b.ratingAvg - a.ratingAvg);
     else if (sort === "reviews") list.sort((a, b) => b.reviewCount - a.reviewCount);

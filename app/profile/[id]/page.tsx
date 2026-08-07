@@ -221,6 +221,7 @@ export default function PublicTraderProfilePage() {
   const [pendingAction, setPendingAction] = useState<"message" | "save" | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number>(-1);
   const [showAllGallery, setShowAllGallery] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
 
   const openLightbox = (index: number) => setLightboxIndex(index);
   const closeLightbox = () => setLightboxIndex(-1);
@@ -234,6 +235,17 @@ export default function PublicTraderProfilePage() {
       setLightboxIndex((prev) => (prev === 0 ? portfolio.length - 1 : prev - 1));
     }
   };
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const userStr = localStorage.getItem("user");
+      if (userStr) {
+        try {
+          setCurrentUser(JSON.parse(userStr));
+        } catch (e) { }
+      }
+    }
+  }, []);
 
   useEffect(() => {
     if (!traderId) return;
@@ -368,6 +380,8 @@ export default function PublicTraderProfilePage() {
   const certificates = tp?.certificates || [];
   const insuranceDocuments = tp?.insuranceDocuments || [];
 
+  const isCurrentUserTrader = currentUser?.role === "TRADER" || currentUser?.role === "trader";
+
   return (
     <div className="min-h-screen bg-white font-sans selection:bg-[#6E9625]/20 selection:text-[#1C2C1C]">
       {/* ── Navbar Spacer ── */}
@@ -375,11 +389,11 @@ export default function PublicTraderProfilePage() {
 
       <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
         <button
-          onClick={() => router.push("/directory-listing/search")}
+          onClick={() => router.push(isCurrentUserTrader ? "/trader" : "/directory-listing/search")}
           className="flex items-center gap-2 text-gray-500 hover:text-[#243A24] font-medium cursor-pointer transition-colors mb-6 lg:mb-8"
         >
           <ArrowLeft size={18} />
-          Back to Search Results
+          {isCurrentUserTrader ? "Back to Dashboard" : "Back to Search Results"}
         </button>
 
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
@@ -415,23 +429,27 @@ export default function PublicTraderProfilePage() {
               </div>
 
               {/* Action Buttons */}
-              <button
-                onClick={handleSendMessage}
-                className="w-full bg-[#1C2C1C] text-white rounded-xl py-3.5 font-bold text-[14px] mb-3 flex items-center justify-center gap-2 hover:bg-black transition-colors"
-              >
-                <MessageSquare size={18} /> Send Message
-              </button>
-              <button
-                onClick={handleToggleSave}
-                disabled={isSaving}
-                className={`w-full rounded-xl py-3.5 font-bold text-[14px] flex items-center justify-center gap-2 transition-colors ${isSaved
-                  ? "bg-[#F4F7F1] text-[#6E9625] hover:bg-[#e9f0e1] border border-[#6E9625]"
-                  : "bg-[#F3F4F6] text-[#4B5563] hover:bg-gray-200"
-                  }`}
-              >
-                <Heart size={18} fill={isSaved ? "currentColor" : "none"} className={isSaved ? "text-[#6E9625]" : "text-[#4B5563]"} />
-                {isSaved ? "Saved" : "Save Trader"}
-              </button>
+              {!isCurrentUserTrader && (
+                <>
+                  <button
+                    onClick={handleSendMessage}
+                    className="w-full bg-[#1C2C1C] text-white rounded-xl py-3.5 font-bold text-[14px] mb-3 flex items-center justify-center gap-2 hover:bg-black transition-colors"
+                  >
+                    <MessageSquare size={18} /> Send Message
+                  </button>
+                  <button
+                    onClick={handleToggleSave}
+                    disabled={isSaving}
+                    className={`w-full rounded-xl py-3.5 font-bold text-[14px] flex items-center justify-center gap-2 transition-colors ${isSaved
+                      ? "bg-[#F4F7F1] text-[#6E9625] hover:bg-[#e9f0e1] border border-[#6E9625]"
+                      : "bg-[#F3F4F6] text-[#4B5563] hover:bg-gray-200"
+                      }`}
+                  >
+                    <Heart size={18} fill={isSaved ? "currentColor" : "none"} className={isSaved ? "text-[#6E9625]" : "text-[#4B5563]"} />
+                    {isSaved ? "Saved" : "Save Trader"}
+                  </button>
+                </>
+              )}
 
               <hr className="w-full border-gray-100 my-6" />
 

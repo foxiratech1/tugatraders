@@ -317,8 +317,9 @@ export default function ChatWindow({
   };
 
   return (
-    <div className="flex-1 flex overflow-hidden bg-white rounded-3xl border border-gray-100 shadow-sm min-h-[75vh]">
-      {/* Central Chat Panel */}
+    <>
+      <div className="flex-1 flex overflow-hidden bg-white rounded-3xl border border-gray-100 shadow-sm min-h-[75vh]">
+        {/* Central Chat Panel */}
       <div className="flex-1 flex flex-col min-w-0 border-r border-gray-50">
         {/* Chat Header */}
         <div className="p-4 bg-white border-b border-gray-100 flex items-center justify-between flex-shrink-0">
@@ -426,196 +427,91 @@ export default function ChatWindow({
         />
       </div>
 
-      {/* Right Side Bar (Job & Trader Details) - HIDE FOR TRADER VIEW */}
-      {!isTraderView && (
-        <div className="w-[300px] hidden lg:flex flex-col p-5 overflow-y-auto bg-white flex-shrink-0">
-          {/* Job Overview */}
-          {job ? (
-            <div className="mb-6">
-              <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">Job Overview</h4>
-              <div className="bg-[#F9FAFB] border border-gray-100 rounded-2xl p-4 shadow-sm">
-                <h5 className="text-[14px] font-bold text-[#1C2C1C] mb-3">{job.title || "Renovation"}</h5>
+    </div>
 
-                <div className="space-y-2.5">
-                  {job.location && (
-                    <div className="flex items-center gap-2.5 text-gray-500 text-[12px]">
-                      <MapPin size={15} className="text-[#6E9625] flex-shrink-0" />
-                      <span className="truncate">{job.location}</span>
-                    </div>
-                  )}
+      {/* Report Modal */ }
+  {
+    showReportModal && (
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
+        <div className="bg-white rounded-3xl border border-gray-150 p-6 max-w-md w-full shadow-xl">
+          <h3 className="text-[18px] font-bold text-[#1C2C1C] mb-4 flex items-center gap-2">
+            <AlertTriangle className="text-red-500" />
+            Report {isTraderView ? "Customer" : "Trader"}
+          </h3>
 
-                  <div className="flex items-center gap-2.5 text-gray-500 text-[12px]">
-                    <Calendar size={15} className="text-[#6E9625] flex-shrink-0" />
-                    <span>
-                      {job.startDate ? new Date(job.startDate).toLocaleDateString([], { day: "numeric", month: "short", year: "numeric" }) : "flexible"}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center gap-2.5 text-gray-500 text-[12px]">
-                    <DollarSign size={15} className="text-[#6E9625] flex-shrink-0" />
-                    <span className="font-semibold text-[#1C2C1C]">{job.budget || "Budget TBD"}</span>
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-3 border-t border-gray-100 flex items-center justify-between">
-                  <span className="text-[10px] text-gray-400 uppercase">Status</span>
-                  <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${jobStatus === "COMPLETED" ? "bg-emerald-50 text-emerald-700 border border-emerald-100" : "bg-orange-50 text-orange-700 border border-orange-100"
-                    }`}>
-                    {jobStatus}
-                  </span>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div className="mb-6 bg-[#F9FAFB] rounded-2xl p-4 border border-gray-100 flex items-center gap-2.5">
-              <Info size={16} className="text-[#6E9625]" />
-              <p className="text-[12px] text-gray-500">No active job associated with this chat.</p>
-            </div>
-          )}
-
-          {/* Trader Details */}
-          <div>
-            <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-3">Your Details</h4>
-            <div className="border border-gray-200 rounded-2xl p-4 flex flex-col items-center text-center shadow-sm">
-              <div className="w-16 h-16 rounded-full bg-emerald-50 border border-emerald-150 flex items-center justify-center font-bold text-emerald-800 text-[20px] overflow-hidden mb-3">
-                {(() => {
-                  const imgPath = partner?.profileImage || (partner as any)?.avatar || (partner as any)?.logo || (partner as any)?.traderProfile?.logo || (partner as any)?.traderProfile?.profileImage || (partner as any)?.traderProfile?.document || null;
-                  const finalImgUrl = getImageUrl(imgPath);
-                  return finalImgUrl ? (
-                    <img
-                      src={finalImgUrl}
-                      alt={partner?.fullName || "User"}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    partner?.fullName?.charAt(0) || "U"
-                  );
-                })()}
-              </div>
-
-              <h5 className="text-[14px] font-bold text-[#1C2C1C] mb-1">{partner?.fullName}</h5>
-
-              {/* Star Rating */}
-              <div className="flex items-center gap-1.5 mb-4">
-                <span className="flex items-center gap-0.5 text-[11px] text-gray-500 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">
-                  <Star size={11} fill="#F59E0B" className="text-[#F59E0B]" />
-                  <span className="font-bold text-[#1C2C1C]">{(partner as any)?.rating || "5.0"}</span>
-                </span>
-                <span className="text-[11px] text-gray-400">({(partner as any)?.reviewsCount || 0} reviews)</span>
-              </div>
-
-              {/* Badges */}
-              <div className="w-full space-y-2 mb-4 pt-3 border-t border-gray-100 text-left">
-                <div className="flex items-center justify-between text-[11px] text-gray-500">
-                  <span>Member since</span>
-                  <span className="font-semibold text-[#1C2C1C]">{(partner as any)?.joinedYear || "2024"}</span>
-                </div>
-                <div className="flex items-center justify-between text-[11px] text-gray-500">
-                  <span>Identity</span>
-                  <span className="flex items-center gap-1 text-emerald-600 font-semibold">
-                    <ShieldCheck size={13} /> Verified
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-[11px] text-gray-500">
-                  <span>Insurance</span>
-                  <span className="flex items-center gap-1 text-emerald-600 font-semibold">
-                    <ShieldCheck size={13} /> Uploaded
-                  </span>
-                </div>
-              </div>
-
-              <button
-                onClick={() => window.location.href = "mailto:support@tugatraders.com"}
-                className="w-full py-2 bg-[#1C2C1C] text-white hover:bg-[#2A3C2A] rounded-xl text-[12px] font-bold transition-all shadow-sm flex items-center justify-center gap-1.5"
+          <form onSubmit={handleReportSubmit}>
+            <div className="mb-4">
+              <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">Report Type</label>
+              <select
+                value={reportType}
+                onChange={(e) => setReportType(e.target.value)}
+                className="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl px-4 py-2.5 text-[13px] text-[#1C2C1C] outline-none focus:border-[#6E9625]"
               >
-                <Mail size={14} />
-                Contact Tuga Support
+                <option value="USER">User</option>
+                <option value="REVIEW">Review</option>
+                <option value="JOB">Job</option>
+                <option value="MESSAGE">Message</option>
+                <option value="TRADER_PROFILE">Trader Profile</option>
+              </select>
+            </div>
+
+            <div className="mb-5">
+              <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                Report Reason
+              </label>
+
+              <select
+                value={reportReason}
+                onChange={(e) => setReportReason(e.target.value)}
+                className="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl px-4 py-2.5"
+              >
+                <option value="SPAM">Spam</option>
+                <option value="FAKE">Fake</option>
+                <option value="ABUSIVE">Abusive</option>
+                <option value="HARASSMENT">Harassment</option>
+                <option value="INAPPROPRIATE_CONTENT">
+                  Inappropriate Content
+                </option>
+                <option value="SCAM">Scam</option>
+                <option value="OTHER">Other</option>
+              </select>
+              {reportReason === "OTHER" && (
+                <textarea
+                  value={customReason}
+                  onChange={(e) => setCustomReason(e.target.value)}
+                  placeholder="Enter your reason..."
+                  rows={4}
+                  className="w-full mt-3 bg-[#F9FAFB] border border-gray-200 rounded-xl px-4 py-3"
+                />
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-3.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowReportModal(false);
+                  setReportReason("");
+                }}
+                className="px-4 py-2 border border-gray-200 hover:bg-gray-50 text-gray-500 rounded-xl text-[12px] font-semibold transition-colors"
+                disabled={submittingReport}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-5 py-2 bg-red-600 text-white hover:bg-red-700 rounded-xl text-[12px] font-bold transition-all shadow-sm"
+                disabled={submittingReport}
+              >
+                {submittingReport ? "Submitting..." : "Submit Report"}
               </button>
             </div>
-          </div>
+          </form>
         </div>
-      )}
-
-      {/* Report Modal */}
-      {showReportModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
-          <div className="bg-white rounded-3xl border border-gray-150 p-6 max-w-md w-full shadow-xl">
-            <h3 className="text-[18px] font-bold text-[#1C2C1C] mb-4 flex items-center gap-2">
-              <AlertTriangle className="text-red-500" />
-              Report {isTraderView ? "Customer" : "Trader"}
-            </h3>
-
-            <form onSubmit={handleReportSubmit}>
-              <div className="mb-4">
-                <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">Report Type</label>
-                <select
-                  value={reportType}
-                  onChange={(e) => setReportType(e.target.value)}
-                  className="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl px-4 py-2.5 text-[13px] text-[#1C2C1C] outline-none focus:border-[#6E9625]"
-                >
-                  <option value="USER">User</option>
-                  <option value="REVIEW">Review</option>
-                  <option value="JOB">Job</option>
-                  <option value="MESSAGE">Message</option>
-                  <option value="TRADER_PROFILE">Trader Profile</option>
-                </select>
-              </div>
-
-              <div className="mb-5">
-                <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">
-                  Report Reason
-                </label>
-
-                <select
-                  value={reportReason}
-                  onChange={(e) => setReportReason(e.target.value)}
-                  className="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl px-4 py-2.5"
-                >
-                  <option value="SPAM">Spam</option>
-                  <option value="FAKE">Fake</option>
-                  <option value="ABUSIVE">Abusive</option>
-                  <option value="HARASSMENT">Harassment</option>
-                  <option value="INAPPROPRIATE_CONTENT">
-                    Inappropriate Content
-                  </option>
-                  <option value="SCAM">Scam</option>
-                  <option value="OTHER">Other</option>
-                </select>
-                {reportReason === "OTHER" && (
-                  <textarea
-                    value={customReason}
-                    onChange={(e) => setCustomReason(e.target.value)}
-                    placeholder="Enter your reason..."
-                    rows={4}
-                    className="w-full mt-3 bg-[#F9FAFB] border border-gray-200 rounded-xl px-4 py-3"
-                  />
-                )}
-              </div>
-
-              <div className="flex items-center justify-end gap-3.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    setShowReportModal(false);
-                    setReportReason("");
-                  }}
-                  className="px-4 py-2 border border-gray-200 hover:bg-gray-50 text-gray-500 rounded-xl text-[12px] font-semibold transition-colors"
-                  disabled={submittingReport}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-5 py-2 bg-red-600 text-white hover:bg-red-700 rounded-xl text-[12px] font-bold transition-all shadow-sm"
-                  disabled={submittingReport}
-                >
-                  {submittingReport ? "Submitting..." : "Submit Report"}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-    </div>
+      </div>
+    )
+  }
+    </>
+   
   );
 }

@@ -43,7 +43,7 @@ export default function CustomerNavbar() {
     { name: "Saved", href: "/customer-dashboard/saved", icon: Bookmark },
     // { name: "Profile", href: "/customer-dashboard/profile", icon: User },
     { name: "Reviews", href: "/customer-dashboard/reviews", icon: Star },
-    { name: "Account", href: "/customer-dashboard/account", icon: Settings },
+    { name: "Setting", href: "/customer-dashboard/account", icon: Settings },
   ];
   const fetchNotifications = async () => {
     try {

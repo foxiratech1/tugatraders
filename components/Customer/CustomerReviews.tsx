@@ -31,6 +31,49 @@ interface Review {
   };
 }
 
+function TraderAvatar({ trader }: { trader: any }) {
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(
+    trader?.traderProfile?.logo || trader?.logo || trader?.avatar || trader?.profileImage || null
+  );
+
+  useEffect(() => {
+    // If we already have an avatar or don't have an ID, do nothing
+    if (avatarUrl || !trader?.id) return;
+
+    const fetchProfile = async () => {
+      try {
+        const res = await authApi.getTraderProfileById(trader.id);
+        const profile = res?.data || res;
+        const fetchedAvatar = profile?.traderProfile?.logo || profile?.logo || profile?.avatar || profile?.profileImage;
+        if (fetchedAvatar) {
+          setAvatarUrl(fetchedAvatar);
+        }
+      } catch (err) {
+        console.error("Failed to fetch trader profile for avatar", err);
+      }
+    };
+
+    fetchProfile();
+  }, [trader?.id, avatarUrl]);
+
+  const src = avatarUrl
+    ? (avatarUrl.startsWith("http")
+        ? avatarUrl
+        : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "")}${avatarUrl.startsWith("/") ? avatarUrl : `/${avatarUrl}`}`)
+    : "/avt.png";
+
+  return (
+    <div className="w-12 h-12 rounded-full overflow-hidden bg-[#E9F3DC] flex items-center justify-center flex-shrink-0">
+      <img
+        src={src}
+        alt={trader?.fullName || "Trader"}
+        className="w-full h-full object-cover"
+        crossOrigin="anonymous"
+      />
+    </div>
+  );
+}
+
 function StarRating({ rating }: { rating: number }) {
   return (
     <div className="flex items-center gap-0.5">
@@ -158,22 +201,7 @@ export default function CustomerReviews() {
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div className="flex items-center gap-4">
                     {/* Trader avatar */}
-                    <div className="w-12 h-12 rounded-full overflow-hidden bg-[#E9F3DC] flex items-center justify-center flex-shrink-0">
-                      {r.trader?.profileImage ? (
-                        <img
-                          src={r.trader.profileImage.startsWith("http") ? r.trader.profileImage : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "")}${r.trader.profileImage.startsWith("/") ? r.trader.profileImage : `/${r.trader.profileImage}`}`}
-                          alt={r.trader.fullName || "Trader"}
-                          className="w-full h-full object-cover"
-                          crossOrigin="anonymous"
-                        />
-                      ) : (
-                        <img
-                          src="/avt.png"
-                          alt={r.trader?.fullName || "Trader"}
-                          className="w-full h-full object-cover"
-                        />
-                      )}
-                    </div>
+                    <TraderAvatar trader={r.trader} />
 
                     <div className="min-w-0">
                       <p className="text-[15px] font-bold text-[#1C2C1C] break-words">

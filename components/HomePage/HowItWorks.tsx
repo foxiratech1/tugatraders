@@ -144,8 +144,6 @@ export default function HowItWorks() {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true, amount: 0.2 }}
                 transition={{ duration: 0.6 }}
-
-
                 className="bg-[#D6DED0] rounded-[20px] xl:rounded-[24px] border border-[#C4CEBE] p-4 sm:p-5 xl:p-6 flex flex-col xl:flex-row items-center gap-4 mb-8 relative overflow-hidden w-full"
               >
 

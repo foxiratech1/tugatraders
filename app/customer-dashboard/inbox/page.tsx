@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { Search, MessageSquare, Plus, Check } from "lucide-react";
 import { authApi } from "@/app/api/authApi";
 import ChatWindow from "@/components/Chat/ChatWindow";
+import CustomerChatSidebar from "@/components/Chat/CustomerChatSidebar";
 import { useSocket } from "@/hooks/useSocket";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
@@ -310,12 +311,20 @@ function ChatDashboardContent() {
         {/* Main Content Area */}
         <div className="flex-1 h-full overflow-hidden flex flex-col">
           {selectedConversation ? (
-            <ChatWindow
-              conversation={selectedConversation}
-              currentUserId={currentUserId}
-              onRefreshConversations={loadData}
-              fallbackJobId={fallbackJobId || undefined}
-            />
+            <div className="flex-1 flex gap-6 h-full overflow-hidden">
+              <div className="flex-1 h-full overflow-hidden flex flex-col">
+                <ChatWindow
+                  conversation={selectedConversation}
+                  currentUserId={currentUserId}
+                  onRefreshConversations={loadData}
+                  fallbackJobId={fallbackJobId || undefined}
+                />
+              </div>
+              <CustomerChatSidebar 
+                jobId={selectedConversation.jobId || fallbackJobId || undefined} 
+                traderId={selectedConversation.traderId || selectedConversation.trader?.id} 
+              />
+            </div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center bg-white rounded-3xl border border-gray-100 p-8 text-center shadow-sm h-full">
               <div className="w-20 h-20 bg-[#F0F9F1] rounded-full flex items-center justify-center mx-auto mb-6">
