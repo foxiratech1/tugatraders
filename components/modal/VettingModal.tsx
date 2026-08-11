@@ -46,7 +46,7 @@ export default function VettingModal({ isOpen, onClose }: VettingModalProps) {
           >
             {/* Header Image Area */}
             <div className="relative h-[200px] md:h-[240px] w-full shrink-0">
-              <img src="/vettingimage.png" alt="Vetting" className="absolute inset-0 w-full h-full object-cover" />
+              <img src="/Vetting & Badges.png" alt="Vetting" className="absolute inset-0 w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-r from-[#1b2b1b]/95 via-[#1b2b1b]/85 to-[#1b2b1b]/70" />
 
               <button

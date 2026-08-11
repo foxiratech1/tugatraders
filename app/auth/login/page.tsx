@@ -399,7 +399,7 @@ function LoginContent({ role }: { role?: string }) {
         </div>
         {/* RIGHT SECTION (Hero) */}
         <div className="relative hidden w-full lg:w-[50%] lg:h-auto lg:self-stretch overflow-hidden lg:block flex-shrink-0 z-0">
-          <Image src={currentRole.toUpperCase() === "TRADER" ? "/TraderLogin.jfif" : "/log%20in.png"} alt="Find trusted professionals for every job" fill className="object-cover object-center" priority unoptimized style={{ opacity: 1 }} />
+          <Image src="/newlogin.png" alt="Find trusted professionals for every job" fill className="object-cover object-center" priority unoptimized style={{ opacity: 1 }} />
           <div className="absolute inset-0 bg-[#162716]/30 mix-blend-multiply z-10" />
           <div className="absolute inset-0 flex flex-col justify-end p-8 sm:p-12 xl:p-20 text-white z-20" style={{ background: 'linear-gradient(to top, rgba(22, 39, 22, 0.9) 0%, rgba(22, 39, 22, 0.2) 60%, transparent 100%)' }}>
             <div className="w-full max-w-[576px] h-auto lg:h-[439.73px] max-h-[90%] flex flex-col justify-end text-white" style={{ gap: '23.2px', opacity: 1 }}>
@@ -407,19 +407,11 @@ function LoginContent({ role }: { role?: string }) {
                 <div className="w-6 h-[2px] bg-[#6E9625] rounded-full" />
                 <span className="text-[#6E9625] text-[10px] sm:text-[11px] font-extrabold tracking-[0.2em] uppercase">TRUSTED BY THOUSANDS</span>
               </div>
-              <h2 className="text-[32px] sm:text-[40px] lg:text-[38px] xl:text-[52px] font-bold leading-[1.1] tracking-tight text-white animate-slide-up" style={{ fontFamily: 'var(--font-bricolage), sans-serif' }}>
-                {currentRole.toUpperCase() === "TRADER" ? (
-                  <>The smarter way to<br />win new business.</>
-                ) : (
-                  <>Find trusted<br />professionals<br /> for every job</>
-                )}
+              <h2 className="text-[32px] sm:text-[40px] lg:text-[38px] xl:text-[47px] font-bold leading-[1.1] tracking-tight text-white animate-slide-up" style={{ fontFamily: 'var(--font-bricolage), sans-serif' }}>
+                The smarter way to get the job done —<br /> and grow your business.
               </h2>
               <p className="text-[14px] sm:text-[15px] lg:text-[16px] font-medium leading-relaxed text-white/80 animate-fade-in">
-                {currentRole.toUpperCase() === "TRADER" ? (
-                  <>Receive quality job leads, connect with local customers, and<br />grow your business with a trusted platform built for tradespeople</>
-                ) : (
-                  <>Compare quotes, hire with confidence, and get<br /> your home projects done right.</>
-                )}
+                Compare quotes, hire with confidence, and get<br /> your home projects done right.
               </p>
               {/* Social proof */}
               <div className="flex-shrink-0">

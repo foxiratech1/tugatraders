@@ -2,15 +2,25 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { FiPlusCircle, FiArrowRight, FiCheckCircle, FiCircle } from "react-icons/fi";
+import { FiPlusCircle, FiArrowRight, FiCheckCircle, FiChevronRight } from "react-icons/fi";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { authApi } from "@/app/api/authApi";
 
+const getImageUrl = (path?: string) => {
+  if (!path) return "/placeholder.png";
+  if (path.startsWith("http")) return path;
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
+  const imagePath = path.startsWith('/') ? path : `/${path}`;
+  return `${baseUrl}${imagePath}`;
+};
+
 interface Category {
   id: string;
   name: string;
+  image?: string;
 }
 
 const features = [
@@ -67,7 +77,7 @@ const MapSearchSection = () => {
           className="relative flex items-center justify-center gap-6"
         >
           {/* Left Categories */}
-          <div className="hidden md:flex flex-col gap-3 min-w-[190px]">
+          <div className="hidden md:flex flex-col gap-3 w-[260px] shrink-0">
             {leftCategories.map((cat, i) => (
               <motion.div
                 key={cat.id}
@@ -76,10 +86,28 @@ const MapSearchSection = () => {
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.07 }}
                 onClick={() => router.push(`/directory-listing/search?categoryId=${cat.id}`)}
-                className="flex items-center gap-2.5 bg-white border border-[#E8EDE8] rounded-full px-4 py-2.5 shadow-sm hover:shadow-md hover:border-[#6E9625]/40 transition-all cursor-pointer group"
+                className="flex items-center justify-between bg-white rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] hover:shadow-md border border-[#F3F4F6] transition-all cursor-pointer group overflow-hidden"
               >
-                <span className="w-2 h-2 rounded-full bg-[#6E9625] flex-shrink-0 group-hover:scale-125 transition-transform" />
-                <span className="text-[14px] font-medium text-[#243A24] whitespace-nowrap">{cat.name}</span>
+                <div className="flex items-center gap-4">
+                  <div className="w-[50px] h-[50px] bg-[#314828] flex items-center justify-center shrink-0">
+                    {cat.image ? (
+                      <Image
+                        src={getImageUrl(cat.image)}
+                        alt={cat.name}
+                        width={24}
+                        height={24}
+                        className="object-contain"
+                        unoptimized
+                      />
+                    ) : (
+                      <span className="w-2 h-2 rounded-full bg-white" />
+                    )}
+                  </div>
+                  <span className="text-[14px] font-medium text-[#243A24] truncate">{cat.name}</span>
+                </div>
+                <div className="pr-4 text-gray-400 group-hover:text-[#6E9625] transition-colors">
+                  <FiChevronRight size={18} />
+                </div>
               </motion.div>
             ))}
           </div>
@@ -98,7 +126,7 @@ const MapSearchSection = () => {
           </div>
 
           {/* Right Categories */}
-          <div className="hidden md:flex flex-col gap-3 min-w-[190px]">
+          <div className="hidden md:flex flex-col gap-3 w-[260px] shrink-0">
             {rightCategories.map((cat, i) => (
               <motion.div
                 key={cat.id}
@@ -107,10 +135,28 @@ const MapSearchSection = () => {
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.07 }}
                 onClick={() => router.push(`/directory-listing/search?categoryId=${cat.id}`)}
-                className="flex items-center gap-2.5 bg-white border border-[#E8EDE8] rounded-full px-4 py-2.5 shadow-sm hover:shadow-md hover:border-[#6E9625]/40 transition-all cursor-pointer group"
+                className="flex items-center justify-between bg-white rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] hover:shadow-md border border-[#F3F4F6] transition-all cursor-pointer group overflow-hidden"
               >
-                <span className="w-2 h-2 rounded-full bg-[#6E9625] flex-shrink-0 group-hover:scale-125 transition-transform" />
-                <span className="text-[14px] font-medium text-[#243A24] whitespace-nowrap">{cat.name}</span>
+                <div className="flex items-center gap-4">
+                  <div className="w-[50px] h-[50px] bg-[#314828] flex items-center justify-center shrink-0">
+                    {cat.image ? (
+                      <Image
+                        src={getImageUrl(cat.image)}
+                        alt={cat.name}
+                        width={24}
+                        height={24}
+                        className="object-contain"
+                        unoptimized
+                      />
+                    ) : (
+                      <span className="w-2 h-2 rounded-full bg-white" />
+                    )}
+                  </div>
+                  <span className="text-[14px] font-medium text-[#243A24] truncate">{cat.name}</span>
+                </div>
+                <div className="pr-4 text-gray-400 group-hover:text-[#6E9625] transition-colors">
+                  <FiChevronRight size={18} />
+                </div>
               </motion.div>
             ))}
           </div>

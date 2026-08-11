@@ -132,7 +132,7 @@ export default function PostJobPage() {
   const [postcode, setPostcode] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [timescale, setTimescale] = useState("FLEXIBLE");
+  const [timescale, setTimescale] = useState("");
   const [budgetRange, setBudgetRange] = useState("");
   const [emergency, setEmergency] = useState(false);
   const [files, setFiles] = useState<File[]>([]);

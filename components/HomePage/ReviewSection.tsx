@@ -192,13 +192,13 @@ export default function ReviewSection() {
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.8 }}
-          className="relative mx-auto max-w-[950px] bg-white rounded-[32px] sm:rounded-[48px] md:rounded-[60px] p-6 sm:p-10 md:p-16 text-center shadow-[0_30px_100px_rgba(0,0,0,0.03)] border border-[#C9CBC7] mb-12 sm:mb-16 md:mb-20 overflow-hidden"
+          className="relative mx-auto max-w-[800px] bg-white rounded-[32px] sm:rounded-[48px] md:rounded-[48px] p-6 sm:p-8 md:p-10 text-center shadow-[0_30px_100px_rgba(0,0,0,0.03)] border border-[#C9CBC7] mb-12 sm:mb-16 md:mb-20 overflow-hidden"
         >
           <div className="relative z-10">
-            <h2 className="text-[32px] sm:text-[40px] md:text-[56px] font-bold text-[#243A24] tracking-tight leading-tight mb-4 sm:mb-6 md:mb-8">
+            <h2 className="text-[32px] sm:text-[40px] md:text-[56px] font-bold text-[#243A24] tracking-tight leading-tight mb-3 sm:mb-4 md:mb-5">
               Your Review <span className="text-[#6E9625]">Matters.</span>
             </h2>
-            <p className="mx-auto max-w-[700px] text-[15px] sm:text-[16px] md:text-[18px] leading-relaxed text-[#6F736C] font-medium mb-6 sm:mb-8 md:mb-10">
+            <p className="mx-auto max-w-[700px] text-[15px] sm:text-[16px] md:text-[18px] leading-relaxed text-[#6F736C] font-medium mb-5 sm:mb-6 md:mb-8">
               Your feedback plays an important role in helping us uphold the high standards
               of our traders. It also supports their reputation and helps other potential
               customers make informed decisions based on your experience.

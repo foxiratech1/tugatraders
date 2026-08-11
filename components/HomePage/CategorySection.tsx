@@ -71,9 +71,9 @@ const CategoryCard = ({ cat }: { cat: any }) => {
           </span>
 
           {/* SHOWS ON HOVER */}
-          <span className="text-[13px] text-white/70 mt-1 opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-10 transition-all duration-500 overflow-hidden">
+          {/* <span className="text-[13px] text-white/70 mt-1 opacity-0 max-h-0 group-hover:opacity-100 group-hover:max-h-10 transition-all duration-500 overflow-hidden">
             Explore trusted {name.toLowerCase()} services
-          </span>
+          </span> */}
         </div>
       </div>
 

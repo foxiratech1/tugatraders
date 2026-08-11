@@ -798,8 +798,7 @@ export default function TraderSignupPage() {
 
                 {/* Sub copy */}
                 <p className="text-[14px] lg:text-[15px] font-medium leading-relaxed text-white/75">
-                  Receive quality job leads, connect with local customers, and
-                  grow your business with a trusted platform built for tradespeople
+                  Receive quality job leads, connect with local customers, and grow your business. One trusted platform. Built for homeowners, businesses and Tradespeople.
 
                 </p>
 

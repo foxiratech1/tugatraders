@@ -228,14 +228,14 @@ const ContactLayout = () => {
               <div className="flex flex-wrap gap-4 sm:gap-6 text-[12px] font-bold text-[#243A24] border-t border-[#243A241F] pt-6">
 
                 <Link
-                  href="#"
+                  href="/terms"
                   className="hover:text-[#243A24] transition-colors"
                 >
                   Terms of Service
                 </Link>
 
                 <Link
-                  href="#"
+                  href="/terms?tab=cookies"
                   className="hover:text-[#243A24] transition-colors"
                 >
                   Privacy Policy

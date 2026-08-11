@@ -21,7 +21,7 @@ export default function Hero() {
       {/* BACKGROUND IMAGE */}
       <div className="absolute inset-0 z-0">
         <Image
-          src="/homepagenew.png"
+          src="/NewHomepage.png"
           alt="Tradespeople working"
           fill
           unoptimized
@@ -44,7 +44,7 @@ export default function Hero() {
           className="text-[36px] sm:text-[48px] md:text-[72px] font-bold text-white tracking-tight leading-[1.1] mb-4 max-w-[1000px]"
         >
           Portugal&apos;s Smarter Way to <br className="hidden md:block" />
-          Find Local <span className="text-[#7ca13a]">Tradespeople</span>
+          Find Local <span className="text-[#1d3321]">Tradespeople</span>
         </motion.h1>
         <motion.p
           initial={{ opacity: 0, y: 20 }}
@@ -130,7 +130,7 @@ export default function Hero() {
               Your Next Job Is Just One Click Away
             </p>
             {role !== "customer" && role !== "trader" && (
-              <Link href="/trader-signup" className="inline-flex items-center gap-3 rounded-[16px] bg-[#d91e1e] px-8 py-4 text-[15px] font-bold text-white hover:bg-[#b81919] transition-all shadow-xl shadow-red-900/20">
+              <Link href="/trader-signup" className="inline-flex items-center gap-3 rounded-[16px] bg-[#C60C03] px-8 py-4 text-[15px] font-bold text-white hover:bg-[#b81919] transition-all shadow-xl shadow-red-900/20">
                 <FiUserPlus size={20} />
                 <span>Join as a Tradesperson</span>
               </Link>

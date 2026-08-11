@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-export default function CookieSettingsContent() {
+export default function CookieSettingsContent({ onNavigateTab }: { onNavigateTab?: (tab: string) => void }) {
   const [analytics, setAnalytics] = useState(true);
   const [functional, setFunctional] = useState(true);
   const [marketing, setMarketing] = useState(false);
@@ -151,12 +151,13 @@ export default function CookieSettingsContent() {
       <div className="pt-2">
         <p className="text-gray-700">
           Learn more in our{" "}
-          <a
-            href="/privacy-cookie-policy"
-            className="text-blue-600 hover:underline font-medium"
+          <button
+            type="button"
+            onClick={() => onNavigateTab?.("cookies")}
+            className="text-blue-600 hover:underline font-medium cursor-pointer"
           >
             Cookie Policy
-          </a>
+          </button>
         </p>
       </div>
     </div>

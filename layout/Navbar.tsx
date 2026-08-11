@@ -185,43 +185,15 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              {/* LOGIN DROPDOWN */}
+              {/* LOGIN BUTTON */}
               <div className="relative">
                 <button
-                  onClick={() => {
-                    setLoginOpen(!loginOpen);
-                    setSignupOpen(false);
-                  }}
+                  onClick={() => router.push("/auth/login")}
                   className="flex items-center gap-2 rounded-[12px] bg-[#1d3321] px-5 py-2 xl:px-6 xl:py-2.5 text-[14px] font-bold text-white shadow-lg shadow-[#1d3321]/20 hover:bg-[#28462d] transition-all duration-300"
                 >
                   <FiLogIn size={18} />
                   Log in
-                  <FiChevronDown size={14} />
                 </button>
-
-                {loginOpen && (
-                  <div className="absolute right-0 mt-2 w-52 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-xl">
-                    <button
-                      onClick={() => {
-                        router.push("/auth/login?role=CUSTOMER");
-                        setLoginOpen(false);
-                      }}
-                      className="block w-full px-4 py-3 text-left text-sm font-medium hover:bg-gray-100"
-                    >
-                      Customer
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        router.push("/auth/login?role=TRADER");
-                        setLoginOpen(false);
-                      }}
-                      className="block w-full px-4 py-3 text-left text-sm font-medium hover:bg-gray-100"
-                    >
-                      Trader
-                    </button>
-                  </div>
-                )}
               </div>
 
               {/* SIGNUP DROPDOWN */}
@@ -257,7 +229,7 @@ export default function Navbar() {
                       }}
                       className="block w-full px-4 py-3 text-left text-sm font-medium hover:bg-gray-100"
                     >
-                      Trader
+                      Traders
                     </button>
                   </div>
                 )}
@@ -356,25 +328,14 @@ export default function Navbar() {
             <>
               {/* LOGIN */}
               <div className="border-t border-[#1d3321]/10 pt-4">
-                <h3 className="mb-3 font-bold text-[#1d3321]">Login</h3>
-
-                <div className="flex flex-col gap-2">
-                  <Link
-                    href="/auth/login?role=CUSTOMER"
-                    onClick={closeMenu}
-                    className="rounded-lg bg-white px-4 py-3 text-sm font-medium"
-                  >
-                    For Customer
-                  </Link>
-
-                  <Link
-                    href="/auth/login?role=TRADER"
-                    onClick={closeMenu}
-                    className="rounded-lg bg-white px-4 py-3 text-sm font-medium"
-                  >
-                    For Trader
-                  </Link>
-                </div>
+                <Link
+                  href="/auth/login"
+                  onClick={closeMenu}
+                  className="flex items-center gap-2 rounded-lg bg-white px-4 py-3 text-sm font-bold text-[#1d3321] hover:bg-gray-50 transition-colors"
+                >
+                  <FiLogIn size={18} />
+                  Log in
+                </Link>
               </div>
 
               {/* SIGNUP */}

@@ -175,7 +175,7 @@ export default function TermsLayout() {
             {activeTab === 'review' && <ReviewPolicyContent />}
             {activeTab === 'moderation' && <ContentModerationContent />}
             {activeTab === 'disputes' && <DisputeContent />}
-            {activeTab === 'cookieSettings' && <CookieSettingsContent />}
+            {activeTab === 'cookieSettings' && <CookieSettingsContent onNavigateTab={handleTabChange} />}
             {activeTab === 'traderAgreement' && <TraderAgreementContent />}
           </div>
 

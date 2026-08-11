@@ -22,17 +22,17 @@ export default function TrustSection() {
           transition={{ duration: 0.6 }}
           className="relative group"
         >
-          <div className="relative bg-[#243A24] rounded-[60px] rounded-bl-none p-6 sm:p-10 md:p-14 shadow-2xl shadow-[#243A24]/20 transition-transform hover:-translate-y-1 duration-500 z-10">
+          <div className="relative bg-[#243A24] rounded-[48px] rounded-bl-none p-6 sm:p-8 md:p-10 shadow-2xl shadow-[#243A24]/20 transition-transform hover:-translate-y-1 duration-500 z-10">
 
             {/* THE "TAIL" OF THE BUBBLE */}
             <div className="absolute -bottom-6 left-0 w-0 h-0 border-t-[24px] border-t-[#243A24] border-r-[24px] border-r-transparent" />
 
             {/* SMALLER & TIGHTER TITLE */}
-            <h2 className="text-[20px] sm:text-[28px] md:text-[36px] font-bold text-white leading-[1.1] mb-4">
+            <h2 className="text-[20px] sm:text-[28px] md:text-[36px] font-bold text-white leading-[1.1] mb-3">
               Want to hire with <br className="max-sm:hidden" /> confidence?
             </h2>
 
-            <p className="text-[16px] text-white/70 font-medium leading-relaxed mb-8 max-w-[380px]">
+            <p className="text-[16px] text-white/70 font-medium leading-relaxed mb-4">
               Check our{" "}
               <Link
                 href="#"

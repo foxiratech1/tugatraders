@@ -383,9 +383,9 @@ export default function PublicTraderProfilePage() {
   const isCurrentUserTrader = currentUser?.role === "TRADER" || currentUser?.role === "trader";
 
   return (
-    <div className="min-h-screen bg-white font-sans selection:bg-[#6E9625]/20 selection:text-[#1C2C1C]">
+    <div className="min-h-screen bg-[#C9CBC7] font-sans selection:bg-[#6E9625]/20 selection:text-[#1C2C1C]">
       {/* ── Navbar Spacer ── */}
-      <div className="h-16 lg:h-24 bg-white" />
+      <div className="h-16 lg:h-24 bg-transparent" />
 
       <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
         <button
@@ -402,101 +402,116 @@ export default function PublicTraderProfilePage() {
           <div className="w-full lg:w-[320px] flex-shrink-0 flex flex-col gap-6">
 
             {/* Top Info Card */}
-            <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-col items-center text-center">
-              {/* Avatar */}
-              <div className="w-32 h-32 rounded-full overflow-hidden mb-4 bg-gray-50 flex items-center justify-center border-4 border-white shadow-sm relative">
-                <img src={avatarUrl} alt={fullName} className="w-full h-full object-cover" />
+            <div className="bg-white rounded-3xl shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-col items-center text-center overflow-hidden">
+
+              {/* Dark Green Banner */}
+              <div className="w-full h-32 bg-[#1C2C1C] relative overflow-hidden shrink-0">
+                <div className="absolute -bottom-12 -left-[10%] w-[120%] h-24 bg-white" style={{ borderRadius: '50% 50% 0 0' }}></div>
               </div>
 
-              <h1 className="text-[22px] font-extrabold text-[#1C2C1C] mb-2">{fullName}</h1>
-
-              {/* Verified Badge */}
-              {isVerified && (
-                <div className="flex items-center gap-1.5 text-[#1C2C1C] font-semibold text-[13px] mb-4">
-                  <CheckCircle size={16} className="text-[#1C2C1C]" />
-                  Vetted Trader
+              <div className="px-6 pb-6 sm:px-8 sm:pb-8 flex flex-col items-center -mt-16 relative w-full z-10">
+                {/* Avatar with Verified Shield */}
+                <div className="relative mb-3">
+                  <div className="w-28 h-28 rounded-full overflow-hidden bg-[#1C2C1C] flex items-center justify-center border-4 border-white shadow-sm">
+                    <img src={avatarUrl} alt={fullName} className="w-full h-full object-cover" />
+                  </div>
+                  {isVerified && (
+                    <div className="absolute bottom-1 right-1 bg-[#6E9625] text-white p-1 rounded-full border-2 border-white shadow-sm">
+                      <ShieldCheck size={14} />
+                    </div>
+                  )}
                 </div>
-              )}
 
-              {/* Rating */}
-              <div className="flex items-center gap-1 mb-6">
-                {[...Array(5)].map((_, i) => (
-                  <Star key={i} size={16} fill={i < Math.round(rating) ? "#F59E0B" : "none"} className={i < Math.round(rating) ? "text-[#F59E0B]" : "text-gray-200"} />
-                ))}
-                <span className="text-[13px] font-medium text-gray-500 ml-1">
-                  {rating > 0 ? rating.toFixed(1) : 'New'} ({reviewCount} reviews)
-                </span>
-              </div>
+                <h1 className="text-[22px] font-extrabold text-[#1C2C1C] mb-1">{fullName}</h1>
 
-              {/* Action Buttons */}
-              {!isCurrentUserTrader && (
-                <>
-                  <button
-                    onClick={handleSendMessage}
-                    className="w-full bg-[#1C2C1C] text-white rounded-xl py-3.5 font-bold text-[14px] mb-3 flex items-center justify-center gap-2 hover:bg-black transition-colors"
-                  >
-                    <MessageSquare size={18} /> Send Message
-                  </button>
-                  <button
-                    onClick={handleToggleSave}
-                    disabled={isSaving}
-                    className={`w-full rounded-xl py-3.5 font-bold text-[14px] flex items-center justify-center gap-2 transition-colors ${isSaved
-                      ? "bg-[#F4F7F1] text-[#6E9625] hover:bg-[#e9f0e1] border border-[#6E9625]"
-                      : "bg-[#F3F4F6] text-[#4B5563] hover:bg-gray-200"
-                      }`}
-                  >
-                    <Heart size={18} fill={isSaved ? "currentColor" : "none"} className={isSaved ? "text-[#6E9625]" : "text-[#4B5563]"} />
-                    {isSaved ? "Saved" : "Save Trader"}
-                  </button>
-                </>
-              )}
-
-              <hr className="w-full border-gray-100 my-6" />
-
-              {/* Contact info */}
-              <div className="w-full text-left space-y-5">
-                {email && (
-                  <div className="flex items-start gap-4">
-                    <div className="w-8 h-8 rounded-full bg-[#F4F7F1] flex items-center justify-center text-[#6E9625] flex-shrink-0 mt-0.5">
-                      <Mail size={16} />
-                    </div>
-                    <div>
-                      <p className="text-[12px] text-gray-500 font-medium mb-0.5">Email</p>
-                      <a href={`mailto:${email}`} className="text-[14px] font-bold text-[#6E9625] hover:underline break-all">{email}</a>
-                    </div>
+                {/* Verified Badge */}
+                {isVerified && (
+                  <div className="flex items-center gap-1.5 text-[#6E9625] font-bold text-[13px] mb-4">
+                    <CheckCircle size={15} className="fill-[#6E9625] text-white" />
+                    Vetted Trader
                   </div>
                 )}
-                {phone && (
-                  <div className="flex items-start gap-4">
-                    <div className="w-8 h-8 rounded-full bg-[#F4F7F1] flex items-center justify-center text-[#6E9625] flex-shrink-0 mt-0.5">
-                      <Phone size={16} />
-                    </div>
-                    <div>
-                      <p className="text-[12px] text-gray-500 font-medium mb-0.5">Phone</p>
-                      <a href={`tel:${phone}`} className="text-[14px] font-bold text-[#6E9625] hover:underline">{phone}</a>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
 
-            {/* Stats Card */}
-            <div className="bg-[#F4F7F1] rounded-3xl p-6 sm:p-8 shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-[#E9F0E1] flex flex-col gap-5 text-left">
-              <div className="flex flex-col gap-1">
-                <span className="text-gray-500 font-medium text-[12px]">Company</span>
-                <span className="font-bold text-[#1C2C1C] text-[14px]">{companyName || '-'}</span>
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-gray-500 font-medium text-[12px]">Location</span>
-                <span className="font-bold text-[#1C2C1C] text-[14px]">{location || '-'}</span>
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-gray-500 font-medium text-[12px]">Jobs Completed</span>
-                <span className="font-bold text-[#1C2C1C] text-[14px]">{metrics?.completedJobs || 0}</span>
-              </div>
-              <div className="flex flex-col gap-1">
-                <span className="text-gray-500 font-medium text-[12px]">Response Rate</span>
-                <span className="font-bold text-[#1C2C1C] text-[14px]">{metrics?.responseRate ? `${Math.round(metrics.responseRate * 100)}%` : 'N/A'}</span>
+                {/* Rating */}
+                <div className="flex items-center gap-1 mb-6">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} size={16} fill={i < Math.round(rating) ? "#F59E0B" : "none"} className={i < Math.round(rating) ? "text-[#F59E0B]" : "text-gray-200"} />
+                  ))}
+                  <span className="text-[13px] font-medium text-gray-500 ml-1">
+                    {rating > 0 ? rating.toFixed(1) : 'New'} ({reviewCount} reviews)
+                  </span>
+                </div>
+
+                {/* Action Buttons */}
+                {!isCurrentUserTrader && (
+                  <>
+                    <button
+                      onClick={handleSendMessage}
+                      className="w-full bg-[#1C2C1C] text-white rounded-xl py-3.5 font-bold text-[14px] mb-3 flex items-center justify-center gap-2 hover:bg-black transition-colors"
+                    >
+                      <MessageSquare size={18} /> Send Message
+                    </button>
+                    <button
+                      onClick={handleToggleSave}
+                      disabled={isSaving}
+                      className={`w-full rounded-xl py-3.5 font-bold text-[14px] flex items-center justify-center gap-2 transition-colors ${isSaved
+                        ? "bg-[#F4F7F1] text-[#6E9625] hover:bg-[#e9f0e1] border border-[#6E9625]"
+                        : "bg-[#F3F4F6] text-[#4B5563] hover:bg-gray-200"
+                        }`}
+                    >
+                      <Heart size={18} fill={isSaved ? "currentColor" : "none"} className={isSaved ? "text-[#6E9625]" : "text-[#4B5563]"} />
+                      {isSaved ? "Saved" : "Save Trader"}
+                    </button>
+                  </>
+                )}
+
+                <hr className="w-full border-gray-100 my-6" />
+
+                {/* Contact info */}
+                <div className="w-full text-left space-y-5">
+                  {email && (
+                    <div className="flex items-start gap-4">
+                      <div className="w-8 h-8 rounded-full bg-[#F4F7F1] flex items-center justify-center text-[#6E9625] flex-shrink-0 mt-0.5">
+                        <Mail size={16} />
+                      </div>
+                      <div>
+                        <p className="text-[12px] text-gray-500 font-medium mb-0.5">Email</p>
+                        <a href={`mailto:${email}`} className="text-[14px] font-medium text-[#6E9625] hover:underline break-all">{email}</a>
+                      </div>
+                    </div>
+                  )}
+                  {phone && (
+                    <div className="flex items-start gap-4">
+                      <div className="w-8 h-8 rounded-full bg-[#F4F7F1] flex items-center justify-center text-[#6E9625] flex-shrink-0 mt-0.5">
+                        <Phone size={16} />
+                      </div>
+                      <div>
+                        <p className="text-[12px] text-gray-500 font-medium mb-0.5">Phone</p>
+                        <a href={`tel:${phone}`} className="text-[14px] font-medium text-[#6E9625] hover:underline">{phone}</a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Stats Card */}
+                <div className="w-full mt-8 bg-[#F4F7F1] rounded-3xl p-6 sm:p-7 shadow-sm border border-[#E9F0E1] flex flex-col gap-5 text-left">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-gray-500 font-medium text-[12px]">Company</span>
+                    <span className="font-bold text-[#1C2C1C] text-[14px]">{companyName || '-'}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-gray-500 font-medium text-[12px]">Location</span>
+                    <span className="font-bold text-[#1C2C1C] text-[14px]">{location || '-'}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-gray-500 font-medium text-[12px]">Jobs Completed</span>
+                    <span className="font-bold text-[#1C2C1C] text-[14px]">{metrics?.completedJobs || 0}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-gray-500 font-medium text-[12px]">Response Rate</span>
+                    <span className="font-bold text-[#1C2C1C] text-[14px]">{metrics?.responseRate ? `${Math.round(metrics.responseRate * 100)}%` : 'N/A'}</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -706,7 +721,9 @@ export default function PublicTraderProfilePage() {
 
           </div>
         </div>
+
       </main>
+
 
       <VettingModal
         isOpen={isVettingModalOpen}
@@ -727,6 +744,7 @@ export default function PublicTraderProfilePage() {
         onNext={nextLightboxImage}
         onPrev={prevLightboxImage}
       />
-    </div>
+
+    </div >
   );
 }

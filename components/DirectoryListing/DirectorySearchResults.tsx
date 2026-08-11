@@ -277,6 +277,8 @@ const DirectorySearchResults = () => {
   // Work radius state
   const [workRadius, setWorkRadius] = useState(20);
 
+  const [searchName, setSearchName] = useState('');
+
   // Rating filter state
   const [minRating, setMinRating] = useState<number | null>(null);
   const [appliedMinRating, setAppliedMinRating] = useState<number | null>(null);
@@ -542,6 +544,7 @@ const DirectorySearchResults = () => {
 
   const filteredResults = traderResults
     .filter(t => appliedMinRating === null || (t.averageRating || 0) >= appliedMinRating)
+    .filter(t => !searchName || (t.fullName || '').toLowerCase().includes(searchName.toLowerCase()))
     .sort((a, b) => {
       if (sortOption === "Highest Review") return (b.averageRating || 0) - (a.averageRating || 0);
       if (sortOption === "Lowest Review") return (a.averageRating || 0) - (b.averageRating || 0);
@@ -573,7 +576,7 @@ const DirectorySearchResults = () => {
           {/* Header */}
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
             <h2 className="text-[20px] sm:text-[24px] font-extrabold text-[#1C2C1C]">
-              {filteredResults.length} Professional{filteredResults.length !== 1 && 's'} found in Manchester
+              {filteredResults.length} Professional{filteredResults.length !== 1 && 's'} found
             </h2>
             <div className="flex items-center gap-3 mt-4 sm:mt-0 text-[14px]">
               <span className="text-[#4B5563] font-medium hidden sm:inline">Sort by:</span>
@@ -613,6 +616,20 @@ const DirectorySearchResults = () => {
               <div className="bg-white rounded-[24px] p-6 shadow-sm border border-[#F3F4F6] mb-6">
                 <h3 className="text-[20px] font-bold text-[#243A24] mb-6">Filters</h3>
                 <div className="flex flex-col gap-5">
+                  {/* Search by Name */}
+                  <div>
+                    <label className="block text-[14px] font-medium text-[#4B5563] mb-2">Search by Name</label>
+                    <div className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]"><Search size={16} /></div>
+                      <input
+                        type="text"
+                        placeholder="e.g. John Doe"
+                        value={searchName}
+                        onChange={(e) => setSearchName(e.target.value)}
+                        className="w-full bg-[#F3F4F6] text-[#4B5563] text-[14px] font-medium rounded-xl py-3 pl-10 pr-4 outline-none placeholder-[#9CA3AF]"
+                      />
+                    </div>
+                  </div>
                   {/* Category */}
                   <div>
                     <label className="block text-[14px] font-medium text-[#4B5563] mb-2">Category</label>
@@ -965,9 +982,17 @@ const DirectorySearchResults = () => {
 
 
                         {/* Bio */}
-                        <p className="text-[#4B5563] text-[13px] leading-relaxed line-clamp-2 sm:line-clamp-3 mb-6">
+                        <p className="text-[#4B5563] text-[13px] leading-relaxed line-clamp-2 sm:line-clamp-3 mb-4">
                           {trader.about || trader.aboutUs || "No description provided."}
                         </p>
+
+                        {/* Location */}
+                        {trader.location && (
+                          <div className="flex items-center gap-2 text-[13px] font-medium text-[#4B5563] mt-auto">
+                            <MapPin size={15} className="text-[#6E9625] shrink-0" />
+                            <span className="truncate">{trader.location}</span>
+                          </div>
+                        )}
 
                         {/* <div className="mt-auto">
                        
@@ -1036,9 +1061,9 @@ const DirectorySearchResults = () => {
                           </a>
                         )}
 
-                        <Link href={`/profile/${trader.id}`} className="w-full text-center bg-[#1C2C1C] text-white py-3.5 rounded-xl font-bold text-[14px] hover:bg-black transition-colors block">
+                        <a href={`/profile/${trader.id}`} target="_blank" rel="noopener noreferrer" className="w-full text-center bg-[#1C2C1C] text-white py-3.5 rounded-xl font-bold text-[14px] hover:bg-black transition-colors block">
                           View Profile
-                        </Link>
+                        </a>
 
                         <button
                           onClick={(e) => {

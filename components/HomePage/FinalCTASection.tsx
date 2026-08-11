@@ -9,7 +9,7 @@ import Link from "next/link";
 const FinalCTASection = () => {
   const bottomChecklist = [
     "100% FREE FOR HOMEOWNERS",
-    "VERIFIED & VETTED PROFILES",
+    "VETTED AND LOCAL TRADESPEOPLE",
     "DIRECT TRADER COMMUNICATION",
     "TRUSTED REVIEW SYSTEM",
   ];

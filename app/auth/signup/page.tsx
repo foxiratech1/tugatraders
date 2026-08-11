@@ -596,7 +596,7 @@ export default function RegisterPage() {
                     {/* ================= RIGHT SECTION — HERO (restricted to exactly 728px x 1004px on large screen, scales fluidly) ================= */}
                     <div className="relative hidden w-full lg:w-[50%] lg:h-auto lg:self-stretch min-h-screen overflow-hidden lg:block flex-shrink-0 z-0">
                         <Image
-                            src="/signupframe.png"
+                            src="/CustomerSignUp.png"
                             alt="Find trusted professionals for every job"
                             fill
                             className="object-cover object-center"
@@ -635,8 +635,7 @@ export default function RegisterPage() {
                                     className="text-[32px] sm:text-[40px] lg:text-[44px] xl:text-[44px] font-bold leading-[1.1] tracking-tight text-white animate-slide-up"
                                     style={{ fontFamily: 'var(--font-bricolage), sans-serif' }}
                                 >
-                                    Find trusted <br />
-                                    professionals for every job
+                                    Find trusted professionals, compare quotes, and hire with confidence.
                                 </h2>
 
                                 {/* Description */}

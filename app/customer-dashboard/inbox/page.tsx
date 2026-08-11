@@ -13,11 +13,11 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 function getImageUrl(path: string | null | undefined): string | null {
   if (!path) return null;
   if (path.startsWith("http")) return path;
-  
+
   const baseUrl = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
   let imagePath = path.startsWith('/') ? path : `/${path}`;
   imagePath = imagePath.replace(/\/\//g, '/'); // remove any double slashes inside the path
-  
+
   return `${baseUrl}${imagePath}`;
 }
 
@@ -249,8 +249,8 @@ function ChatDashboardContent() {
                       key={c.id}
                       onClick={() => handleSelectConversation(c.id)}
                       className={`flex items-center gap-3 p-3 rounded-2xl cursor-pointer transition-all ${isSelected
-                          ? "bg-[#6E9625] text-white shadow-sm"
-                          : "hover:bg-[#F9FAFB] border border-transparent text-[#1C2C1C]"
+                        ? "bg-[#6E9625] text-white shadow-sm"
+                        : "hover:bg-[#F9FAFB] border border-transparent text-[#1C2C1C]"
                         }`}
                     >
                       {/* Avatar */}
@@ -320,9 +320,9 @@ function ChatDashboardContent() {
                   fallbackJobId={fallbackJobId || undefined}
                 />
               </div>
-              <CustomerChatSidebar 
-                jobId={selectedConversation.jobId || fallbackJobId || undefined} 
-                traderId={selectedConversation.traderId || selectedConversation.trader?.id} 
+              <CustomerChatSidebar
+                jobId={selectedConversation.jobId || fallbackJobId || undefined}
+                traderId={selectedConversation.traderId || selectedConversation.trader?.id}
               />
             </div>
           ) : (
