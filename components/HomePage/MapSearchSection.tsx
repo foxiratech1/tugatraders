@@ -120,7 +120,7 @@ const MapSearchSection = () => {
                         alt={cat.name}
                         width={24}
                         height={24}
-                        className="object-contain"
+                        className="object-contain brightness-0 invert"
                         unoptimized
                       />
                     ) : (
@@ -173,7 +173,7 @@ const MapSearchSection = () => {
                         alt={cat.name}
                         width={24}
                         height={24}
-                        className="object-contain"
+                        className="object-contain brightness-0 invert"
                         unoptimized
                       />
                     ) : (
