@@ -470,7 +470,7 @@ export default function PostJobPage() {
             {/* Row 2: Sub Category & Location */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col gap-2">
-                <label className="text-[12px] font-bold text-[#243A24]">Sub Category *</label>
+                <label className="text-[12px] font-bold text-[#243A24]">Sub Category </label>
                 <CustomDropdown
                   options={subCategories.map(s => ({ id: s.id || s._id, name: s.name }))}
                   value={subCategoryId}

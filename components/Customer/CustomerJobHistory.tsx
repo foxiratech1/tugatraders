@@ -163,7 +163,7 @@ const statusConfig: Record<
     dot: "bg-blue-500",
   },
   ASSIGNED: {
-    label: "Contacted",
+    label: "Live",
     bg: "bg-blue-50",
     text: "text-blue-700",
     dot: "bg-blue-500",
@@ -180,8 +180,8 @@ const statusConfig: Record<
     text: "text-purple-700",
     dot: "bg-purple-500",
   },
-  CANCELLED: {
-    label: "Cancelled",
+  CLOSED: {
+    label: "Closed",
     bg: "bg-red-50",
     text: "text-red-600",
     dot: "bg-red-400",
@@ -196,9 +196,9 @@ const statusConfig: Record<
 
 const FILTER_TABS = [
   { key: "ALL", label: "All Jobs" },
-  { key: "ASSIGNED", label: "Contacted" },
+  { key: "ASSIGNED", label: "Live" },
   { key: "COMPLETED", label: "Completed" },
-  { key: "CANCELLED", label: "Cancelled" },
+  { key: "CLOSED", label: "Closed" },
 ];
 
 // ─── StatusBadge ──────────────────────────────────────────────────────────────

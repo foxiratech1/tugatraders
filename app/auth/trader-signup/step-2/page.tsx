@@ -316,11 +316,11 @@ export default function Step2Page() {
                     registrationNumber: unwrapped.traderData.registrationNumber || "",
                     // location: unwrapped.traderData.location || "",
                     about: unwrapped.traderData.about || "",
-                    expMin1Year: true,
-                    authorized: true,
-                    vettingTerms: true,
-                    traderAgreement: true,
-                    privacyCookies: true,
+                    expMin1Year: false,
+                    authorized: false,
+                    vettingTerms: false,
+                    traderAgreement: false,
+                    privacyCookies: false,
                 }));
 
                 // const skillList = unwrapped.selectedSkillServices || unwrapped.traderData.selectedSkillServices || unwrapped.traderData.skillServices || [];

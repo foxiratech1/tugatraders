@@ -391,9 +391,20 @@ function LoginContent({ role }: { role?: string }) {
             </div> */}
             {/* REGISTER LINK */}
             <div className="text-center mt-1">
-              <p className="text-[13px] text-[#1C2C1C]/60 font-medium">
-                Don&#39;t have an account? <Link href="/auth/signup" className="text-[#1C2C1C] font-extrabold hover:underline">Sign up</Link>
+              <p className="text-[13px] text-[#1C2C1C]/60 font-medium mb-3">
+                Don&#39;t have an account?
               </p>
+              <Link href="/auth/signup" className="inline-block w-full text-center py-2.5 rounded-xl border border-[#243A24]/20 text-[13px] font-extrabold text-[#1C2C1C] hover:bg-[#F4F7F1] transition-colors">
+                Sign Up as Customer
+              </Link>
+              <div className="flex items-center gap-3 my-2.5">
+                <div className="flex-1 h-px bg-[#1C2C1C]/10" />
+                <span className="text-[12px] text-[#1C2C1C]/40 font-bold">OR</span>
+                <div className="flex-1 h-px bg-[#1C2C1C]/10" />
+              </div>
+              <Link href="/auth/trader-signup" className="inline-block w-full text-center py-2.5 rounded-xl border border-[#243A24]/20 text-[13px] font-extrabold text-[#1C2C1C] hover:bg-[#F4F7F1] transition-colors">
+                Sign Up as Trader
+              </Link>
             </div>
           </div>
         </div>

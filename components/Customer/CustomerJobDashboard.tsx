@@ -19,9 +19,12 @@ import {
   ChevronRight,
   AlertCircle,
   CheckCircle,
+  XCircle,
   X,
   Eye,
   DollarSign,
+  Euro,
+  Tag,
   MessageSquare,
   MoreVertical,
   PlusCircle,
@@ -148,8 +151,8 @@ const formatBudget = (b: string) =>
 
 // Status badge config
 const statusConfig: Record<string, { label: string; bg: string; text: string; dot: string }> = {
-  OPEN: { label: "Open", bg: "bg-[#E8F5E9]", text: "text-[#2E7D32]", dot: "bg-[#2E7D32]" },
-  POSTED: { label: "Live", bg: "bg-[#E8F5E9]", text: "text-[#2E7D32]", dot: "bg-[#2E7D32]" },
+  OPEN: { label: "Live", bg: "bg-[#FDE2D6]", text: "text-[#D32F2F]", dot: "bg-[#D32F2F]" },
+  POSTED: { label: "Live", bg: "bg-[#FDE2D6]", text: "text-[#D32F2F]", dot: "bg-[#D32F2F]" },
   QUOTE_RECEIVED: {
     label: "Quote Received",
     bg: "bg-[#FFF8E1]",
@@ -163,11 +166,12 @@ const statusConfig: Record<string, { label: string; bg: string; text: string; do
     dot: "bg-[#1565C0]",
   },
 
-  ASSIGNED: { label: "Contacted", bg: "bg-[#E3F2FD]", text: "text-[#1565C0]", dot: "bg-[#1565C0]" },
-  COMPLETED: { label: "Completed", bg: "bg-[#F3E5F5]", text: "text-[#6A1B9A]", dot: "bg-[#6A1B9A]" },
-  CANCELLED: { label: "Cancelled", bg: "bg-[#F5F5F5]", text: "text-gray-500", dot: "bg-gray-400" },
-  EXPIRED: { label: "Expired", bg: "bg-[#F5F5F5]", text: "text-gray-500", dot: "bg-gray-400" },
-  ACTIVE: { label: "Active", bg: "bg-transparent border border-[#4CAF50]", text: "text-[#4CAF50]", dot: "bg-[#4CAF50]" },
+  ASSIGNED: { label: "Contacted", bg: "bg-[#B6D5F4]", text: "text-[#1565C0]", dot: "bg-[#1565C0]" },
+  COMPLETED: { label: "COMPLETED", bg: "bg-[#D8F3D7]", text: "text-[#2E7D32]", dot: "bg-[#2E7D32]" },
+  CANCELLED: { label: "CLOSED", bg: "bg-[#BDBDBD]", text: "text-[#424242]", dot: "bg-[#424242]" },
+  CLOSED: { label: "CLOSED", bg: "bg-[#BDBDBD]", text: "text-[#424242]", dot: "bg-[#424242]" },
+  EXPIRED: { label: "EXPIRED", bg: "bg-[#BDBDBD]", text: "text-[#424242]", dot: "bg-[#424242]" },
+  ACTIVE: { label: "Live", bg: "bg-[#FDE2D6]", text: "text-[#D32F2F]", dot: "bg-[#D32F2F]" },
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -246,17 +250,34 @@ function QuotesModal({
   quotes,
   onClose,
   onAccept,
+  onSendMessage,
+  onDecline,
 }: {
   quotes: Quote[];
   onClose: () => void;
   onAccept: (quoteId: string) => void;
+  onSendMessage: (traderId: string) => void;
+  onDecline: (quoteId: string) => void;
 }) {
   const [accepting, setAccepting] = useState<string | null>(null);
+  const [declining, setDeclining] = useState<string | null>(null);
 
   const handleAccept = async (quoteId: string) => {
     setAccepting(quoteId);
-    await onAccept(quoteId);
-    setAccepting(null);
+    try {
+      await onAccept(quoteId);
+    } finally {
+      setAccepting(null);
+    }
+  };
+
+  const handleDecline = async (quoteId: string) => {
+    setDeclining(quoteId);
+    try {
+      await onDecline(quoteId);
+    } finally {
+      setDeclining(null);
+    }
   };
 
   const formatPrice = (p: string) =>
@@ -389,21 +410,51 @@ function QuotesModal({
                 <p className="text-[10px] text-gray-400 mb-3">Received: {formatDate(quote.createdAt)}</p>
 
                 {/* Actions */}
-                {quote.status?.toUpperCase() !== "ACCEPTED" && (
-                  <div className="flex items-center gap-2">
+                {quote.status?.toUpperCase() === "ACCEPTED" ? (
+                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
+                    <CheckCircle size={12} />
+                    Quote Accepted
+                  </div>
+                ) : quote.status?.toUpperCase() === "REJECTED" ? (
+                  <div className="flex flex-col gap-2.5">
+                    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-red-700 bg-red-50 px-3 py-1.5 rounded-lg border border-red-100 w-fit">
+                      <XCircle size={12} className="text-red-500" />
+                      Quote Declined
+                    </div>
+                    <div>
+                      <button
+                        onClick={() => onSendMessage(quote.trader?.id)}
+                        className="flex items-center justify-center gap-1.5 px-4 py-2 border border-[#1565C0] cursor-pointer text-[#1565C0] hover:bg-blue-50 rounded-lg text-[12px] font-semibold transition-colors"
+                      >
+                        <MessageSquare size={13} />
+                        Send Message
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2 flex-wrap">
                     <button
                       onClick={() => handleAccept(quote.id)}
-                      disabled={accepting === quote.id}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#4CAF50] hover:bg-[#43A047] text-white rounded-lg text-[12px] font-bold transition-colors disabled:opacity-50"
+                      disabled={accepting === quote.id || declining === quote.id}
+                      className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#4CAF50] hover:bg-[#43A047] text-white rounded-lg text-[12px] font-bold transition-colors disabled:opacity-50 min-w-[110px]"
                     >
                       <CheckCircle size={13} />
                       {accepting === quote.id ? "Accepting..." : "Accept Quote"}
                     </button>
                     <button
-                      onClick={onClose}
-                      className="px-4 py-2 border border-gray-200 hover:bg-gray-50 text-gray-500 rounded-lg text-[12px] font-semibold transition-colors"
+                      onClick={() => onSendMessage(quote.trader?.id)}
+                      className="flex items-center justify-center gap-1.5 px-4 py-2 border border-[#1565C0] cursor-pointer text-[#1565C0] hover:bg-blue-50 rounded-lg text-[12px] font-semibold transition-colors"
                     >
-                      Dismiss
+                      <MessageSquare size={13} />
+                      Send Message
+                    </button>
+                    <button
+                      onClick={() => handleDecline(quote.id)}
+                      disabled={accepting === quote.id || declining === quote.id}
+                      className="flex items-center justify-center gap-1.5 px-4 py-2 border border-red-300 cursor-pointer text-red-600 hover:bg-red-50 rounded-lg text-[12px] font-semibold transition-colors disabled:opacity-50"
+                    >
+                      <X size={13} />
+                      {declining === quote.id ? "Declining..." : "Decline"}
                     </button>
                   </div>
                 )}
@@ -485,49 +536,20 @@ function TraderQuoteCard({
           <MessageSquare size={14} />
           View your conversation with tradesperson
         </button>
-        {isAssigned && jobStatus === "ASSIGNED" && quoteStatus?.toUpperCase() === "ACCEPTED" ? (
-          <div className="flex items-center gap-2">
-            <style dangerouslySetInnerHTML={{
-              __html: `
-              @keyframes startWorkPulse {
-                0% {
-                  transform: scale(1);
-                  box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.6);
-                }
-                50% {
-                  transform: scale(1.04);
-                  box-shadow: 0 0 0 8px rgba(76, 175, 80, 0);
-                }
-                100% {
-                  transform: scale(1);
-                  box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
-                }
-              }
-              .btn-start-work-pulse {
-                animation: startWorkPulse 2s infinite ease-in-out;
-              }
-            `}} />
-            <button
-              onClick={onStartJob}
-              className="px-4 py-1.5 bg-[#4CAF50] text-white rounded-lg text-[12px] font-bold hover:bg-[#43A047] transition-all btn-start-work-pulse hover:scale-105 active:scale-95"
-            >
-              Start Work
-            </button>
+        {isAssigned && (jobStatus === "COMPLETED") ? (
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#2E7D32] bg-[#D8F3D7] px-3 py-1 rounded-lg border border-[#A5D6A7]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]" />
+            Completed
           </div>
-        ) : isAssigned && jobStatus === "ACTIVE" ? (
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onCancelJob}
-              className="px-3.5 py-1.5 border border-red-200 text-red-600 rounded-lg text-[12px] font-semibold hover:bg-red-50 transition-colors"
-            >
-              Cancel
-            </button>
-            <button
-              onClick={onCompleteJob}
-              className="px-3.5 py-1.5 bg-[#1C2C1C] text-white rounded-lg text-[12px] font-bold hover:bg-[#2c3e2c] transition-colors"
-            >
-              Complete
-            </button>
+        ) : isAssigned && (jobStatus === "CLOSED" || jobStatus === "CANCELLED" || jobStatus === "EXPIRED") ? (
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#424242] bg-[#EEEEEE] px-3 py-1 rounded-lg border border-[#BDBDBD]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#424242]" />
+            {jobStatus === "CANCELLED" ? "Cancelled" : "Closed"}
+          </div>
+        ) : isAssigned && (jobStatus === "IN_PROGRESS" || jobStatus === "ACTIVE" || quoteStatus?.toUpperCase() === "ACCEPTED") ? (
+          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#1565C0] bg-[#E3F2FD] px-3 py-1 rounded-lg border border-[#BBDEFB]">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#1565C0]" />
+            In Progress
           </div>
         ) : isAssigned ? (
           <div className="flex items-center gap-2">
@@ -557,6 +579,11 @@ export default function CustomerJobDashboard() {
   const [isCloseJobModalOpen, setIsCloseJobModalOpen] = useState(false);
   const [reviewedJobIds, setReviewedJobIds] = useState<Set<string>>(new Set());
   const [jobReviews, setJobReviews] = useState<Record<string, any>>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalJobs, setTotalJobs] = useState(0);
+
+  const JOBS_PER_PAGE = 5;
 
   const handleOpenChat = async (traderId: string, jobId?: string) => {
     try {
@@ -578,22 +605,46 @@ export default function CustomerJobDashboard() {
   const handleAcceptQuote = async (quoteId: string) => {
     try {
       await authApi.acceptQuote(quoteId);
-      toast.success("Quote accepted successfully!");
-      // Refresh quotes after accepting
+      // Automatically move job to IN_PROGRESS when quote is accepted
       if (selectedJob) {
+        try {
+          await authApi.startJob(selectedJob.id);
+        } catch (startErr) {
+          console.warn("startJob failed (non-critical):", startErr);
+        }
+        toast.success("Quote accepted! Job is now in progress.");
+        // Refresh quotes
         const res = await authApi.getJobQuotes(selectedJob.id);
         const arr = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
         setQuotes(arr);
-        // Also refresh jobs to get updated status
+        // Refresh jobs to reflect IN_PROGRESS status
         const jobsRes = await authApi.getMyJobs();
         const jobsArr = Array.isArray(jobsRes) ? jobsRes : Array.isArray(jobsRes?.data) ? jobsRes.data : [];
         setJobs(jobsArr);
         const updatedJob = jobsArr.find((j: Job) => j.id === selectedJob.id);
         if (updatedJob) setSelectedJob(updatedJob);
+      } else {
+        toast.success("Quote accepted successfully!");
       }
     } catch (error: any) {
       console.error("Failed to accept quote", error);
       toast.error(error?.response?.data?.message || "Failed to accept quote");
+    }
+  };
+
+  const handleDeclineQuote = async (quoteId: string) => {
+    try {
+      await authApi.rejectQuote(quoteId);
+      toast.success("Quote declined successfully!");
+      if (selectedJob) {
+        // Refresh quotes
+        const res = await authApi.getJobQuotes(selectedJob.id);
+        const arr = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
+        setQuotes(arr);
+      }
+    } catch (error: any) {
+      console.error("Failed to decline quote", error);
+      toast.error(error?.response?.data?.message || "Failed to decline quote");
     }
   };
 
@@ -661,7 +712,7 @@ export default function CustomerJobDashboard() {
     async function fetchJobsAndReviews() {
       try {
         const [jobsRes, reviewsRes] = await Promise.all([
-          authApi.getMyJobs(),
+          authApi.getMyJobs(currentPage, JOBS_PER_PAGE),
           authApi.getMyReviews().catch((e) => {
             console.error("Failed to fetch reviews", e);
             return [];
@@ -673,7 +724,13 @@ export default function CustomerJobDashboard() {
           : Array.isArray(jobsRes?.data)
             ? jobsRes.data
             : [];
+
         setJobs(arr);
+
+        const meta = jobsRes?.meta;
+
+        setTotalJobs(meta?.total ?? arr.length);
+        setTotalPages(meta?.totalPages ?? 1);
         if (arr.length > 0) setSelectedJob(arr[0]);
 
         const reviewsArr = Array.isArray(reviewsRes)
@@ -712,7 +769,7 @@ export default function CustomerJobDashboard() {
       }
     }
     fetchJobsAndReviews();
-  }, []);
+  }, [currentPage]);
 
   useEffect(() => {
     async function fetchSavedTraders() {
@@ -773,16 +830,23 @@ export default function CustomerJobDashboard() {
                 Find a Trader
               </button>
             </Link>
-            {selectedJob && !reviewedJobIds.has(selectedJob.id) && (selectedJob.status === "CLOSED" || selectedJob.status === "COMPLETED"
-              ? selectedJob.selectedTrader
-              : selectedJob.status !== "CANCELLED"
-            ) && (
+            {selectedJob &&
+              !reviewedJobIds.has(selectedJob.id) &&
+              selectedJob.status !== "CANCELLED" &&
+              selectedJob.status !== "EXPIRED" && (
                 <Link
-                  href={`/customer-dashboard/leave-review?jobId=${selectedJob.id}${selectedJob.selectedTrader ? `&traderId=${selectedJob.selectedTrader.id}` : ''}`}
+                  href={`/customer-dashboard/leave-review?jobId=${selectedJob.id}${selectedJob.selectedTrader
+                    ? `&traderId=${selectedJob.selectedTrader.id}`
+                    : ""
+                    }`}
                 >
                   <button className="flex items-center gap-2 px-5 py-2.5 rounded-[12px] border border-gray-200 bg-white cursor-pointer text-[14px] font-bold text-[#1C2C1C] hover:bg-gray-50 transition-colors shadow-sm">
                     <Star size={16} />
-                    {selectedJob.status === "CLOSED" || selectedJob.status === "COMPLETED" ? "Share Your Experience" : "Leave a Review"}
+
+                    {selectedJob.status === "CLOSED" ||
+                      selectedJob.status === "COMPLETED"
+                      ? "Share Your Experience"
+                      : "Leave a Review"}
                   </button>
                 </Link>
               )}
@@ -795,50 +859,63 @@ export default function CustomerJobDashboard() {
           </div>
         </div>
 
-        {/* ── Main Grid: left (180px) + right (1fr) ────────────────────── */}
-        <div className="grid grid-cols-[240px_1fr] gap-6">
+        {/* ── Main Grid: left (300px) + right (1fr) ────────────────────── */}
+        <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6 items-start">
 
-          {/* ── Left: Job History ────────────────────────────────────────── */}
-          <div>
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-[14px] font-bold text-[#1C2C1C]">Job History</h2>
-              <button className="text-[12px] font-semibold text-[#6E9625] hover:underline">
-                View All
-              </button>
+          {/* ── Left: Job History (Light Green Background Container) ──────── */}
+          <div className="bg-[#F2F7EB] rounded-2xl p-4 border border-[#E2EED2] flex flex-col gap-3">
+            <div className="mb-1">
+              <h2 className="text-[15px] font-extrabold text-[#1C2C1C]">Job History</h2>
             </div>
 
             {loading ? (
               <div className="space-y-2">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-[60px] rounded-lg bg-white animate-pulse border border-gray-100" />
+                  <div key={i} className="h-[75px] rounded-xl bg-white animate-pulse border border-gray-100" />
                 ))}
               </div>
             ) : jobs.length === 0 ? (
-              <p className="text-[13px] text-gray-400 px-2">No jobs posted yet.</p>
+              <p className="text-[13px] text-gray-400 px-2 py-4 text-center">No jobs posted yet.</p>
             ) : (
               <div className="space-y-3">
                 {jobs.map((job) => {
                   const isSelected = selectedJob?.id === job.id;
-                  const isClosed = job.status === "CLOSED";
+                  // const isClosed = job.status === "CLOSED" || job.status === "CANCELLED" || job.status === "EXPIRED";
+                  const isClosedOrCompleted =
+                    job.status === "CLOSED" || job.status === "COMPLETED";
                   return (
                     <button
                       key={job.id}
                       onClick={() => setSelectedJob(job)}
-                      className={`w-full p-4 rounded-xl border transition-all text-left
-${isSelected
-                          ? `border-[#8BC34A] ${isClosed ? 'bg-gray-50' : 'bg-white'}`
-                          : `${isClosed ? 'border-gray-200 bg-gray-50 opacity-70 hover:bg-gray-100' : 'border-transparent bg-white hover:border-gray-200'}`
+                      className={`w-full p-4 rounded-xl border transition-all text-left flex flex-col gap-2 ${isSelected
+                        ? isClosedOrCompleted
+                          ? "border-2 border-gray-300 bg-[#E5E5E5] shadow-sm"
+                          : "border-2 border-[#8BC34A] bg-white  shadow-sm ring-2 ring-[#8BC34A]/20"
+                        : isClosedOrCompleted
+                          ? "border-gray-300 bg-[#E5E5E5] hover:bg-[#DEDEDE]"
+                          : "border-transparent bg-white hover:border-gray-200"
                         }`}
                     >
-                      <div className="flex items-start justify-between gap-1.5 mb-1">
-                        <p className={`text-[12px] font-semibold leading-snug line-clamp-2 ${isClosed && !isSelected ? 'text-gray-500' : 'text-[#1C2C1C]'}`}>
-                          {job.title}
-                        </p>
+                      <div className="flex items-center justify-between">
+                        <StatusBadge status={job.status} />
                       </div>
-                      <StatusBadge status={job.status} />
-                      <div className="flex items-center gap-1 mt-1.5 text-[10px] text-gray-400">
-                        <Calendar size={9} />
-                        {formatDate(job.createdAt)}
+                      <p className="text-[13px] font-bold text-[#1C2C1C] leading-snug line-clamp-2">
+                        {job.title}
+                      </p>
+                      {job.category?.name && (
+                        <div className="flex items-center gap-1.5 text-[11px] text-gray-500 font-medium">
+                          <Tag size={12} className="text-gray-400" />
+                          <span>{job.category.name}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center justify-between mt-1 text-[11px] text-gray-400 pt-1 border-t border-gray-100">
+                        <div className="flex items-center gap-1 text-[#557A18] font-bold">
+                          <Euro size={11} /> {formatBudget(job.budgetRange)}
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <Calendar size={11} />
+                          {formatDate(job.createdAt)}
+                        </div>
                       </div>
                     </button>
                   );
@@ -847,410 +924,324 @@ ${isSelected
             )}
           </div>
 
-          {/* ── Right: Selected Job Detail ────────────────────────────── */}
+          {/* ── Right: Selected Job Detail (Single Master Card Container) ──────── */}
           {selectedJob ? (
-            <div className="flex flex-col gap-5 min-h-[265px]">
-              {(() => {
-                const isSelectedClosed = selectedJob.status === "CLOSED";
-                return (
-                  <>
-                    {/* Top Card: Job Header + Trader Quotes */}
+            <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.04)] border border-gray-200/80 flex flex-col gap-6 sticky top-[90px]">
+              {/* Header Pill & Title */}
+              <div className="flex items-start justify-between">
+                <div>
+                  <span className="inline-block bg-[#EAF3DE] text-[#557A18] font-bold text-[11px] px-3 py-1 rounded-full mb-2 tracking-wide">
+                    JOB-{selectedJob.id?.substring(0, 8).toUpperCase()}
+                  </span>
+                  <h2 className="text-[22px] font-extrabold text-[#1C2C1C] leading-tight mb-2">
+                    {selectedJob.title}
+                  </h2>
+                  <div className="flex items-center gap-3">
+                    <StatusBadge status={selectedJob.status} />
+                    <span className="text-[12px] text-gray-400 font-medium flex items-center gap-1">
+                      <Clock size={13} /> Posted {formatDate(selectedJob.createdAt)}
+                    </span>
+                  </div>
+                </div>
+
+                {/* More Options / Actions Dropdown */}
+                <div className="relative flex items-center gap-1">
+                  {(() => {
+                    const createdAt = new Date(selectedJob.createdAt).getTime();
+                    const now = new Date().getTime();
+                    const hoursDiff = (now - createdAt) / (1000 * 60 * 60);
+                    if (hoursDiff <= 48 && selectedJob.status !== "CLOSED" && selectedJob.status !== "CANCELLED" && selectedJob.status !== "COMPLETED" && !selectedJob.quotesReceived && !selectedJob.quotesCount) {
+                      return (
+                        <button
+                          onClick={() => {
+                            sessionStorage.setItem('editJobData', JSON.stringify(selectedJob));
+                            router.push(`/post-job?edit=true&jobId=${selectedJob.id}`);
+                          }}
+                          className="w-8 h-8 flex items-center justify-center text-[#223321] hover:bg-gray-100 rounded-full transition-colors"
+                          title="Edit Job"
+                        >
+                          <Edit2 size={16} />
+                        </button>
+                      );
+                    }
+                    return null;
+                  })()}
+
+                  {selectedJob.status !== "CLOSED" && selectedJob.status !== "COMPLETED" && selectedJob.status !== "CANCELLED" && selectedJob.status !== "EXPIRED" && (
+                    <button
+                      onClick={() => setJobMenuOpen(!jobMenuOpen)}
+                      onBlur={() => setTimeout(() => setJobMenuOpen(false), 200)}
+                      className="w-8 h-8 flex items-center justify-center text-[#223321] hover:bg-gray-100 rounded-full transition-colors"
+                    >
+                      <MoreVertical size={20} />
+                    </button>
+                  )}
+
+                  {jobMenuOpen && (
+                    <div className="absolute right-0 top-full mt-1 w-[150px] bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.12)] border border-gray-100 p-3.5 z-10 flex flex-col gap-3">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCompleteJob();
+                          setJobMenuOpen(false);
+                        }}
+                        className="w-full text-center py-2.5 px-3 text-[14px] rounded-xl bg-[#B2D8B2] hover:bg-[#a1cca1] cursor-pointer transition-colors text-[#001D3D]"
+                      >
+                        Job complete
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setIsCloseJobModalOpen(true);
+                          setJobMenuOpen(false);
+                        }}
+                        className="w-full text-center py-2.5 px-3 text-[14px] bg-[#E8E8E8] rounded-xl hover:bg-[#d6d6d6] cursor-pointer transition-colors text-[#001D3D]"
+                      >
+                        Close job
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* 5 Block Info Grid matching mockup */}
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                <div className="p-3 rounded-2xl bg-[#F8F9FA] border border-gray-100">
+                  <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-1">
+                    LOCATION
+                  </span>
+                  <div className="flex items-center gap-1 text-[13px] font-bold text-[#1C2C1C] truncate">
+                    <MapPin size={13} className="text-[#6E9625] shrink-0" />
+                    <span className="truncate">{selectedJob.postcode || "—"}</span>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-[#F8F9FA] border border-gray-100">
+                  <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-1">
+                    CATEGORY
+                  </span>
+                  <div className="flex items-center gap-1 text-[13px] font-bold text-[#1C2C1C] truncate">
+                    <Tag size={13} className="text-[#6E9625] shrink-0" />
+                    <span className="truncate">{selectedJob.category?.name || "General"}</span>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-[#F8F9FA] border border-gray-100">
+                  <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-1">
+                    TIMESCALE
+                  </span>
+                  <div className="flex items-center gap-1 text-[13px] font-bold text-[#1C2C1C] truncate">
+                    <Clock size={13} className="text-[#6E9625] shrink-0" />
+                    <span className="truncate">{formatTimescale(selectedJob.timescale)}</span>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-[#F8F9FA] border border-gray-100">
+                  <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-1">
+                    BUDGET
+                  </span>
+                  <div className="flex items-center gap-1 text-[13px] font-bold text-[#1C2C1C] truncate">
+                    <Euro size={13} className="text-[#6E9625] shrink-0" />
+                    <span className="truncate">{formatBudget(selectedJob.budgetRange)}</span>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-2xl bg-[#F8F9FA] border border-gray-100 col-span-2 sm:col-span-1">
+                  <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-1">
+                    QUOTES RECEIVED
+                  </span>
+                  <div className="flex items-center gap-1.5 text-[13px] font-bold text-[#1C2C1C]">
+                    <MessageSquare size={13} className="text-[#6E9625] shrink-0" />
+                    <span>{Math.max(quotes.length, quotesCount)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* JOB DESCRIPTION */}
+              <div>
+                <span className="text-[11px] font-extrabold text-[#1C2C1C] uppercase tracking-wider mb-2 block">
+                  JOB DESCRIPTION
+                </span>
+                <p className="text-[14px] leading-relaxed text-gray-600">
+                  {selectedJob.description}
+                </p>
+              </div>
+
+              {/* Attachments Section */}
+              {selectedJob.attachments && selectedJob.attachments.length > 0 && (
+                <div>
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 text-[12px] font-bold text-gray-700 mb-3 bg-gray-50">
+                    <Paperclip size={14} className="text-gray-400" />
+                    Attachments ({selectedJob.attachments.length})
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    {selectedJob.attachments.map((att) => (
+                      <a
+                        key={att.id}
+                        href={getAttachmentUrl(att.url || att.file)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-2 p-2 rounded-xl border border-gray-200 hover:border-[#6E9625] transition-colors"
+                      >
+                        <img
+                          src={getAttachmentUrl(att.url || att.file)}
+                          alt="attachment"
+                          className="w-14 h-14 object-cover rounded-lg"
+                        />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Quotes + Saved Traders Row */}
+              <div className="grid grid-cols-[3fr_1.4fr] gap-5">
+
+                {/* Trader Quotes Card */}
+                <div className="rounded-2xl border border-gray-200/80 p-5 bg-white shadow-sm min-w-0">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-[15px] font-bold text-[#223321]">
+                      Quotes ({quotesLoading ? "..." : Math.max(quotes.length, quotesCount)})
+                    </h3>
+                    {quotes.length > 0 && (
+                      <button
+                        onClick={() => setQuotesModalOpen(true)}
+                        className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#6E9625] hover:bg-[#58791C] text-white rounded-lg text-[12px] font-bold transition-colors shadow-sm"
+                      >
+                        <Eye size={13} />
+                        View Quotes
+                      </button>
+                    )}
+                  </div>
+
+                  {quotesLoading ? (
+                    <p className="text-center text-[13px] text-gray-400 py-6 animate-pulse">
+                      Loading quotes...
+                    </p>
+                  ) : quotes.length > 0 ? (
                     <div className="space-y-4">
-
-                      {/* Header Card */}
-                      <div className={`rounded-2xl border border-[#E8E8E8] shadow-sm px-6 py-5 ${isSelectedClosed ? 'bg-gray-50 opacity-90' : 'bg-white'}`}>
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <div className="flex items-center gap-3">
-                              <h2 className="text-[20px] font-bold text-[#223321]">
-                                {selectedJob.title}
-                              </h2>
-
-                              <ActiveBadge status={selectedJob.status} />
-                            </div>
-
-                            <div className="flex items-center gap-1 mt-2 text-[12px] text-[#8A8A8A]">
-                              <Calendar size={12} />
-                              Job posted {formatDate(selectedJob.createdAt)}
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-1">
-                            {(() => {
-                              const createdAt = new Date(selectedJob.createdAt).getTime();
-                              const now = new Date().getTime();
-                              const hoursDiff = (now - createdAt) / (1000 * 60 * 60);
-                              if (hoursDiff <= 48 && selectedJob.status !== "CLOSED" && selectedJob.status !== "CANCELLED" && selectedJob.status !== "COMPLETED" && !selectedJob.quotesReceived && !selectedJob.quotesCount) {
-                                return (
-                                  <button
-                                    onClick={() => {
-                                      sessionStorage.setItem('editJobData', JSON.stringify(selectedJob));
-                                      router.push(`/post-job?edit=true&jobId=${selectedJob.id}`);
-                                    }}
-                                    className="w-8 h-8 flex items-center justify-center text-[#223321] hover:bg-gray-100 rounded-full transition-colors"
-                                    title="Edit Job"
-                                  >
-                                    <Edit2 size={16} />
-                                  </button>
-                                );
-                              }
-                              return null;
-                            })()}
-
-                            <div className="relative">
-                              <button
-                                onClick={() => setJobMenuOpen(!jobMenuOpen)}
-                                onBlur={() => setTimeout(() => setJobMenuOpen(false), 200)}
-                                className="w-8 h-8 flex items-center justify-center text-[#223321] hover:bg-gray-100 rounded-full transition-colors"
-                              >
-                                <MoreVertical size={20} />
-                              </button>
-
-                              {jobMenuOpen && (
-                                <div className="absolute right-0 top-full mt-1 w-[150px] bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.12)] border border-gray-100 p-3.5 z-10 flex flex-col gap-3">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleCompleteJob();
-                                      setJobMenuOpen(false);
-                                    }}
-                                    className="w-full text-center py-2.5 px-3 text-[14px] rounded-xl bg-[#B2D8B2] hover:bg-[#a1cca1] cursor-pointer transition-colors text-[#001D3D]"
-                                  >
-                                    Job complete
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setIsCloseJobModalOpen(true);
-                                      setJobMenuOpen(false);
-                                    }}
-                                    className="w-full text-center py-2.5 px-3 text-[14px] bg-[#E8E8E8] rounded-xl hover:bg-[#d6d6d6] cursor-pointer transition-colors text-[#001D3D]"
-                                  >
-                                    Close job
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Trader Quotes Card */}
-
-                      <div className={`rounded-2xl border border-[#E8E8E8] shadow-sm p-5 ${isSelectedClosed ? 'bg-gray-50 opacity-90' : 'bg-white'}`}>
-                        <div className="flex items-center justify-between mb-5">
-                          <h3 className="text-[15px] font-bold text-[#223321]">
-                            Trader Quotes ({quotesLoading ? "..." : Math.max(quotes.length, quotesCount)})
-                          </h3>
-
-                          <div className="flex items-center gap-3">
-                            {/* View Quotes button – shown when quotes are available */}
-                            {quotes.length > 0 && (
-                              <button
-                                onClick={() => setQuotesModalOpen(true)}
-                                className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#6E9625] hover:bg-[#58791C] text-white rounded-lg text-[12px] font-bold transition-colors shadow-sm"
-                              >
-                                <Eye size={13} />
-                                View Quotes
-                              </button>
-                            )}
-                            <div className="text-[12px] text-[#7D7D7D]">
-                              Sort by:
-                              <span className="ml-1 font-semibold text-[#223321]">Highest Rated</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {quotesLoading ? (
-                          <p className="text-center text-[13px] text-gray-400 py-8 animate-pulse">
-                            Loading quotes...
-                          </p>
-                        ) : quotes.length > 0 ? (
-                          <div className="space-y-4">
-                            {quotes.map((quote) => (
-                              <TraderQuoteCard
-                                key={quote.id}
-                                trader={quote.trader || quote}
-                                isAssigned={selectedJob?.selectedTrader?.id === (quote.trader?.id || quote.id)}
-                                quoteId={quote.id}
-                                onAccept={handleAcceptQuote}
-                                quoteStatus={quote.status}
-                                jobStatus={selectedJob?.status}
-                                onStartJob={handleStartJob}
-                                onCompleteJob={handleCompleteJob}
-                                onCancelJob={handleCancelJob}
-                                onOpenChat={(traderId) => handleOpenChat(traderId, selectedJob?.id)}
-                              />
-                            ))}
-                          </div>
-                        ) : selectedJob.selectedTrader ? (
-                          <>
-                            <TraderQuoteCard
-                              trader={selectedJob.selectedTrader}
-                              isAssigned
-                              jobStatus={selectedJob?.status}
-                              onStartJob={handleStartJob}
-                              onCompleteJob={handleCompleteJob}
-                              onCancelJob={handleCancelJob}
-                              onOpenChat={(traderId) => handleOpenChat(traderId, selectedJob?.id)}
-                            />
-
-                            {quotesCount <= 1 && (
-                              <p className="text-center text-[12px] text-gray-400 pt-4">
-                                No other trader quotes yet.
-                              </p>
-                            )}
-                          </>
-                        ) : (
-                          <p className="text-center text-[13px] text-gray-400 py-8">
-                            No trader quotes yet.
-                          </p>
-                        )}
-                      </div>
+                      {quotes.map((quote) => (
+                        <TraderQuoteCard
+                          key={quote.id}
+                          trader={quote.trader || quote}
+                          isAssigned={selectedJob?.selectedTrader?.id === (quote.trader?.id || quote.id)}
+                          quoteId={quote.id}
+                          onAccept={handleAcceptQuote}
+                          quoteStatus={quote.status}
+                          jobStatus={selectedJob?.status}
+                          onStartJob={handleStartJob}
+                          onCompleteJob={handleCompleteJob}
+                          onCancelJob={handleCancelJob}
+                          onOpenChat={(traderId) => handleOpenChat(traderId, selectedJob?.id)}
+                        />
+                      ))}
                     </div>
+                  ) : selectedJob.selectedTrader ? (
+                    <TraderQuoteCard
+                      trader={selectedJob.selectedTrader}
+                      isAssigned
+                      jobStatus={selectedJob?.status}
+                      onStartJob={handleStartJob}
+                      onCompleteJob={handleCompleteJob}
+                      onCancelJob={handleCancelJob}
+                      onOpenChat={(traderId) => handleOpenChat(traderId, selectedJob?.id)}
+                    />
+                  ) : (
+                    <p className="text-center text-[13px] text-gray-400 py-6">
+                      No quotes received yet.
+                    </p>
+                  )}
+                </div>
 
-                    {/* Review CTA for closed/completed unreviewed jobs */}
-                    {(selectedJob.status === "CLOSED" || selectedJob.status === "COMPLETED") && !reviewedJobIds.has(selectedJob.id) && selectedJob.selectedTrader && (
-                      <div className="rounded-2xl border border-[#E9F0E1] bg-[#F4F7F1] p-5 flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-[#6E9625]/15 flex items-center justify-center flex-shrink-0">
-                            <Star size={20} className="text-[#6E9625]" />
-                          </div>
-                          <div>
-                            <p className="text-[14px] font-bold text-[#1C2C1C]">Share Your Experience</p>
-                            <p className="text-[12px] text-gray-500">Help others by leaving a review for this trader.</p>
-                          </div>
-                        </div>
-                        <Link href={`/customer-dashboard/leave-review?jobId=${selectedJob.id}&traderId=${selectedJob.selectedTrader.id}`}>
-                          <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#6E9625] text-white text-[13px] font-bold hover:bg-[#58791C] transition-colors cursor-pointer shadow-sm">
-                            <Star size={14} />
-                            Write Review
-                          </button>
-                        </Link>
-                      </div>
-                    )}
-
-                    {/* Review completed indicator / details */}
-                    {(selectedJob.status === "CLOSED" || selectedJob.status === "COMPLETED") && reviewedJobIds.has(selectedJob.id) && (
-                      <div className="rounded-2xl border border-[#E9F0E1] bg-white p-5 shadow-sm">
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-2 text-[#6E9625]">
-                            <CheckCircle size={18} className="flex-shrink-0" />
-                            <span className="text-[14px] font-bold">Review Submitted</span>
-                          </div>
-                          {jobReviews[selectedJob.id]?.createdAt && (
-                            <span className="text-[12px] text-gray-500">
-                              {formatDate(jobReviews[selectedJob.id].createdAt)}
-                            </span>
-                          )}
-                        </div>
-
-                        {jobReviews[selectedJob.id] ? (
-                          <div className="bg-[#F8F9F5] rounded-xl p-4 border border-[#E9F0E1]">
-                            {jobReviews[selectedJob.id].wasWorkCompleted === false ? (
-                              <div className="text-[13px] text-gray-700">
-                                <p className="font-semibold mb-1">Work not completed</p>
-                                <p>{jobReviews[selectedJob.id].noWorkReason || 'No reason provided'}</p>
-                              </div>
-                            ) : (
-                              <>
-                                <div className="flex items-center gap-1 mb-2">
-                                  {[1, 2, 3, 4, 5].map((star) => (
-                                    <Star
-                                      key={star}
-                                      size={14}
-                                      className={star <= (jobReviews[selectedJob.id].rating || 0) ? "text-[#6E9625] fill-[#6E9625]" : "text-gray-300 fill-gray-300"}
-                                    />
-                                  ))}
-                                  <span className="ml-2 text-[13px] font-bold text-[#1C2C1C]">
-                                    {jobReviews[selectedJob.id].rating ? jobReviews[selectedJob.id].rating.toFixed(1) : ''}
-                                  </span>
-                                </div>
-                                {jobReviews[selectedJob.id].title && (
-                                  <h4 className="text-[14px] font-bold text-[#1C2C1C] mb-1">
-                                    {jobReviews[selectedJob.id].title}
-                                  </h4>
-                                )}
-                                {jobReviews[selectedJob.id].review && (
-                                  <p className="text-[13px] text-gray-600">
-                                    {jobReviews[selectedJob.id].review}
-                                  </p>
-                                )}
-                              </>
-                            )}
-                          </div>
-                        ) : (
-                          <p className="text-[13px] text-gray-500 mt-2">You have already submitted a review for this job. Thank you!</p>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Bottom Row: Job Details + Saved Traders */}
-                    <div className="grid grid-cols-[3fr_1.4fr] gap-5">
-
-                      {/* Job Details Accordion Card */}
-                      <div className={`min-w-0 rounded-2xl border border-gray-200 shadow-sm px-5 ${isSelectedClosed ? 'bg-gray-50 opacity-90' : 'bg-white'}`}>
-                        <h3 className="text-[14px] font-bold text-[#1C2C1C] py-4 border-b border-gray-100">
-                          Job Details
-                        </h3>
-
-                        {/* Location */}
-                        <AccordionRow
-                          icon={<MapPin size={15} className="text-[#4CAF50]" />}
-                          label="Location & Address"
-                        >
-                          <p className="text-[13px] text-gray-600">
-                            Postcode:{" "}
-                            <strong className="text-[#1C2C1C]">{selectedJob.postcode}</strong>
-                          </p>
-                          {selectedJob.latitude && selectedJob.longitude && (
-                            <p className="text-[11px] text-gray-400 mt-1">
-                              {selectedJob.latitude}, {selectedJob.longitude}
-                            </p>
-                          )}
-                        </AccordionRow>
-
-                        {/* Description & Timeline */}
-                        <AccordionRow
-                          defaultOpen
-                          icon={<FileText size={15} className="text-[#4CAF50]" />}
-                          label="Description & Timeline"
-                        >
-                          <p className="text-[13px] text-gray-600 leading-relaxed mb-4 whitespace-pre-wrap break-words">
-                            {selectedJob.description}
-                          </p>
-                          <div className="flex items-start gap-0 divide-x divide-gray-200">
-                            <div className="pr-5">
-                              <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">
-                                Start Date
-                              </p>
-                              <p className="text-[13px] font-semibold text-[#1C2C1C]">
-                                {formatTimescale(selectedJob.timescale)}
-                              </p>
-                            </div>
-                            <div className="pl-5">
-                              <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">
-                                Budget
-                              </p>
-                              <p className="text-[13px] font-semibold text-[#1C2C1C]">
-                                {formatBudget(selectedJob.budgetRange)}
-                              </p>
-                            </div>
-                          </div>
-                          {selectedJob.emergency && (
-                            <div className="mt-3 flex items-center gap-1.5 text-[12px] font-semibold text-[#E53935]">
-                              <Zap size={12} fill="#E53935" />
-                              Emergency Job
-                            </div>
-                          )}
-                          {(selectedJob.category || selectedJob.skillService || selectedJob.subCategory) && (
-                            <div className="mt-3 flex flex-wrap gap-1.5">
-                              {selectedJob.category && (
-                                <span className="px-2.5 py-1 rounded-full bg-[#F0F5E8] text-[#4A6B0A] text-[11px] font-medium">
-                                  {selectedJob.category.name}
-                                </span>
-                              )}
-                              {selectedJob.skillService && (
-                                <span className="px-2.5 py-1 rounded-full bg-[#F0F5E8] text-[#4A6B0A] text-[11px] font-medium">
-                                  {selectedJob.skillService.name}
-                                </span>
-                              )}
-                              {selectedJob.subCategory && (
-                                <span className="px-2.5 py-1 rounded-full bg-[#F0F5E8] text-[#4A6B0A] text-[11px] font-medium">
-                                  {selectedJob.subCategory.name}
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </AccordionRow>
-
-                        {/* Uploaded Images */}
-                        <AccordionRow
-                          icon={<ImageIcon size={15} className="text-[#4CAF50]" />}
-                          label={`Uploaded Images (${selectedJob.attachments?.length ?? 0})`}
-                        >
-                          {selectedJob.attachments?.length > 0 ? (
-                            <div className="flex flex-wrap gap-2">
-                              {selectedJob.attachments.map((att) => (
-                                <div
-                                  key={att.id}
-                                  className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 border border-gray-200 flex-shrink-0"
-                                >
-                                  <img
-                                    src={getAttachmentUrl(att.url || att.file)}
-                                    alt="Job attachment"
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            <p className="text-[12px] text-gray-400">No images uploaded.</p>
-                          )}
-                        </AccordionRow>
-                      </div>
-
-                      {/* Saved Traders Card */}
-                      <div className={`rounded-2xl border border-gray-200 shadow-sm p-4 h-fit ${isSelectedClosed ? 'bg-gray-50 opacity-90' : 'bg-white'}`}>
-                        <div className="flex items-center justify-between mb-4">
-                          <div className="flex items-center gap-2">
-                            <Bookmark size={14} className="text-[#4CAF50]" />
-                            <h3 className="text-[13px] font-bold text-[#1C2C1C]">Saved Traders</h3>
-                          </div>
-                          <span className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-[11px] font-bold text-gray-500">
-                            {savedTradersLoading ? "..." : savedTraders.length}
-                          </span>
-                        </div>
-
-                        {savedTradersLoading ? (
-                          <p className="text-center text-[13px] text-gray-400 py-4 animate-pulse">
-                            Loading...
-                          </p>
-                        ) : savedTraders.length > 0 ? (
-                          <div className="flex flex-col divide-y divide-gray-100">
-                            {savedTraders.map((item) => {
-                              const t = item.trader || item;
-                              return (
-                                <div
-                                  key={t.id || t._id || Math.random()}
-                                  className="flex items-center gap-2.5 py-3 cursor-pointer group"
-                                >
-                                  <div className="w-8 h-8 rounded-full bg-[#4CAF50] flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0">
-                                    {t.fullName ? t.fullName[0].toUpperCase() : "T"}
-                                  </div>
-                                  <div className="flex-1 min-w-0">
-                                    <p className="text-[12px] font-semibold text-[#1C2C1C] truncate">
-                                      {t.fullName || "Unknown Trader"}
-                                    </p>
-                                    <p className="text-[10px] text-gray-400">Saved Trader</p>
-                                  </div>
-                                  <ChevronRight size={13} className="text-gray-300 group-hover:text-gray-400 flex-shrink-0" />
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <p className="text-center text-[13px] text-gray-400 py-4">
-                            No saved traders.
-                          </p>
-                        )}
-
-                        <Link href="/customer-dashboard/saved">
-                          <button className="mt-3 w-full text-center text-[12px] font-semibold text-[#6E9625] hover:underline">
-                            View all saved
-                          </button>
-                        </Link>
-                      </div>
+                {/* Saved Traders Card */}
+                <div className="rounded-2xl border border-gray-200/80 p-5 bg-white shadow-sm h-fit">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <Bookmark size={14} className="text-[#4CAF50]" />
+                      <h3 className="text-[13px] font-bold text-[#1C2C1C]">Saved Traders</h3>
                     </div>
-                  </>
-                );
-              })()}
+                    <span className="w-5 h-5 rounded-full bg-gray-100 flex items-center justify-center text-[11px] font-bold text-gray-500">
+                      {savedTradersLoading ? "..." : savedTraders.length}
+                    </span>
+                  </div>
+
+                  {savedTradersLoading ? (
+                    <p className="text-center text-[13px] text-gray-400 py-4 animate-pulse">
+                      Loading...
+                    </p>
+                  ) : savedTraders.length > 0 ? (
+                    <div className="flex flex-col divide-y divide-gray-100">
+                      {savedTraders.map((item) => {
+                        const t = item.trader || item;
+                        return (
+                          <div
+                            key={t.id || t._id || Math.random()}
+                            className="flex items-center gap-2.5 py-3 cursor-pointer group"
+                          >
+                            <div className="w-8 h-8 rounded-full bg-[#4CAF50] flex items-center justify-center text-white text-[11px] font-bold flex-shrink-0">
+                              {t.fullName ? t.fullName[0].toUpperCase() : "T"}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-[12px] font-semibold text-[#1C2C1C] truncate">
+                                {t.fullName || "Unknown Trader"}
+                              </p>
+                              <p className="text-[10px] text-gray-400">Saved Trader</p>
+                            </div>
+                            <ChevronRight size={13} className="text-gray-300 group-hover:text-gray-400 flex-shrink-0" />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-center text-[13px] text-gray-400 py-4">
+                      No saved traders.
+                    </p>
+                  )}
+
+                  <Link href="/customer-dashboard/saved">
+                    <button className="mt-3 w-full text-center text-[12px] font-semibold text-[#6E9625] hover:underline">
+                      View all saved
+                    </button>
+                  </Link>
+                </div>
+
+              </div>
             </div>
           ) : !loading ? (
             <div className="bg-white rounded-2xl border border-gray-200 flex items-center justify-center p-16 text-[14px] text-gray-400">
               No jobs to display yet.
             </div>
           ) : null}
+
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-3 mt-2 border-t border-[#E2EED2]">
+              <button
+                onClick={() => {
+                  setCurrentPage((prev) => Math.max(prev - 1, 1));
+                  setSelectedJob(null);
+                }}
+                disabled={currentPage === 1}
+                className="px-3 py-1.5 text-[11px] font-semibold rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Previous
+              </button>
+
+              <span className="text-[11px] font-semibold text-gray-500">
+                Page {currentPage} of {totalPages}
+              </span>
+
+              <button
+                onClick={() => {
+                  setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+                  setSelectedJob(null);
+                }}
+                disabled={currentPage === totalPages}
+                className="px-3 py-1.5 text-[11px] font-semibold rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -1305,6 +1296,13 @@ ${isSelected
           onAccept={async (quoteId) => {
             await handleAcceptQuote(quoteId);
             setQuotesModalOpen(false);
+          }}
+          onSendMessage={(traderId) => {
+            setQuotesModalOpen(false);
+            handleOpenChat(traderId, selectedJob?.id);
+          }}
+          onDecline={async (quoteId) => {
+            await handleDeclineQuote(quoteId);
           }}
         />
       )}

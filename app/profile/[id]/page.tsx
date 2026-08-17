@@ -383,7 +383,7 @@ export default function PublicTraderProfilePage() {
   const isCurrentUserTrader = currentUser?.role === "TRADER" || currentUser?.role === "trader";
 
   return (
-    <div className="min-h-screen bg-[#C9CBC7] font-sans selection:bg-[#6E9625]/20 selection:text-[#1C2C1C]">
+    <div className="min-h-screen bg-[#E2E8DC] font-sans selection:bg-[#6E9625]/20 selection:text-[#1C2C1C]">
       {/* ── Navbar Spacer ── */}
       <div className="h-16 lg:h-24 bg-transparent" />
 

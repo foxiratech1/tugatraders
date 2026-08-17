@@ -314,7 +314,7 @@ export default function TraderReviews() {
             <p className="text-gray-500 text-[14px] mt-1">Track your reputation and respond to customer feedback.</p>
           </div>
           <div className="flex items-center gap-1.5 bg-[#E9F3DC] text-[#6E9625] px-4 py-2 rounded-lg font-semibold text-[13px]">
-            Top Rated Seller <Award size={16} />
+            Top Rated Tradesperson <Award size={16} />
           </div>
         </div>
 

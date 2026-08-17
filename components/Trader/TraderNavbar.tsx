@@ -32,10 +32,9 @@ const navLinks = [
   { label: "Dashboard", href: "/trader", icon: LayoutDashboard },
   { label: "Inbox", href: "/trader/inbox", icon: Mail },
   { label: "Jobs & Leads", href: "/trader/jobs", icon: Briefcase },
+  { label: "Quotes", href: "/trader/quote", icon: FileText },
   { label: "Reviews", href: "/trader/reviews", icon: Star },
   { label: "Profile", href: "/trader/profile", icon: User },
-  // Quotes tab will be a button, not a link
-  { label: "Quotes", href: "/trader/quote", icon: FileText },
   { label: "Subscription & Billing", href: "/trader/billing", icon: CreditCard },
 ];
 

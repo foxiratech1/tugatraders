@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { authApi } from "@/app/api/authApi";
-import { FileText, RefreshCw, CheckCircle, XCircle, Clock, ArrowRight } from "lucide-react";
+import { FileText, RefreshCw, CheckCircle, XCircle, Clock, ArrowRight, Pencil } from "lucide-react";
 
 /**
  * Quote type mirrors the shape returned by GET /api/quotes/my-quotes
@@ -89,30 +89,63 @@ function formatPrice(price?: number) {
 
 function QuoteCard({ quote }: { quote: Quote }) {
   const jobTitle = quote.job?.title || quote.jobTitle || "Job";
-  const jobPostcode = quote.job?.postcode || quote.jobPostcode || "";
-  const jobId = quote.job?.id || quote.jobId || "";
 
   return (
-    <div className="bg-[#F7F7F5] rounded-2xl border border-[#E8E8E8] shadow-sm p-5 hover:shadow-md hover:border-[#C8D9A8] transition-all duration-200 group cursor-pointer">
+    <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm p-5 hover:shadow-md hover:border-[#C8D9A8] transition-all duration-200">
+      {/* Top section */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
-          <p className="text-[14px] font-bold text-[#1C2C1C] truncate">{jobTitle}</p>
-          {jobPostcode && (
-            <p className="text-[12px] text-gray-500 mt-1 flex items-center gap-1">
-              <FileText size={12} /> {jobPostcode}
-            </p>
-          )}
+          <p className="text-[14px] font-bold text-[#1C2C1C] truncate">
+            {jobTitle}
+          </p>
         </div>
+
         <div className="flex flex-col items-end gap-2 flex-shrink-0">
-          <p className="text-[18px] font-black text-[#1C2C1C]">{formatPrice(quote.price)}</p>
-          <QuoteStatusBadge status={quote.status ?? "PENDING"} />
+          <p className="text-[18px] font-black text-[#1C2C1C]">
+            {formatPrice(quote.price)}
+          </p>
+
+          <QuoteStatusBadge
+            status={quote.status ?? "PENDING"}
+          />
         </div>
       </div>
-      <div className="flex items-center justify-between mt-3 text-[11px] text-gray-500">
-        <span>{formatDate(quote.createdAt)}</span>
-        <Link href={`/trader/jobs/${jobId}`} className="flex items-center gap-1 text-[#6E9625] hover:text-[#4A6B0A] transition-colors">
-          View Job <ArrowRight size={12} />
-        </Link>
+
+      {/* Bottom section */}
+      <div className="flex items-center justify-between mt-3">
+        {/* Date */}
+        <span className="text-[11px] text-gray-500">
+          {formatDate(quote.createdAt)}
+        </span>
+
+        {/* Edit + View Quote */}
+        {/* Edit + View Quote */}
+        <div className="flex items-center gap-3">
+
+          {/* Edit Quote */}
+          <Link
+            href={`/trader/quotes/${quote.id}/edit`}
+            title="Edit Quote"
+            aria-label="Edit Quote"
+            className="flex items-center justify-center w-7 h-7 flex-shrink-0 rounded-md bg-[#F1F5E9] text-[#6E9625] hover:bg-[#E4ECD5] hover:text-[#4A6B0A] transition-colors"
+          >
+            <Pencil
+              size={15}
+              strokeWidth={2.5}
+              className="block"
+            />
+          </Link>
+
+          {/* View Quote */}
+          <Link
+            href={`/trader/quotes/${quote.id}`}
+            className="flex items-center gap-1 text-[11px] text-[#6E9625] hover:text-[#4A6B0A] whitespace-nowrap"
+          >
+            View Quote
+            <ArrowRight size={12} />
+          </Link>
+
+        </div>
       </div>
     </div>
   );

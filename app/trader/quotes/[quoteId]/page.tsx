@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { authApi } from "@/app/api/authApi";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, FileText, Paperclip } from "lucide-react";
 import toast from "react-hot-toast";
 
 interface QuoteDetail {
@@ -14,6 +14,7 @@ interface QuoteDetail {
   message?: string;
   createdAt: string;
   updatedAt?: string;
+  attachments?: string[];
   job?: {
     id: string;
     title: string;
@@ -145,6 +146,57 @@ export default function TraderQuoteDetailPage() {
               <div>
                 <p className="text-sm text-gray-500">Postcode</p>
                 <p>{quote.job.postcode}</p>
+              </div>
+            )}
+
+            {/* Attachments */}
+            {Array.isArray(quote.attachments) && quote.attachments.length > 0 && (
+              <div>
+                <p className="text-sm text-gray-500 mb-3 flex items-center gap-1.5">
+                  <Paperclip size={14} />
+                  Attachments ({quote.attachments.length})
+                </p>
+                <div className="flex flex-wrap gap-3">
+                  {quote.attachments.map((att: any, idx: number) => {
+                    // API may return objects { url, file, path } or plain strings
+                    let url: string = typeof att === "string"
+                      ? att
+                      : (att?.url || att?.file || att?.path || "");
+                    if (url.startsWith("undefined")) url = url.replace("undefined", "");
+                    const rawBase = process.env.NEXT_PUBLIC_API_URL || "";
+                    const baseUrl = rawBase.endsWith("/") ? rawBase.slice(0, -1) : rawBase;
+                    const fullUrl = url.startsWith("http")
+                      ? url
+                      : `${baseUrl}${url.startsWith("/") ? url : `/${url}`}`;
+                    const isImage = /\.(jpeg|jpg|gif|png|webp)$/i.test(url);
+                    const fileName = url.substring(url.lastIndexOf("/") + 1) || `attachment-${idx + 1}`;
+
+                    return (
+                      <a
+                        key={idx}
+                        href={fullUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group block w-[120px] rounded-xl border border-gray-200 bg-white overflow-hidden hover:border-[#6E9625] hover:shadow-md transition-all"
+                      >
+                        {isImage ? (
+                          <img
+                            src={fullUrl}
+                            alt={fileName}
+                            className="w-full h-[80px] object-cover"
+                          />
+                        ) : (
+                          <div className="w-full h-[80px] bg-gray-50 flex items-center justify-center">
+                            <FileText size={28} className="text-gray-400 group-hover:text-[#6E9625] transition-colors" />
+                          </div>
+                        )}
+                        <div className="px-2 py-1.5">
+                          <p className="text-[11px] text-[#1C2C1C] font-medium truncate">{fileName}</p>
+                        </div>
+                      </a>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>

@@ -2,7 +2,12 @@
 
 import Image from "next/image";
 import { useEffect, useState } from "react";
-import { FiPlusCircle, FiArrowRight, FiCheckCircle, FiChevronRight } from "react-icons/fi";
+import {
+  FiPlusCircle,
+  FiArrowRight,
+  FiCheckCircle,
+  FiChevronRight,
+} from "react-icons/fi";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -11,9 +16,18 @@ import { authApi } from "@/app/api/authApi";
 const getImageUrl = (path?: string) => {
   if (!path) return "/placeholder.png";
   if (path.startsWith("http")) return path;
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-  const baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
-  const imagePath = path.startsWith('/') ? path : `/${path}`;
+
+  const API_URL =
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+
+  const baseUrl = API_URL.endsWith("/")
+    ? API_URL.slice(0, -1)
+    : API_URL;
+
+  const imagePath = path.startsWith("/")
+    ? path
+    : `/${path}`;
+
   return `${baseUrl}${imagePath}`;
 };
 
@@ -35,22 +49,29 @@ const MapSearchSection = () => {
   const router = useRouter();
 
   useEffect(() => {
-    authApi.getCategories().then((res) => {
-      const data = Array.isArray(res) ? res : res?.data ?? [];
-      setCategories(data);
-    }).catch(() => setCategories([]));
+    authApi
+      .getCategories()
+      .then((res) => {
+        const data = Array.isArray(res) ? res : res?.data ?? [];
+        setCategories(data);
+      })
+      .catch(() => setCategories([]));
   }, []);
 
-  // Split categories into left (first half) and right (second half), max 10 total (5 each side)
   const maxShow = 10;
   const capped = categories.slice(0, maxShow);
   const midpoint = Math.ceil(capped.length / 2);
   const leftCategories = capped.slice(0, midpoint);
   const rightCategories = capped.slice(midpoint);
 
+  const handleCategoryClick = (id: string) => {
+    router.push(`/directory-listing/search?categoryId=${id}`);
+  };
+
   return (
-    <section className="bg-[#FAFAF5] py-20 overflow-hidden">
-      <div className="mx-auto max-w-[1300px] px-6 text-center">
+    <section className="w-full overflow-hidden bg-[#FAFAF5] py-12 sm:py-16 lg:py-20">
+      <div className="mx-auto w-full max-w-[1400px] px-4 text-center sm:px-6 lg:px-8 xl:px-10">
+
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -58,26 +79,29 @@ const MapSearchSection = () => {
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.6 }}
         >
-          <h2 className="mx-auto max-w-[900px] text-[36px] md:text-[42px] font-bold leading-[1.2] text-[#243A24] tracking-tight mb-4">
+          <h2 className="mx-auto max-w-[1000px] text-[28px] font-bold leading-[1.2] tracking-tight text-[#243A24] sm:text-[34px] md:text-[40px] lg:text-[42px] xl:text-[46px]">
             Search for Trades or Post Your Job,
-            <br />
+            <br className="hidden sm:block" />
+            <span className="sm:hidden"> </span>
             Compare Quotes, and Hire with Confidence
           </h2>
-          <p className="text-[18px] font-medium text-[#6E9625] mb-16">
+
+          <p className="mt-4 mb-10 text-[15px] font-medium text-[#6E9625] sm:mb-12 sm:text-[17px] lg:mb-16 lg:text-[18px]">
             All in One Place, Completely Free.
           </p>
         </motion.div>
 
-        {/* Map + Categories Section */}
+        {/* Map + Categories */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.8 }}
-          className="relative flex items-center justify-center gap-6"
+          className="relative flex w-full items-center justify-center gap-6 lg:gap-8 xl:gap-10"
         >
+
           {/* Left Categories */}
-          <div className="hidden md:flex flex-col gap-3 w-[260px] shrink-0">
+          <div className="hidden shrink-0 flex-col gap-3 md:flex md:w-[280px] lg:w-[300px] xl:w-[320px]">
             {leftCategories.map((cat, i) => (
               <motion.div
                 key={cat.id}
@@ -85,11 +109,11 @@ const MapSearchSection = () => {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.07 }}
-                onClick={() => router.push(`/directory-listing/search?categoryId=${cat.id}`)}
-                className="flex items-center justify-between bg-white rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] hover:shadow-md border border-[#F3F4F6] transition-all cursor-pointer group overflow-hidden"
+                onClick={() => handleCategoryClick(cat.id)}
+                className="group flex min-h-[50px] w-full cursor-pointer items-center justify-between overflow-hidden rounded-xl border border-[#F3F4F6] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.04)] transition-all hover:shadow-md"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-[50px] h-[50px] bg-[#314828] flex items-center justify-center shrink-0">
+                <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
+                  <div className="flex h-[50px] w-[50px] shrink-0 items-center justify-center bg-[#314828]">
                     {cat.image ? (
                       <Image
                         src={getImageUrl(cat.image)}
@@ -100,12 +124,16 @@ const MapSearchSection = () => {
                         unoptimized
                       />
                     ) : (
-                      <span className="w-2 h-2 rounded-full bg-white" />
+                      <span className="h-2 w-2 rounded-full bg-white" />
                     )}
                   </div>
-                  <span className="text-[14px] font-medium text-[#243A24] truncate">{cat.name}</span>
+
+                  <span className="min-w-0 flex-1 text-left text-[13px] font-medium leading-snug text-[#243A24] sm:text-[14px]">
+                    {cat.name}
+                  </span>
                 </div>
-                <div className="pr-4 text-gray-400 group-hover:text-[#6E9625] transition-colors">
+
+                <div className="shrink-0 pr-3 text-gray-400 transition-colors group-hover:text-[#6E9625] sm:pr-4">
                   <FiChevronRight size={18} />
                 </div>
               </motion.div>
@@ -113,20 +141,20 @@ const MapSearchSection = () => {
           </div>
 
           {/* Center Map */}
-          <div className="relative flex-shrink-0 w-full max-w-[320px] md:max-w-[380px]">
+          <div className="relative w-full max-w-[280px] shrink-0 sm:max-w-[320px] md:max-w-[340px] lg:max-w-[360px] xl:max-w-[380px]">
             <Image
               src="/maplogo.jfif"
               alt="Portugal Map with Trades"
               width={380}
               height={500}
               unoptimized
-              className="object-contain w-full"
               priority
+              className="h-auto w-full object-contain"
             />
           </div>
 
           {/* Right Categories */}
-          <div className="hidden md:flex flex-col gap-3 w-[260px] shrink-0">
+          <div className="hidden shrink-0 flex-col gap-3 md:flex md:w-[280px] lg:w-[300px] xl:w-[320px]">
             {rightCategories.map((cat, i) => (
               <motion.div
                 key={cat.id}
@@ -134,11 +162,11 @@ const MapSearchSection = () => {
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.07 }}
-                onClick={() => router.push(`/directory-listing/search?categoryId=${cat.id}`)}
-                className="flex items-center justify-between bg-white rounded-xl shadow-[0_2px_12px_rgba(0,0,0,0.04)] hover:shadow-md border border-[#F3F4F6] transition-all cursor-pointer group overflow-hidden"
+                onClick={() => handleCategoryClick(cat.id)}
+                className="group flex min-h-[50px] w-full cursor-pointer items-center justify-between overflow-hidden rounded-xl border border-[#F3F4F6] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.04)] transition-all hover:shadow-md"
               >
-                <div className="flex items-center gap-4">
-                  <div className="w-[50px] h-[50px] bg-[#314828] flex items-center justify-center shrink-0">
+                <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
+                  <div className="flex h-[50px] w-[50px] shrink-0 items-center justify-center bg-[#314828]">
                     {cat.image ? (
                       <Image
                         src={getImageUrl(cat.image)}
@@ -149,12 +177,16 @@ const MapSearchSection = () => {
                         unoptimized
                       />
                     ) : (
-                      <span className="w-2 h-2 rounded-full bg-white" />
+                      <span className="h-2 w-2 rounded-full bg-white" />
                     )}
                   </div>
-                  <span className="text-[14px] font-medium text-[#243A24] truncate">{cat.name}</span>
+
+                  <span className="min-w-0 flex-1 text-left text-[13px] font-medium leading-snug text-[#243A24] sm:text-[14px]">
+                    {cat.name}
+                  </span>
                 </div>
-                <div className="pr-4 text-gray-400 group-hover:text-[#6E9625] transition-colors">
+
+                <div className="shrink-0 pr-3 text-gray-400 transition-colors group-hover:text-[#6E9625] sm:pr-4">
                   <FiChevronRight size={18} />
                 </div>
               </motion.div>
@@ -162,42 +194,51 @@ const MapSearchSection = () => {
           </div>
         </motion.div>
 
-        {/* Mobile categories (shown below map on small screens) */}
-        <div className="flex md:hidden flex-wrap justify-center gap-2 mt-6">
+        {/* Mobile Categories */}
+        <div className="mt-6 flex flex-wrap justify-center gap-2 md:hidden">
           {capped.map((cat) => (
-            <div
+            <button
               key={cat.id}
-              onClick={() => router.push(`/directory-listing/search?categoryId=${cat.id}`)}
-              className="flex items-center gap-2 bg-white border border-[#E8EDE8] rounded-full px-3 py-2 shadow-sm cursor-pointer hover:shadow-md transition-all"
+              type="button"
+              onClick={() => handleCategoryClick(cat.id)}
+              className="flex max-w-full items-center gap-2 rounded-full border border-[#E8EDE8] bg-white px-3 py-2 text-left shadow-sm transition-all hover:shadow-md sm:px-4 sm:py-2.5"
             >
-              <span className="w-2 h-2 rounded-full bg-[#6E9625] flex-shrink-0" />
-              <span className="text-[13px] font-medium text-[#243A24]">{cat.name}</span>
-            </div>
+              <span className="h-2 w-2 shrink-0 rounded-full bg-[#6E9625]" />
+
+              <span className="max-w-[220px] truncate text-[12px] font-medium text-[#243A24] sm:max-w-[280px] sm:text-[13px]">
+                {cat.name}
+              </span>
+            </button>
           ))}
         </div>
 
-        {/* CTA Section */}
+        {/* CTA */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.6 }}
-          className="mt-16 flex flex-col items-center"
+          className="mt-12 flex flex-col items-center sm:mt-14 lg:mt-16"
         >
-          <Link href="/post-job" className="flex items-center gap-3 bg-[#243A24] text-white px-8 py-4 rounded-[14px] text-[17px] font-bold shadow-xl shadow-[#243A24]/20 hover:bg-[#1a2e1a] transition-all mb-10">
-            <FiPlusCircle size={22} className="text-[#FFFFFF]" />
-            Post a Job
-            <FiArrowRight size={20} className="ml-2 text-[#FFFFFF]" />
+          <Link
+            href="/post-job"
+            className="flex w-full max-w-[280px] items-center justify-center gap-2 rounded-[14px] bg-[#243A24] px-5 py-3.5 text-[15px] font-bold text-white shadow-xl shadow-[#243A24]/20 transition-all hover:bg-[#1a2e1a] sm:max-w-[300px] sm:gap-3 sm:px-7 sm:py-4 sm:text-[17px]"
+          >
+            <FiPlusCircle size={22} className="shrink-0 text-white" />
+            <span>Post a Job</span>
+            <FiArrowRight size={20} className="ml-1 shrink-0 text-white" />
           </Link>
 
-          <h3 className="text-[36px] md:text-[48px] font-bold text-[#243A24] tracking-tight">
-            Let the <span className="text-[#6E9625]">right</span> tradespeople<br />come to you.
+          <h3 className="mt-4 text-center text-[28px] font-bold leading-[1.2] tracking-tight text-[#243A24] sm:text-[36px] md:text-[42px] lg:text-[48px]">
+            Let the <span className="text-[#6E9625]">right</span> tradespeople
+            <br />
+            come to you.
           </h3>
         </motion.div>
 
         {/* Bottom Feature Box */}
-        <div className="mt-20 mx-auto max-w-[1352px] bg-[#F1F7E8] rounded-[56px] p-8 md:p-12 border border-[#6E96251A]">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="mx-auto mt-12 w-full max-w-[1352px] rounded-[24px] border border-[#6E96251A] bg-[#F1F7E8] p-5 sm:mt-16 sm:rounded-[32px] sm:p-7 md:p-9 lg:mt-20 lg:rounded-[56px] lg:p-12">
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-7 lg:grid-cols-4 lg:gap-8">
             {features.map((feature, index) => (
               <motion.div
                 key={index}
@@ -205,18 +246,20 @@ const MapSearchSection = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.2 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="flex items-center gap-4 text-left"
+                className="flex items-center gap-3 text-left sm:gap-4"
               >
-                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-white flex items-center justify-center shadow-sm">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white shadow-sm sm:h-9 sm:w-9">
                   <FiCheckCircle className="text-[#84cc16]" size={18} />
                 </div>
-                <p className="text-[18px] font-bold text-[#243A24] leading-tight">
+
+                <p className="text-[14px] font-bold leading-snug text-[#243A24] sm:text-[16px] lg:text-[17px] xl:text-[18px]">
                   {feature}
                 </p>
               </motion.div>
             ))}
           </div>
         </div>
+
       </div>
     </section>
   );

@@ -26,6 +26,7 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
   const [recommend, setRecommend] = useState<boolean | null>(initialRecommend);
 
   const [selectedReason, setSelectedReason] = useState<string>(searchParams.get('noWorkReason') || '');
+  const [otherReason, setOtherReason] = useState<string>('');
   const initialReviewType = searchParams.get('reviewType') || reviewTypeProp || (jobId ? 'JOB' : 'DIRECTORY');
   const [reviewType, setReviewType] = useState<string>(initialReviewType);
   const [interactionSource, setInteractionSource] = useState<string>(searchParams.get('interactionSource') || '');
@@ -224,7 +225,8 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
           files.forEach(f => payload.append("proofs", f));
         }
       } else {
-        if (selectedReason) payload.append("noWorkReason", selectedReason);
+        const noWorkReasonValue = selectedReason === 'OTHER' ? otherReason.trim() : selectedReason;
+        if (noWorkReasonValue) payload.append("noWorkReason", noWorkReasonValue);
         if (rating > 0) payload.append("rating", String(rating));
       }
 
@@ -232,6 +234,17 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
         await authApi.updateReview(editReviewId, payload);
       } else {
         await authApi.postReview(payload);
+      }
+
+      if (!workCarriedOut) {
+        const finalJobId = jobId || propJobId;
+        if (finalJobId && finalJobId !== '00000000-0000-0000-0000-000000000000') {
+          try {
+            await authApi.cancelJob(finalJobId);
+          } catch (cancelErr) {
+            console.error("Failed to cancel job via cancelJob API:", cancelErr);
+          }
+        }
       }
 
       setIsSuccess(true);
@@ -280,48 +293,53 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
         </div>
       )}
       <form onSubmit={handleSubmit}>
-        <div className="mb-6">
-          <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Select Tradesperson / Company <span className="text-red-500">*</span></label>
-          <div className="relative">
-            <select
-              value={selectedTraderId}
-              onChange={(e) => setSelectedTraderId(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl py-3 px-4 text-[14px] text-gray-700 outline-none focus:border-[#4CAF50] appearance-none"
-              required
-            >
-              <option value="">Select Tradesperson / Company</option>
-              {traders.map((t: any) => (
-                <option key={t.id} value={t.id}>
-                  {t.companyName || `${t.firstName || ''} ${t.lastName || ''}`.trim() || 'Unknown Company'}
-                </option>
-              ))}
-            </select>
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-              <ChevronDown size={16} />
+        {workCarriedOut && (
+          <>
+            <div className="mb-6">
+              <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Select Tradesperson / Company <span className="text-red-500">*</span></label>
+              <div className="relative">
+                <select
+                  value={selectedTraderId}
+                  onChange={(e) => setSelectedTraderId(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl py-3 px-4 text-[14px] text-gray-700 outline-none focus:border-[#4CAF50] appearance-none"
+                  required
+                >
+                  <option value="">Select Tradesperson / Company</option>
+                  {traders.map((t: any) => (
+                    <option key={t.id} value={t.id}>
+                      {t.companyName || `${t.firstName || ''} ${t.lastName || ''}`.trim() || 'Unknown Company'}
+                    </option>
+                  ))}
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                  <ChevronDown size={16} />
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
 
-        <div className="mb-6">
-          <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Interaction Source</label>
-          <div className="relative">
-            <select
-              value={interactionSource}
-              onChange={(e) => setInteractionSource(e.target.value)}
-              className="w-full border border-gray-200 rounded-xl py-3 px-4 text-[14px] text-gray-700 outline-none focus:border-[#4CAF50] appearance-none"
-            >
-              <option value="">Select source</option>
-              <option value="JOB_CHAT">Post a Job</option>
-              <option value="DIRECTORY_CHAT">Online Chat</option>
-              <option value="WHATSAPP">WhatsApp</option>
-              <option value="PHONE">Phone</option>
-              {/* <option value="MANUAL">Manual</option> */}
-            </select>
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-              <ChevronDown size={16} />
+            <div className="mb-6">
+              <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Interaction Source</label>
+              <div className="relative">
+                <select
+                  value={interactionSource}
+                  onChange={(e) => setInteractionSource(e.target.value)}
+                  className="w-full border border-gray-200 rounded-xl py-3 px-4 text-[14px] text-gray-700 outline-none focus:border-[#4CAF50] appearance-none"
+                >
+                  <option value="">Select source</option>
+                  <option value="JOB_CHAT">Post a Job</option>
+                  <option value="DIRECTORY_CHAT">Online Chat</option>
+                  <option value="PHONE">Phone</option>
+                  <option value="WHATSAPP">WhatsApp</option>
+
+                  {/* <option value="MANUAL">Manual</option> */}
+                </select>
+                <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                  <ChevronDown size={16} />
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
+          </>
+        )}
 
 
         {!hideWorkCarriedOut && (
@@ -548,6 +566,23 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
               ))}
             </div>
 
+            {/* Other reason text input — shown when OTHER is selected */}
+            {selectedReason === 'OTHER' && (
+              <div className="animate-in fade-in slide-in-from-top-2 duration-200">
+                <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">
+                  Please describe your reason <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  rows={3}
+                  value={otherReason}
+                  onChange={(e) => setOtherReason(e.target.value)}
+                  placeholder="Tell us what happened..."
+                  required
+                  className="w-full border border-[#6E9625] rounded-xl py-3 px-4 text-[14px] text-gray-700 outline-none focus:border-[#4A6B0A] focus:ring-2 focus:ring-[#6E9625]/20 resize-none transition-all"
+                />
+              </div>
+            )}
+
             <div className="bg-gray-50/50 rounded-xl p-8 text-center border border-gray-100">
               <h3 className="text-[15px] font-semibold text-[#1C2C1C] mb-4">How would you rate the professional?</h3>
               <div className="flex justify-center gap-2 mb-3">
@@ -580,7 +615,7 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
             <div className="pt-4">
               <button
                 type="submit"
-                disabled={!selectedReason || isSubmitting}
+                disabled={!selectedReason || (selectedReason === 'OTHER' && !otherReason.trim()) || isSubmitting}
                 className="px-8 py-3.5 bg-[#1C2C1C] text-white rounded-xl text-[14px] font-bold flex items-center gap-2 hover:bg-[#2c3e2c] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {editReviewId

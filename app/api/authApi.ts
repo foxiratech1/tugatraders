@@ -259,9 +259,9 @@ export const authApi = {
   },
 
   // Fetch jobs posted by the current customer
-  getMyJobs: async () => {
-    const { data } = await api.get("/api/jobs/my-jobs");
-    return data;
+  getMyJobs: async (page = 1, limit = 5) => {
+    const response = await api.get(`/api/jobs/my-jobs?page=${page}&limit=${limit}`);
+    return response.data;
   },
 
   // Fetch full details of a specific job by ID
@@ -341,6 +341,14 @@ export const authApi = {
     return data;
   },
 
+  // Reject/Decline a quote
+  rejectQuote: async (quoteId: string) => {
+    const { data } = await api.post(`/api/quotes/reject/${quoteId}`);
+    return data;
+  },
+
+
+
   // Job actions
   startJob: async (jobId: string) => {
     const { data } = await api.patch(`/api/jobs/${jobId}/start`);
@@ -374,6 +382,20 @@ export const authApi = {
   // Fetch a single quote by its ID
   getQuoteDetail: async (quoteId: string) => {
     const { data } = await api.get(`/api/quotes/${quoteId}`);
+    return data;
+  },
+
+  updateQuote: async (
+    quoteId: string,
+    payload: FormData | { price: number; estimatedDays: number; message: string; attachments?: string[] }
+  ) => {
+    if (payload instanceof FormData) {
+      const { data } = await api.post(`/api/quotes/update/${quoteId}`, payload, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return data;
+    }
+    const { data } = await api.post(`/api/quotes/update/${quoteId}`, payload);
     return data;
   },
 

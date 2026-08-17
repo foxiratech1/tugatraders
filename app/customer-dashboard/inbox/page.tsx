@@ -106,7 +106,23 @@ function ChatDashboardContent() {
           ...c,
           id: c.id || c._id,
         }));
-        setConversations(mappedList);
+        // Deduplicate by traderId — keep only the most recent conversation per trader
+        const seenTraders = new Map<string, typeof mappedList[0]>();
+        for (const conv of mappedList) {
+          const tid = conv.trader?.id || conv.trader?._id || conv.traderId || conv.id;
+          if (!seenTraders.has(tid)) {
+            seenTraders.set(tid, conv);
+          } else {
+            // Keep whichever has the more recent lastMessage
+            const existing = seenTraders.get(tid)!;
+            const existingTime = existing.lastMessage?.createdAt ? new Date(existing.lastMessage.createdAt).getTime() : 0;
+            const newTime = conv.lastMessage?.createdAt ? new Date(conv.lastMessage.createdAt).getTime() : 0;
+            if (newTime > existingTime) {
+              seenTraders.set(tid, conv);
+            }
+          }
+        }
+        setConversations(Array.from(seenTraders.values()));
       }
     } catch (error) {
       console.error("Failed to load dashboard chat data:", error);
