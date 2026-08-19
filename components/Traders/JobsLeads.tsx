@@ -101,6 +101,9 @@ export default function JobsLeads() {
   const [quoteAttachments, setQuoteAttachments] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 5;
+
   const openQuoteModal = () => {
     if (!selectedJob) return;
     const isClosedOrComplete =
@@ -256,6 +259,17 @@ export default function JobsLeads() {
     return result;
   }, [jobs, activeTab, searchQuery]);
 
+  const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE);
+
+  const paginatedJobs = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredJobs.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredJobs, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchQuery]);
+
   const tabs = ["All", "New", "Contacted", "Completed", "Closed"];
 
   // Helper to count jobs for tabs
@@ -345,6 +359,7 @@ export default function JobsLeads() {
                       key={tab}
                       onClick={() => {
                         setActiveTab(tab);
+                        setCurrentPage(1);
                         // Ensure we don't keep selection on a filtered out job
                         const firstOfTab = jobs.find(j => tab === "All" || j.status === tab);
                         if (firstOfTab) setSelectedJob(firstOfTab);
@@ -367,7 +382,7 @@ export default function JobsLeads() {
                 ) : filteredJobs.length === 0 ? (
                   <div className="text-center py-10 text-gray-500 text-[14px]">No jobs found.</div>
                 ) : (
-                  filteredJobs.map((job, idx) => {
+                  paginatedJobs.map((job, idx) => {
                     const isSelected = selectedJob?.id === job.id;
                     return (
                       <div
@@ -428,6 +443,46 @@ export default function JobsLeads() {
                   })
                 )}
               </div>
+              {!loading && filteredJobs.length > 0 && totalPages > 1 && (
+                <div className="flex items-center justify-center gap-2 mt-6">
+
+                  <button
+                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                    disabled={currentPage === 1}
+                    className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    Previous
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, index) => {
+                    const page = index + 1;
+
+                    return (
+                      <button
+                        key={page}
+                        onClick={() => setCurrentPage(page)}
+                        className={`w-9 h-9 rounded-lg text-sm font-semibold transition-colors ${currentPage === page
+                          ? "bg-[#1C2C1C] text-white"
+                          : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+                          }`}
+                      >
+                        {page}
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                    disabled={currentPage === totalPages}
+                    className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+                  >
+                    Next
+                  </button>
+
+                </div>
+              )}
             </div>
 
             {/* Right Column: Job Details */}
@@ -450,9 +505,9 @@ export default function JobsLeads() {
                       </span>
                     </div>
                   </div>
-                  <button className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors flex-shrink-0">
+                  {/* <button className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors flex-shrink-0">
                     <MoreHorizontal size={18} />
-                  </button>
+                  </button> */}
                 </div>
 
                 {/* Info Grid - 2x2 grid to prevent truncation */}

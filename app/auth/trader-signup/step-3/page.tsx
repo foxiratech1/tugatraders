@@ -172,7 +172,7 @@ export default function Step3Page() {
     const router = useRouter();
     const pathname = usePathname();
     const [loading, setLoading] = useState(false);
-    const [billingCycle, setBillingCycle] = useState<"MONTHLY" | "YEARLY">("YEARLY");
+    const [billingCycle, setBillingCycle] = useState<"MONTHLY" | "YEARLY">("MONTHLY");
 
     // Guard to prevent non-traders, unverified users, or incomplete step-2 traders from accessing step-3
     useEffect(() => {

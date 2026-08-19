@@ -832,19 +832,19 @@ export default function CustomerJobDashboard() {
             </Link>
             {selectedJob &&
               !reviewedJobIds.has(selectedJob.id) &&
-              selectedJob.status !== "CANCELLED" &&
               selectedJob.status !== "EXPIRED" && (
                 <Link
                   href={`/customer-dashboard/leave-review?jobId=${selectedJob.id}${selectedJob.selectedTrader
                     ? `&traderId=${selectedJob.selectedTrader.id}`
                     : ""
-                    }`}
+                    }${selectedJob.status === "CANCELLED" || selectedJob.status === "CLOSED" ? "&hideWorkCarriedOut=false" : ""}`}
                 >
                   <button className="flex items-center gap-2 px-5 py-2.5 rounded-[12px] border border-gray-200 bg-white cursor-pointer text-[14px] font-bold text-[#1C2C1C] hover:bg-gray-50 transition-colors shadow-sm">
                     <Star size={16} />
 
                     {selectedJob.status === "CLOSED" ||
-                      selectedJob.status === "COMPLETED"
+                      selectedJob.status === "COMPLETED" ||
+                      selectedJob.status === "CANCELLED"
                       ? "Share Your Experience"
                       : "Leave a Review"}
                   </button>
@@ -1277,7 +1277,6 @@ export default function CustomerJobDashboard() {
               <button
                 onClick={async () => {
                   setIsCloseJobModalOpen(false);
-                  await handleCloseJobSubmit();
                   const traderId = selectedJob?.selectedTrader?.id || '';
                   router.push(`/customer-dashboard/leave-review?jobId=${selectedJob?.id}&traderId=${traderId}&workCarriedOut=false&hideWorkCarriedOut=true`);
                 }}

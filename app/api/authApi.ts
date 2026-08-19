@@ -368,9 +368,15 @@ export const authApi = {
   },
 
   // Fetch all quotes for the current customer
-  getMyQuotes: async () => {
-    const { data } = await api.get('/api/quotes/my-quotes');
-    return data;
+  getMyQuotes: async (page = 1, limit = 10) => {
+    const response = await api.get("/api/quotes/my-quotes", {
+      params: {
+        page,
+        limit,
+      },
+    });
+
+    return response.data;
   },
 
   getMyQuoteByJobId: async (jobId: string) => {

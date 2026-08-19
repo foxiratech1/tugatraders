@@ -182,19 +182,42 @@ export default function TraderQuotesComponent() {
   const [existingAttachments, setExistingAttachments] = useState<string[]>([]);
   const [newAttachments, setNewAttachments] = useState<File[]>([]);
 
-  const fetchQuotes = async () => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalQuotes, setTotalQuotes] = useState(0);
+  const ITEMS_PER_PAGE = 10;
+
+  const fetchQuotes = async (page = currentPage) => {
     setLoading(true);
     setError(null);
+
     try {
-      const res = await authApi.getMyQuotes();
+      const res = await authApi.getMyQuotes(page, ITEMS_PER_PAGE);
+
       console.log("TraderQuotesComponent response", res);
+
       const possible = res?.data ?? res;
+
       const arr: Quote[] = Array.isArray(possible)
         ? possible
         : Array.isArray(possible?.quotes)
-          ? possible?.quotes
+          ? possible.quotes
           : [];
+
       setQuotes(arr);
+
+      // Pagination metadata
+      const meta = res?.meta ?? possible?.meta;
+
+      if (meta) {
+        setCurrentPage(meta.page ?? page);
+        setTotalPages(meta.totalPages ?? 1);
+        setTotalQuotes(meta.total ?? 0);
+      } else {
+        // fallback if API doesn't return meta
+        setTotalPages(1);
+        setTotalQuotes(arr.length);
+      }
     } catch (e) {
       console.error("Failed to fetch trader quotes", e);
       setError("Failed to load quotes. Please try again.");
@@ -312,8 +335,15 @@ export default function TraderQuotesComponent() {
   };
 
   useEffect(() => {
-    fetchQuotes();
+    fetchQuotes(1);
   }, []);
+
+  const handlePageChange = (page: number) => {
+    if (page < 1 || page > totalPages || page === currentPage) return;
+
+    setCurrentPage(page);
+    fetchQuotes(page);
+  };
 
   return (
     <div className="min-h-screen bg-[#F8F9F5]">
@@ -321,7 +351,7 @@ export default function TraderQuotesComponent() {
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-[2rem] font-bold text-[#1C2C1C]">My Quotes</h1>
           <button
-            onClick={fetchQuotes}
+            onClick={() => fetchQuotes(currentPage)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-gray-200 bg-white text-[13px] font-semibold text-[#1C2C1C] hover:bg-gray-50 transition-colors"
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Refresh
@@ -337,7 +367,7 @@ export default function TraderQuotesComponent() {
           <div className="bg-white rounded-2xl border border-red-100 p-10 text-center">
             <XCircle size={40} className="mx-auto text-red-400 mb-3" />
             <p className="text-[14px] font-semibold text-red-600">{error}</p>
-            <button onClick={fetchQuotes} className="mt-4 px-5 py-2 rounded-full bg-[#1C2C1C] text-white text-[13px] font-bold hover:bg-[#2c3e2c] transition-colors">
+            <button onClick={() => fetchQuotes(currentPage)} className="mt-4 px-5 py-2 rounded-full bg-[#1C2C1C] text-white text-[13px] font-bold hover:bg-[#2c3e2c] transition-colors">
               Try Again
             </button>
           </div>
@@ -355,6 +385,50 @@ export default function TraderQuotesComponent() {
           </div>
         )}
       </div>
+
+      {!loading && quotes.length > 0 && totalPages > 1 && (
+        <div className="flex items-center justify-between mt-8">
+          <p className="text-[12px] text-gray-500">
+            Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–
+            {Math.min(currentPage * ITEMS_PER_PAGE, totalQuotes)} of {totalQuotes} quotes
+          </p>
+
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-[13px] font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+
+            {Array.from({ length: totalPages }, (_, index) => {
+              const page = index + 1;
+
+              return (
+                <button
+                  key={page}
+                  onClick={() => handlePageChange(page)}
+                  className={`w-9 h-9 rounded-lg text-[13px] font-semibold transition-colors ${currentPage === page
+                    ? "bg-[#1C2C1C] text-white"
+                    : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+                    }`}
+                >
+                  {page}
+                </button>
+              );
+            })}
+
+            <button
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+              className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-[13px] font-semibold text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── Edit Quote Modal ──────────────────────────────────────── */}
       {isEditModalOpen && editingQuote && (

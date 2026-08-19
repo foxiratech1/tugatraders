@@ -17,31 +17,94 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
   const reviewCreatedAt = searchParams.get("createdAt");
   const hideWorkCarriedOut = searchParams.get('hideWorkCarriedOut') === 'true';
 
-  const [workCarriedOut, setWorkCarriedOut] = useState<boolean>(searchParams.has('workCarriedOut') ? searchParams.get('workCarriedOut') === 'true' : true);
-  const [rating, setRating] = useState<number>(parseInt(searchParams.get('rating') || '0'));
+  const [workCarriedOut, setWorkCarriedOut] = useState<boolean>(true);
+  const [rating, setRating] = useState<number>(0);
   const [hoverRating, setHoverRating] = useState<number>(0);
 
-  const recommendParam = searchParams.get('recommend');
-  const initialRecommend = recommendParam === 'true' ? true : recommendParam === 'false' ? false : null;
-  const [recommend, setRecommend] = useState<boolean | null>(initialRecommend);
+  const [recommend, setRecommend] = useState<boolean | null>(null);
 
-  const [selectedReason, setSelectedReason] = useState<string>(searchParams.get('noWorkReason') || '');
+  const [selectedReason, setSelectedReason] = useState<string>('');
   const [otherReason, setOtherReason] = useState<string>('');
-  const initialReviewType = searchParams.get('reviewType') || reviewTypeProp || (jobId ? 'JOB' : 'DIRECTORY');
-  const [reviewType, setReviewType] = useState<string>(initialReviewType);
-  const [interactionSource, setInteractionSource] = useState<string>(searchParams.get('interactionSource') || '');
-  const [completionDate, setCompletionDate] = useState<string>(searchParams.get('completionDate') || '');
-  const [title, setTitle] = useState<string>(searchParams.get('title') || '');
-  const [review, setReview] = useState<string>(searchParams.get('review') || '');
+  const [reviewType, setReviewType] = useState<string>('JOB');
+  const [interactionSource, setInteractionSource] = useState<string>('');
+  const [completionDate, setCompletionDate] = useState<string>('');
+  const [title, setTitle] = useState<string>('');
+  const [review, setReview] = useState<string>('');
   const [files, setFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
-  const [selectedTraderId, setSelectedTraderId] = useState<string>(searchParams.get('traderId') || '');
+  const [selectedTraderId, setSelectedTraderId] = useState<string>('');
   const [traders, setTraders] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>(searchParams.get('serviceUsed') || '');
+  const [selectedCategory, setSelectedCategory] = useState<string>('');
+
+  // Load initial state from sessionStorage or URL parameters
+  useEffect(() => {
+    const key = `leaveReviewState_${jobId || ''}_${traderId || ''}`;
+    const saved = sessionStorage.getItem(key);
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.rating !== undefined) setRating(parsed.rating);
+        if (parsed.recommend !== undefined) setRecommend(parsed.recommend);
+        if (parsed.selectedReason) setSelectedReason(parsed.selectedReason);
+        if (parsed.otherReason) setOtherReason(parsed.otherReason);
+        if (parsed.reviewType) setReviewType(parsed.reviewType);
+        if (parsed.interactionSource) setInteractionSource(parsed.interactionSource);
+        if (parsed.completionDate) setCompletionDate(parsed.completionDate);
+        if (parsed.title) setTitle(parsed.title);
+        if (parsed.review) setReview(parsed.review);
+        if (parsed.selectedCategory) setSelectedCategory(parsed.selectedCategory);
+        if (parsed.selectedTraderId) setSelectedTraderId(parsed.selectedTraderId);
+
+        // Prefer URL parameter for workCarriedOut, fallback to saved session state
+        if (searchParams.has('workCarriedOut')) {
+          setWorkCarriedOut(searchParams.get('workCarriedOut') === 'true');
+        } else if (parsed.workCarriedOut !== undefined) {
+          setWorkCarriedOut(parsed.workCarriedOut);
+        }
+      } catch (e) {
+        console.error("Failed to parse saved review state", e);
+      }
+    } else {
+      // Fallback to URL parameters if no session state
+      if (searchParams.has('workCarriedOut')) setWorkCarriedOut(searchParams.get('workCarriedOut') === 'true');
+      if (searchParams.get('rating')) setRating(parseInt(searchParams.get('rating') || '0'));
+      const rec = searchParams.get('recommend');
+      if (rec) setRecommend(rec === 'true' ? true : rec === 'false' ? false : null);
+      if (searchParams.get('noWorkReason')) setSelectedReason(searchParams.get('noWorkReason') || '');
+      setReviewType(searchParams.get('reviewType') || reviewTypeProp || (jobId ? 'JOB' : 'DIRECTORY'));
+      if (searchParams.get('interactionSource')) setInteractionSource(searchParams.get('interactionSource') || '');
+      if (searchParams.get('completionDate')) setCompletionDate(searchParams.get('completionDate') || '');
+      if (searchParams.get('title')) setTitle(searchParams.get('title') || '');
+      if (searchParams.get('review')) setReview(searchParams.get('review') || '');
+      if (searchParams.get('traderId')) setSelectedTraderId(searchParams.get('traderId') || '');
+      if (searchParams.get('serviceUsed')) setSelectedCategory(searchParams.get('serviceUsed') || '');
+    }
+  }, [searchParams, jobId, traderId, reviewTypeProp]);
+
+  // Save state to sessionStorage
+  useEffect(() => {
+    if (!jobId && !traderId) return;
+    const key = `leaveReviewState_${jobId || ''}_${traderId || ''}`;
+    const state = {
+      workCarriedOut,
+      rating,
+      recommend,
+      selectedReason,
+      otherReason,
+      reviewType,
+      interactionSource,
+      completionDate,
+      title,
+      review,
+      selectedTraderId,
+      selectedCategory,
+    };
+    sessionStorage.setItem(key, JSON.stringify(state));
+  }, [workCarriedOut, rating, recommend, selectedReason, otherReason, reviewType, interactionSource, completionDate, title, review, selectedTraderId, selectedCategory, jobId, traderId]);
 
   useEffect(() => {
     const fetchTraders = async () => {
@@ -190,6 +253,17 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
       return;
     }
 
+    if (!workCarriedOut) {
+      if (!selectedReason) {
+        setError('Please select a reason why the work was not completed.');
+        return;
+      }
+      if (selectedReason === 'OTHER' && !otherReason.trim()) {
+        setError('Please describe your reason.');
+        return;
+      }
+    }
+
     if (workCarriedOut && reviewType === 'DIRECTORY' && files.length === 0) {
       toast.error('Proof of work (upload files) is required for directory reviews.');
       return;
@@ -230,22 +304,30 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
         if (rating > 0) payload.append("rating", String(rating));
       }
 
+      // If work was not carried out, just close the job and exit (do not post a review)
+      if (!workCarriedOut) {
+        const finalJobId = jobId || propJobId;
+        if (finalJobId && finalJobId !== '00000000-0000-0000-0000-000000000000') {
+          const noWorkReasonValue = selectedReason === 'OTHER' ? otherReason.trim() : selectedReason;
+          await authApi.closeJob(finalJobId, { isWorkCarriedOut: false, cancelReason: noWorkReasonValue });
+        }
+
+        const key = `leaveReviewState_${jobId || ''}_${traderId || ''}`;
+        sessionStorage.removeItem(key);
+        setIsSuccess(true);
+        return;
+      }
+
+      // If work was carried out, post or update the review
       if (editReviewId) {
         await authApi.updateReview(editReviewId, payload);
       } else {
         await authApi.postReview(payload);
       }
 
-      if (!workCarriedOut) {
-        const finalJobId = jobId || propJobId;
-        if (finalJobId && finalJobId !== '00000000-0000-0000-0000-000000000000') {
-          try {
-            await authApi.cancelJob(finalJobId);
-          } catch (cancelErr) {
-            console.error("Failed to cancel job via cancelJob API:", cancelErr);
-          }
-        }
-      }
+      // Clear the session storage on success
+      const key = `leaveReviewState_${jobId || ''}_${traderId || ''}`;
+      sessionStorage.removeItem(key);
 
       setIsSuccess(true);
     } catch (err: any) {
@@ -582,35 +664,6 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
                 />
               </div>
             )}
-
-            <div className="bg-gray-50/50 rounded-xl p-8 text-center border border-gray-100">
-              <h3 className="text-[15px] font-semibold text-[#1C2C1C] mb-4">How would you rate the professional?</h3>
-              <div className="flex justify-center gap-2 mb-3">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <button
-                    key={star}
-                    type="button"
-                    onMouseEnter={() => setHoverRating(star)}
-                    onMouseLeave={() => setHoverRating(0)}
-                    onClick={() => setRating(star)}
-                    className="focus:outline-none"
-                  >
-                    <Star
-                      size={32}
-                      className={`${star <= (hoverRating || rating)
-                        ? 'text-[#6E9625] fill-[#6E9625]'
-                        : 'text-[#E5E7EB] fill-[#E5E7EB]'
-                        } transition-colors`}
-                    />
-                  </button>
-                ))}
-              </div>
-              {rating > 0 && (
-                <p className="text-[13px] font-bold text-[#6E9625]">
-                  {rating.toFixed(1)} {rating >= 4 ? 'Excellent Quality' : rating >= 3 ? 'Good Quality' : 'Poor Quality'}
-                </p>
-              )}
-            </div>
 
             <div className="pt-4">
               <button

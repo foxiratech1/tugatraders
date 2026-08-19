@@ -58,8 +58,8 @@ function TraderAvatar({ trader }: { trader: any }) {
 
   const src = avatarUrl
     ? (avatarUrl.startsWith("http")
-        ? avatarUrl
-        : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "")}${avatarUrl.startsWith("/") ? avatarUrl : `/${avatarUrl}`}`)
+      ? avatarUrl
+      : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "")}${avatarUrl.startsWith("/") ? avatarUrl : `/${avatarUrl}`}`)
     : "/avt.png";
 
   return (
@@ -218,8 +218,8 @@ export default function CustomerReviews() {
                   {/* Badge + Rating */}
                   <div className="flex flex-col items-end gap-1">
                     <span className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${r.reviewType === "JOB"
-                        ? "bg-[#E9F3DC] text-[#4A7C10]"
-                        : "bg-blue-50 text-blue-600"
+                      ? "bg-[#E9F3DC] text-[#4A7C10]"
+                      : "bg-blue-50 text-blue-600"
                       }`}>
                       {r.reviewType === "JOB" ? "Job Review" : "Directory Review"}
                     </span>
