@@ -1071,8 +1071,8 @@ const DirectorySearchResults = () => {
                             if (btn.disabled) return;
                             btn.disabled = true;
 
-                            const storedUser = localStorage.getItem('user');
-                            if (!storedUser) {
+                            const isLoggedIn = !!getAccessToken();
+                            if (!isLoggedIn) {
                               setPendingTraderId(trader.id);
                               setPendingAction("contact-trader");
                               setShowLoginModal(true);
@@ -1090,16 +1090,7 @@ const DirectorySearchResults = () => {
                         {/* Leave a Review */}
                         <div className="mt-2 text-center">
                           <button
-                            onClick={() => {
-                              const storedUser = localStorage.getItem('user');
-                              if (!storedUser) {
-                                setPendingTraderId(trader.id);
-                                setPendingAction("leave-review");
-                                setShowLoginModal(true);
-                              } else {
-                                router.push(`/profile/${trader.id}?review=true`);
-                              }
-                            }}
+                            onClick={(e) => handleProtectedAction(e, trader.id, "leave-review")}
                             className="text-gray-500 text-[14px] font-semibold underline underline-offset-4 hover:text-gray-700 transition-colors cursor-pointer"
                           >
                             Leave a review
