@@ -627,7 +627,8 @@ export default function Step3Page() {
                                                 <ul className="flex flex-col gap-4 mb-10">
                                                     <li className={`flex items-start gap-3 text-[14px] font-medium ${isSelected ? 'text-white/80' : 'text-[#1C2C1C]/70'}`}>
                                                         <Check size={18} className="text-[#6E9625] flex-shrink-0 mt-0.5" />
-                                                        {plan.unlimitedTrades ? "Unlimited" : `Up to ${plan.maxTrades}`} Categories
+                                                        {plan.unlimitedTrades ? "Unlimited" : `Up to ${plan.maxTrades}`}{" "}
+                                                        {plan.name.toLowerCase() === "bronze" ? "Category" : "Categories"}
                                                     </li>
                                                     <li className={`flex items-start gap-3 text-[14px] font-medium ${isSelected ? 'text-white/80' : 'text-[#1C2C1C]/70'}`}>
                                                         <Check size={18} className="text-[#6E9625] flex-shrink-0 mt-0.5" />

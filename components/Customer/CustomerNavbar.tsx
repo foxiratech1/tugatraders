@@ -141,7 +141,7 @@ export default function CustomerNavbar() {
               key={link.name}
               href={link.href}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-[14px] font-semibold transition-colors ${isActive
-                ? "bg-[#1C2C1C] text-white shadow-sm"
+                ? "bg-[#7ca13a] text-white shadow-sm"
                 : "text-[#1C2C1C]/60 hover:text-[#1C2C1C] hover:bg-gray-100/50"
                 }`}
             >

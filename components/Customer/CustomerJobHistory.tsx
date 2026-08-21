@@ -176,9 +176,9 @@ const statusConfig: Record<
   },
   COMPLETED: {
     label: "Completed",
-    bg: "bg-purple-50",
+    bg: "#7ca13a",
     text: "text-purple-700",
-    dot: "bg-purple-500",
+    dot: "#7ca13a",
   },
   CLOSED: {
     label: "Closed",

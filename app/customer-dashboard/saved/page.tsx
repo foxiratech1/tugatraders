@@ -224,6 +224,33 @@ export default function SavedTradersPage() {
     return list;
   }, [traders, search, sort]);
 
+  const groupedByCategory = useMemo(() => {
+    const groups: Record<string, SavedTrader[]> = {};
+
+    filtered.forEach((trader) => {
+      const categories = trader.tradeCategories?.filter(Boolean) || [];
+
+      if (categories.length === 0) {
+        if (!groups["Other"]) {
+          groups["Other"] = [];
+        }
+
+        groups["Other"].push(trader);
+        return;
+      }
+
+      categories.forEach((category) => {
+        if (!groups[category]) {
+          groups[category] = [];
+        }
+
+        groups[category].push(trader);
+      });
+    });
+
+    return Object.entries(groups);
+  }, [filtered]);
+
   return (
     <main className="min-h-screen bg-[#F8F9F5] px-4 sm:px-8 lg:px-12 py-10">
       <div className="max-w-[1200px] mx-auto">
@@ -305,9 +332,36 @@ export default function SavedTradersPage() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filtered.map((trader) => (
-              <TraderCard key={trader.id} trader={trader} onRemove={handleRemoveTrader} />
+          <div className="flex flex-col gap-10">
+            {groupedByCategory.map(([category, categoryTraders]) => (
+              <section key={category}>
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="w-10 h-10 rounded-xl bg-[#E9F3DC] flex items-center justify-center">
+                    <Wrench size={20} className="text-[#6E9625]" />
+                  </div>
+
+                  <div>
+                    <h2 className="text-[20px] font-bold text-[#1C2C1C]">
+                      {category}
+                    </h2>
+
+                    <p className="text-[12px] text-[#1C2C1C]/50">
+                      {categoryTraders.length}{" "}
+                      {categoryTraders.length === 1 ? "trader" : "traders"}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {categoryTraders.map((trader) => (
+                    <TraderCard
+                      key={`${category}-${trader.id}`}
+                      trader={trader}
+                      onRemove={handleRemoveTrader}
+                    />
+                  ))}
+                </div>
+              </section>
             ))}
           </div>
         )}

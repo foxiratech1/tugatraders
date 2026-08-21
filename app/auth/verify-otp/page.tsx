@@ -276,17 +276,17 @@ export default function VerifyOtpPage() {
         </div>
 
         {/* Right side image */}
-        <div className="hidden lg:flex w-full lg:w-[50%] lg:h-auto lg:self-stretch min-h-screen relative bg-[#1C2C1C] overflow-hidden lg:block flex-shrink-0 z-0">
+        <div className="hidden lg:flex w-full lg:w-[50%] lg:h-auto lg:self-stretch min-h-screen relative overflow-hidden lg:block flex-shrink-0 z-0">
           <div className="absolute inset-0 z-0">
             <Image
-              src="/image2.png"
+              src="/vettingimage.jfif"
               alt="Background"
               fill
-              className="object-cover opacity-60"
+              className="object-cover"
               priority
             />
           </div>
-          <div className="absolute inset-0 bg-gradient-to-t from-[#1C2C1C] via-[#1C2C1C]/80 to-transparent z-10" />
+
           <div className="relative z-20 mt-auto p-12 text-white">
             <h2 className="text-[42px] font-bold leading-tight mb-4 tracking-tight" style={{ fontFamily: 'var(--font-bricolage), sans-serif' }}>
               Confirm your identity

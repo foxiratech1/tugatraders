@@ -49,7 +49,7 @@ export default function TrustSafetyModal({ isOpen, onClose }: TrustSafetyModalPr
             {/* Header Image Area */}
             <div className="relative h-[240px] md:h-[300px] w-full shrink-0">
               <img src="/hiringimage.png" alt="Trustyman" className="absolute inset-0 w-full h-full object-cover" />
-              <div className="" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/20" />
 
               <button
                 onClick={onClose}
@@ -59,8 +59,8 @@ export default function TrustSafetyModal({ isOpen, onClose }: TrustSafetyModalPr
               </button>
 
               <div className="absolute bottom-0 left-0 p-6 md:p-8 text-white z-10 w-full">
-                <h2 className="text-[28px] md:text-[36px] font-normal mb-3  text-center text-black">Hiring safely</h2>
-                <p className="text-[#FFFFFF] max-w-[750px] text-[14px] md:text-[14px] leading-relaxed font-light text-black text-center">
+                <h2 className="text-[26px] md:text-[32px] font-bold mb-1.5 tracking-tight text-white">Hiring safely</h2>
+                <p className="text-white/80 max-w-[750px] text-[14px] md:text-[15px] leading-relaxed font-light">
                   TugaTrades helps you connect with independent tradespeople, but we always recommend taking a<br className="hidden md:block" />
                   few simple steps before hiring anyone. These tips help you make informed decisions and avoid<br className="hidden md:block" />
                   common issues.

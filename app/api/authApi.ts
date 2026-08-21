@@ -362,6 +362,7 @@ export const authApi = {
     const { data } = await api.patch(`/api/jobs/${jobId}/cancel`);
     return data;
   },
+
   closeJob: async (jobId: string, data?: any) => {
     const response = await api.post(`/api/jobs/${jobId}/close`, data);
     return response.data;

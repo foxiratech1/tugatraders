@@ -33,6 +33,7 @@ import {
 import toast from "react-hot-toast";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import ShareReviewModal from "@/components/modal/ShareReviewModal";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -160,7 +161,7 @@ const statusConfig: Record<string, { label: string; bg: string; text: string; do
     dot: "bg-[#F57C00]",
   },
   IN_PROGRESS: {
-    label: "In Progress",
+    label: "IN PROGRESS",
     bg: "bg-[#E3F2FD]",
     text: "text-[#1565C0]",
     dot: "bg-[#1565C0]",
@@ -171,7 +172,7 @@ const statusConfig: Record<string, { label: string; bg: string; text: string; do
   CANCELLED: { label: "CLOSED", bg: "bg-[#BDBDBD]", text: "text-[#424242]", dot: "bg-[#424242]" },
   CLOSED: { label: "CLOSED", bg: "bg-[#BDBDBD]", text: "text-[#424242]", dot: "bg-[#424242]" },
   EXPIRED: { label: "EXPIRED", bg: "bg-[#BDBDBD]", text: "text-[#424242]", dot: "bg-[#424242]" },
-  ACTIVE: { label: "Live", bg: "bg-[#FDE2D6]", text: "text-[#D32F2F]", dot: "bg-[#D32F2F]" },
+  ACTIVE: { label: "LIVE", bg: "bg-[#FDE2D6]", text: "text-[#D32F2F]", dot: "bg-[#D32F2F]" },
 };
 
 function StatusBadge({ status }: { status: string }) {
@@ -344,9 +345,14 @@ function QuotesModal({
                       <CheckCircle size={11} />
                       Accepted
                     </span>
+                  ) : quote.status?.toUpperCase() === "REJECTED" || quote.status?.toUpperCase() === "DECLINED" ? (
+                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-50 text-red-700 text-[11px] font-semibold border border-red-100">
+                      <XCircle size={11} />
+                      Declined
+                    </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-[11px] font-semibold border border-amber-100">
-                      {quote.status ?? "Pending"}
+                      {quote.status?.toUpperCase() === "PENDING" ? "Pending" : quote.status ?? "Pending"}
                     </span>
                   )}
                 </div>
@@ -415,7 +421,7 @@ function QuotesModal({
                     <CheckCircle size={12} />
                     Quote Accepted
                   </div>
-                ) : quote.status?.toUpperCase() === "REJECTED" ? (
+                ) : quote.status?.toUpperCase() === "REJECTED" || quote.status?.toUpperCase() === "DECLINED" ? (
                   <div className="flex flex-col gap-2.5">
                     <div className="flex items-center gap-1.5 text-[11px] font-semibold text-red-700 bg-red-50 px-3 py-1.5 rounded-lg border border-red-100 w-fit">
                       <XCircle size={12} className="text-red-500" />
@@ -480,6 +486,8 @@ function TraderQuoteCard({
   onCompleteJob,
   onCancelJob,
   onOpenChat,
+  hasReviewed,
+  onLeaveReview,
 }: {
   trader: SelectedTrader;
   isAssigned: boolean;
@@ -491,6 +499,8 @@ function TraderQuoteCard({
   onCompleteJob?: () => void;
   onCancelJob?: () => void;
   onOpenChat?: (traderId: string) => void;
+  hasReviewed?: boolean;
+  onLeaveReview?: () => void;
 }) {
 
   return (
@@ -525,6 +535,11 @@ function TraderQuoteCard({
             <CheckCircle size={12} />
             Accepted
           </div>
+        ) : quoteStatus?.toUpperCase() === "REJECTED" || quoteStatus?.toUpperCase() === "DECLINED" ? (
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 text-red-700 text-[11px] font-semibold border border-red-100">
+            <XCircle size={12} />
+            Declined
+          </div>
         ) : null}
       </div>
 
@@ -537,9 +552,20 @@ function TraderQuoteCard({
           View your conversation with tradesperson
         </button>
         {isAssigned && (jobStatus === "COMPLETED") ? (
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#2E7D32] bg-[#D8F3D7] px-3 py-1 rounded-lg border border-[#A5D6A7]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]" />
-            Completed
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#2E7D32] bg-[#D8F3D7] px-3 py-1 rounded-lg border border-[#A5D6A7]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]" />
+              Completed
+            </div>
+            {!hasReviewed && onLeaveReview && (
+              <button
+                onClick={onLeaveReview}
+                className="flex items-center gap-1 text-[11px] font-bold text-white bg-[#6E9625] hover:bg-[#58791C] px-3 py-1 rounded-lg transition-colors shadow-sm cursor-pointer"
+              >
+                <Star size={11} className="fill-white" />
+                Leave a Review
+              </button>
+            )}
           </div>
         ) : isAssigned && (jobStatus === "CLOSED" || jobStatus === "CANCELLED" || jobStatus === "EXPIRED") ? (
           <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#424242] bg-[#EEEEEE] px-3 py-1 rounded-lg border border-[#BDBDBD]">
@@ -583,7 +609,40 @@ export default function CustomerJobDashboard() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalJobs, setTotalJobs] = useState(0);
 
+  // Share Your Review popup states
+  const [shareReviewModalJob, setShareReviewModalJob] = useState<Job | null>(null);
+  const [shareReviewTrader, setShareReviewTrader] = useState<SelectedTrader | null>(null);
+  const [isShareReviewModalOpen, setIsShareReviewModalOpen] = useState(false);
+
   const JOBS_PER_PAGE = 5;
+
+  const handleDismissReviewModal = (jobId?: string) => {
+    setIsShareReviewModalOpen(false);
+    const targetId = jobId || shareReviewModalJob?.id;
+    if (targetId) {
+      try {
+        sessionStorage.setItem(`dismissedReviewPopup_${targetId}`, "true");
+      } catch (e) {
+        console.error("Failed to store dismissed review popup in sessionStorage", e);
+      }
+    }
+  };
+
+  const handleNavigateToReview = (job?: Job | null, trader?: SelectedTrader | null) => {
+    const targetJob = job || shareReviewModalJob || selectedJob;
+    if (!targetJob) return;
+    const targetTraderId =
+      trader?.id ||
+      targetJob.selectedTrader?.id ||
+      (quotes.length > 0 && quotes[0].trader?.id) ||
+      "";
+    setIsShareReviewModalOpen(false);
+    const hideWork = targetJob.status === "CANCELLED" || targetJob.status === "CLOSED" ? "&hideWorkCarriedOut=false" : "&workCarriedOut=true";
+    router.push(
+      `/customer-dashboard/leave-review?jobId=${targetJob.id}${targetTraderId ? `&traderId=${targetTraderId}` : ""
+      }${hideWork}`
+    );
+  };
 
   const handleOpenChat = async (traderId: string, jobId?: string) => {
     try {
@@ -668,11 +727,21 @@ export default function CustomerJobDashboard() {
     try {
       await authApi.completeJob(selectedJob.id);
       toast.success("Job completed successfully!");
-      const res = await authApi.getMyJobs();
+      const res = await authApi.getMyJobs(currentPage, JOBS_PER_PAGE);
       const arr = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
       setJobs(arr);
-      const updatedJob = arr.find((j: Job) => j.id === selectedJob.id);
-      if (updatedJob) setSelectedJob(updatedJob);
+      const updatedJob = arr.find((j: Job) => j.id === selectedJob.id) || {
+        ...selectedJob,
+        status: "COMPLETED",
+      };
+      setSelectedJob(updatedJob);
+
+      // Automatically show the "Share Your Review" pop-up for the trader who completed the job
+      if (!reviewedJobIds.has(updatedJob.id) && !updatedJob.hasReviewed) {
+        setShareReviewModalJob(updatedJob);
+        setShareReviewTrader(updatedJob.selectedTrader || null);
+        setIsShareReviewModalOpen(true);
+      }
     } catch (error: any) {
       toast.error(error?.response?.data?.message || "Failed to complete job");
     }
@@ -693,10 +762,10 @@ export default function CustomerJobDashboard() {
     }
   };
 
-  const handleCloseJobSubmit = async () => {
+  const handleCloseJobSubmit = async (data: { isWorkCarriedOut: boolean; cancelReason?: string } = { isWorkCarriedOut: true }) => {
     if (!selectedJob) return;
     try {
-      await authApi.closeJob(selectedJob.id);
+      await authApi.closeJob(selectedJob.id, data);
       toast.success("Job closed successfully!");
       const res = await authApi.getMyJobs();
       const arr = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
@@ -756,12 +825,29 @@ export default function CustomerJobDashboard() {
             reviewsMap[r.job?.id] = r;
           }
         });
-        // Also check the hasReviewed flag on each job
-        arr.forEach((j: Job) => {
-          if (j.hasReviewed) reviewedIds.add(j.id);
-        });
+        // NOTE: only mark a job as reviewed if there is an actual review returned from the API.
+        // Do NOT use j.hasReviewed here — the backend may set that flag for reasons unrelated
+        // to the customer having actually submitted a review.
         setReviewedJobIds(reviewedIds);
         setJobReviews(reviewsMap);
+
+        // Auto-detect completed jobs awaiting review that haven't been dismissed in this session
+        const unreviewedCompletedJob = arr.find((j: Job) => {
+          if (j.status !== "COMPLETED") return false;
+          if (reviewedIds.has(j.id) || j.hasReviewed) return false;
+          try {
+            if (sessionStorage.getItem(`dismissedReviewPopup_${j.id}`) === "true") {
+              return false;
+            }
+          } catch { }
+          return true;
+        });
+
+        if (unreviewedCompletedJob) {
+          setShareReviewModalJob(unreviewedCompletedJob);
+          setShareReviewTrader(unreviewedCompletedJob.selectedTrader || null);
+          setIsShareReviewModalOpen(true);
+        }
       } catch (e) {
         console.error("Failed to fetch customer jobs", e);
       } finally {
@@ -833,22 +919,18 @@ export default function CustomerJobDashboard() {
             {selectedJob &&
               !reviewedJobIds.has(selectedJob.id) &&
               selectedJob.status !== "EXPIRED" && (
-                <Link
-                  href={`/customer-dashboard/leave-review?jobId=${selectedJob.id}${selectedJob.selectedTrader
-                    ? `&traderId=${selectedJob.selectedTrader.id}`
-                    : ""
-                    }${selectedJob.status === "CANCELLED" || selectedJob.status === "CLOSED" ? "&hideWorkCarriedOut=false" : ""}`}
+                <button
+                  onClick={() => handleNavigateToReview(selectedJob, selectedJob.selectedTrader)}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-[12px] border border-gray-200 bg-white cursor-pointer text-[14px] font-bold text-[#1C2C1C] hover:bg-gray-50 transition-colors shadow-sm"
                 >
-                  <button className="flex items-center gap-2 px-5 py-2.5 rounded-[12px] border border-gray-200 bg-white cursor-pointer text-[14px] font-bold text-[#1C2C1C] hover:bg-gray-50 transition-colors shadow-sm">
-                    <Star size={16} />
+                  <Star size={16} className={selectedJob.status === "COMPLETED" ? "text-[#6E9625] fill-[#6E9625]" : ""} />
 
-                    {selectedJob.status === "CLOSED" ||
-                      selectedJob.status === "COMPLETED" ||
-                      selectedJob.status === "CANCELLED"
+                  {selectedJob.status === "COMPLETED"
+                    ? "Leave a Review"
+                    : selectedJob.status === "CLOSED" || selectedJob.status === "CANCELLED"
                       ? "Share Your Experience"
                       : "Leave a Review"}
-                  </button>
-                </Link>
+                </button>
               )}
             <Link href="/customer-dashboard/post-job">
               <button className="flex items-center gap-2 px-5 py-2.5 rounded-[12px] bg-[#6E9625] text-white text-[14px] cursor-pointer font-bold hover:bg-[#58791C] transition-colors shadow-sm">
@@ -1133,6 +1215,8 @@ export default function CustomerJobDashboard() {
                           onCompleteJob={handleCompleteJob}
                           onCancelJob={handleCancelJob}
                           onOpenChat={(traderId) => handleOpenChat(traderId, selectedJob?.id)}
+                          hasReviewed={selectedJob ? (reviewedJobIds.has(selectedJob.id) || selectedJob.hasReviewed) : false}
+                          onLeaveReview={() => handleNavigateToReview(selectedJob, quote.trader || quote)}
                         />
                       ))}
                     </div>
@@ -1145,6 +1229,8 @@ export default function CustomerJobDashboard() {
                       onCompleteJob={handleCompleteJob}
                       onCancelJob={handleCancelJob}
                       onOpenChat={(traderId) => handleOpenChat(traderId, selectedJob?.id)}
+                      hasReviewed={reviewedJobIds.has(selectedJob.id) || selectedJob.hasReviewed}
+                      onLeaveReview={() => handleNavigateToReview(selectedJob, selectedJob.selectedTrader)}
                     />
                   ) : (
                     <p className="text-center text-[13px] text-gray-400 py-6">
@@ -1266,7 +1352,7 @@ export default function CustomerJobDashboard() {
               <button
                 onClick={async () => {
                   setIsCloseJobModalOpen(false);
-                  await handleCloseJobSubmit();
+                  await handleCloseJobSubmit({ isWorkCarriedOut: true });
                   const traderId = selectedJob?.selectedTrader?.id || '';
                   router.push(`/customer-dashboard/leave-review?jobId=${selectedJob?.id}&traderId=${traderId}&workCarriedOut=true&hideWorkCarriedOut=true`);
                 }}
@@ -1305,6 +1391,15 @@ export default function CustomerJobDashboard() {
           }}
         />
       )}
+
+      {/* Share Your Review Modal for Completed Jobs */}
+      <ShareReviewModal
+        isOpen={isShareReviewModalOpen}
+        onClose={() => handleDismissReviewModal()}
+        onLeaveReview={() => handleNavigateToReview()}
+        job={shareReviewModalJob}
+        trader={shareReviewTrader}
+      />
     </div>
   );
 }

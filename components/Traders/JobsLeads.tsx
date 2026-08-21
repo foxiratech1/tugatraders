@@ -77,7 +77,7 @@ function getUIStatus(item: any): string {
   if (item.status === "ASSIGNED" || item.status === "QUOTE_RECEIVED" || item.matchStatus === "ACCEPTED" || item.matchStatus === "QUOTED") {
     return "Contacted";
   }
-  if (item.status === "OPEN" || item.status === "POSTED" || item.status === "ACTIVE") return "Live";
+  if (item.status === "OPEN" || item.status === "POSTED" || item.status === "ACTIVE") return "New";
   return "New";
 }
 
@@ -103,6 +103,17 @@ export default function JobsLeads() {
 
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 5;
+
+  useEffect(() => {
+    if (isDetailsModalOpen || isQuoteModalOpen || showSuccessModal) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isDetailsModalOpen, isQuoteModalOpen, showSuccessModal]);
 
   const openQuoteModal = () => {
     if (!selectedJob) return;
@@ -434,7 +445,23 @@ export default function JobsLeads() {
                             <Calendar size={13} />
                             Posted {job.postedDate}
                           </span>
-                          <button className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#F5F7F2] text-[#6E9625] text-[12px] font-bold hover:bg-[#EAEFD9] transition-colors">
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              setSelectedJob(job);
+                              try {
+                                toast.loading("Loading job details...", { id: "jobDetails" });
+                                const data = await authApi.getCustomerJobById(job.id);
+                                setFullJobData(data?.data || data);
+                                setIsDetailsModalOpen(true);
+                                toast.success("Job details loaded", { id: "jobDetails" });
+                              } catch (error) {
+                                console.error(error);
+                                toast.error("Failed to load full details", { id: "jobDetails" });
+                              }
+                            }}
+                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#F5F7F2] text-[#6E9625] text-[12px] font-bold hover:bg-[#EAEFD9] transition-colors cursor-pointer"
+                          >
                             View Details <ArrowRight size={13} />
                           </button>
                         </div>
@@ -487,7 +514,7 @@ export default function JobsLeads() {
 
             {/* Right Column: Job Details */}
             {selectedJob ? (
-              <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-[#E5E5E5] sticky top-[100px]">
+              <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-[#E5E5E5] sticky top-[100px] max-h-[calc(100vh-120px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
 
                 {/* Header */}
                 <div className="flex items-start justify-between mb-4">
@@ -567,7 +594,7 @@ export default function JobsLeads() {
                     Job Description
                   </span>
                   <div className="p-5 rounded-2xl border border-gray-100 bg-white shadow-sm">
-                    <p className="text-[14px] leading-relaxed text-gray-600 mb-4">
+                    <p className="text-[14px] leading-relaxed text-gray-600 mb-4 line-clamp-4">
                       {selectedJob.description}
                     </p>
                     <button
@@ -1005,7 +1032,7 @@ export default function JobsLeads() {
             </div>
 
             {/* Content */}
-            <div className="p-6 overflow-y-auto space-y-6">
+            <div className="p-6 overflow-y-auto space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
 
               {/* Customer Info Section */}
               {fullJobData.customer && (

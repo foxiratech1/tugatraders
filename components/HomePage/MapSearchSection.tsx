@@ -32,9 +32,11 @@ const getImageUrl = (path?: string) => {
 };
 
 interface Category {
-  id: string;
+  id?: string;
+  _id?: string;
   name: string;
   image?: string;
+  isActive?: boolean;
 }
 
 const features = [
@@ -52,19 +54,19 @@ const MapSearchSection = () => {
     authApi
       .getCategories()
       .then((res) => {
-        const data = Array.isArray(res) ? res : res?.data ?? [];
+        const rawData = Array.isArray(res) ? res : res?.data ?? [];
+        const data = Array.isArray(rawData) ? rawData : rawData?.data ?? [];
         setCategories(data);
       })
       .catch(() => setCategories([]));
   }, []);
 
-  const maxShow = 10;
-  const capped = categories.slice(0, maxShow);
-  const midpoint = Math.ceil(capped.length / 2);
-  const leftCategories = capped.slice(0, midpoint);
-  const rightCategories = capped.slice(midpoint);
+  const midpoint = Math.ceil(categories.length / 2);
+  const leftCategories = categories.slice(0, midpoint);
+  const rightCategories = categories.slice(midpoint);
 
-  const handleCategoryClick = (id: string) => {
+  const handleCategoryClick = (id?: string) => {
+    if (!id) return;
     router.push(`/directory-listing/search?categoryId=${id}`);
   };
 
@@ -104,12 +106,12 @@ const MapSearchSection = () => {
           <div className="hidden shrink-0 flex-col gap-3 md:flex md:w-[280px] lg:w-[300px] xl:w-[320px]">
             {leftCategories.map((cat, i) => (
               <motion.div
-                key={cat.id}
+                key={cat.id || cat._id || i}
                 initial={{ opacity: 0, x: -20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.07 }}
-                onClick={() => handleCategoryClick(cat.id)}
+                onClick={() => handleCategoryClick(cat.id || cat._id)}
                 className="group flex min-h-[50px] w-full cursor-pointer items-center justify-between overflow-hidden rounded-xl border border-[#F3F4F6] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.04)] transition-all hover:shadow-md"
               >
                 <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
@@ -157,12 +159,12 @@ const MapSearchSection = () => {
           <div className="hidden shrink-0 flex-col gap-3 md:flex md:w-[280px] lg:w-[300px] xl:w-[320px]">
             {rightCategories.map((cat, i) => (
               <motion.div
-                key={cat.id}
+                key={cat.id || cat._id || i}
                 initial={{ opacity: 0, x: 20 }}
                 whileInView={{ opacity: 1, x: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: i * 0.07 }}
-                onClick={() => handleCategoryClick(cat.id)}
+                onClick={() => handleCategoryClick(cat.id || cat._id)}
                 className="group flex min-h-[50px] w-full cursor-pointer items-center justify-between overflow-hidden rounded-xl border border-[#F3F4F6] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.04)] transition-all hover:shadow-md"
               >
                 <div className="flex min-w-0 flex-1 items-center gap-3 sm:gap-4">
@@ -196,11 +198,11 @@ const MapSearchSection = () => {
 
         {/* Mobile Categories */}
         <div className="mt-6 flex flex-wrap justify-center gap-2 md:hidden">
-          {capped.map((cat) => (
+          {categories.map((cat, i) => (
             <button
-              key={cat.id}
+              key={cat.id || cat._id || i}
               type="button"
-              onClick={() => handleCategoryClick(cat.id)}
+              onClick={() => handleCategoryClick(cat.id || cat._id)}
               className="flex max-w-full items-center gap-2 rounded-full border border-[#E8EDE8] bg-white px-3 py-2 text-left shadow-sm transition-all hover:shadow-md sm:px-4 sm:py-2.5"
             >
               <span className="h-2 w-2 shrink-0 rounded-full bg-[#6E9625]" />

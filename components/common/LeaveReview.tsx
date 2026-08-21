@@ -21,7 +21,7 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
   const [rating, setRating] = useState<number>(0);
   const [hoverRating, setHoverRating] = useState<number>(0);
 
-  const [recommend, setRecommend] = useState<boolean | null>(null);
+  const [wouldRecommendTrader, setWouldRecommendTrader] = useState<boolean | undefined>(undefined);
 
   const [selectedReason, setSelectedReason] = useState<string>('');
   const [otherReason, setOtherReason] = useState<string>('');
@@ -33,7 +33,6 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
   const [files, setFiles] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
-  const [error, setError] = useState<string>('');
 
   const [selectedTraderId, setSelectedTraderId] = useState<string>('');
   const [traders, setTraders] = useState<any[]>([]);
@@ -48,7 +47,11 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
       try {
         const parsed = JSON.parse(saved);
         if (parsed.rating !== undefined) setRating(parsed.rating);
-        if (parsed.recommend !== undefined) setRecommend(parsed.recommend);
+        if (parsed.wouldRecommendTrader !== undefined) {
+          setWouldRecommendTrader(parsed.wouldRecommendTrader);
+        } else if (parsed.recommend !== undefined && parsed.recommend !== null) {
+          setWouldRecommendTrader(parsed.recommend);
+        }
         if (parsed.selectedReason) setSelectedReason(parsed.selectedReason);
         if (parsed.otherReason) setOtherReason(parsed.otherReason);
         if (parsed.reviewType) setReviewType(parsed.reviewType);
@@ -72,8 +75,12 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
       // Fallback to URL parameters if no session state
       if (searchParams.has('workCarriedOut')) setWorkCarriedOut(searchParams.get('workCarriedOut') === 'true');
       if (searchParams.get('rating')) setRating(parseInt(searchParams.get('rating') || '0'));
-      const rec = searchParams.get('recommend');
-      if (rec) setRecommend(rec === 'true' ? true : rec === 'false' ? false : null);
+      const rec = searchParams.get('wouldRecommendTrader') || searchParams.get('recommend');
+      if (rec === 'true') {
+        setWouldRecommendTrader(true);
+      } else if (rec === 'false') {
+        setWouldRecommendTrader(false);
+      }
       if (searchParams.get('noWorkReason')) setSelectedReason(searchParams.get('noWorkReason') || '');
       setReviewType(searchParams.get('reviewType') || reviewTypeProp || (jobId ? 'JOB' : 'DIRECTORY'));
       if (searchParams.get('interactionSource')) setInteractionSource(searchParams.get('interactionSource') || '');
@@ -92,7 +99,7 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
     const state = {
       workCarriedOut,
       rating,
-      recommend,
+      wouldRecommendTrader,
       selectedReason,
       otherReason,
       reviewType,
@@ -104,7 +111,7 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
       selectedCategory,
     };
     sessionStorage.setItem(key, JSON.stringify(state));
-  }, [workCarriedOut, rating, recommend, selectedReason, otherReason, reviewType, interactionSource, completionDate, title, review, selectedTraderId, selectedCategory, jobId, traderId]);
+  }, [workCarriedOut, rating, wouldRecommendTrader, selectedReason, otherReason, reviewType, interactionSource, completionDate, title, review, selectedTraderId, selectedCategory, jobId, traderId]);
 
   useEffect(() => {
     const fetchTraders = async () => {
@@ -189,9 +196,11 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
     if (searchParams.get('rating')) {
       setRating(parseInt(searchParams.get('rating') || '0', 10));
     }
-    const rec = searchParams.get('recommend');
-    if (rec !== null) {
-      setRecommend(rec === 'true' ? true : rec === 'false' ? false : null);
+    const rec = searchParams.get('wouldRecommendTrader') || searchParams.get('recommend');
+    if (rec === 'true') {
+      setWouldRecommendTrader(true);
+    } else if (rec === 'false') {
+      setWouldRecommendTrader(false);
     }
     if (searchParams.get('reviewType')) {
       setReviewType(searchParams.get('reviewType') || (jobId ? 'JOB' : 'DIRECTORY'));
@@ -246,27 +255,34 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
 
-    if (workCarriedOut && rating === 0) {
-      setError('Please provide a rating.');
-      return;
-    }
-
-    if (!workCarriedOut) {
+    // ── Per-field client-side validation ─────────────────────────────────────
+    if (workCarriedOut) {
+      if (rating === 0) {
+        toast.error('Star rating is required. Please select a rating.');
+        return;
+      }
+      if (!completionDate || !completionDate.trim()) {
+        toast.error('Work completion date is required. Please select the date the work was completed.');
+        return;
+      }
+      if (wouldRecommendTrader === undefined) {
+        toast.error('Please indicate whether you would recommend this trader.');
+        return;
+      }
+      if (reviewType === 'DIRECTORY' && files.length === 0) {
+        toast.error('Proof of work is required for directory reviews. Please upload at least one file.');
+        return;
+      }
+    } else {
       if (!selectedReason) {
-        setError('Please select a reason why the work was not completed.');
+        toast.error('Please select a reason why the work was not completed.');
         return;
       }
       if (selectedReason === 'OTHER' && !otherReason.trim()) {
-        setError('Please describe your reason.');
+        toast.error('Please describe your reason in the text field.');
         return;
       }
-    }
-
-    if (workCarriedOut && reviewType === 'DIRECTORY' && files.length === 0) {
-      toast.error('Proof of work (upload files) is required for directory reviews.');
-      return;
     }
 
     setIsSubmitting(true);
@@ -288,10 +304,12 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
 
       if (workCarriedOut) {
         payload.append("rating", String(rating));
-        if (completionDate) {
+        if (completionDate && completionDate.trim()) {
           payload.append("workCompletedDate", new Date(completionDate).toISOString());
         }
-        if (recommend !== null) payload.append("wouldRecommendTrader", String(recommend));
+        if (wouldRecommendTrader === true || wouldRecommendTrader === false) {
+          payload.append("wouldRecommendTrader", String(wouldRecommendTrader));
+        }
         if (title) payload.append("title", title);
         if (review) payload.append("review", review);
 
@@ -332,11 +350,13 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
       setIsSuccess(true);
     } catch (err: any) {
       console.error(err);
-      const msg: string = err?.message || '';
-      if (msg.includes('401') || msg.toLowerCase().includes('unauthorized')) {
-        setError('Your session has expired. Please log in again and retry.');
+      const status = err?.response?.status;
+      if (status === 401) {
+        toast.error('Your session has expired. Please log in again.');
+      } else if (status === 400) {
+        toast.error('Please make sure all required fields are filled in correctly.');
       } else {
-        setError(msg || 'Failed to submit review. Please try again.');
+        toast.error('Something went wrong. Please try again.');
       }
     } finally {
       setIsSubmitting(false);
@@ -362,12 +382,6 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
           ? "Your feedback helps maintain our high standards of quality."
           : "This helps us improve our matchmaking and professional network."}
       </p>
-
-      {error && (
-        <div className="mb-6 p-4 bg-red-50 text-red-600 rounded-xl text-sm font-medium">
-          {error}
-        </div>
-      )}
 
       {!!editReviewId && !canEditReview && (
         <div className="mb-6 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">
@@ -550,12 +564,12 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
                 <input
                   type="file"
                   multiple
-                  accept=".pdf,.docx,.doc"
+                  accept="image/*,.pdf,.docx,.doc"
                   className="hidden"
                   onChange={handleFileChange}
                 />
                 <p className="text-[14px] font-semibold text-[#1C2C1C] mb-1">Drop file or Browse</p>
-                <p className="text-[12px] text-gray-500">Format: pdf, docx, doc &<br />Max file size: 25 MB</p>
+                <p className="text-[12px] text-gray-500">Format: images, pdf, docx, doc &<br />Max file size: 25 MB</p>
               </label>
               {files.length > 0 && (
                 <div className="mt-3 space-y-2 w-1/2">
@@ -580,24 +594,24 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
               <div className="flex gap-3">
                 <button
                   type="button"
-                  onClick={() => setRecommend(true)}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full border text-[13px] font-bold transition-colors ${recommend === true
+                  onClick={() => setWouldRecommendTrader(true)}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full border text-[13px] font-bold transition-colors ${wouldRecommendTrader === true
                     ? 'border-[#6E9625] text-[#6E9625] bg-[#F8F9F5]'
                     : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                     }`}
                 >
-                  <ThumbsUp size={16} className={recommend === true ? 'text-[#6E9625]' : 'text-gray-400'} />
+                  <ThumbsUp size={16} className={wouldRecommendTrader === true ? 'text-[#6E9625]' : 'text-gray-400'} />
                   Recommended
                 </button>
                 <button
                   type="button"
-                  onClick={() => setRecommend(false)}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full border text-[13px] font-bold transition-colors ${recommend === false
+                  onClick={() => setWouldRecommendTrader(false)}
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-full border text-[13px] font-bold transition-colors ${wouldRecommendTrader === false
                     ? 'border-red-500 text-red-600 bg-red-50'
                     : 'border-gray-200 text-gray-600 hover:bg-gray-50'
                     }`}
                 >
-                  <ThumbsDown size={16} className={recommend === false ? 'text-red-500' : 'text-gray-400'} />
+                  <ThumbsDown size={16} className={wouldRecommendTrader === false ? 'text-red-500' : 'text-gray-400'} />
                   Don't Recommend
                 </button>
               </div>

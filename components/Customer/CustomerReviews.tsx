@@ -12,6 +12,8 @@ interface Review {
   rating: number;
   title?: string;
   review?: string;
+  traderReply?: string;
+  reply?: string;
   reviewType: "JOB" | "DIRECTORY";
   workCarriedOut: boolean;
   workCompletedDate?: string;
@@ -75,16 +77,36 @@ function TraderAvatar({ trader }: { trader: any }) {
 }
 
 function StarRating({ rating }: { rating: number }) {
+  const ratingLabels: Record<number, string> = {
+    1: "Very Poor",
+    2: "Poor",
+    3: "Good",
+    4: "Very Good",
+    5: "Excellent",
+  };
+
   return (
-    <div className="flex items-center gap-0.5">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Star
-          key={star}
-          size={16}
-          className={star <= rating ? "text-[#FACC15] fill-[#FACC15]" : "text-gray-300 fill-gray-100"}
-          strokeWidth={1.5}
-        />
-      ))}
+    <div className="flex flex-col items-end gap-0.5">
+      <div className="flex items-center gap-0.5">
+        {[1, 2, 3, 4, 5].map((star) => (
+          <Star
+            key={star}
+            size={16}
+            className={
+              star <= rating
+                ? "text-[#FACC15] fill-[#FACC15]"
+                : "text-gray-300 fill-gray-100"
+            }
+            strokeWidth={1.5}
+          />
+        ))}
+      </div>
+
+      {rating >= 1 && rating <= 5 && (
+        <span className="text-[11px] font-semibold text-[#1C2C1C]">
+          {rating} — {ratingLabels[rating]}
+        </span>
+      )}
     </div>
   );
 }
@@ -233,10 +255,27 @@ export default function CustomerReviews() {
                 )}
 
                 {/* Review body */}
+                {/* Review body */}
                 {r.review && (
                   <p className="text-[14px] text-gray-600 leading-relaxed mb-4 break-words">
                     &ldquo;{r.review}&rdquo;
                   </p>
+                )}
+
+                {/* Trader Reply */}
+                {(r.traderReply || r.reply) && (
+                  <div className="mt-4 mb-4 bg-[#F2F7EB] border-l-4 border-[#6E9625] rounded-r-xl p-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <MessageSquare size={14} className="text-[#6E9625]" />
+                      <span className="text-[12px] font-bold text-[#1C2C1C]">
+                        Trader Reply
+                      </span>
+                    </div>
+
+                    <p className="text-[13px] text-gray-600 leading-relaxed break-words">
+                      &ldquo;{r.traderReply || r.reply}&rdquo;
+                    </p>
+                  </div>
                 )}
 
                 {/* Reason (if no work carried out) */}

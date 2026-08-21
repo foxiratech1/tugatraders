@@ -363,13 +363,13 @@ export default function TraderNavbar() {
               <div className="relative" ref={notifDropdownRef}>
                 <button
                   onClick={() => setNotifOpen(!notifOpen)}
-                  className="relative w-8 h-8 rounded-full flex items-center justify-center text-[#1C2C1C]/60 hover:bg-[#F5F5F5] hover:text-[#1C2C1C] transition-all hover:scale-105 active:scale-95"
+                  className="relative w-9 h-9 rounded-full flex items-center justify-center text-[#1C2C1C]/60 hover:bg-[#F5F5F5] hover:text-[#1C2C1C] transition-all hover:scale-105 active:scale-95"
                   aria-label="Notifications"
                 >
-                  <Bell size={18} />
+                  <Bell size={21} />
                   {/* Unread dot with pulse */}
                   {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 w-4 h-4 bg-[#6E9625] rounded-full border-2 border-white flex items-center justify-center text-[8px] text-white font-bold animate-pulse">
+                    <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-[8px] text-white font-bold animate-pulse">
                       {unreadCount}
                     </span>
                   )}
@@ -402,7 +402,7 @@ export default function TraderNavbar() {
                               setNotifOpen(false);
                               router.push(`/trader/notifications?id=${n.id}`);
                             }}
-                            className={`cursor-pointer px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-[#F5F5F5] transition-colors text-left ${!n.isRead && !n.read ? "bg-[#6E9625]/5" : ""
+                            className={`cursor-pointer px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-[#F5F5F5] transition-colors text-left ${!n.isRead && !n.read ? "bg-red-50" : ""
                               }`}
                           >
                             <div className="flex items-start justify-between gap-2">
