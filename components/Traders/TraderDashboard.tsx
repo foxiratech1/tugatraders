@@ -148,7 +148,7 @@ export default function TraderDashboard() {
                     <h4 className="text-[24px] font-black text-[#1C2C1C] leading-none mb-1">
                       {actionRequired.newJobsCount ?? 0}
                     </h4>
-                    <p className="text-[12px] text-gray-500 font-medium">New jobs available</p>
+                    <p className="text-[12px] text-gray-500 font-medium">In progress job</p>
                   </div>
                 </div>
                 <button className="text-[12px] font-bold text-[#6E9625] flex items-center gap-1 hover:underline mt-1">
@@ -190,7 +190,7 @@ export default function TraderDashboard() {
                     <h4 className="text-[24px] font-black text-[#1C2C1C] leading-none mb-1">
                       {actionRequired.newReviewsCount ?? 0}
                     </h4>
-                    <p className="text-[12px] text-gray-500 font-medium">New review received</p>
+                    <p className="text-[12px] text-gray-500 font-medium">Pending Reviews</p>
                   </div>
                 </div>
                 <button className="text-[12px] font-bold text-[#6E9625] flex items-center gap-1 hover:underline mt-1">

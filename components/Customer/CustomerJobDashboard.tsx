@@ -1267,9 +1267,17 @@ export default function CustomerJobDashboard() {
                   <span className="text-[11px] font-extrabold text-[#1C2C1C] uppercase tracking-wider mb-2 block">
                     JOB DESCRIPTION
                   </span>
-                  <p className="text-[14px] leading-relaxed text-gray-600">
+                  <p className="text-[14px] leading-relaxed text-gray-600 line-clamp-3">
                     {selectedJob.description}
                   </p>
+                  {selectedJob.description && selectedJob.description.length > 150 && (
+                    <Link
+                      href="/customer-dashboard/job-history"
+                      className="text-[12px] font-bold text-[#6E9625] hover:underline mt-1 inline-block"
+                    >
+                      Read More
+                    </Link>
+                  )}
                 </div>
 
                 {/* Attachments Section */}
