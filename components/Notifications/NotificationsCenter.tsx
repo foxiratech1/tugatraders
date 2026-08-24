@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { authApi } from "@/app/api/authApi";
 import { Bell, MessageSquare, AlertCircle, MoreVertical } from "lucide-react";
+import { useSocket } from "@/hooks/useSocket";
 
 function NotificationsCenterContent() {
   const searchParams = useSearchParams();
@@ -14,6 +15,15 @@ function NotificationsCenterContent() {
   const [filter, setFilter] = useState<"ALL" | "UNREAD">("ALL");
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 5;
+
+  useSocket({
+    onNewNotification: (notif) => {
+      setNotifications((prev) => {
+        if (prev.some((n) => n.id === notif.id)) return prev;
+        return [notif, ...prev];
+      });
+    },
+  });
 
   const fetchNotifications = async () => {
     try {

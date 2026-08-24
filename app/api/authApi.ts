@@ -258,6 +258,24 @@ export const authApi = {
     return data;
   },
 
+  // Fetch customer dashboard details
+  getCustomerDashboard: async () => {
+    const { data } = await api.get('/api/customer/dashboard');
+    return data;
+  },
+
+  // Fetch trader dashboard details
+  getTraderDashboard: async () => {
+    const { data } = await api.get('/api/trader/dashboard');
+    return data;
+  },
+
+  // Fetch customer profile as seen by a trader
+  getCustomerProfileForTrader: async (customerId: string) => {
+    const { data } = await api.get(`/api/trader/dashboard/customer/${customerId}`);
+    return data;
+  },
+
   // Fetch jobs posted by the current customer
   getMyJobs: async (page = 1, limit = 5) => {
     const response = await api.get(`/api/jobs/my-jobs?page=${page}&limit=${limit}`);
@@ -397,12 +415,12 @@ export const authApi = {
     payload: FormData | { price: number; estimatedDays: number; message: string; attachments?: string[] }
   ) => {
     if (payload instanceof FormData) {
-      const { data } = await api.post(`/api/quotes/update/${quoteId}`, payload, {
+      const { data } = await api.patch(`/api/quotes/${quoteId}`, payload, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       return data;
     }
-    const { data } = await api.post(`/api/quotes/update/${quoteId}`, payload);
+    const { data } = await api.patch(`/api/quotes/${quoteId}`, payload);
     return data;
   },
 

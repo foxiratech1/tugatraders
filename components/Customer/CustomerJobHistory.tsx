@@ -2,6 +2,7 @@
 
 import { Fragment, useEffect, useState } from "react";
 import { authApi } from "@/app/api/authApi";
+import { useSocket } from "@/hooks/useSocket";
 import {
   MapPin,
   Calendar,
@@ -374,6 +375,15 @@ export default function CustomerJobHistory() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<"date" | "title" | "status">("date");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+
+  useSocket({
+    onJobUpdated: (updatedJob) => {
+      if (!updatedJob || !updatedJob.id) return;
+      setJobs((prev) =>
+        prev.map((j) => (j.id === updatedJob.id ? { ...j, ...updatedJob } : j))
+      );
+    },
+  });
 
   useEffect(() => {
     async function fetchJobs() {

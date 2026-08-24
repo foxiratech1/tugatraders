@@ -780,7 +780,15 @@ export default function TraderProfilePage() {
           .sort((a, b) => a.categoryId.localeCompare(b.categoryId));
       };
 
+      const getTradeCategoriesOnly = (groups: CategoryGroup[]) => {
+        return groups
+          .filter(g => g.categoryId && g.selectedSkillServices.length > 0 && g.selectedSubCategories.length > 0)
+          .map(g => g.categoryId)
+          .sort((a, b) => a.localeCompare(b));
+      };
+
       const categoriesChanged = JSON.stringify(normalizeGroups(categoryGroups)) !== JSON.stringify(normalizeGroups(initialCategoryGroups));
+      const tradeCategoriesChanged = JSON.stringify(getTradeCategoriesOnly(categoryGroups)) !== JSON.stringify(getTradeCategoriesOnly(initialCategoryGroups));
 
       if (traderStatus !== "MANUAL_CHECK" && categoriesChanged && !isCategoryChangePending) {
         const validGroups = categoryGroups.filter(g => g.categoryId && g.selectedSkillServices.length > 0 && g.selectedSubCategories.length > 0);
@@ -789,7 +797,7 @@ export default function TraderProfilePage() {
         const skillServiceIds = validGroups.flatMap(g => g.selectedSkillServices);
         const subCategoryIds = validGroups.flatMap(g => g.selectedSubCategories);
 
-        if (tradeCategories.length > 0) {
+        if (tradeCategoriesChanged && tradeCategories.length > 0) {
           fd.append("tradeCategories", JSON.stringify(tradeCategories));
         }
         if (skillServiceIds.length > 0) {
@@ -844,14 +852,14 @@ export default function TraderProfilePage() {
       // --------------------------
 
       const backendMessage = updateRes?.message;
-      const finalMessage = categoriesChanged
+      const finalMessage = tradeCategoriesChanged
         ? "Profile updated successfully! Your category changes are pending approval."
         : (backendMessage || "Profile updated successfully!");
 
       ThemeSwal.fire({
-        icon: categoriesChanged ? 'info' : 'success',
+        icon: tradeCategoriesChanged ? 'info' : 'success',
         iconColor: '#6E9625',
-        title: categoriesChanged ? 'Notice' : 'Success',
+        title: tradeCategoriesChanged ? 'Notice' : 'Success',
         text: finalMessage
       });
 

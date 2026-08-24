@@ -25,6 +25,7 @@ import TraderQuotesComponent from "@/components/Trader/TraderQuotesComponent";
 import TraderReportTable from "@/components/Trader/TraderReportTable";
 import toast from "react-hot-toast";
 import { clearTokens } from "@/utils/auth";
+import { useSocket } from "@/hooks/useSocket";
 
 
 // Base navLinks
@@ -57,9 +58,19 @@ export default function TraderNavbar() {
   const [userAvatar, setUserAvatar] = useState<string | undefined>(undefined);
   const [traderStatus, setTraderStatus] = useState("PENDING");
 
-  // Notification state
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+
+  // Hook up socket for new notifications
+  useSocket({
+    onNewNotification: (notif) => {
+      setNotifications((prev) => {
+        if (prev.some((n) => n.id === notif.id)) return prev;
+        return [notif, ...prev];
+      });
+      setUnreadCount((prev) => prev + 1);
+    },
+  });
 
   const fetchNotifications = async () => {
     try {
@@ -169,9 +180,6 @@ export default function TraderNavbar() {
     fetchStatus();
     fetchNotifications();
 
-    const interval = setInterval(fetchNotifications, 60000);
-
-    return () => clearInterval(interval);
   }, []);
 
   // Close dropdowns when clicking outside

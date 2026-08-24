@@ -9,6 +9,7 @@ import { authApi } from "@/app/api/authApi";
 import { ChevronDown, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { clearTokens } from "@/utils/auth";
+import { useSocket } from "@/hooks/useSocket";
 
 export default function CustomerNavbar() {
   const pathname = usePathname();
@@ -18,6 +19,17 @@ export default function CustomerNavbar() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
+
+  // Hook up socket for new notifications
+  useSocket({
+    onNewNotification: (notif) => {
+      setNotifications((prev) => {
+        if (prev.some((n) => n.id === notif.id)) return prev;
+        return [notif, ...prev];
+      });
+      setUnreadCount((prev) => prev + 1);
+    },
+  });
 
   const notifDropdownRef = useRef<HTMLDivElement>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
@@ -87,8 +99,6 @@ export default function CustomerNavbar() {
     loadProfile();
     fetchNotifications();
 
-    const interval = setInterval(fetchNotifications, 60000);
-
     const handleOutsideClick = (e: MouseEvent) => {
       if (notifDropdownRef.current && !notifDropdownRef.current.contains(e.target as Node)) {
         setShowNotifDropdown(false);
@@ -101,7 +111,6 @@ export default function CustomerNavbar() {
     document.addEventListener("mousedown", handleOutsideClick);
 
     return () => {
-      clearInterval(interval);
       document.removeEventListener("mousedown", handleOutsideClick);
     };
   }, []);

@@ -17,6 +17,7 @@ import {
   Loader2
 } from "lucide-react";
 import toast from "react-hot-toast";
+import { useSocket } from "@/hooks/useSocket";
 
 /**
  * Quote type mirrors the shape returned by GET /api/quotes/my-quotes
@@ -187,6 +188,14 @@ export default function TraderQuotesComponent() {
   const [totalQuotes, setTotalQuotes] = useState(0);
   const ITEMS_PER_PAGE = 10;
 
+  useSocket({
+    onQuoteUpdated: (updatedQuote) => {
+      setQuotes((prev) =>
+        prev.map((q) => (q.id === updatedQuote.id ? { ...q, ...updatedQuote } : q))
+      );
+    },
+  });
+
   const fetchQuotes = async (page = currentPage) => {
     setLoading(true);
     setError(null);
@@ -300,26 +309,26 @@ export default function TraderQuotesComponent() {
 
     setIsSubmitting(true);
     try {
-      const formData = new FormData();
-      formData.append("price", String(parsedPrice));
-      formData.append("estimatedDays", String(parsedDays));
-      formData.append("message", message.trim());
+      const payload = {
+        price: parsedPrice,
+        estimatedDays: parsedDays,
+        message: message.trim(),
+      };
 
-      existingAttachments.forEach((url) => {
-        formData.append("attachments", url);
-      });
-
-      newAttachments.forEach((file) => {
-        formData.append("attachments", file);
-      });
-
-      await authApi.updateQuote(editingQuote.id, formData);
+      await authApi.updateQuote(editingQuote.id, payload);
       toast.success("Quote updated successfully!");
 
       setQuotes((prevQuotes) =>
         prevQuotes.map((q) =>
           q.id === editingQuote.id
-            ? { ...q, price: parsedPrice, updatedAt: new Date().toISOString() }
+            ? {
+              ...q,
+              price: parsedPrice,
+              estimatedDays: parsedDays,
+              message: message.trim(),
+              attachments: existingAttachments,
+              updatedAt: new Date().toISOString(),
+            }
             : q
         )
       );
@@ -328,7 +337,7 @@ export default function TraderQuotesComponent() {
       setEditingQuote(null);
     } catch (err: any) {
       console.error("Failed to update quote", err);
-      toast.error(err?.message || "Failed to update quote. Please try again.");
+      toast.error(err?.response?.data?.message || err?.message || "Failed to update quote. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useMemo, useRef } from "react";
 import { authApi } from "@/app/api/authApi";
-import { Search, MapPin, Tag, MoreHorizontal, Calendar, Star, Send, MessageCircle, ArrowRight, X, Euro, Clock, FileText, Paperclip, Trash2 } from "lucide-react";
+import { Search, MapPin, Tag, MoreHorizontal, Calendar, Star, Send, MessageCircle, ArrowRight, X, Euro, Clock, FileText, Paperclip, Trash2, Play, User, Phone, Mail, Briefcase, Shield, CheckCircle, ChevronDown } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
+import { useSocket } from "@/hooks/useSocket";
 
 // Type definitions based on typical job structures and screenshot
 interface JobLead {
@@ -72,8 +73,9 @@ const formatPostedDate = (iso: string) => {
 
 function getUIStatus(item: any): string {
   if (item.status === "COMPLETED") return "Completed";
+  if (item.status === "IN_PROGRESS") return "In Progress";
   if (item.status === "CANCELLED" || item.status === "CLOSED" || item.status === "EXPIRED") return "Closed";
-  if (item.matchStatus === "REJECTED") return "Closed";
+  if (item.matchStatus === "REJECTED") return "Live";
   if (item.status === "ASSIGNED" || item.status === "QUOTE_RECEIVED" || item.matchStatus === "ACCEPTED" || item.matchStatus === "QUOTED") {
     return "Contacted";
   }
@@ -93,16 +95,107 @@ export default function JobsLeads() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [fullJobData, setFullJobData] = useState<any>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [isStartingJob, setIsStartingJob] = useState(false);
+  const [editingQuoteId, setEditingQuoteId] = useState<string | null>(null);
   const [quoteForm, setQuoteForm] = useState({
     price: "",
     estimatedDays: "",
     message: "",
+    availability: "",
   });
   const [quoteAttachments, setQuoteAttachments] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 5;
+
+  // Customer profile modal state
+  const [isCustomerProfileModalOpen, setIsCustomerProfileModalOpen] = useState(false);
+  const [customerProfileData, setCustomerProfileData] = useState<any>(null);
+  const [isLoadingCustomerProfile, setIsLoadingCustomerProfile] = useState(false);
+
+  const mapJobLeadItem = (item: any): JobLead => ({
+    id: item.id,
+    jobId: item.id?.substring(0, 8).toUpperCase() || "",
+    title: item.title || "",
+    location: item.postcode || "No Location",
+    tag: item.category?.name || "General",
+    status: getUIStatus(item),
+    rawStatus: item.status,
+    matchStatus: item.matchStatus,
+    timeAgo: formatTimeAgo(item.createdAt),
+    postedDate: formatPostedDate(item.createdAt),
+    description: item.description || "",
+    timescale: item.timescale ? item.timescale.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) : "Flexible",
+    budgetRange: item.budgetRange ? item.budgetRange.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) : "Under €500",
+    hasQuoted: Boolean(
+      item.hasQuoted ||
+      item.isQuoted ||
+      item.matchStatus === "QUOTED" ||
+      item.matchStatus === "ACCEPTED" ||
+      (Array.isArray(item.quotes) && item.quotes.length > 0) ||
+      item.hasSentQuote
+    ),
+    isQuoteAccepted: Boolean(
+      item.isQuoteAccepted ||
+      item.matchStatus === "ACCEPTED" ||
+      item.status === "ASSIGNED"
+    ),
+    customer: {
+      id: item.customerId || item.customer?.id || item.customer?._id || "",
+      name: item.customer?.fullName || "Valued Customer",
+      avatar: item.customer?.profileImage || undefined,
+      rating: item.customer?.rating ?? 10.0,
+      reviewsCount: item.customer?.reviewsCount ?? 2,
+      jobsPosted: item.customer?.jobsPosted ?? 1,
+    },
+  });
+
+  useSocket({
+    onNewJob: (job) => {
+      if (!job || !job.id) return;
+      const mapped = mapJobLeadItem(job);
+      setJobs((prev) => {
+        if (prev.some((j) => j.id === mapped.id)) return prev;
+        return [mapped, ...prev];
+      });
+      setSelectedJob((prev) => prev || mapped);
+    },
+    onJobUpdated: (updated) => {
+      if (!updated || !updated.id) return;
+      setJobs((prev) =>
+        prev.map((j) => {
+          if (j.id === updated.id) {
+            const rawStatus = updated.status ?? j.rawStatus;
+            const matchStatus = updated.matchStatus ?? j.matchStatus;
+            const merged = {
+              ...j,
+              ...updated,
+              rawStatus,
+              matchStatus,
+              status: getUIStatus({ ...j, ...updated, status: rawStatus, matchStatus }),
+            };
+            return merged;
+          }
+          return j;
+        })
+      );
+      setSelectedJob((prev) => {
+        if (prev && prev.id === updated.id) {
+          const rawStatus = updated.status ?? prev.rawStatus;
+          const matchStatus = updated.matchStatus ?? prev.matchStatus;
+          return {
+            ...prev,
+            ...updated,
+            rawStatus,
+            matchStatus,
+            status: getUIStatus({ ...prev, ...updated, status: rawStatus, matchStatus }),
+          };
+        }
+        return prev;
+      });
+    },
+  });
 
   useEffect(() => {
     if (isDetailsModalOpen || isQuoteModalOpen || showSuccessModal) {
@@ -115,8 +208,9 @@ export default function JobsLeads() {
     };
   }, [isDetailsModalOpen, isQuoteModalOpen, showSuccessModal]);
 
-  const openQuoteModal = () => {
+  const openQuoteModal = async () => {
     if (!selectedJob) return;
+    const isRejected = selectedJob.matchStatus === "REJECTED";
     const isClosedOrComplete =
       selectedJob.status === "Closed" ||
       selectedJob.status === "Completed" ||
@@ -124,11 +218,43 @@ export default function JobsLeads() {
       selectedJob.rawStatus === "COMPLETED" ||
       selectedJob.rawStatus === "CANCELLED" ||
       selectedJob.rawStatus === "EXPIRED";
-    if (selectedJob.hasQuoted || selectedJob.isQuoteAccepted || isClosedOrComplete) {
+
+    if (!isRejected && (selectedJob.hasQuoted || selectedJob.isQuoteAccepted || isClosedOrComplete)) {
       return;
     }
-    setQuoteForm({ price: "", estimatedDays: "", message: "" });
+
+    setQuoteForm({ price: "", estimatedDays: "", message: "", availability: "" });
     setQuoteAttachments([]);
+    setEditingQuoteId(null);
+
+    if (isRejected) {
+      try {
+        toast.loading("Loading your previous quote...", { id: "loadQuote" });
+        const res = await authApi.getMyQuoteByJobId(selectedJob.id);
+        if (res && res.data) {
+          const quote = res.data;
+          setEditingQuoteId(quote.id);
+          const getAvailabilityFromDays = (days: number) => {
+            if (days <= 1) return "Within 24 hours";
+            if (days <= 3) return "Within 3 days";
+            if (days <= 7) return "Within 7 days";
+            return "7days +";
+          };
+
+          setQuoteForm({
+            price: quote.price?.toString() || "",
+            estimatedDays: quote.estimatedDays?.toString() || "",
+            message: quote.message || "",
+            availability: quote.estimatedDays ? getAvailabilityFromDays(quote.estimatedDays) : "",
+          });
+        }
+        toast.dismiss("loadQuote");
+      } catch (error) {
+        toast.dismiss("loadQuote");
+        console.error("Failed to load previous quote", error);
+      }
+    }
+
     setIsQuoteModalOpen(true);
   };
 
@@ -152,24 +278,48 @@ export default function JobsLeads() {
     try {
       setIsSendingQuote(true);
 
-      const formData = new FormData();
-      formData.append("price", quoteForm.price);
-      formData.append("estimatedDays", quoteForm.estimatedDays);
-      formData.append("message", quoteForm.message);
-      quoteAttachments.forEach((file) => {
-        formData.append("attachments", file);
-      });
+      const mapAvailabilityToDays = (availability: string) => {
+        switch (availability) {
+          case "Can start immediately": return 1;
+          case "Within 24 hours": return 1;
+          case "Within 3 days": return 3;
+          case "Within 7 days": return 7;
+          case "7days +": return 14;
+          default: return 1;
+        }
+      };
 
-      await authApi.sendJobQuote(selectedJob.id, formData);
+      const mappedDays = mapAvailabilityToDays(quoteForm.availability);
+
+      if (editingQuoteId) {
+        // Send JSON payload for updates (without attachments to avoid validation error)
+        const payload = {
+          price: Number(quoteForm.price),
+          estimatedDays: mappedDays,
+          message: quoteForm.message,
+        };
+        await authApi.updateQuote(editingQuoteId, payload);
+      } else {
+        // Send FormData for new quotes
+        const formData = new FormData();
+        formData.append("price", quoteForm.price);
+        formData.append("estimatedDays", String(mappedDays));
+        formData.append("message", quoteForm.message);
+
+        quoteAttachments.forEach((file) => {
+          formData.append("attachments", file);
+        });
+        await authApi.sendJobQuote(selectedJob.id, formData);
+      }
       // toast.success("Job quote sent successfully!");
       setIsQuoteModalOpen(false);
       setShowSuccessModal(true);
       setJobs((prevJobs) =>
         prevJobs.map((j) =>
-          j.id === selectedJob.id ? { ...j, hasQuoted: true, status: "Contacted" } : j
+          j.id === selectedJob.id ? { ...j, hasQuoted: true, status: "Contacted", matchStatus: "QUOTED" } : j
         )
       );
-      setSelectedJob((prev) => (prev ? { ...prev, hasQuoted: true, status: "Contacted" } : null));
+      setSelectedJob((prev) => (prev ? { ...prev, hasQuoted: true, status: "Contacted", matchStatus: "QUOTED" } : null));
     } catch (error: any) {
       console.error("Failed to send quote", error);
       toast.error(error?.response?.data?.message || "Failed to send job quote");
@@ -184,42 +334,7 @@ export default function JobsLeads() {
         const res = await authApi.getMatchedJobs();
         console.log("Matched Jobs Response:", res);
         if (res && res.data && res.data.length > 0) {
-          const mappedJobs: JobLead[] = res.data.map((item: any) => ({
-            id: item.id,
-            jobId: item.id?.substring(0, 8).toUpperCase() || "",
-            title: item.title || "",
-            location: item.postcode || "No Location",
-            tag: item.category?.name || "General",
-            status: getUIStatus(item),
-            rawStatus: item.status,
-            matchStatus: item.matchStatus,
-            timeAgo: formatTimeAgo(item.createdAt),
-            postedDate: formatPostedDate(item.createdAt),
-            description: item.description || "",
-            timescale: item.timescale ? item.timescale.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) : "Flexible",
-            budgetRange: item.budgetRange ? item.budgetRange.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) : "Under €500",
-            hasQuoted: Boolean(
-              item.hasQuoted ||
-              item.isQuoted ||
-              item.matchStatus === "QUOTED" ||
-              item.matchStatus === "ACCEPTED" ||
-              (Array.isArray(item.quotes) && item.quotes.length > 0) ||
-              item.hasSentQuote
-            ),
-            isQuoteAccepted: Boolean(
-              item.isQuoteAccepted ||
-              item.matchStatus === "ACCEPTED" ||
-              item.status === "ASSIGNED"
-            ),
-            customer: {
-              id: item.customerId || item.customer?.id || item.customer?._id || "",
-              name: item.customer?.fullName || "Valued Customer",
-              avatar: item.customer?.profileImage || undefined,
-              rating: item.customer?.rating ?? 10.0,
-              reviewsCount: item.customer?.reviewsCount ?? 2,
-              jobsPosted: item.customer?.jobsPosted ?? 1,
-            },
-          }));
+          const mappedJobs: JobLead[] = res.data.map((item: any) => mapJobLeadItem(item));
           setJobs(mappedJobs);
           setSelectedJob(mappedJobs[0]);
         } else {
@@ -315,6 +430,20 @@ export default function JobsLeads() {
       return (
         <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#E8F5E9] text-[#2E7D32] text-[11px] font-bold">
           Completed
+        </div>
+      );
+    }
+    if (status === "Pending") {
+      return (
+        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#FFF3E0] text-[#E65100] text-[11px] font-bold">
+          Pending
+        </div>
+      );
+    }
+    if (status === "In Progress") {
+      return (
+        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#EDE7F6] text-[#5E35B1] text-[11px] font-bold">
+          In Progress
         </div>
       );
     }
@@ -513,320 +642,377 @@ export default function JobsLeads() {
             </div>
 
             {/* Right Column: Job Details */}
-            {selectedJob ? (
-              <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-[#E5E5E5] sticky top-[100px] max-h-[calc(100vh-120px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+            {filteredJobs.length > 0 && (
+              selectedJob ? (
+                <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-[#E5E5E5] sticky top-[100px] max-h-[calc(100vh-120px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
 
-                {/* Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <span className="inline-block bg-[#EAF3DE] text-[#557A18] font-bold text-[11px] px-3 py-1 rounded-full mb-2 tracking-wide">
-                      JOB-{selectedJob.jobId}
-                    </span>
-                    <h2 className="text-[24px] font-bold text-[#1C2C1C] leading-tight mb-2.5">
-                      {selectedJob.title}
-                    </h2>
-                    <div className="flex items-center gap-3">
-                      {renderStatusBadge(selectedJob.status)}
-                      <span className="text-[12px] text-gray-400 font-medium flex items-center gap-1">
-                        <Clock size={13} /> Posted {selectedJob.timeAgo}
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <span className="inline-block bg-[#EAF3DE] text-[#557A18] font-bold text-[11px] px-3 py-1 rounded-full mb-2 tracking-wide">
+                        JOB-{selectedJob.jobId}
                       </span>
+                      <h2 className="text-[24px] font-bold text-[#1C2C1C] leading-tight mb-2.5">
+                        {selectedJob.title}
+                      </h2>
+                      <div className="flex items-center gap-3">
+                        {renderStatusBadge(
+                          selectedJob.status === "Closed" || selectedJob.status === "Completed" || selectedJob.matchStatus === "REJECTED" || selectedJob.rawStatus === "IN_PROGRESS"
+                            ? selectedJob.status
+                            : selectedJob.isQuoteAccepted
+                              ? "Contacted"
+                              : selectedJob.hasQuoted
+                                ? "Pending"
+                                : selectedJob.status
+                        )}
+                        <span className="text-[12px] text-gray-400 font-medium flex items-center gap-1">
+                          <Clock size={13} /> Posted {selectedJob.timeAgo}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                  {/* <button className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors flex-shrink-0">
+                    {/* <button className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors flex-shrink-0">
                     <MoreHorizontal size={18} />
                   </button> */}
-                </div>
-
-                {/* Info Grid - 2x2 grid to prevent truncation */}
-                <div className="grid grid-cols-2 gap-3.5 mb-8">
-                  <div className="p-3.5 rounded-2xl bg-[#F8F9FA] border border-gray-100 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-sm shrink-0">
-                      <MapPin size={16} className="text-[#6E9625]" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-0.5">
-                        LOCATION
-                      </span>
-                      <span className="text-[13px] font-bold text-[#1C2C1C] leading-none">{selectedJob.location}</span>
-                    </div>
                   </div>
 
-                  <div className="p-3.5 rounded-2xl bg-[#F8F9FA] border border-gray-100 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-sm shrink-0">
-                      <Tag size={16} className="text-[#6E9625]" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-0.5">
-                        CATEGORY
-                      </span>
-                      <span className="text-[13px] font-bold text-[#1C2C1C] leading-none">{selectedJob.tag}</span>
-                    </div>
-                  </div>
-
-                  <div className="p-3.5 rounded-2xl bg-[#F8F9FA] border border-gray-100 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-sm shrink-0">
-                      <Clock size={16} className="text-[#6E9625]" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-0.5">
-                        TIMESCALE
-                      </span>
-                      <span className="text-[13px] font-bold text-[#1C2C1C] leading-none">{selectedJob.timescale || "Flexible"}</span>
-                    </div>
-                  </div>
-
-                  <div className="p-3.5 rounded-2xl bg-[#F8F9FA] border border-gray-100 flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-sm shrink-0">
-                      <Euro size={16} className="text-[#6E9625]" />
-                    </div>
-                    <div>
-                      <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-0.5">
-                        BUDGET
-                      </span>
-                      <span className="text-[13px] font-bold text-[#1C2C1C] leading-none">{selectedJob.budgetRange || "Under €500"}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Job Description */}
-                <div className="mb-8">
-                  <span className="text-[12px] font-bold text-[#1C2C1C] uppercase tracking-wider mb-3 block">
-                    Job Description
-                  </span>
-                  <div className="p-5 rounded-2xl border border-gray-100 bg-white shadow-sm">
-                    <p className="text-[14px] leading-relaxed text-gray-600 mb-4 line-clamp-4">
-                      {selectedJob.description}
-                    </p>
-                    <button
-                      onClick={async () => {
-                        try {
-                          toast.loading("Loading job details...", { id: "jobDetails" });
-                          const data = await authApi.getCustomerJobById(selectedJob.id);
-                          setFullJobData(data?.data || data);
-                          setIsDetailsModalOpen(true);
-                          toast.success("Job details loaded", { id: "jobDetails" });
-                        } catch (error) {
-                          console.error(error);
-                          toast.error("Failed to load full details", { id: "jobDetails" });
-                        }
-                      }}
-                      className="text-[13px] font-bold text-[#6E9625] hover:text-[#58791C] flex items-center gap-1 transition-colors cursor-pointer"
-                    >
-                      View full details <ArrowRight size={14} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Attachments Section Trigger (Mocked representation as in figma mockup screenshot) */}
-                {/* Attachments */}
-                {fullJobData?.attachments && fullJobData.attachments.length > 0 && (
-                  <div className="mb-8">
-                    <span className="text-[12px] font-bold text-[#1C2C1C] uppercase tracking-wider mb-3 block">
-                      Attachments ({fullJobData.attachments.length})
-                    </span>
-
-                    <div className="flex flex-wrap gap-3">
-                      {fullJobData.attachments.map((att: any, idx: number) => {
-                        let cleanPath = att.url || att.file || att.path || "";
-
-                        if (cleanPath.startsWith("undefined")) {
-                          cleanPath = cleanPath.replace("undefined", "");
-                        }
-
-                        const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
-
-                        const fullUrl = cleanPath.startsWith("http")
-                          ? cleanPath
-                          : `${baseUrl}${cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`}`;
-
-                        const isImage = /\.(jpeg|jpg|gif|png|webp)$/i.test(cleanPath);
-
-                        return (
-                          <a
-                            key={idx}
-                            href={fullUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="group block w-[110px] rounded-xl border border-gray-200 bg-white overflow-hidden hover:border-[#6E9625] transition-colors"
-                          >
-                            {isImage ? (
-                              <img
-                                src={fullUrl}
-                                alt={att.filename || "Attachment"}
-                                className="w-full h-[75px] object-cover"
-                              />
-                            ) : (
-                              <div className="w-full h-[75px] bg-gray-100 flex items-center justify-center">
-                                <FileText size={24} className="text-gray-400" />
-                              </div>
-                            )}
-
-                            <div className="px-2 py-1.5">
-                              <p className="text-[10px] text-[#1C2C1C] font-medium truncate">
-                                {att.filename ||
-                                  cleanPath.split("/").pop() ||
-                                  "Attachment"}
-                              </p>
-                            </div>
-                          </a>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-                {/* Customer Details */}
-                <div className="mb-8">
-                  <span className="text-[12px] font-bold text-[#1C2C1C] uppercase tracking-wider mb-3 block">
-                    CUSTOMER
-                  </span>
-                  <div className="p-5 rounded-2xl border border-gray-100 flex items-center justify-between bg-white shadow-sm gap-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 flex items-center justify-center font-bold text-gray-600 text-lg">
-                        {selectedJob.customer?.avatar ? (
-                          <img
-                            src={getImageUrl(selectedJob.customer.avatar)}
-                            alt={selectedJob.customer?.name ?? ''}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <span>
-                            {selectedJob.customer?.name ? selectedJob.customer.name.charAt(0) : ''}
-                          </span>
-                        )}
+                  {/* Info Grid - 2x2 grid to prevent truncation */}
+                  <div className="grid grid-cols-2 gap-3.5 mb-8">
+                    <div className="p-3.5 rounded-2xl bg-[#F8F9FA] border border-gray-100 flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-sm shrink-0">
+                        <MapPin size={16} className="text-[#6E9625]" />
                       </div>
                       <div>
-                        <h4 className="text-[15px] font-bold text-[#1C2C1C] mb-0.5">
-                          {selectedJob.customer?.name ?? ''}
-                        </h4>
-                        <div className="text-[12px] font-medium text-[#1C2C1C] space-y-0.5">
-                          <div className="flex items-center gap-1.5">
-                            <Star size={13} className="text-[#F5A623] fill-[#F5A623] shrink-0" />
-                            <span>
-                              {selectedJob.customer?.rating !== undefined ? selectedJob.customer.rating.toFixed(1) : '0.0'}{' '}
-                              <span className="text-gray-400 font-normal">({selectedJob.customer?.reviewsCount ?? 0} Reviews)</span>
-                            </span>
-                          </div>
-                          <div className="text-gray-400 font-normal">
-                            {selectedJob.customer?.jobsPosted ?? 0} Job Posted
-                          </div>
-                        </div>
+                        <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-0.5">
+                          LOCATION
+                        </span>
+                        <span className="text-[13px] font-bold text-[#1C2C1C] leading-none">{selectedJob.location}</span>
                       </div>
                     </div>
-                    <button
-                      onClick={() => {
-                        if (selectedJob.customer?.id) {
-                          router.push(`/trader/customer-profile/${selectedJob.customer.id}`);
-                        }
-                      }}
-                      className="px-4 py-2 border border-gray-200 text-[#6E9625] rounded-xl text-[12px] font-bold hover:bg-gray-50 transition-colors shrink-0 cursor-pointer"
-                    >
-                      View Profile
-                    </button>
+
+                    <div className="p-3.5 rounded-2xl bg-[#F8F9FA] border border-gray-100 flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-sm shrink-0">
+                        <Tag size={16} className="text-[#6E9625]" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-0.5">
+                          CATEGORY
+                        </span>
+                        <span className="text-[13px] font-bold text-[#1C2C1C] leading-none">{selectedJob.tag}</span>
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 rounded-2xl bg-[#F8F9FA] border border-gray-100 flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-sm shrink-0">
+                        <Clock size={16} className="text-[#6E9625]" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-0.5">
+                          TIMESCALE
+                        </span>
+                        <span className="text-[13px] font-bold text-[#1C2C1C] leading-none">{selectedJob.timescale || "Flexible"}</span>
+                      </div>
+                    </div>
+
+                    <div className="p-3.5 rounded-2xl bg-[#F8F9FA] border border-gray-100 flex items-center gap-3">
+                      <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-sm shrink-0">
+                        <Euro size={16} className="text-[#6E9625]" />
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-0.5">
+                          BUDGET
+                        </span>
+                        <span className="text-[13px] font-bold text-[#1C2C1C] leading-none">{selectedJob.budgetRange || "Under €500"}</span>
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                {/* Actions */}
-                <div className="flex flex-col gap-3">
-                  {(() => {
-                    const isClosed =
-                      selectedJob.status === "Closed" ||
-                      selectedJob.rawStatus === "CLOSED" ||
-                      selectedJob.rawStatus === "CANCELLED" ||
-                      selectedJob.rawStatus === "EXPIRED" ||
-                      selectedJob.matchStatus === "REJECTED";
-                    const isCompleted =
-                      selectedJob.status === "Completed" ||
-                      selectedJob.rawStatus === "COMPLETED";
-                    const isAccepted =
-                      selectedJob.isQuoteAccepted ||
-                      selectedJob.matchStatus === "ACCEPTED" ||
-                      selectedJob.rawStatus === "ASSIGNED";
-                    const hasQuoted = selectedJob.hasQuoted;
-
-                    const isSendDisabled = isClosed || isCompleted || isAccepted || hasQuoted;
-
-                    let buttonText = "Send Job Quote";
-                    if (isAccepted) buttonText = "Quote Accepted";
-                    else if (hasQuoted) buttonText = "Quote Sent";
-                    else if (isCompleted) buttonText = "Job Completed";
-                    else if (isClosed) buttonText = "Job Closed";
-
-                    return (
+                  {/* Job Description */}
+                  <div className="mb-8">
+                    <span className="text-[12px] font-bold text-[#1C2C1C] uppercase tracking-wider mb-3 block">
+                      Job Description
+                    </span>
+                    <div className="p-5 rounded-2xl border border-gray-100 bg-white shadow-sm">
+                      <p className="text-[14px] leading-relaxed text-gray-600 mb-4 line-clamp-4">
+                        {selectedJob.description}
+                      </p>
                       <button
-                        onClick={openQuoteModal}
-                        disabled={isSendDisabled}
-                        className={`w-full h-[48px] rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 transition-colors ${isSendDisabled
-                          ? "bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300"
-                          : "bg-[#1C2C1C] hover:bg-[#2A412A] text-white cursor-pointer"
-                          }`}
+                        onClick={async () => {
+                          try {
+                            toast.loading("Loading job details...", { id: "jobDetails" });
+                            const data = await authApi.getCustomerJobById(selectedJob.id);
+                            setFullJobData(data?.data || data);
+                            setIsDetailsModalOpen(true);
+                            toast.success("Job details loaded", { id: "jobDetails" });
+                          } catch (error) {
+                            console.error(error);
+                            toast.error("Failed to load full details", { id: "jobDetails" });
+                          }
+                        }}
+                        className="text-[13px] font-bold text-[#6E9625] hover:text-[#58791C] flex items-center gap-1 transition-colors cursor-pointer"
                       >
-                        <Send size={16} />
-                        {buttonText}
+                        View full details <ArrowRight size={14} />
                       </button>
-                    );
-                  })()}
-                  <button
-                    onClick={async () => {
-                      if (!selectedJob?.customer?.id) {
-                        toast.error("Could not find customer contact details.");
-                        return;
-                      }
+                    </div>
+                  </div>
 
-                      try {
-                        toast.loading("Opening conversation...", {
-                          id: "openConversation",
-                        });
+                  {/* Attachments Section Trigger (Mocked representation as in figma mockup screenshot) */}
+                  {/* Attachments */}
+                  {fullJobData?.attachments && fullJobData.attachments.length > 0 && (
+                    <div className="mb-8">
+                      <span className="text-[12px] font-bold text-[#1C2C1C] uppercase tracking-wider mb-3 block">
+                        Attachments ({fullJobData.attachments.length})
+                      </span>
 
-                        const res = await authApi.getOrCreateConversation(
-                          selectedJob.customer.id,
-                          selectedJob.id
-                        );
+                      <div className="flex flex-wrap gap-3">
+                        {fullJobData.attachments.map((att: any, idx: number) => {
+                          let cleanPath = att.url || att.file || att.path || "";
 
-                        const conversation = res?.data || res;
+                          if (cleanPath.startsWith("undefined")) {
+                            cleanPath = cleanPath.replace("undefined", "");
+                          }
 
-                        const conversationId =
-                          conversation?.id || conversation?._id;
+                          const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
 
-                        if (!conversationId) {
-                          toast.error("Failed to create conversation.", {
-                            id: "openConversation",
-                          });
+                          const fullUrl = cleanPath.startsWith("http")
+                            ? cleanPath
+                            : `${baseUrl}${cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`}`;
+
+                          const isImage = /\.(jpeg|jpg|gif|png|webp)$/i.test(cleanPath);
+
+                          return (
+                            <a
+                              key={idx}
+                              href={fullUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="group block w-[110px] rounded-xl border border-gray-200 bg-white overflow-hidden hover:border-[#6E9625] transition-colors"
+                            >
+                              {isImage ? (
+                                <img
+                                  src={fullUrl}
+                                  alt={att.filename || "Attachment"}
+                                  className="w-full h-[75px] object-cover"
+                                />
+                              ) : (
+                                <div className="w-full h-[75px] bg-gray-100 flex items-center justify-center">
+                                  <FileText size={24} className="text-gray-400" />
+                                </div>
+                              )}
+
+                              <div className="px-2 py-1.5">
+                                <p className="text-[10px] text-[#1C2C1C] font-medium truncate">
+                                  {att.filename ||
+                                    cleanPath.split("/").pop() ||
+                                    "Attachment"}
+                                </p>
+                              </div>
+                            </a>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  {/* Customer Details */}
+                  <div className="mb-8">
+                    <span className="text-[12px] font-bold text-[#1C2C1C] uppercase tracking-wider mb-3 block">
+                      CUSTOMER
+                    </span>
+                    <div className="p-5 rounded-2xl border border-gray-100 flex items-center justify-between bg-white shadow-sm gap-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 flex items-center justify-center font-bold text-gray-600 text-lg">
+                          {selectedJob.customer?.avatar ? (
+                            <img
+                              src={getImageUrl(selectedJob.customer.avatar)}
+                              alt={selectedJob.customer?.name ?? ''}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <span>
+                              {selectedJob.customer?.name ? selectedJob.customer.name.charAt(0) : ''}
+                            </span>
+                          )}
+                        </div>
+                        <div>
+                          <h4 className="text-[15px] font-bold text-[#1C2C1C] mb-0.5">
+                            {selectedJob.customer?.name ?? ''}
+                          </h4>
+                        </div>
+                      </div>
+                      <button
+                        onClick={async () => {
+                          const customerId = selectedJob.customer?.id;
+                          if (!customerId) {
+                            toast.error("Customer ID not available");
+                            return;
+                          }
+                          try {
+                            setIsLoadingCustomerProfile(true);
+                            setIsCustomerProfileModalOpen(true);
+                            setCustomerProfileData(null);
+                            const res = await authApi.getCustomerProfileForTrader(customerId);
+                            setCustomerProfileData(res?.data || res);
+                          } catch (err: any) {
+                            console.error("Failed to load customer profile", err);
+                            toast.error(err?.response?.data?.message || "Failed to load customer profile");
+                            setIsCustomerProfileModalOpen(false);
+                          } finally {
+                            setIsLoadingCustomerProfile(false);
+                          }
+                        }}
+                        className="px-4 py-2 border border-gray-200 text-[#6E9625] rounded-xl text-[12px] font-bold hover:bg-gray-50 transition-colors shrink-0 cursor-pointer"
+                      >
+                        View Profile
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex flex-col gap-3">
+                    {(() => {
+                      const isRejected = selectedJob.matchStatus === "REJECTED";
+                      const isClosed =
+                        (!isRejected && selectedJob.status === "Closed") ||
+                        selectedJob.rawStatus === "CLOSED" ||
+                        selectedJob.rawStatus === "CANCELLED" ||
+                        selectedJob.rawStatus === "EXPIRED";
+                      const isCompleted =
+                        selectedJob.status === "Completed" ||
+                        selectedJob.rawStatus === "COMPLETED";
+                      const isAccepted =
+                        selectedJob.isQuoteAccepted ||
+                        selectedJob.matchStatus === "ACCEPTED" ||
+                        selectedJob.rawStatus === "ASSIGNED";
+                      const hasQuoted = selectedJob.hasQuoted;
+
+                      const isSendDisabled = isClosed || isCompleted || isAccepted || (hasQuoted && !isRejected);
+
+                      let buttonText = "Send Job Quote";
+                      if (isAccepted) buttonText = "Quote Accepted";
+                      else if (isRejected) buttonText = "Revoke Quote";
+                      else if (hasQuoted) buttonText = "Quote Sent";
+                      else if (isCompleted) buttonText = "Job Completed";
+                      else if (isClosed) buttonText = "Job Closed";
+
+                      return (
+                        <>
+                          <button
+                            onClick={openQuoteModal}
+                            disabled={isSendDisabled}
+                            className={`w-full h-[48px] rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 transition-colors ${isSendDisabled
+                              ? "bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300"
+                              : "bg-[#1C2C1C] hover:bg-[#2A412A] text-white cursor-pointer"
+                              }`}
+                          >
+                            <Send size={16} />
+                            {buttonText}
+                          </button>
+
+                          {isAccepted && (
+                            <button
+                              disabled={isStartingJob || selectedJob.rawStatus === "IN_PROGRESS"}
+                              onClick={async () => {
+                                try {
+                                  setIsStartingJob(true);
+                                  toast.loading("Starting job...", { id: "startJob" });
+                                  await authApi.startJob(selectedJob.id);
+                                  toast.success("Job started successfully!", { id: "startJob" });
+
+                                  // Optimistically update the UI
+                                  setJobs((prevJobs) =>
+                                    prevJobs.map((j) =>
+                                      j.id === selectedJob.id ? { ...j, status: "In Progress", rawStatus: "IN_PROGRESS" } : j
+                                    )
+                                  );
+                                  setSelectedJob((prev) => (prev ? { ...prev, status: "In Progress", rawStatus: "IN_PROGRESS" } : null));
+                                } catch (error: any) {
+                                  console.error("Failed to start job", error);
+                                  toast.error(error?.response?.data?.message || "Failed to start job", { id: "startJob" });
+                                } finally {
+                                  setIsStartingJob(false);
+                                }
+                              }}
+                              className={`w-full h-[48px] rounded-xl text-[14px] font-extrabold flex items-center justify-center gap-2 transition-all ${isStartingJob || selectedJob.rawStatus === "IN_PROGRESS"
+                                ? "bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300"
+                                : "bg-gradient-to-r from-[#6E9625] to-[#8BC34A] hover:from-[#58791C] hover:to-[#6E9625] text-white shadow-[0_4px_12px_rgba(110,150,37,0.3)] hover:shadow-[0_6px_16px_rgba(110,150,37,0.4)] cursor-pointer scale-100 hover:scale-[1.02]"
+                                }`}
+                            >
+                              {selectedJob.rawStatus === "IN_PROGRESS" ? (
+                                "Job Started"
+                              ) : isStartingJob ? (
+                                "Starting..."
+                              ) : (
+                                <>
+                                  <Play size={18} className="fill-current" />
+                                  Start Job
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </>
+                      );
+                    })()}
+                    <button
+                      onClick={async () => {
+                        if (!selectedJob?.customer?.id) {
+                          toast.error("Could not find customer contact details.");
                           return;
                         }
 
-                        toast.success("Conversation opened", {
-                          id: "openConversation",
-                        });
-
-                        router.push(
-                          `/trader/inbox?conversationId=${conversationId}&customerId=${selectedJob.customer.id}&jobId=${selectedJob.id}`
-                        );
-                      } catch (error: any) {
-                        console.error("Failed to open customer conversation:", error);
-
-                        toast.error(
-                          error?.response?.data?.message ||
-                          error?.message ||
-                          "Failed to open conversation.",
-                          {
+                        try {
+                          toast.loading("Opening conversation...", {
                             id: "openConversation",
-                          }
-                        );
-                      }
-                    }}
-                    className="w-full h-[48px] rounded-xl bg-white border border-[#E5E5E5] hover:bg-gray-50 text-[#1C2C1C] text-[14px] font-bold flex items-center justify-center gap-2 transition-colors shadow-sm cursor-pointer"
-                  >
-                    <MessageCircle size={16} />
-                    Contact Customer
-                  </button>
-                </div>
+                          });
 
-              </div>
-            ) : (
-              <div className="bg-white rounded-[24px] p-8 text-center text-gray-500 border border-gray-100 flex items-center justify-center h-[300px]">
-                Select a job to view details
-              </div>
-            )}
+                          const res = await authApi.getOrCreateConversation(
+                            selectedJob.customer.id,
+                            selectedJob.id
+                          );
+
+                          const conversation = res?.data || res;
+
+                          const conversationId =
+                            conversation?.id || conversation?._id;
+
+                          if (!conversationId) {
+                            toast.error("Failed to create conversation.", {
+                              id: "openConversation",
+                            });
+                            return;
+                          }
+
+                          toast.success("Conversation opened", {
+                            id: "openConversation",
+                          });
+
+                          router.push(
+                            `/trader/inbox?conversationId=${conversationId}&customerId=${selectedJob.customer.id}&jobId=${selectedJob.id}`
+                          );
+                        } catch (error: any) {
+                          console.error("Failed to open customer conversation:", error);
+
+                          toast.error(
+                            error?.response?.data?.message ||
+                            error?.message ||
+                            "Failed to open conversation.",
+                            {
+                              id: "openConversation",
+                            }
+                          );
+                        }
+                      }}
+                      className="w-full h-[48px] rounded-xl bg-white border border-[#E5E5E5] hover:bg-gray-50 text-[#1C2C1C] text-[14px] font-bold flex items-center justify-center gap-2 transition-colors shadow-sm cursor-pointer"
+                    >
+                      <MessageCircle size={16} />
+                      Contact Customer
+                    </button>
+                  </div>
+
+                </div>
+              ) : (
+                <div className="bg-white rounded-[24px] p-8 text-center text-gray-500 border border-gray-100 flex items-center justify-center h-[300px]">
+                  Select a job to view details
+                </div>
+              ))}
 
           </div>
         </div>
@@ -881,23 +1067,26 @@ export default function JobsLeads() {
                 </div>
               </div>
 
-              {/* Estimated Days */}
+              {/* Availability */}
               <div>
                 <label className="block text-[12px] font-semibold text-[#1C2C1C] mb-1.5">
-                  Estimated Days
+                  Availability
                 </label>
                 <div className="relative">
-                  <Clock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="number"
-                    step="0.5"
-                    min={0.5}
+                  <select
                     required
-                    placeholder="e.g. 0.5 or 3"
-                    value={quoteForm.estimatedDays}
-                    onChange={(e) => setQuoteForm((f) => ({ ...f, estimatedDays: e.target.value }))}
-                    className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] placeholder:text-gray-400 focus:outline-none focus:border-[#8BC34A] focus:ring-2 focus:ring-[#8BC34A]/20 transition-all"
-                  />
+                    value={quoteForm.availability}
+                    onChange={(e) => setQuoteForm((f) => ({ ...f, availability: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] bg-white focus:outline-none focus:border-[#8BC34A] focus:ring-2 focus:ring-[#8BC34A]/20 transition-all appearance-none cursor-pointer"
+                  >
+                    <option value="" disabled>Select your availability</option>
+                    <option value="Can start immediately">Can start immediately</option>
+                    <option value="Within 24 hours">Within 24 hours</option>
+                    <option value="Within 3 days">Within 3 days</option>
+                    <option value="Within 7 days">Within 7 days</option>
+                    <option value="7days +">7days +</option>
+                  </select>
+                  <ChevronDown size={15} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 </div>
               </div>
 
@@ -1173,6 +1362,122 @@ export default function JobsLeads() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Customer Profile Modal ─────────────────────────── */}
+      {isCustomerProfileModalOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          style={{ backgroundColor: "rgba(0,0,0,0.5)" }}
+          onClick={() => setIsCustomerProfileModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-[24px] w-full max-w-[520px] max-h-[90vh] overflow-y-auto shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between px-6 py-5 border-b border-gray-100">
+              <h2 className="text-[18px] font-extrabold text-[#1C2C1C]">Customer Profile</h2>
+              <button
+                onClick={() => setIsCustomerProfileModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center hover:bg-gray-200 transition-colors"
+              >
+                <X size={16} className="text-gray-600" />
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div className="p-6">
+              {isLoadingCustomerProfile ? (
+                <div className="flex flex-col items-center justify-center py-16 gap-3">
+                  <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[#6E9625]" />
+                  <p className="text-[13px] text-gray-500">Loading customer profile...</p>
+                </div>
+              ) : customerProfileData ? (
+                <div className="flex flex-col gap-6">
+
+                  {/* Avatar + Name */}
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-full bg-gray-200 overflow-hidden flex items-center justify-center font-bold text-gray-600 text-xl flex-shrink-0">
+                      {customerProfileData.profileImage ? (
+                        <img
+                          src={getImageUrl(customerProfileData.profileImage)}
+                          alt={customerProfileData.fullName || "Customer"}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <User size={28} className="text-gray-400" />
+                      )}
+                    </div>
+                    <div>
+                      <h3 className="text-[20px] font-extrabold text-[#1C2C1C] leading-tight">
+                        {customerProfileData.fullName || "Customer"}
+                      </h3>
+                      <p className="text-[13px] text-gray-500 mt-0.5">
+                        Member since{" "}
+                        {customerProfileData.createdAt
+                          ? new Date(customerProfileData.createdAt).toLocaleDateString("en-GB", { month: "long", year: "numeric" })
+                          : "N/A"}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Contact Info & Stats */}
+                  <div className="bg-[#F8F9F5] rounded-2xl p-4 flex flex-col gap-3">
+                    <h4 className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Details</h4>
+
+                    {customerProfileData.email && (
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center flex-shrink-0">
+                          <Mail size={14} className="text-[#6E9625]" />
+                        </div>
+                        <span className="text-[13px] font-semibold text-[#1C2C1C]">{customerProfileData.email}</span>
+                      </div>
+                    )}
+
+                    {customerProfileData.phone && (
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center flex-shrink-0">
+                          <Phone size={14} className="text-[#6E9625]" />
+                        </div>
+                        <span className="text-[13px] font-semibold text-[#1C2C1C]">
+                          {customerProfileData.phone}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-3 mt-2 border-t border-gray-200 pt-3">
+                      <div className="w-8 h-8 rounded-full bg-[#EAF3DE] flex items-center justify-center flex-shrink-0">
+                        <Briefcase size={16} className="text-[#6E9625]" />
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[14px] font-black text-[#1C2C1C] leading-none">
+                          {customerProfileData.totalJobsPosted ?? 0}
+                        </span>
+                        <span className="text-[10px] text-gray-500 font-medium">Total Jobs Posted</span>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500 text-[13px]">
+                  No customer profile data available.
+                </div>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="px-6 py-4 border-t border-gray-100">
+              <button
+                onClick={() => setIsCustomerProfileModalOpen(false)}
+                className="w-full h-[44px] bg-[#1C2C1C] text-white rounded-xl text-[14px] font-bold hover:bg-[#2A412A] transition-colors"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

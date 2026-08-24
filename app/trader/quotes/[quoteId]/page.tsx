@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { authApi } from "@/app/api/authApi";
 import { ArrowLeft, FileText, Paperclip } from "lucide-react";
 import toast from "react-hot-toast";
+import { useSocket } from "@/hooks/useSocket";
 
 interface QuoteDetail {
   id: string;
@@ -28,6 +29,18 @@ export default function TraderQuoteDetailPage() {
 
   const [quote, setQuote] = useState<QuoteDetail | null>(null);
   const [loading, setLoading] = useState(true);
+
+  useSocket({
+    onQuoteUpdated: (updated) => {
+      if (!updated) return;
+      setQuote((prev) => {
+        if (prev && (prev.id === updated.id || prev.job?.id === updated.jobId || prev.job?.id === updated.job?.id)) {
+          return { ...prev, ...updated };
+        }
+        return prev;
+      });
+    },
+  });
 
   useEffect(() => {
     const fetchQuote = async () => {

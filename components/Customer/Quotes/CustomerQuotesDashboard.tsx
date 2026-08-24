@@ -16,6 +16,7 @@ import {
   Filter,
   RefreshCw,
 } from "lucide-react";
+import { useSocket } from "@/hooks/useSocket";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -257,6 +258,20 @@ export default function CustomerQuotesDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("All");
+
+  useSocket({
+    onNewQuote: (newQuote) => {
+      setQuotes((prev) => {
+        if (prev.some((q) => q.id === newQuote.id)) return prev;
+        return [newQuote, ...prev];
+      });
+    },
+    onQuoteUpdated: (updatedQuote) => {
+      setQuotes((prev) =>
+        prev.map((q) => (q.id === updatedQuote.id ? { ...q, ...updatedQuote } : q))
+      );
+    },
+  });
 
   const fetchQuotes = async () => {
     setLoading(true);
