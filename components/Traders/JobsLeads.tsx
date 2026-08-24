@@ -126,8 +126,8 @@ export default function JobsLeads() {
     timeAgo: formatTimeAgo(item.createdAt),
     postedDate: formatPostedDate(item.createdAt),
     description: item.description || "",
-    timescale: item.timescale ? item.timescale.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) : "Flexible",
-    budgetRange: item.budgetRange ? item.budgetRange.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) : "Under €500",
+    timescale: item.timescale ? item.timescale.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase()) : "Flexible",
+    budgetRange: item.budgetRange ? item.budgetRange.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase()) : "Under €500",
     hasQuoted: Boolean(
       item.hasQuoted ||
       item.isQuoted ||
@@ -1280,13 +1280,13 @@ export default function JobsLeads() {
                 <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
                   <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Budget</span>
                   <span className="text-[13px] font-bold text-[#1C2C1C]">
-                    {fullJobData.budgetRange?.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) || "—"}
+                    {fullJobData.budgetRange?.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase()) || "—"}
                   </span>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
                   <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Timescale</span>
                   <span className="text-[13px] font-bold text-[#1C2C1C]">
-                    {fullJobData.timescale?.replace(/_/g, " ").replace(/\b\w/g, (c: string) => c.toUpperCase()) || "—"}
+                    {fullJobData.timescale?.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase()) || "—"}
                   </span>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
