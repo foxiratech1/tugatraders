@@ -229,6 +229,29 @@ export default function ChatWindow({
 
   const [loadingComplete, setLoadingComplete] = useState(false);
   const [loadingClose, setLoadingClose] = useState(false);
+  const [loadingStartJob, setLoadingStartJob] = useState(false);
+
+  // Job Start Action
+  const handleStartJob = async () => {
+    if (!activeJobId) {
+      toast.error("No job is linked to this conversation", { id: "job-action-error" });
+      return;
+    }
+
+    try {
+      setLoadingStartJob(true);
+      await authApi.startJob(activeJobId);
+      setJobStatus("IN_PROGRESS");
+      toast.success("Job started successfully!", { id: "job-action-success" });
+      if (onRefreshConversations) onRefreshConversations();
+    } catch (error: any) {
+      console.error("Failed to start job:", error);
+      const errMsg = getErrorMessage(error, "Failed to start job");
+      toast.error(errMsg, { id: "job-action-error" });
+    } finally {
+      setLoadingStartJob(false);
+    }
+  };
 
   // Job Completion Action
   const handleJobComplete = async () => {
@@ -380,11 +403,11 @@ export default function ChatWindow({
                   <span className="px-4 py-1.5 bg-gray-100 text-gray-500 border border-gray-200 rounded-xl text-[12px] font-bold flex items-center gap-1">
                     Job Closed
                   </span>
-                ) : (
+                ) : jobStatus === "IN_PROGRESS" ? (
                   <>
                     <button
                       onClick={handleJobComplete}
-                      disabled={loadingComplete || loadingClose}
+                      disabled={loadingComplete || loadingClose || loadingStartJob}
                       className="px-4 py-1.5 bg-[#6E9625] hover:bg-[#5C7F1F] text-white rounded-xl text-[12px] font-bold transition-all shadow-xs flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <CheckCircle size={14} />
@@ -393,13 +416,21 @@ export default function ChatWindow({
 
                     <button
                       onClick={handleJobClose}
-                      disabled={loadingComplete || loadingClose}
+                      disabled={loadingComplete || loadingClose || loadingStartJob}
                       className="px-4 py-1.5 bg-[#1C2C1C] hover:bg-[#2C422C] text-white rounded-xl text-[12px] font-bold transition-all shadow-xs flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {loadingClose ? "Closing..." : "Close Job"}
                     </button>
                   </>
-                )}
+                ) : jobStatus === "CONTRACTED" ? (
+                  <button
+                    onClick={handleStartJob}
+                    disabled={loadingStartJob}
+                    className="px-4 py-1.5 bg-[#6E9625] hover:bg-[#5C7F1F] text-white rounded-xl text-[12px] font-bold transition-all shadow-xs flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {loadingStartJob ? "Starting..." : "Start Job"}
+                  </button>
+                ) : null}
               </>
             )}
           </div>
