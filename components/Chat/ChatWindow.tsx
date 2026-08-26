@@ -105,7 +105,7 @@ export default function ChatWindow({
   const [submittingReport, setSubmittingReport] = useState(false);
   const [isReported, setIsReported] = useState(false);
 
-  const [jobStatus, setJobStatus] = useState<string>(job?.status || "CONTRACTED");
+  const [jobStatus, setJobStatus] = useState<string | null>(job?.status || null);
 
   useEffect(() => {
     console.log("Conversation", conversation);
@@ -131,12 +131,41 @@ export default function ChatWindow({
 
   useEffect(() => {
     loadMessageHistory();
-    // Reset typing status on conversation change
     setIsPartnerTyping(false);
+  }, [conversationId]);
+
+  // Sync job status when conversation/job prop changes
+  useEffect(() => {
     if (job?.status) {
       setJobStatus(job.status);
+    } else if (!job && !conversation.jobId && !fallbackJobId) {
+      // No job linked at all — clear any stale status
+      setJobStatus(null);
     }
-  }, [conversationId, job]);
+  }, [job?.status, job, conversation.jobId, fallbackJobId]);
+
+  // When activeJobId exists but jobStatus is not populated in the conversation object,
+  // fetch the real job status directly from the API
+  useEffect(() => {
+    if (!activeJobId) return;
+    // Only fetch if status is still unknown (null)
+    if (jobStatus !== null) return;
+
+    const fetchJobStatus = async () => {
+      try {
+        const res = await authApi.getCustomerJobById(activeJobId);
+        const jobData = res?.data || res;
+        if (jobData?.status) {
+          setJobStatus(jobData.status);
+        }
+      } catch (err) {
+        // Silently fail — status buttons will default to "Start Job"
+        console.warn("Could not fetch job status for conversation:", err);
+      }
+    };
+
+    fetchJobStatus();
+  }, [activeJobId]);
 
   // Connect to socket and hook up listeners
   const {
@@ -343,86 +372,108 @@ export default function ChatWindow({
     <>
       <div className="flex-1 flex overflow-hidden bg-white rounded-3xl border border-gray-100 shadow-sm min-h-[75vh]">
         {/* Central Chat Panel */}
-      <div className="flex-1 flex flex-col min-w-0 border-r border-gray-50">
-        {/* Chat Header */}
-        <div className="p-4 bg-white border-b border-gray-100 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-3">
-            {/* Avatar */}
-            <div className="relative w-11 h-11 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-800 font-bold overflow-hidden flex-shrink-0">
-              {(() => {
-                const imgPath = partner?.profileImage || (partner as any)?.avatar || (partner as any)?.logo || (partner as any)?.traderProfile?.logo || (partner as any)?.traderProfile?.profileImage || (partner as any)?.traderProfile?.document || null;
-                const finalImgUrl = getImageUrl(imgPath);
-                return finalImgUrl ? (
-                  <img
-                    src={finalImgUrl}
-                    alt={partner?.fullName || "User"}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  partner?.fullName?.charAt(0) || "U"
-                );
-              })()}
-              {/* Online Dot overlay */}
-              {/* <span
+        <div className="flex-1 flex flex-col min-w-0 border-r border-gray-50">
+          {/* Chat Header */}
+          <div className="p-4 bg-white border-b border-gray-100 flex items-center justify-between flex-shrink-0">
+            <div className="flex items-center gap-3">
+              {/* Avatar */}
+              <div className="relative w-11 h-11 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-800 font-bold overflow-hidden flex-shrink-0">
+                {(() => {
+                  const imgPath = partner?.profileImage || (partner as any)?.avatar || (partner as any)?.logo || (partner as any)?.traderProfile?.logo || (partner as any)?.traderProfile?.profileImage || (partner as any)?.traderProfile?.document || null;
+                  const finalImgUrl = getImageUrl(imgPath);
+                  return finalImgUrl ? (
+                    <img
+                      src={finalImgUrl}
+                      alt={partner?.fullName || "User"}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    partner?.fullName?.charAt(0) || "U"
+                  );
+                })()}
+                {/* Online Dot overlay */}
+                {/* <span
                 className={`absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-white ${isPartnerOnline ? "bg-[#4CAF50]" : "bg-gray-300"
                   }`}
               /> */}
-            </div>
-            <div>
-              <h3 className="text-[15px] font-bold text-[#1C2C1C]">{partner?.fullName}</h3>
-              {/* <p className="text-[11px] text-gray-400 flex items-center gap-1">
+              </div>
+              <div>
+                <h3 className="text-[15px] font-bold text-[#1C2C1C]">{partner?.fullName}</h3>
+                {/* <p className="text-[11px] text-gray-400 flex items-center gap-1">
                 <span className={`w-1.5 h-1.5 rounded-full ${isPartnerOnline ? "bg-[#4CAF50]" : "bg-gray-300"}`} />
                 {isPartnerOnline ? "Online" : "Offline"}
               </p> */}
+              </div>
             </div>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowReportModal(true)}
-              disabled={isReported}
-              className={`px-3.5 py-1.5 rounded-xl text-[12px] font-bold border transition-all flex items-center gap-1 ${isReported
-                ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
-                : "text-red-500 border-red-200 hover:bg-red-50"
-                }`}
-            >
-              <AlertTriangle size={14} />
-              {isReported ? "Reported" : "Report"}
-            </button>
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setShowReportModal(true)}
+                disabled={isReported}
+                className={`px-3.5 py-1.5 rounded-xl text-[12px] font-bold border transition-all flex items-center gap-1 ${isReported
+                  ? "bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed"
+                  : "text-red-500 border-red-200 hover:bg-red-50"
+                  }`}
+              >
+                <AlertTriangle size={14} />
+                {isReported ? "Reported" : "Report"}
+              </button>
 
-            {/* Customer Job Actions when linked to a job */}
-            {!isTraderView && activeJobId && (
-              <>
-                {jobStatus === "COMPLETED" ? (
-                  <span className="px-4 py-1.5 bg-[#6E9625] text-white rounded-xl text-[12px] font-bold flex items-center gap-1.5 shadow-xs">
-                    <CheckCircle size={14} />
-                    JOB COMPLETE
-                  </span>
-                ) : jobStatus === "CANCELLED" || jobStatus === "CLOSED" ? (
-                  <span className="px-4 py-1.5 bg-gray-100 text-gray-500 border border-gray-200 rounded-xl text-[12px] font-bold flex items-center gap-1">
-                    Job Closed
-                  </span>
-                ) : jobStatus === "IN_PROGRESS" ? (
-                  <>
-                    <button
-                      onClick={handleJobComplete}
-                      disabled={loadingComplete || loadingClose || loadingStartJob}
-                      className="px-4 py-1.5 bg-[#6E9625] hover:bg-[#5C7F1F] text-white rounded-xl text-[12px] font-bold transition-all shadow-xs flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
+              {/* Job Actions — only shown when a job is linked to this conversation */}
+              {(() => {
+                // 🔒 No job linked → no buttons at all
+                if (!activeJobId) return null;
+
+                const status = jobStatus?.toUpperCase();
+                const isInProgress = status === "IN_PROGRESS";
+                const isCompleted = status === "COMPLETED";
+                const isClosed = status === "CANCELLED" || status === "CLOSED";
+
+                // Terminal states — show static badge
+                if (isCompleted) {
+                  return (
+                    <span className="px-4 py-1.5 bg-[#6E9625] text-white rounded-xl text-[12px] font-bold flex items-center gap-1.5 shadow-xs">
                       <CheckCircle size={14} />
-                      {loadingComplete ? "Completing..." : "Job Complete"}
-                    </button>
+                      JOB COMPLETE
+                    </span>
+                  );
+                }
 
-                    <button
-                      onClick={handleJobClose}
-                      disabled={loadingComplete || loadingClose || loadingStartJob}
-                      className="px-4 py-1.5 bg-[#1C2C1C] hover:bg-[#2C422C] text-white rounded-xl text-[12px] font-bold transition-all shadow-xs flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {loadingClose ? "Closing..." : "Close Job"}
-                    </button>
-                  </>
-                ) : jobStatus === "CONTRACTED" ? (
+                if (isClosed) {
+                  return (
+                    <span className="px-4 py-1.5 bg-gray-100 text-gray-500 border border-gray-200 rounded-xl text-[12px] font-bold flex items-center gap-1">
+                      Job Closed
+                    </span>
+                  );
+                }
+
+                // Active job — show Complete + Close Job
+                if (isInProgress) {
+                  return (
+                    <>
+                      <button
+                        onClick={handleJobComplete}
+                        disabled={loadingComplete || loadingClose || loadingStartJob}
+                        className="px-4 py-1.5 bg-[#6E9625] hover:bg-[#5C7F1F] text-white rounded-xl text-[12px] font-bold transition-all shadow-xs flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <CheckCircle size={14} />
+                        {loadingComplete ? "Completing..." : "Job Complete"}
+                      </button>
+
+                      <button
+                        onClick={handleJobClose}
+                        disabled={loadingComplete || loadingClose || loadingStartJob}
+                        className="px-4 py-1.5 bg-[#1C2C1C] hover:bg-[#2C422C] text-white rounded-xl text-[12px] font-bold transition-all shadow-xs flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {loadingClose ? "Closing..." : "Close Job"}
+                      </button>
+                    </>
+                  );
+                }
+
+                // Job linked but not yet started (PENDING / CONTRACTED / ASSIGNED / null)
+                return (
                   <button
                     onClick={handleStartJob}
                     disabled={loadingStartJob}
@@ -430,119 +481,118 @@ export default function ChatWindow({
                   >
                     {loadingStartJob ? "Starting..." : "Start Job"}
                   </button>
-                ) : null}
-              </>
-            )}
+                );
+              })()}
+            </div>
           </div>
-        </div>
 
-        {/* Message feed */}
-        {loadingMessages ? (
-          <div className="flex-1 flex items-center justify-center py-10 bg-[#F9FAFB]">
-            <p className="text-[13px] text-gray-400 animate-pulse">Loading message history...</p>
-          </div>
-        ) : (
-          <MessageList
-            messages={messages}
-            currentUserId={currentUserId}
-            isTyping={isPartnerTyping}
-            traderName={partner?.fullName}
+          {/* Message feed */}
+          {loadingMessages ? (
+            <div className="flex-1 flex items-center justify-center py-10 bg-[#F9FAFB]">
+              <p className="text-[13px] text-gray-400 animate-pulse">Loading message history...</p>
+            </div>
+          ) : (
+            <MessageList
+              messages={messages}
+              currentUserId={currentUserId}
+              isTyping={isPartnerTyping}
+              traderName={partner?.fullName}
+            />
+          )}
+
+          {/* Input Bar */}
+          <ChatInput
+            onSendMessage={handleSendMessage}
+            onTyping={() => emitSocketTyping(conversationId)}
+            onStopTyping={() => emitSocketStopTyping(conversationId)}
           />
-        )}
-
-        {/* Input Bar */}
-        <ChatInput
-          onSendMessage={handleSendMessage}
-          onTyping={() => emitSocketTyping(conversationId)}
-          onStopTyping={() => emitSocketStopTyping(conversationId)}
-        />
-      </div>
-
-    </div>
-
-      {/* Report Modal */ }
-  {
-    showReportModal && (
-      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
-        <div className="bg-white rounded-3xl border border-gray-150 p-6 max-w-md w-full shadow-xl">
-          <h3 className="text-[18px] font-bold text-[#1C2C1C] mb-4 flex items-center gap-2">
-            <AlertTriangle className="text-red-500" />
-            Report {isTraderView ? "Customer" : "Trader"}
-          </h3>
-
-          <form onSubmit={handleReportSubmit}>
-            <div className="mb-4">
-              <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">Report Type</label>
-              <select
-                value={reportType}
-                onChange={(e) => setReportType(e.target.value)}
-                className="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl px-4 py-2.5 text-[13px] text-[#1C2C1C] outline-none focus:border-[#6E9625]"
-              >
-                <option value="USER">User</option>
-                <option value="REVIEW">Review</option>
-                <option value="JOB">Job</option>
-                <option value="MESSAGE">Message</option>
-                <option value="TRADER_PROFILE">Trader Profile</option>
-              </select>
-            </div>
-
-            <div className="mb-5">
-              <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">
-                Report Reason
-              </label>
-
-              <select
-                value={reportReason}
-                onChange={(e) => setReportReason(e.target.value)}
-                className="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl px-4 py-2.5"
-              >
-                <option value="SPAM">Spam</option>
-                <option value="FAKE">Fake</option>
-                <option value="ABUSIVE">Abusive</option>
-                <option value="HARASSMENT">Harassment</option>
-                <option value="INAPPROPRIATE_CONTENT">
-                  Inappropriate Content
-                </option>
-                <option value="SCAM">Scam</option>
-                <option value="OTHER">Other</option>
-              </select>
-              {reportReason === "OTHER" && (
-                <textarea
-                  value={customReason}
-                  onChange={(e) => setCustomReason(e.target.value)}
-                  placeholder="Enter your reason..."
-                  rows={4}
-                  className="w-full mt-3 bg-[#F9FAFB] border border-gray-200 rounded-xl px-4 py-3"
-                />
-              )}
-            </div>
-
-            <div className="flex items-center justify-end gap-3.5">
-              <button
-                type="button"
-                onClick={() => {
-                  setShowReportModal(false);
-                  setReportReason("");
-                }}
-                className="px-4 py-2 border border-gray-200 hover:bg-gray-50 text-gray-500 rounded-xl text-[12px] font-semibold transition-colors"
-                disabled={submittingReport}
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                className="px-5 py-2 bg-red-600 text-white hover:bg-red-700 rounded-xl text-[12px] font-bold transition-all shadow-sm"
-                disabled={submittingReport}
-              >
-                {submittingReport ? "Submitting..." : "Submit Report"}
-              </button>
-            </div>
-          </form>
         </div>
+
       </div>
-    )
-  }
+
+      {/* Report Modal */}
+      {
+        showReportModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
+            <div className="bg-white rounded-3xl border border-gray-150 p-6 max-w-md w-full shadow-xl">
+              <h3 className="text-[18px] font-bold text-[#1C2C1C] mb-4 flex items-center gap-2">
+                <AlertTriangle className="text-red-500" />
+                Report {isTraderView ? "Customer" : "Trader"}
+              </h3>
+
+              <form onSubmit={handleReportSubmit}>
+                <div className="mb-4">
+                  <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">Report Type</label>
+                  <select
+                    value={reportType}
+                    onChange={(e) => setReportType(e.target.value)}
+                    className="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl px-4 py-2.5 text-[13px] text-[#1C2C1C] outline-none focus:border-[#6E9625]"
+                  >
+                    <option value="USER">User</option>
+                    <option value="REVIEW">Review</option>
+                    <option value="JOB">Job</option>
+                    <option value="MESSAGE">Message</option>
+                    <option value="TRADER_PROFILE">Trader Profile</option>
+                  </select>
+                </div>
+
+                <div className="mb-5">
+                  <label className="block text-[12px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                    Report Reason
+                  </label>
+
+                  <select
+                    value={reportReason}
+                    onChange={(e) => setReportReason(e.target.value)}
+                    className="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl px-4 py-2.5"
+                  >
+                    <option value="SPAM">Spam</option>
+                    <option value="FAKE">Fake</option>
+                    <option value="ABUSIVE">Abusive</option>
+                    <option value="HARASSMENT">Harassment</option>
+                    <option value="INAPPROPRIATE_CONTENT">
+                      Inappropriate Content
+                    </option>
+                    <option value="SCAM">Scam</option>
+                    <option value="OTHER">Other</option>
+                  </select>
+                  {reportReason === "OTHER" && (
+                    <textarea
+                      value={customReason}
+                      onChange={(e) => setCustomReason(e.target.value)}
+                      placeholder="Enter your reason..."
+                      rows={4}
+                      className="w-full mt-3 bg-[#F9FAFB] border border-gray-200 rounded-xl px-4 py-3"
+                    />
+                  )}
+                </div>
+
+                <div className="flex items-center justify-end gap-3.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowReportModal(false);
+                      setReportReason("");
+                    }}
+                    className="px-4 py-2 border border-gray-200 hover:bg-gray-50 text-gray-500 rounded-xl text-[12px] font-semibold transition-colors"
+                    disabled={submittingReport}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="px-5 py-2 bg-red-600 text-white hover:bg-red-700 rounded-xl text-[12px] font-bold transition-all shadow-sm"
+                    disabled={submittingReport}
+                  >
+                    {submittingReport ? "Submitting..." : "Submit Report"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )
+      }
     </>
-   
+
   );
 }

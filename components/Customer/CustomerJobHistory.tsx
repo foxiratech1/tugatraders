@@ -99,6 +99,10 @@ interface Job {
   category?: Category;
   skillService?: SkillService;
   subCategory?: SubCategory;
+  // Arrays returned by the API (multi-select support)
+  categories?: Category[];
+  skillServices?: SkillService[];
+  subCategories?: SubCategory[];
   selectedTrader?: SelectedTrader;
 }
 
@@ -278,26 +282,56 @@ function ExpandedDetail({
                 </div>
               </div>
 
-              {/* Tags */}
-              {(job.category || job.skillService || job.subCategory) && (
-                <div className="flex flex-wrap gap-1.5">
-                  {job.category && (
-                    <span className="px-2.5 py-1 rounded-full bg-[#EDF3E1] text-[#4A6B0A] text-[11px] font-medium">
-                      {job.category.name}
-                    </span>
-                  )}
-                  {job.skillService && (
-                    <span className="px-2.5 py-1 rounded-full bg-[#EDF3E1] text-[#4A6B0A] text-[11px] font-medium">
-                      {job.skillService.name}
-                    </span>
-                  )}
-                  {job.subCategory && (
-                    <span className="px-2.5 py-1 rounded-full bg-[#EDF3E1] text-[#4A6B0A] text-[11px] font-medium">
-                      {job.subCategory.name}
-                    </span>
-                  )}
-                </div>
-              )}
+              {/* Tags — show all categories, skill services & sub-categories */}
+              {(() => {
+                const cats = (job as any).categories?.length
+                  ? (job as any).categories
+                  : job.category ? [job.category] : [];
+                const skills = (job as any).skillServices?.length
+                  ? (job as any).skillServices
+                  : job.skillService ? [job.skillService] : [];
+                const subs = (job as any).subCategories?.length
+                  ? (job as any).subCategories
+                  : job.subCategory ? [job.subCategory] : [];
+
+                const hasAny = cats.length > 0 || skills.length > 0 || subs.length > 0;
+                if (!hasAny) return null;
+
+                return (
+                  <div className="space-y-2">
+                    {cats.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider w-full">Categories</span>
+                        {cats.map((c: Category) => (
+                          <span key={c.id} className="px-2.5 py-1 rounded-full bg-[#EDF3E1] text-[#4A6B0A] text-[11px] font-medium">
+                            {c.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {skills.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider w-full">Service Types</span>
+                        {skills.map((s: SkillService) => (
+                          <span key={s.id} className="px-2.5 py-1 rounded-full bg-[#E8F0FF] text-[#1D4ED8] text-[11px] font-medium">
+                            {s.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                    {subs.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider w-full">Sub-Categories</span>
+                        {subs.map((sc: SubCategory) => (
+                          <span key={sc.id} className="px-2.5 py-1 rounded-full bg-[#FFF3E0] text-[#C05621] text-[11px] font-medium">
+                            {sc.name}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Assigned Trader */}
               {job.selectedTrader && (
@@ -718,16 +752,26 @@ export default function CustomerJobHistory() {
                           </div>
                         </td>
 
-                        {/* Category */}
+                        {/* Category — show all from categories array */}
                         <td className="px-4 py-4">
-                          {job.category ? (
-                            <span className="inline-flex items-center gap-1.5 text-[12px] text-gray-600">
-                              <Briefcase size={12} className="text-gray-400 flex-shrink-0" />
-                              {job.category.name}
-                            </span>
-                          ) : (
-                            <span className="text-[12px] text-gray-300">—</span>
-                          )}
+                          {(() => {
+                            const cats = (job as any).categories?.length
+                              ? (job as any).categories
+                              : job.category ? [job.category] : [];
+                            if (cats.length === 0) {
+                              return <span className="text-[12px] text-gray-300">—</span>;
+                            }
+                            return (
+                              <div className="flex flex-col gap-1">
+                                {cats.map((c: Category) => (
+                                  <span key={c.id} className="inline-flex items-center gap-1.5 text-[12px] text-gray-600">
+                                    <Briefcase size={12} className="text-gray-400 flex-shrink-0" />
+                                    {c.name}
+                                  </span>
+                                ))}
+                              </div>
+                            );
+                          })()}
                         </td>
 
                         {/* Quotes */}

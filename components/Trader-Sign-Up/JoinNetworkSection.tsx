@@ -51,7 +51,7 @@ const JoinNetworkSection = () => {
       <div className="max-w-[1100px] mx-auto">
         {/* Heading */}
         <div className="text-center mb-12">
-          <h2 className="text-[32px] md:text-[38px] font-bold text-[#0A2619] leading-[1.3]">
+          <h2 className="text-[28px] sm:text-[32px] lg:text-[38px] font-bold text-[#0A2619] leading-[1.3]">
             Join a Professional Network Built for
             <br />
             <span className="text-[#6E9625] " style={{ fontFamily: "var(--font-bricolage), Georgia, serif" }}>
@@ -62,7 +62,7 @@ const JoinNetworkSection = () => {
         </div>
 
         {/* Three Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mb-16">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-16">
           {/* Card 1 — Expand Your Business Locally */}
           <div className="bg-[#FFFFFF] border border-[#E5E5E5] rounded-[16px] p-7 flex flex-col">
             <div className="w-10 h-10 rounded-[12px] bg-[#6FAE7C1A] flex items-center justify-center mb-6">
@@ -173,8 +173,8 @@ const JoinNetworkSection = () => {
         </div>
 
         {/* Benefits Section */}
-        <div className="bg-[#F5F7F3] rounded-2xl px-10 py-12 mb-14">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-20 gap-y-6">
+        <div className="bg-[#F5F7F3] rounded-2xl px-6 py-8 sm:px-10 sm:py-12 mb-14">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 lg:gap-x-20 gap-y-6">
             {/* Left column */}
             <div className="space-y-6">
               {benefitsLeft.map((item, index) => (
@@ -210,7 +210,7 @@ const JoinNetworkSection = () => {
         {/* CTA Button */}
         <div className="text-center">
           <Link href="/auth/trader-signup">
-            <button className="bg-[#B91C1C] hover:bg-[#991B1B] text-white font-bold text-[16px] px-12 py-4 rounded-lg transition-colors shadow-md cursor-pointer">
+            <button className="bg-[#B91C1C] hover:bg-[#991B1B] text-white font-bold text-[15px] sm:text-[16px] px-8 sm:px-12 py-3.5 sm:py-4 rounded-lg transition-colors shadow-md cursor-pointer w-full sm:w-auto">
               Get Started
             </button>
           </Link>

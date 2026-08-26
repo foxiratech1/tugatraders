@@ -51,7 +51,7 @@ const HowItWorksHero = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  
+
   const [errors, setErrors] = useState<{
     workRadius?: string;
     baseLocation?: string;
@@ -165,7 +165,7 @@ const HowItWorksHero = () => {
         contactNumber: formData.contactNumber,
         location: formData.baseLocation,
       };
-      
+
       const res = await traderRegister(payload);
 
       if (res) {
@@ -243,28 +243,28 @@ const HowItWorksHero = () => {
   return (
     <section className="bg-[#F7F9F6] pt-40 pb-20 px-6 lg:px-20 overflow-hidden min-h-screen">
       <div className="max-w-[1400px] mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 items-start lg:items-center">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-16 items-start xl:items-center">
 
           {/* Left Column - Content & Form */}
-          <div className="lg:col-span-7 flex flex-col gap-8">
+          <div className="xl:col-span-7 flex flex-col gap-8">
             <div className="flex items-center gap-2 bg-[#6FAE7C1A] border border-[#6FAE7C33] rounded-full px-4 py-1.5 w-fit">
               <span className="w-2 h-2 rounded-full bg-[#6E9625]" />
               <span className="text-[12px] font-bold text-[#6E9625] uppercase tracking-wider">Now in Portugal</span>
             </div>
 
-            <h1 className="text-[64px] lg:text-[60px] font-bold text-[#243A24] leading-[1.05] tracking-tight">
-              Built Specifically for <br />
+            <h1 className="text-[40px] sm:text-[48px] lg:text-[60px] font-bold text-[#243A24] leading-[1.05] tracking-tight">
+              Built Specifically for <br className="hidden sm:block" />
               Tradespeople in <span className="text-[#6E9625]">Portugal</span>
             </h1>
 
-            <p className="text-[20px] text-[#1F3D2B99]/60 font-medium leading-relaxed max-w-[650px]">
+            <p className="text-[16px] sm:text-[18px] lg:text-[20px] text-[#1F3D2B99]/60 font-medium leading-relaxed max-w-[650px]">
               Join the fastest-growing network of professional trades in Portugal.
               Connect with local homeowners and grow your business today.
             </p>
 
             {/* Form Card */}
             <div className="w-full max-w-[448px] bg-white rounded-[28px] p-7 sm:p-9 shadow-[0_12px_48px_rgba(36,58,36,0.07)] border border-[#243A240A] flex flex-col gap-[18px]">
-              
+
               <div>
                 <h2
                   className="text-[24px] sm:text-[26px] font-bold text-[#1C2C1C] tracking-tight leading-tight mb-1"
@@ -278,9 +278,9 @@ const HowItWorksHero = () => {
               </div>
 
               <form onSubmit={handleSubmit} className="flex flex-col gap-[14px]">
-                
+
                 {/* Work Radius & Location */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
                     <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">
                       Work Radius (KM)
@@ -348,7 +348,7 @@ const HowItWorksHero = () => {
                 </div>
 
                 {/* Password & Confirm Password */}
-                <div className="grid grid-cols-2 gap-3 relative">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 relative">
                   <div className="flex flex-col gap-1.5 relative">
                     <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">Password</label>
                     <input
@@ -448,13 +448,13 @@ const HowItWorksHero = () => {
           </div>
 
           {/* Right Column - Timeline */}
-          <div className="lg:col-span-5 relative pl-12 lg:pl-20 mt-12 lg:mt-0">
+          <div className="xl:col-span-5 relative mt-16 xl:mt-0 max-w-[448px] mx-auto xl:mx-0 xl:ml-12">
             {/* Connecting Line */}
-            <div className="absolute left-[47.5px] lg:left-[115.5px] top-4 bottom-4 w-[1px] bg-[#E5E5E5]" />
+            <div className="absolute left-[27px] top-4 bottom-4 w-[2px] bg-[#E5E5E5]" />
 
-            <div className="space-y-16 lg:space-y-24 relative">
+            <div className="space-y-12 xl:space-y-20 relative">
               {steps.map((step) => (
-                <div key={step.id} className="flex items-start gap-10 group">
+                <div key={step.id} className="flex items-start gap-6 xl:gap-10 group">
                   {/* Step Circle */}
                   <div className={`
                     relative z-10 w-14 h-14 rounded-full flex items-center justify-center font-bold text-[20px] transition-all duration-300

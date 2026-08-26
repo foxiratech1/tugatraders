@@ -5,7 +5,7 @@ import { UserPlus } from 'lucide-react';
 
 const SecureJobsBanner = () => {
   return (
-    <section className="relative w-full h-[240px] md:h-[260px] overflow-hidden">
+    <section className="relative w-full min-h-[240px] md:min-h-[260px] flex items-center overflow-hidden py-12 md:py-0">
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
         <Image
@@ -18,21 +18,21 @@ const SecureJobsBanner = () => {
       </div>
 
       {/* Content */}
-      <div className="relative z-10 h-full max-w-[1240px] mx-auto px-6 lg:px-14 flex flex-col md:flex-row items-center justify-between gap-4 py-6 md:py-0">
+      <div className="relative z-10 w-full max-w-[1240px] mx-auto px-6 lg:px-14 flex flex-col md:flex-row items-center justify-between gap-6 md:gap-4">
 
-        <div className="flex flex-col gap-2 text-center md:text-left max-w-[520px]">
-          <h2 className="text-[26px] md:text-[36px] font-bold text-white leading-[1.08]" style={{ fontFamily: "var(--font-bricolage)" }}>
+        <div className="flex flex-col gap-3 md:gap-2 text-center md:text-left max-w-[520px]">
+          <h2 className="text-[28px] sm:text-[32px] lg:text-[36px] font-bold text-white leading-[1.15] md:leading-[1.08]" style={{ fontFamily: "var(--font-bricolage)" }}>
             Secure The <span className="text-[#6E9625]">Right Jobs,</span> <br className="hidden md:block" />
             Effortlessly.
           </h2>
-          <p className="text-[13px] md:text-[15px] text-white/70 font-medium leading-relaxed">
+          <p className="text-[14px] md:text-[15px] text-white/70 font-medium leading-relaxed">
             TugaTrades connects you with clients actively looking for <br className="hidden lg:block" />
             your skills and ready to hire.
           </p>
         </div>
 
-        <Link href="/auth/trader-signup">
-          <button className="bg-[#C60C03] text-white px-6 py-3 rounded-[12px] font-bold text-[14px] flex items-center gap-2.5 transition-all hover:scale-[1.02] shadow-xl group cursor-pointer">
+        <Link href="/auth/trader-signup" className="w-full sm:w-auto mt-2 md:mt-0">
+          <button className="w-full sm:w-auto bg-[#C60C03] text-white px-6 py-3.5 sm:py-3 rounded-[12px] font-bold text-[15px] flex items-center justify-center gap-2.5 transition-all hover:scale-[1.02] shadow-xl group cursor-pointer">
             <UserPlus size={18} className="transition-transform group-hover:scale-110" />
             Join as a Tradesperson
           </button>

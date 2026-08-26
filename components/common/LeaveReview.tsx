@@ -38,6 +38,12 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
   const [traders, setTraders] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
+  // All services linked to this job (populated from job details API)
+  const [jobServices, setJobServices] = useState<{
+    categories: { id: string; name: string }[];
+    skillServices: { id: string; name: string }[];
+    subCategories: { id: string; name: string }[];
+  }>({ categories: [], skillServices: [], subCategories: [] });
 
   // Load initial state from sessionStorage or URL parameters
   useEffect(() => {
@@ -173,9 +179,16 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
           setSelectedTraderId(job.selectedTrader.id);
         }
 
-        // Pre-fill category from job's category
-        if (!selectedCategory && job.category?.id) {
-          setSelectedCategory(job.category.id);
+        // Pre-fill category from job's category / categories
+        const cats = job.categories?.length ? job.categories : (job.category ? [job.category] : []);
+        const skills = job.skillServices?.length ? job.skillServices : (job.skillService ? [job.skillService] : []);
+        const subs = job.subCategories?.length ? job.subCategories : (job.subCategory ? [job.subCategory] : []);
+
+        setJobServices({ categories: cats, skillServices: skills, subCategories: subs });
+
+        // Keep selectedCategory set for backward-compat payload (use first category id)
+        if (!selectedCategory && cats.length > 0) {
+          setSelectedCategory(cats[0].id);
         }
 
         // Pre-fill interaction source to Job Chat if not set
@@ -485,23 +498,36 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
               </div>
               <div>
                 <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-2">Services Used</label>
-                <div className="relative">
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full border border-gray-200 rounded-xl py-3 px-4 text-[14px] text-gray-700 outline-none focus:border-[#4CAF50] appearance-none"
-                  >
-                    <option value="">Select a service</option>
-                    {categories.map((cat: any) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.name}
-                      </option>
-                    ))}
-                  </select>
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
-                    <ChevronDown size={16} />
+                {/* Show job-linked services as read-only coloured pills */}
+                {jobServices.categories.length > 0 ? (
+                  <div className="border border-gray-200 rounded-xl px-4 py-3 bg-gray-50/50 space-y-2.5 min-h-[46px]">
+                    {jobServices.categories.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5">
+
+                        {jobServices.categories.map(c => (
+                          <span key={c.id} className="px-2.5 py-1 rounded-full bg-[#EDF3E1] text-[#4A6B0A] text-[11px] font-medium">{c.name}</span>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                </div>
+                ) : (
+                  /* Fallback: show general category dropdown if job has no services attached */
+                  <div className="relative">
+                    <select
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      className="w-full border border-gray-200 rounded-xl py-3 px-4 text-[14px] text-gray-700 outline-none focus:border-[#4CAF50] appearance-none"
+                    >
+                      <option value="">Select a service</option>
+                      {categories.map((cat: any) => (
+                        <option key={cat.id} value={cat.id}>{cat.name}</option>
+                      ))}
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                      <ChevronDown size={16} />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

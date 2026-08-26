@@ -12,7 +12,7 @@ const MissionSection = () => {
 
   return (
     <section className="bg-[#FAFAF9] pt-24 lg:pt-28 pb-16 lg:pb-20 px-4 sm:px-6 lg:px-20 overflow-hidden">
-      <div className="max-w-[1200px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-14 lg:gap-20 items-center">
+      <div className="max-w-[1200px] mx-auto w-full grid grid-cols-1 xl:grid-cols-2 gap-14 xl:gap-20 items-center">
 
         {/* LEFT CONTENT */}
         <div className="flex flex-col items-start">
@@ -55,7 +55,7 @@ const MissionSection = () => {
         </div>
 
         {/* RIGHT IMAGE SIDE */}
-        <div className="relative flex justify-center lg:justify-end">
+        <div className="relative flex justify-center xl:justify-end mt-4 xl:mt-0">
 
           {/* Main Image Wrapper */}
           <div className="relative w-full max-w-[420px] h-[450px] rounded-[26px] overflow-visible">
@@ -76,7 +76,7 @@ const MissionSection = () => {
 
             {/* Floating Quote Card */}
             <div
-              className="absolute top-[41px] -left-[78px] w-[270px] h-[170px] bg-[#FFFFFFB2]/60 rounded-[18px] p-4 z-20"
+              className="absolute top-4 -left-3 sm:-left-6 xl:top-[41px] xl:-left-[78px] w-[210px] sm:w-[240px] xl:w-[270px] h-auto xl:h-[170px] bg-[#FFFFFFB2]/60 rounded-[18px] p-3 xl:p-4 z-20"
               style={{
 
                 backdropFilter: 'blur(12px)',
@@ -86,13 +86,13 @@ const MissionSection = () => {
             >
 
               {/* Quote Icon */}
-              <div className="w-8 h-8 rounded-full bg-[#243A24] flex items-center justify-center mb-3">
-                <span className="text-white text-[22px] font-bold leading-none mt-1">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-[#243A24] flex items-center justify-center mb-2 sm:mb-3">
+                <span className="text-white text-[16px] sm:text-[22px] font-bold leading-none mt-1">
                   “
                 </span>
               </div>
 
-              <p className="text-[#243A24] text-[12px] leading-[1.65] font-medium">
+              <p className="text-[#243A24] text-[10px] sm:text-[11px] xl:text-[12px] leading-[1.65] font-medium">
                 Connecting you with skilled tradespeople
                 you can rely on - delivering every job with
                 expertise, quality, and transparency, while
@@ -103,7 +103,7 @@ const MissionSection = () => {
 
             {/* Why Choose Us Card */}
             <div
-              className="absolute bottom-[18px] left-[300px] w-[256px] h-[176px] bg-[#FFFFFFB2]/60 rounded-[18px] p-4 z-20 border-[#FFFFFF4D]/30"
+              className="absolute bottom-4 -right-3 sm:-right-6 left-auto xl:right-auto xl:bottom-[18px] xl:left-[300px] w-[170px] sm:w-[200px] xl:w-[256px] h-auto xl:h-[176px] bg-[#FFFFFFB2]/60 rounded-[18px] p-3 xl:p-4 z-20 border-[#FFFFFF4D]/30"
               style={{
 
                 backdropFilter: 'blur(14px)',
@@ -112,7 +112,7 @@ const MissionSection = () => {
               }}
             >
 
-              <h3 className="text-[14px] font-bold text-[#243A24] mb-4">
+              <h3 className="text-[12px] xl:text-[14px] font-bold text-[#243A24] mb-2 xl:mb-4">
                 Why Choose Us?
               </h3>
 
@@ -124,7 +124,7 @@ const MissionSection = () => {
                     <Check size={9} className="text-white stroke-[3]" />
                   </div>
 
-                  <span className="text-[12px] font-medium text-[#555555]">
+                  <span className="text-[10px] sm:text-[11px] xl:text-[12px] font-medium text-[#555555]">
                     Vetted Tradespeople
                   </span>
                 </div>
@@ -135,7 +135,7 @@ const MissionSection = () => {
                     <Check size={9} className="text-white stroke-[3]" />
                   </div>
 
-                  <span className="text-[12px] font-medium text-[#555555]">
+                  <span className="text-[10px] sm:text-[11px] xl:text-[12px] font-medium text-[#555555]">
                     Free Quotes
                   </span>
                 </div>
@@ -146,7 +146,7 @@ const MissionSection = () => {
                     <Check size={9} className="text-white stroke-[3]" />
                   </div>
 
-                  <span className="text-[12px] font-medium text-[#555555]">
+                  <span className="text-[10px] sm:text-[11px] xl:text-[12px] font-medium text-[#555555]">
                     Trusted Reviews
                   </span>
                 </div>

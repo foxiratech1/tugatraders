@@ -336,7 +336,7 @@ function QuotesModal({
                     </div>
                     <div>
                       <Link href={`/customer-dashboard/trader-profile/${quote.trader?.id}`}>
-                        <p className="text-[13px] font-bold text-[#1C2C1C] hover:underline cursor-pointer">{quote.trader?.fullName ?? "Unknown"}</p>
+                        <p className="text-[13px] font-bold text-[#1C2C1C] hover:underline cursor-pointer">{quote.trader?.traderProfile?.companyName || quote.trader?.fullName || "Unknown"}</p>
                       </Link>
                       <p className="text-[11px] text-gray-400">{quote.trader?.email}</p>
                     </div>
@@ -491,6 +491,8 @@ function TraderQuoteCard({
   onOpenChat,
   hasReviewed,
   onLeaveReview,
+  quote,
+  onDecline,
 }: {
   trader: SelectedTrader;
   isAssigned: boolean;
@@ -504,89 +506,199 @@ function TraderQuoteCard({
   onOpenChat?: (traderId: string) => void;
   hasReviewed?: boolean;
   onLeaveReview?: () => void;
+  quote?: Quote;
+  onDecline?: (quoteId: string) => void;
 }) {
+  const [accepting, setAccepting] = useState<boolean>(false);
+  const [declining, setDeclining] = useState<boolean>(false);
+
+  const formatPrice = (p?: string) =>
+    p ? (isNaN(Number(p)) ? p : `£${Number(p).toLocaleString()}`) : "—";
 
   return (
-    <div className="border border-gray-200 rounded-xl p-4 mb-3 last:mb-0">
-      <div className="flex items-start justify-between">
+    <div className="border border-gray-200 rounded-xl p-4 mb-3 last:mb-0 hover:border-[#8BC34A]/60 hover:shadow-sm transition-all bg-white">
+      {/* Header Row */}
+      <div className="flex items-start justify-between mb-4">
         <div className="flex items-start gap-3">
-
-          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="1.5">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
-              <polyline points="9 22 9 12 15 12 15 22" />
-            </svg>
+          <div className="w-11 h-11 rounded-full bg-[#7CB342] flex items-center justify-center text-white text-[16px] font-bold flex-shrink-0 mt-0.5">
+            {trader?.fullName?.[0]?.toUpperCase() ?? "T"}
           </div>
           <div>
             <Link href={`/customer-dashboard/trader-profile/${trader.id}`}>
-              <p className="text-[13px] font-bold text-[#1C2C1C] hover:underline cursor-pointer">
+              <p className="text-[14px] font-bold text-[#1C2C1C] hover:underline cursor-pointer">
                 {trader.traderProfile?.companyName || trader.fullName || 'Unknown Trader'}
               </p>
             </Link>
-            <div className="flex items-center gap-3 mt-0.5">
-              <span className="flex items-center gap-1 bg-[#FFF9E5] text-[#D97706] px-2 py-0.5 rounded-[6px] font-bold border border-[#FEF08A]/50 text-[11px]">
-                <Star size={10} fill="currentColor" /> {(trader.traderMetrics?.averageRating || 0).toFixed(1)}
-              </span>
-              <span className="text-gray-400 text-[11px]">({trader.traderMetrics?.totalReviews || 0} reviews)</span>
+            {trader.email && (
+              <p className="text-[12px] text-gray-500 mb-1">{trader.email}</p>
+            )}
+            <div className="flex items-center gap-1.5">
+              <div className="flex text-[#FFB300]">
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <Star
+                    key={i}
+                    size={12}
+                    className={i <= Math.round(trader.traderMetrics?.averageRating || 0) ? "fill-current" : "text-gray-200"}
+                  />
+                ))}
+              </div>
+              <span className="text-[11px] font-bold text-gray-700">{(trader.traderMetrics?.averageRating || 0).toFixed(1)}</span>
+              <span className="text-[11px] text-gray-400">({trader.traderMetrics?.totalReviews || 0} reviews)</span>
             </div>
           </div>
         </div>
 
-        {/* Status or MoreHorizontal menu */}
+        {/* Status badge */}
         {quoteStatus?.toUpperCase() === "ACCEPTED" ? (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold border border-emerald-100">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F5E9] text-[#2E7D32] text-[11px] font-bold border border-[#C8E6C9]">
             <CheckCircle size={12} />
-            Accepted
-          </div>
+            Quote Accepted
+          </span>
         ) : quoteStatus?.toUpperCase() === "REJECTED" || quoteStatus?.toUpperCase() === "DECLINED" ? (
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 text-red-700 text-[11px] font-semibold border border-red-100">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFEBEE] text-[#D32F2F] text-[11px] font-bold border border-[#FFCDD2]">
             <XCircle size={12} />
-            Declined
-          </div>
+            Quote Declined
+          </span>
+        ) : quoteStatus ? (
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFF8E1] text-[#F57C00] text-[11px] font-bold border border-[#FFECB3]">
+            {quoteStatus?.toUpperCase() === "PENDING" ? "Pending" : quoteStatus ?? "Pending"}
+          </span>
         ) : null}
       </div>
 
-      <div className="mt-3 flex items-center justify-between">
-        <button
-          onClick={() => onOpenChat && onOpenChat(trader.id)}
-          className="flex items-center gap-1.5 text-[12px] text-[#4CAF50] hover:text-[#43A047] font-semibold cursor-pointer border-0 bg-transparent py-1 transition-colors"
-        >
-          <MessageSquare size={14} />
-          View your conversation with tradesperson
-        </button>
-        {isAssigned && (jobStatus === "COMPLETED") ? (
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#2E7D32] bg-[#D8F3D7] px-3 py-1 rounded-lg border border-[#A5D6A7]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]" />
-              Completed
+      {/* Quote Details (Only show if a quote is provided) */}
+      {quote && (
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_2fr] gap-3 mb-4">
+            <div className="flex flex-col gap-1 bg-[#F9F9F9] rounded-xl p-3 border border-gray-100/50">
+              <div className="flex items-center gap-1.5 text-gray-400">
+                <DollarSign size={13} className="text-[#4CAF50]" />
+                <span className="text-[11px] font-semibold">Price</span>
+              </div>
+              <span className="text-[14px] font-bold text-[#1C2C1C] pl-5">{formatPrice(quote.price)}</span>
             </div>
-            {!hasReviewed && onLeaveReview && (
+
+            <div className="flex flex-col gap-1 bg-[#F9F9F9] rounded-xl p-3 border border-gray-100/50">
+              <div className="flex items-center gap-1.5 text-gray-400">
+                <Clock size={13} className="text-[#8BC34A]" />
+                <span className="text-[11px] font-semibold">Est. Days</span>
+              </div>
+              <span className="text-[14px] font-bold text-[#1C2C1C] pl-5">{quote.estimatedDays} day{quote.estimatedDays !== 1 ? 's' : ''}</span>
+            </div>
+
+            <div className="flex flex-col gap-1 bg-[#F9F9F9] rounded-xl p-3 border border-gray-100/50">
+              <div className="flex items-center gap-1.5 text-gray-400">
+                <MessageSquare size={13} className="text-gray-400" />
+                <span className="text-[11px] font-semibold">Message</span>
+              </div>
+              <span className="text-[12px] font-medium text-[#1C2C1C] pl-5 break-words line-clamp-3">{quote.message}</span>
+            </div>
+          </div>
+
+          {/* Attachments */}
+          {quote.attachments && quote.attachments.length > 0 && (
+            <div className="mb-4">
+              <p className="text-[13px] font-semibold text-[#888888] mb-2.5 flex items-center gap-1.5">
+                <Paperclip size={14} className="text-[#999999]" />
+                Attachments
+              </p>
+              <div className="flex flex-wrap gap-2.5">
+                {quote.attachments.map((att) => (
+                  <a
+                    key={att.id}
+                    href={getAttachmentUrl(att.url || att.file)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2.5 bg-white border border-gray-200 rounded-xl px-3.5 py-2 hover:border-[#8BC34A] transition-colors shadow-sm max-w-full"
+                    title={att.filename}
+                  >
+                    {att.mimeType?.startsWith("image/") ? (
+                      <ImageIcon size={15} className="text-[#6E9625] flex-shrink-0" />
+                    ) : (
+                      <FileText size={15} className="text-gray-400 flex-shrink-0" />
+                    )}
+                    <span className="text-[13px] text-[#444444] font-medium truncate max-w-[160px]">
+                      {att.filename}
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Footer / Actions */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-2 pt-3 border-t border-gray-100">
+        {quote ? (
+          <p className="text-[11px] text-gray-400 font-medium">Received: {formatDate(quote.createdAt)}</p>
+        ) : (
+          <p className="text-[11px] text-gray-400 font-medium">Trader details</p>
+        )}
+
+        <div className="flex items-center gap-3 flex-wrap">
+          {quote && quoteStatus?.toUpperCase() === "PENDING" && quoteId && onAccept && onDecline ? (
+            <>
               <button
-                onClick={onLeaveReview}
-                className="flex items-center gap-1 text-[11px] font-bold text-white bg-[#6E9625] hover:bg-[#58791C] px-3 py-1 rounded-lg transition-colors shadow-sm cursor-pointer"
+                onClick={async () => {
+                  setAccepting(true);
+                  try {
+                    await onAccept(quoteId);
+                  } finally {
+                    setAccepting(false);
+                  }
+                }}
+                disabled={accepting || declining}
+                className="flex items-center justify-center gap-1.5 px-4 py-1.5 bg-[#4CAF50] hover:bg-[#43A047] text-white rounded-lg text-[12px] font-bold transition-colors disabled:opacity-50 min-w-[110px]"
               >
-                <Star size={11} className="fill-white" />
-                Leave a Review
+                <CheckCircle size={13} />
+                {accepting ? "Accepting..." : "Accept Quote"}
               </button>
-            )}
-          </div>
-        ) : isAssigned && (jobStatus === "CLOSED" || jobStatus === "CANCELLED" || jobStatus === "EXPIRED") ? (
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#424242] bg-[#EEEEEE] px-3 py-1 rounded-lg border border-[#BDBDBD]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#424242]" />
-            {jobStatus === "CANCELLED" ? "Cancelled" : "Closed"}
-          </div>
-        ) : isAssigned && (jobStatus === "IN_PROGRESS" || jobStatus === "ACTIVE" || quoteStatus?.toUpperCase() === "ACCEPTED") ? (
-          <div className="flex items-center gap-1.5 text-[11px] font-semibold text-[#1565C0] bg-[#E3F2FD] px-3 py-1 rounded-lg border border-[#BBDEFB]">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#1565C0]" />
-            In Progress
-          </div>
-        ) : isAssigned ? (
-          <div className="flex items-center gap-2">
-            <span className="text-[12px] font-semibold text-gray-500 bg-gray-100 px-3 py-1 rounded-lg">
-              {jobStatus}
-            </span>
-          </div>
-        ) : null}
+              <button
+                onClick={() => onOpenChat && onOpenChat(trader.id)}
+                className="flex items-center justify-center gap-1.5 px-4 py-1.5 border border-[#1565C0] cursor-pointer text-[#1565C0] hover:bg-blue-50 rounded-lg text-[12px] font-semibold transition-colors bg-white"
+              >
+                <MessageSquare size={13} />
+                Send Message
+              </button>
+              <button
+                onClick={async () => {
+                  setDeclining(true);
+                  try {
+                    await onDecline(quoteId);
+                  } finally {
+                    setDeclining(false);
+                  }
+                }}
+                disabled={accepting || declining}
+                className="flex items-center justify-center gap-1.5 px-4 py-1.5 border border-red-300 cursor-pointer text-red-600 hover:bg-red-50 rounded-lg text-[12px] font-semibold transition-colors disabled:opacity-50"
+              >
+                <X size={13} />
+                {declining ? "Declining..." : "Decline"}
+              </button>
+            </>
+          ) : (
+            <>
+              <button
+                onClick={() => onOpenChat && onOpenChat(trader.id)}
+                className="flex items-center justify-center gap-1.5 px-4 py-1.5 border border-[#1565C0] cursor-pointer text-[#1565C0] hover:bg-blue-50 rounded-lg text-[12px] font-semibold transition-colors bg-white"
+              >
+                <MessageSquare size={13} />
+                Send Message
+              </button>
+
+              {isAssigned && (jobStatus === "COMPLETED") && !hasReviewed && onLeaveReview && (
+                <button
+                  onClick={onLeaveReview}
+                  className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-[#6E9625] hover:bg-[#58791C] rounded-lg text-[12px] font-bold transition-colors shadow-sm cursor-pointer"
+                >
+                  <Star size={12} className="fill-white" />
+                  Leave a Review
+                </button>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -995,10 +1107,10 @@ export default function CustomerJobDashboard() {
         </div>
 
         {/* ── Main Grid: left (300px) + right (1fr) ────────────────────── */}
-        <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6 items-start relative">
 
           {/* ── Left: Job History (Light Green Background Container) ──────── */}
-          <div className="bg-[#F2F7EB] rounded-2xl p-4 border border-[#E2EED2] flex flex-col gap-3">
+          <div className="bg-[#F2F7EB] rounded-2xl p-4 border border-[#E2EED2] flex flex-col gap-3 sticky top-8 max-h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar">
             <div className="mb-1">
               <h2 className="text-[15px] font-extrabold text-[#1C2C1C]">Job History</h2>
             </div>
@@ -1316,15 +1428,6 @@ export default function CustomerJobDashboard() {
                       <h3 className="text-[15px] font-bold text-[#223321]">
                         Quotes ({quotesLoading ? "..." : Math.max(quotes.length, quotesCount)})
                       </h3>
-                      {quotes.length > 0 && (
-                        <button
-                          onClick={() => setQuotesModalOpen(true)}
-                          className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#6E9625] hover:bg-[#58791C] text-white rounded-lg text-[12px] font-bold transition-colors shadow-sm"
-                        >
-                          <Eye size={13} />
-                          View Quotes
-                        </button>
-                      )}
                     </div>
 
                     {quotesLoading ? (
@@ -1337,9 +1440,11 @@ export default function CustomerJobDashboard() {
                           <TraderQuoteCard
                             key={quote.id}
                             trader={quote.trader || quote}
+                            quote={quote}
                             isAssigned={selectedJob?.selectedTrader?.id === (quote.trader?.id || quote.id)}
                             quoteId={quote.id}
                             onAccept={handleAcceptQuote}
+                            onDecline={handleDeclineQuote}
                             quoteStatus={quote.status}
                             jobStatus={selectedJob?.status}
                             // onStartJob={handleStartJob}

@@ -11,11 +11,11 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://api.tugatraders.ser
 function getImageUrl(path: string | null | undefined): string | null {
   if (!path) return null;
   if (path.startsWith("http")) return path;
-  
+
   const baseUrl = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
   let imagePath = path.startsWith('/') ? path : `/${path}`;
   imagePath = imagePath.replace(/\/\//g, '/');
-  
+
   return `${baseUrl}${imagePath}`;
 }
 
@@ -95,7 +95,7 @@ export default function CustomerChatSidebar({ jobId, traderId }: SidebarProps) {
                   JOB-{job?.id?.slice(0, 5)?.toUpperCase() || "N/A"}
                 </p>
                 <h4 className="text-[16px] font-bold text-[#1C2C1C] mb-5">{job?.title}</h4>
-                
+
                 <div className="space-y-4">
                   <div className="flex gap-3">
                     <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
@@ -136,7 +136,7 @@ export default function CustomerChatSidebar({ jobId, traderId }: SidebarProps) {
                 </div>
               </div>
               <div className="text-center mt-4">
-                <Link href={`/customer-dashboard/jobs/${job.id}`} className="text-[#6E9625] text-[13px] font-bold hover:underline">
+                <Link href={`/customer-dashboard/job-history`} className="text-[#6E9625] text-[13px] font-bold hover:underline">
                   View Full Job Post &rarr;
                 </Link>
               </div>
@@ -201,7 +201,7 @@ export default function CustomerChatSidebar({ jobId, traderId }: SidebarProps) {
             <p className="text-[12px] text-gray-300 mb-5 leading-relaxed">
               Get support regarding this job or customer directly from our team.
             </p>
-            <Link 
+            <Link
               href="/contact"
               className="block w-full py-2.5 px-4 bg-white/10 hover:bg-white/20 transition-colors rounded-xl text-center text-[12px] font-bold border border-white/10"
             >

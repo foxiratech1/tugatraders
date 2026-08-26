@@ -6,10 +6,10 @@ import Image from 'next/image';
 const DashboardSection = () => {
   return (
     <section className="bg-[#F8F9F5] py-20 px-6 lg:px-20 overflow-hidden">
-      <div className="max-w-[1200px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-center">
+      <div className="max-w-[1200px] mx-auto w-full grid grid-cols-1 xl:grid-cols-12 gap-12 xl:gap-16 items-center">
 
         {/* Left Column - Content & Stats */}
-        <div className="lg:col-span-6 flex flex-col justify-center animate-fade-in">
+        <div className="xl:col-span-6 flex flex-col justify-center text-center xl:text-left animate-fade-in mx-auto xl:mx-0">
           {/* Heading */}
           <h2
             className="text-[28px] sm:text-[34px] md:text-[36px] font-bold text-[#243A24] leading-[1.25] mb-6 tracking-tight"
@@ -27,11 +27,11 @@ const DashboardSection = () => {
           </p>
 
           {/* Stats Bar */}
-          <div className="flex items-center gap-6 md:gap-10 border-t border-[#243A241A] pt-8">
+          <div className="flex items-center justify-center xl:justify-start gap-4 sm:gap-6 md:gap-10 border-t border-[#243A241A] pt-8">
             {/* Stat 1 */}
             <div className="flex flex-col">
               <span
-                className="text-[32px] md:text-[36px] font-bold text-[#243A24] leading-none mb-2"
+                className="text-[26px] sm:text-[32px] md:text-[36px] font-bold text-[#243A24] leading-none mb-2"
                 style={{ fontFamily: 'var(--font-bricolage)' }}
               >
                 15k+
@@ -47,7 +47,7 @@ const DashboardSection = () => {
             {/* Stat 2 */}
             <div className="flex flex-col">
               <span
-                className="text-[32px] md:text-[36px] font-bold text-[#243A24] leading-none mb-2"
+                className="text-[26px] sm:text-[32px] md:text-[36px] font-bold text-[#243A24] leading-none mb-2"
                 style={{ fontFamily: 'var(--font-bricolage)' }}
               >
                 98%
@@ -63,7 +63,7 @@ const DashboardSection = () => {
             {/* Stat 3 */}
             <div className="flex flex-col">
               <span
-                className="text-[32px] md:text-[36px] font-bold text-[#243A24] leading-none mb-2"
+                className="text-[26px] sm:text-[32px] md:text-[36px] font-bold text-[#243A24] leading-none mb-2"
                 style={{ fontFamily: 'var(--font-bricolage)' }}
               >
                 4.9/5
@@ -76,7 +76,7 @@ const DashboardSection = () => {
         </div>
 
         {/* Right Column - Dashboard Image Mockup */}
-        <div className="lg:col-span-6 flex justify-center items-center">
+        <div className="xl:col-span-6 flex justify-center items-center mt-6 xl:mt-0">
           <div className="relative w-full max-w-[550px] aspect-[550/380] rounded-[20px] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.06)] border border-[#243A240A]">
             <Image
               src="/dashboard.png"

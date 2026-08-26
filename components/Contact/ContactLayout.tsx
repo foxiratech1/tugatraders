@@ -250,7 +250,7 @@ const ContactLayout = () => {
             style={{ animationDelay: "0.2s" }}
           >
 
-            <div className="bg-white w-full max-w-[670px] xl:ml-auto rounded-[16px] p-5 sm:p-8 lg:p-10 xl:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[#243A241F]">
+            <div className="bg-white w-full xl:max-w-[670px] xl:ml-auto rounded-[16px] p-5 sm:p-8 lg:p-10 xl:p-12 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-[#243A241F]">
 
               <h2
                 className="text-[22px] sm:text-[24px] font-bold text-[#111111] mb-3"

@@ -34,7 +34,7 @@ const CTASection = () => {
 
       {/* Heading */}
       <h2
-        className="text-[28px] md:text-[48px] font-bold text-white mb-5 leading-tight max-w-[920px] tracking-tight relative z-10"
+        className="text-[26px] sm:text-[34px] md:text-[48px] font-bold text-white mb-5 leading-tight max-w-[920px] tracking-tight relative z-10"
         style={{ fontFamily: 'var(--font-bricolage)' }}
       >
         TugaTrades makes it simple to find reliable <span className="text-[#8FD14F]">tradespeople</span> in Portugal.
@@ -46,24 +46,24 @@ const CTASection = () => {
       </p>
 
       {/* Buttons Container */}
-      <div className="flex flex-col sm:flex-row items-center justify-center gap-3 relative z-10 w-full max-w-[760px]">
+      <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4 relative z-10 w-full max-w-[860px]">
         {/* Post Job Button */}
-        <Link href="/post-job">
-          <button className="bg-[#6E9625] hover:bg-[#5a7d1e] text-white font-bold  py-4 px-8 rounded-[5px] text-[15px] md:text-[16px] transition-all hover:scale-[1.02] shadow-sm cursor-pointer whitespace-nowrap w-full sm:w-auto min-w-[180px]">
+        <Link href="/post-job" className="w-full md:w-auto block">
+          <button className="bg-[#6E9625] hover:bg-[#5a7d1e] text-white font-bold py-4 px-8 rounded-[5px] text-[15px] md:text-[16px] transition-all hover:scale-[1.02] shadow-sm cursor-pointer whitespace-nowrap w-full min-w-[180px]">
             Post a Job
           </button>
         </Link>
 
         {/* Browse Tradespeople Button */}
-        <Link href="/directory-listing/search">
-          <button className="bg-[#243A24] hover:bg-[#1a2b1a] text-white font-bold  py-4 px-8 rounded-[5px] text-[15px] md:text-[16px] transition-all hover:scale-[1.02] shadow-sm cursor-pointer whitespace-nowrap w-full sm:w-auto min-w-[180px] border border-white/10">
+        <Link href="/directory-listing/search" className="w-full md:w-auto block">
+          <button className="bg-[#243A24] hover:bg-[#1a2b1a] text-white font-bold py-4 px-8 rounded-[5px] text-[15px] md:text-[16px] transition-all hover:scale-[1.02] shadow-sm cursor-pointer whitespace-nowrap w-full min-w-[180px] border border-white/10">
             Browse Tradespeople
           </button>
         </Link>
 
         {/* Join Button */}
-        <Link href="/trader-signup">
-          <button className="bg-[#C60C03] hover:bg-[#A30A02] text-white font-bold  py-4 px-8 rounded-[5px] text-[15px] md:text-[16px] transition-all hover:scale-[1.02] shadow-sm cursor-pointer whitespace-nowrap w-full sm:w-auto min-w-[200px]">
+        <Link href="/trader-signup" className="w-full md:w-auto block">
+          <button className="bg-[#C60C03] hover:bg-[#A30A02] text-white font-bold py-4 px-8 rounded-[5px] text-[15px] md:text-[16px] transition-all hover:scale-[1.02] shadow-sm cursor-pointer whitespace-nowrap w-full min-w-[200px]">
             Join as a Tradesperson
           </button>
         </Link>

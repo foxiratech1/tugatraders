@@ -109,7 +109,7 @@ export default function Navbar() {
         </Link>
 
         {/* DESKTOP NAVIGATION */}
-        <div className="hidden items-center gap-6 xl:gap-8 lg:flex">
+        <div className="hidden items-center gap-6 xl:gap-8 xl:flex">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -122,7 +122,7 @@ export default function Navbar() {
         </div>
 
         {/* DESKTOP ACTIONS */}
-        <div className="hidden items-center gap-4 xl:gap-6 lg:flex">
+        <div className="hidden items-center gap-4 xl:gap-6 xl:flex">
           {isAuthenticated ? (
             <>
 
@@ -246,7 +246,7 @@ export default function Navbar() {
         </div>
 
         {/* MOBILE CONTROLS */}
-        <div className="flex items-center gap-3 lg:hidden">
+        <div className="flex items-center gap-3 xl:hidden">
           <button
             onClick={toggleMenu}
             className="flex h-10 w-10 items-center justify-center rounded-[8px] border border-[#E5E7EB] bg-white text-[#1d3321] hover:bg-gray-50 transition-all shadow-sm"
@@ -259,7 +259,7 @@ export default function Navbar() {
 
       {/* MOBILE DRAWER */}
       {isOpen && (
-        <div className="absolute top-[80px] left-4 right-4 z-40 rounded-[24px] border border-white/20 bg-[#e7ebe5]/95 p-6 backdrop-blur-lg shadow-xl flex flex-col gap-6 lg:hidden">
+        <div className="absolute top-[80px] left-4 right-4 z-40 rounded-[24px] border border-white/20 bg-[#e7ebe5]/95 p-6 backdrop-blur-lg shadow-xl flex flex-col gap-6 xl:hidden">
           {/* NAV LINKS */}
           <div className="flex flex-col gap-4">
             {navLinks.map((link) => (

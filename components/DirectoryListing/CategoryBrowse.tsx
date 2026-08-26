@@ -69,7 +69,7 @@ const CategoryBrowse = () => {
   };
 
   return (
-    <section className="relative w-full min-h-[420px] sm:h-[430px] flex items-center overflow-hidden bg-[#243A24] py-8 sm:py-0">
+    <section className="relative w-full min-h-[400px] sm:min-h-[430px] flex items-center overflow-hidden bg-[#243A24] py-12 sm:py-16">
       {/* BACKGROUND */}
       <div className="absolute inset-0 z-0">
         <Image
@@ -82,7 +82,7 @@ const CategoryBrowse = () => {
         <div className="absolute inset-0 bg-[#243A24]/70" />
       </div>
 
-      <div className="relative z-10 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-20 h-full flex flex-col justify-center pt-8">
+      <div className="relative z-10 w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-20 flex flex-col justify-center">
 
         {/* HEADER */}
         <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-8">
@@ -138,14 +138,14 @@ const CategoryBrowse = () => {
             <Link
               href={`/directory-listing/search?categoryId=${cat.id}`}
               key={index}
-              className="group relative block min-w-[220px] h-[190px] bg-white rounded-[30px] p-6 overflow-hidden flex-shrink-0 shadow-2xl cursor-pointer transition-all duration-500 hover:bg-[#F5F8F2] hover:-translate-y-1"
+              className="group relative block min-w-[180px] sm:min-w-[220px] h-[170px] sm:h-[190px] bg-white rounded-[24px] sm:rounded-[30px] p-5 sm:p-6 overflow-hidden flex-shrink-0 shadow-2xl cursor-pointer transition-all duration-500 hover:bg-[#F5F8F2] hover:-translate-y-1"
             >
               {/* CONTENT */}
               <div className="relative z-10 h-full flex flex-col justify-between">
 
                 {/* TOP */}
                 <div className="transition-all duration-500 group-hover:-translate-x-2">
-                  <div className="w-14 h-14 rounded-2xl bg-[#F4F7F1] flex items-center justify-center overflow-hidden mb-5 transition-all duration-500 group-hover:bg-[#6E9625]/10 group-hover:scale-105">
+                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#F4F7F1] flex items-center justify-center overflow-hidden mb-4 sm:mb-5 transition-all duration-500 group-hover:bg-[#6E9625]/10 group-hover:scale-105">
                     {cat.image ? (
                       <img
                         src={
@@ -154,15 +154,15 @@ const CategoryBrowse = () => {
                             : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "")}${cat.image.startsWith("/") ? cat.image : `/${cat.image}`}`
                         }
                         alt={cat.name}
-                        className="w-8 h-8 object-contain"
+                        className="w-7 h-7 sm:w-8 sm:h-8 object-contain"
                         crossOrigin="anonymous"
                       />
                     ) : (
-                      <Icon className="text-[#064E3B]" size={24} />
+                      <Icon className="text-[#064E3B] w-5 h-5 sm:w-6 sm:h-6" />
                     )}
                   </div>
 
-                  <h3 className="text-[#064E3B] font-bold text-[24px] leading-tight">
+                  <h3 className="text-[#064E3B] font-bold text-[20px] sm:text-[24px] leading-tight">
                     {cat.name}
                   </h3>
                 </div>

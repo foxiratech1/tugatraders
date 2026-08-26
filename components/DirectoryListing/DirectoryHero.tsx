@@ -26,7 +26,7 @@ const CustomDropdown = ({ label, icon: Icon, value, onChange, options, disabled,
 
   return (
     <div 
-      className={`flex-1 flex items-center justify-center lg:justify-start gap-2 lg:gap-4 px-4 md:px-2 lg:px-4 py-4 border-b md:border-b-0 md:border-r border-[#F3F4F6] min-w-0 relative ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`} 
+      className={`flex-1 flex items-center justify-start gap-3 lg:gap-4 px-4 lg:px-6 py-4 border-b lg:border-b-0 lg:border-r border-[#F3F4F6] min-w-0 relative ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`} 
       ref={dropdownRef}
       onClick={() => !disabled && setIsOpen(!isOpen)}
     >
@@ -42,7 +42,7 @@ const CustomDropdown = ({ label, icon: Icon, value, onChange, options, disabled,
       </div>
       
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-[280px] bg-white rounded-xl shadow-[0_15px_60px_rgba(0,0,0,0.12)] border border-gray-100 z-50 max-h-[320px] overflow-y-auto py-2 text-left [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
+        <div className="absolute top-full left-0 right-0 mt-2 w-full bg-white rounded-xl shadow-[0_15px_60px_rgba(0,0,0,0.12)] border border-gray-100 z-50 max-h-[320px] overflow-y-auto py-2 text-left [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
           <div 
             className="px-5 py-3 hover:bg-[#F4F7F1] text-[14px] font-semibold text-[#6B7280] cursor-pointer transition-colors"
             onClick={(e) => { e.stopPropagation(); onChange(''); setIsOpen(false); }}
@@ -177,7 +177,7 @@ const DirectoryHero = () => {
         <div 
           className="w-full max-w-[1280px] mx-auto bg-white rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.08)] border-2 border-[#243A24] p-3"
         >
-          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 md:gap-2 lg:gap-4">
+          <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 lg:gap-0">
 
             {/* Category */}
             <CustomDropdown
@@ -201,7 +201,7 @@ const DirectoryHero = () => {
             />
 
             {/* Location */}
-            <div className="flex-[0.8] flex items-center justify-center lg:justify-start gap-2 lg:gap-4 px-4 md:px-2 lg:px-4 py-4 min-w-0">
+            <div className="flex-[0.8] flex items-center justify-start gap-3 lg:gap-4 px-4 lg:px-6 py-4 min-w-0">
               <FaLocationDot className="text-[#243A24] flex-shrink-0 w-5 h-5 lg:w-6 lg:h-6" />
               <div className="text-left min-w-0 flex-1">
                 <span className="block text-[10px] lg:text-[11px] text-[#9CA3AF] uppercase font-bold tracking-wider mb-1">Location</span>
@@ -219,10 +219,10 @@ const DirectoryHero = () => {
             <button 
               type="button"
               onClick={handleSearch}
-              className="bg-[#243A24] hover:bg-[#1A301A] text-white px-6 py-4 md:px-3 lg:px-6 lg:py-5 rounded-[18px] flex items-center justify-center gap-2 lg:gap-3 font-bold text-[15px] md:text-[13px] lg:text-[16px] transition-all min-w-full md:min-w-[100px] lg:min-w-[160px] cursor-pointer flex-shrink-0"
+              className="bg-[#243A24] hover:bg-[#1A301A] text-white px-6 py-4 lg:px-8 lg:py-5 rounded-[18px] flex items-center justify-center gap-2 lg:gap-3 font-bold text-[15px] lg:text-[16px] transition-all min-w-full lg:min-w-[160px] cursor-pointer flex-shrink-0 mt-2 lg:mt-0"
             >
               <Search className="flex-shrink-0 w-5 h-5 lg:w-6 lg:h-6" />
-              <span className="truncate max-md:block md:hidden lg:block">Search Trader</span>
+              <span className="truncate max-lg:block lg:hidden xl:block">Search Trader</span>
             </button>
 
           </div>

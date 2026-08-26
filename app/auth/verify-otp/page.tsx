@@ -107,11 +107,11 @@ function VerifyOtpContent() {
   const handleVerifyOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email) {
-      toast.error("Email is missing. Please sign up again.");
+      toast.error("Email is missing. Please sign up again.", { id: 'otp-error' });
       return;
     }
     if (otpValue.length < 4) {
-      toast.error("Please enter a valid OTP");
+      toast.error("Please enter a valid OTP", { id: 'otp-error' });
       return;
     }
 
@@ -179,7 +179,7 @@ function VerifyOtpContent() {
       } else if (err.message) {
         msg = err.message;
       }
-      toast.error(msg);
+      toast.error(msg, { id: 'otp-error' });
     } finally {
       setOtpLoading(false);
     }

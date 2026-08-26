@@ -112,12 +112,12 @@ const FaqContent: React.FC<FaqContentProps> = ({ role: propRole }) => {
             <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
               <Search size={20} className="text-[#555555]" />
             </div>
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search questions, topics, or help articles..."
-              className="w-full pl-12 pr-5 py-4 rounded-[16px] text-[15px] text-[#55555566] placeholder-[#55555566] outline-none font-medium"
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search questions, topics, or help articles..."
+                className="w-full pl-12 pr-5 py-4 rounded-[16px] text-[13px] sm:text-[15px] text-[#55555566] placeholder-[#55555566] outline-none font-medium"
             />
           </div>
         </div>
@@ -173,7 +173,7 @@ const FaqContent: React.FC<FaqContentProps> = ({ role: propRole }) => {
             <p className="text-[18px] font-medium text-center">No FAQs available at the moment.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
             {/* Left Column */}
             <div className="flex flex-col gap-4">
               {leftColumn.map((faq, index) => {
@@ -182,13 +182,13 @@ const FaqContent: React.FC<FaqContentProps> = ({ role: propRole }) => {
                 return (
                   <div
                     key={actualIndex}
-                    className="bg-white border border-[#243A241F] rounded-[16px] p-6 transition-all duration-200 hover:shadow-sm"
+                    className="bg-white border border-[#243A241F] rounded-[16px] p-5 md:p-6 transition-all duration-200 hover:shadow-sm"
                   >
                     <button
                       onClick={() => toggleAccordion(actualIndex)}
                       className="w-full flex items-center justify-between gap-4 text-left cursor-pointer"
                     >
-                      <span className="text-[18px] font-bold text-[#243A24]" style={{ fontFamily: 'var(--font-bricolage)' }}>
+                      <span className="text-[16px] md:text-[18px] font-bold text-[#243A24]" style={{ fontFamily: 'var(--font-bricolage)' }}>
                         {faq.question}
                       </span>
                       <span className="shrink-0 w-6 h-6 flex items-center justify-center">
@@ -201,7 +201,7 @@ const FaqContent: React.FC<FaqContentProps> = ({ role: propRole }) => {
                     </button>
                     {isOpen && (
                       <div
-                        className="text-[16px] text-[#555555] mt-4 font-medium leading-relaxed animate-fade-in"
+                        className="text-[14px] md:text-[16px] text-[#555555] mt-4 font-medium leading-relaxed animate-fade-in"
                         dangerouslySetInnerHTML={{ __html: faq.answer.replace(/&nbsp;/g, ' ') }}
                       />
                     )}
@@ -218,13 +218,13 @@ const FaqContent: React.FC<FaqContentProps> = ({ role: propRole }) => {
                 return (
                   <div
                     key={actualIndex}
-                    className="bg-white border border-[#243A241F] rounded-[16px] p-6 transition-all duration-200 hover:shadow-sm"
+                    className="bg-white border border-[#243A241F] rounded-[16px] p-5 md:p-6 transition-all duration-200 hover:shadow-sm"
                   >
                     <button
                       onClick={() => toggleAccordion(actualIndex)}
                       className="w-full flex items-center justify-between gap-4 text-left cursor-pointer"
                     >
-                      <span className="text-[18px] font-bold text-[#243A24]" style={{ fontFamily: 'var(--font-bricolage)' }}>
+                      <span className="text-[16px] md:text-[18px] font-bold text-[#243A24]" style={{ fontFamily: 'var(--font-bricolage)' }}>
                         {faq.question}
                       </span>
                       <span className="shrink-0 w-6 h-6 flex items-center justify-center">
@@ -237,7 +237,7 @@ const FaqContent: React.FC<FaqContentProps> = ({ role: propRole }) => {
                     </button>
                     {isOpen && (
                       <div
-                        className="text-[16px] text-[#555555] mt-4 font-medium leading-relaxed animate-fade-in"
+                        className="text-[14px] md:text-[16px] text-[#555555] mt-4 font-medium leading-relaxed animate-fade-in"
                         dangerouslySetInnerHTML={{ __html: faq.answer.replace(/&nbsp;/g, ' ') }}
                       />
                     )}

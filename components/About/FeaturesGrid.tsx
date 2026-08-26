@@ -28,9 +28,9 @@ const features = [
 
 const FeaturesGrid = () => {
   return (
-    <section className="bg-white py-16 md:py-24 px-6 lg:px-20 overflow-hidden flex items-center justify-center">
+    <section className="bg-white py-16 md:py-24 px-6 xl:px-20 overflow-hidden flex items-center justify-center">
       <div className="max-w-[1200px] mx-auto w-full">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
           {features.map((feature, index) => (
             <div
               key={index}
@@ -43,14 +43,14 @@ const FeaturesGrid = () => {
 
               {/* Title */}
               <h3
-                className="text-[18px] md:text-[20px] font-bold text-[#243A24] mb-4 leading-snug whitespace-pre-line min-h-[56px] flex items-center justify-center"
+                className="text-[18px] sm:text-[20px] font-bold text-[#243A24] mb-4 leading-snug whitespace-pre-line min-h-[56px] flex items-center justify-center"
                 style={{ fontFamily: 'var(--font-bricolage)' }}
               >
                 {feature.title}
               </h3>
 
               {/* Description */}
-              <p className="text-[#555555] text-[13px] md:text-[16px] leading-relaxed font-medium">
+              <p className="text-[#555555] text-[13px] sm:text-[14px] md:text-[15px] xl:text-[16px] leading-relaxed font-medium">
                 {feature.description}
               </p>
             </div>

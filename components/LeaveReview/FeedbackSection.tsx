@@ -7,11 +7,11 @@ import { IoShieldHalfSharp } from "react-icons/io5";
 
 const FeedbackSection = () => {
   return (
-    <section className="bg-[#FAFAF9] pt-16 lg:pt-28 pb-10 lg:pb-12 px-4 sm:px-6 lg:px-20 overflow-hidden flex items-center">
-      <div className="max-w-[1200px] mx-auto w-full grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-center">
+    <section className="bg-[#FAFAF9] pt-28 pb-10 xl:pb-12 px-4 sm:px-6 xl:px-20 overflow-hidden flex items-center">
+      <div className="max-w-[1200px] mx-auto w-full grid grid-cols-1 xl:grid-cols-12 gap-12 xl:gap-20 items-center">
 
         {/* Left Column (Content) */}
-        <div className="lg:col-span-5 w-full lg:w-[638px] flex flex-col items-start pr-0 lg:pr-4 animate-fade-in">
+        <div className="xl:col-span-5 w-full xl:w-[638px] flex flex-col items-start pr-0 xl:pr-4 animate-fade-in">
           {/* Verified Badge */}
           <div className="inline-flex items-center gap-2 bg-[#6E96250F] border border-[#6E96251A] px-4 py-1.5 rounded-full mb-6">
             <BadgeCheck size={14} className="text-[#6E9625]" />
@@ -21,7 +21,7 @@ const FeedbackSection = () => {
           </div>
 
           {/* Heading */}
-          <h1 className="text-[32px] sm:text-[38px] md:text-[55px] font-bold text-[#243A24] leading-[1.15] mb-6 tracking-tight animate-slide-up" style={{ fontFamily: 'var(--font-bricolage)' }}>
+          <h1 className="text-[32px] sm:text-[38px] md:text-[44px] xl:text-[55px] font-bold text-[#243A24] leading-[1.15] mb-6 tracking-tight animate-slide-up" style={{ fontFamily: 'var(--font-bricolage)' }}>
             Your Feedback Helps Others Find <span className="text-[#6E9625]">Reliable</span> Tradespeople
           </h1>
 
@@ -34,8 +34,8 @@ const FeedbackSection = () => {
         </div>
 
         {/* Right Column (Images and Cards) */}
-        <div className="lg:col-span-7 flex justify-center lg:justify-end relative w-full">
-          <div className="relative w-full max-w-[400px] aspect-[500/440] lg:max-w-[480px] lg:h-[500px] lg:aspect-auto lg:ml-auto mt-4 lg:mt-0">
+        <div className="xl:col-span-7 flex justify-center xl:justify-end relative w-full">
+          <div className="relative w-full max-w-[400px] sm:max-w-[480px] aspect-[500/440] xl:max-w-[480px] xl:h-[500px] xl:aspect-auto xl:ml-auto mt-8 xl:mt-0">
 
             {/* Background Decorative Glass Card */}
             <div
@@ -63,7 +63,7 @@ const FeedbackSection = () => {
 
 
             {/* Top-Right Floating Card: Customer Review */}
-            <div className="absolute left-2 sm:-left-4 md:-left-10 lg:-left-12 bottom-[6%] bg-white rounded-[16px] p-3 sm:p-4 shadow-[0_15px_40px_rgba(0,0,0,0.06)] border border-[#243A241F] flex flex-col gap-3 w-[210px] sm:w-[235px] md:w-[260px] z-10 animate-fade-in">
+            <div className="absolute left-2 sm:-left-4 md:-left-10 xl:-left-12 bottom-[6%] bg-white rounded-[16px] p-3 sm:p-4 shadow-[0_15px_40px_rgba(0,0,0,0.06)] border border-[#243A241F] flex flex-col gap-3 w-[210px] sm:w-[235px] md:w-[260px] z-10 animate-fade-in">
               <div className="flex items-center gap-3">
                 {/* Avatar */}
                 <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full overflow-hidden relative shrink-0">

@@ -83,7 +83,7 @@ const OurValues = () => {
       </div>
 
       {/* Slider container */}
-      <div className="relative w-full overflow-hidden py-6">
+      <div className="relative w-full overflow-hidden py-10">
         <div
           className="flex gap-6 transition-transform duration-500 ease-out"
           style={{
@@ -97,7 +97,7 @@ const OurValues = () => {
                 key={index}
                 onClick={() => setActiveIndex(index)}
                 style={{ width: `${cardWidth}px` }}
-                className={`shrink-0 bg-white rounded-[32px] p-8 border transition-all duration-500 flex flex-col items-center cursor-pointer justify-between ${isActive
+                className={`shrink-0 bg-white rounded-[24px] sm:rounded-[32px] p-6 sm:p-8 border transition-all duration-500 flex flex-col items-center cursor-pointer justify-between ${isActive
                   ? 'border-[#6E9625] border-2 shadow-[0_20px_50px_rgba(110,150,37,0.12)] scale-105 z-10 h-[510px]'
                   : 'border-[#243A241F] border opacity-60 scale-95 hover:opacity-85 z-0 h-[460px]'
                   }`}
@@ -110,12 +110,12 @@ const OurValues = () => {
                   </div>
 
                   {/* Value Title */}
-                  <h3 className="text-[20px] md:text-[22px] font-bold text-[#243A24] mb-3 text-center" style={{ fontFamily: 'var(--font-bricolage)' }}>
+                  <h3 className="text-[18px] sm:text-[20px] md:text-[22px] font-bold text-[#243A24] mb-3 text-center" style={{ fontFamily: 'var(--font-bricolage)' }}>
                     {item.title}
                   </h3>
 
                   {/* Value Description */}
-                  <p className="text-[#555555] text-[13px] md:text-[14px] leading-relaxed font-medium text-center px-2">
+                  <p className="text-[#555555] text-[13px] md:text-[14px] leading-relaxed font-medium text-center px-1 sm:px-2">
                     {item.description}
                   </p>
                 </div>

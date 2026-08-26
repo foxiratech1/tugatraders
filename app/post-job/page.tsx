@@ -116,19 +116,239 @@ const CustomDropdown = ({
   );
 };
 
+// Flat multi-select (used for Categories)
+const MultiSelectDropdown = ({
+  options,
+  value,
+  onChange,
+  placeholder,
+  disabled = false,
+}: {
+  options: { id: string; name: string }[];
+  value: string[];
+  onChange: (val: string[]) => void;
+  placeholder: string;
+  disabled?: boolean;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const toggleOption = (id: string) => {
+    if (value.includes(id)) {
+      onChange(value.filter(v => v !== id));
+    } else {
+      onChange([...value, id]);
+    }
+  };
+
+  const removeOption = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (!disabled) onChange(value.filter(v => v !== id));
+  };
+
+  const selectedOptions = options.filter(o => value.includes(o.id));
+
+  return (
+    <div className="relative w-full" ref={dropdownRef}>
+      <div
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        className={`min-h-[48px] w-full rounded-[12px] border ${
+          isOpen ? "border-[#6E9625]" : "border-[#E5E7EB]"
+        } bg-[#F7F5F04D]/30 px-4 py-2 flex flex-wrap items-center gap-2 transition-all ${
+          disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+        }`}
+      >
+        {selectedOptions.length > 0 ? (
+          <div className="flex flex-wrap gap-2 flex-1">
+            {selectedOptions.map(opt => (
+              <div key={opt.id} className="flex items-center gap-1.5 bg-[#F3F8EC] rounded-md px-2.5 py-1">
+                <span className="text-[13px] font-bold text-[#6E9625]">{opt.name}</span>
+                <span onClick={(e) => removeOption(e, opt.id)} className="text-[#6E9625] hover:text-red-500 cursor-pointer text-[14px] leading-none">×</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <span className="text-[14px] text-[#555555] flex-1">{placeholder}</span>
+        )}
+        <ChevronDown size={18} className="text-[#9CA3AF] shrink-0 ml-auto" />
+      </div>
+      {isOpen && !disabled && (
+        <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white border border-[#E5E7EB] rounded-[12px] shadow-[0_8px_30px_rgb(0,0,0,0.08)] max-h-[260px] overflow-y-auto z-50 py-2 custom-scrollbar">
+          {options.map((opt) => {
+            const isSelected = value.includes(opt.id);
+            return (
+              <div
+                key={opt.id}
+                onClick={(e) => { e.stopPropagation(); toggleOption(opt.id); }}
+                className="flex items-center gap-3 px-4 py-3 hover:bg-[#F9FAFB] cursor-pointer transition-colors"
+              >
+                <div className={`w-[18px] h-[18px] rounded-[4px] border flex items-center justify-center shrink-0 transition-colors ${
+                  isSelected ? "bg-[#111827] border-[#111827]" : "border-[#D1D5DB] bg-white"
+                }`}>
+                  {isSelected && (
+                    <svg viewBox="0 0 14 14" fill="none" className="w-3 h-3 text-white">
+                      <path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  )}
+                </div>
+                <span className={`text-[14px] ${isSelected ? "text-[#111827] font-medium" : "text-[#4B5563]"}`}>{opt.name}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// Grouped multi-select: shows items under a parent group label
+const GroupedMultiSelectDropdown = ({
+  groups,
+  value,
+  onChange,
+  placeholder,
+  disabled = false,
+}: {
+  groups: { groupId: string; groupName: string; items: { id: string; name: string }[] }[];
+  value: string[];
+  onChange: (val: string[]) => void;
+  placeholder: string;
+  disabled?: boolean;
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Flatten all items for lookup
+  const allItems = groups.flatMap(g => g.items);
+
+  const toggleOption = (id: string) => {
+    if (value.includes(id)) {
+      onChange(value.filter(v => v !== id));
+    } else {
+      onChange([...value, id]);
+    }
+  };
+
+  const removeOption = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (!disabled) onChange(value.filter(v => v !== id));
+  };
+
+  const selectedItems = allItems.filter(o => value.includes(o.id));
+  const hasGroups = groups.length > 0 && groups.some(g => g.items.length > 0);
+
+  return (
+    <div className="relative w-full" ref={dropdownRef}>
+      <div
+        onClick={() => !disabled && setIsOpen(!isOpen)}
+        className={`min-h-[48px] w-full rounded-[12px] border ${
+          isOpen ? "border-[#6E9625]" : "border-[#E5E7EB]"
+        } bg-[#F7F5F04D]/30 px-4 py-2 flex flex-wrap items-center gap-2 transition-all ${
+          disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+        }`}
+      >
+        {selectedItems.length > 0 ? (
+          <div className="flex flex-wrap gap-2 flex-1">
+            {selectedItems.map(opt => (
+              <div key={opt.id} className="flex items-center gap-1.5 bg-[#F3F8EC] rounded-md px-2.5 py-1">
+                <span className="text-[13px] font-bold text-[#6E9625]">{opt.name}</span>
+                <span onClick={(e) => removeOption(e, opt.id)} className="text-[#6E9625] hover:text-red-500 cursor-pointer text-[14px] leading-none">×</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <span className="text-[14px] text-[#555555] flex-1">{placeholder}</span>
+        )}
+        <ChevronDown size={18} className="text-[#9CA3AF] shrink-0 ml-auto" />
+      </div>
+
+      {isOpen && !disabled && (
+        <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white border border-[#E5E7EB] rounded-[12px] shadow-[0_8px_30px_rgb(0,0,0,0.08)] max-h-[300px] overflow-y-auto z-50 py-2 custom-scrollbar">
+          {!hasGroups ? (
+            <div className="px-4 py-6 text-center text-[13px] text-[#9CA3AF]">No options available</div>
+          ) : (
+            groups.map((group) => (
+              group.items.length > 0 && (
+                <div key={group.groupId}>
+                  {/* Group Header */}
+                  <div className="px-4 pt-3 pb-1.5 flex items-center gap-2">
+                    <div className="h-[1px] w-3 bg-[#E5E7EB]" />
+                    <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#6E9625] whitespace-nowrap">
+                      {group.groupName}
+                    </span>
+                    <div className="h-[1px] flex-1 bg-[#E5E7EB]" />
+                  </div>
+                  {/* Items under this group */}
+                  {group.items.map((opt) => {
+                    const isSelected = value.includes(opt.id);
+                    return (
+                      <div
+                        key={opt.id}
+                        onClick={(e) => { e.stopPropagation(); toggleOption(opt.id); }}
+                        className="flex items-center gap-3 pl-6 pr-4 py-2.5 hover:bg-[#F9FAFB] cursor-pointer transition-colors"
+                      >
+                        <div className={`w-[16px] h-[16px] rounded-[4px] border flex items-center justify-center shrink-0 transition-colors ${
+                          isSelected ? "bg-[#111827] border-[#111827]" : "border-[#D1D5DB] bg-white"
+                        }`}>
+                          {isSelected && (
+                            <svg viewBox="0 0 14 14" fill="none" className="w-2.5 h-2.5 text-white">
+                              <path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                            </svg>
+                          )}
+                        </div>
+                        <span className={`text-[13px] ${
+                          isSelected ? "text-[#111827] font-medium" : "text-[#4B5563]"
+                        }`}>
+                          {opt.name}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )
+            ))
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function PostJobPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Categories data state
   const [categories, setCategories] = useState<any[]>([]);
-  const [skillServices, setSkillServices] = useState<any[]>([]);
-  const [subCategories, setSubCategories] = useState<any[]>([]);
+  // Grouped: each entry = { groupId: categoryId, groupName: categoryName, items: skillService[] }
+  const [skillServiceGroups, setSkillServiceGroups] = useState<{ groupId: string; groupName: string; items: any[] }[]>([]);
+  // Grouped: each entry = { groupId: skillServiceId, groupName: skillServiceName, items: subCategory[] }
+  const [subCategoryGroups, setSubCategoryGroups] = useState<{ groupId: string; groupName: string; items: any[] }[]>([]);
 
   // Form state
-  const [categoryId, setCategoryId] = useState("");
-  const [skillServiceId, setSkillServiceId] = useState("");
-  const [subCategoryId, setSubCategoryId] = useState("");
+  const [categoryIds, setCategoryIds] = useState<string[]>([]);
+  const [skillServiceIds, setSkillServiceIds] = useState<string[]>([]);
+  const [subCategoryIds, setSubCategoryIds] = useState<string[]>([]);
   const [postcode, setPostcode] = useState("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -157,9 +377,17 @@ export default function PostJobPage() {
       if (editDataStr) {
         try {
           const parsed = JSON.parse(editDataStr);
-          if (parsed.category?.id || parsed.category?._id) setCategoryId(parsed.category.id || parsed.category._id);
-          if (parsed.skillService?.id || parsed.skillService?._id) setSkillServiceId(parsed.skillService.id || parsed.skillService._id);
-          if (parsed.subCategory?.id || parsed.subCategory?._id) setSubCategoryId(parsed.subCategory.id || parsed.subCategory._id);
+          if (parsed.categories) setCategoryIds(parsed.categories.map((c: any) => c.id || c._id));
+          else if (parsed.categoryIds) setCategoryIds(parsed.categoryIds);
+          else if (parsed.category?.id || parsed.category?._id) setCategoryIds([parsed.category.id || parsed.category._id]);
+
+          if (parsed.skillServices) setSkillServiceIds(parsed.skillServices.map((s: any) => s.id || s._id));
+          else if (parsed.skillServiceIds) setSkillServiceIds(parsed.skillServiceIds);
+          else if (parsed.skillService?.id || parsed.skillService?._id) setSkillServiceIds([parsed.skillService.id || parsed.skillService._id]);
+
+          if (parsed.subCategories) setSubCategoryIds(parsed.subCategories.map((s: any) => s.id || s._id));
+          else if (parsed.subCategoryIds) setSubCategoryIds(parsed.subCategoryIds);
+          else if (parsed.subCategory?.id || parsed.subCategory?._id) setSubCategoryIds([parsed.subCategory.id || parsed.subCategory._id]);
           if (parsed.postcode) setPostcode(parsed.postcode);
           if (parsed.title) setTitle(parsed.title);
           if (parsed.description) setDescription(parsed.description);
@@ -175,9 +403,9 @@ export default function PostJobPage() {
       if (savedData) {
         try {
           const parsed = JSON.parse(savedData);
-          if (parsed.categoryId) setCategoryId(parsed.categoryId);
-          if (parsed.skillServiceId) setSkillServiceId(parsed.skillServiceId);
-          if (parsed.subCategoryId) setSubCategoryId(parsed.subCategoryId);
+          if (parsed.categoryIds) setCategoryIds(parsed.categoryIds);
+          if (parsed.skillServiceIds) setSkillServiceIds(parsed.skillServiceIds);
+          if (parsed.subCategoryIds) setSubCategoryIds(parsed.subCategoryIds);
           if (parsed.postcode) setPostcode(parsed.postcode);
           if (parsed.title) setTitle(parsed.title);
           if (parsed.description) setDescription(parsed.description);
@@ -197,30 +425,52 @@ export default function PostJobPage() {
     }).catch(err => console.error("Failed to fetch categories", err));
   }, []);
 
-  const handleCategoryChange = async (catId: string) => {
-    setCategoryId(catId);
-    setSkillServiceId("");
-    setSubCategoryId("");
-    setSkillServices([]);
-    setSubCategories([]);
-    if (catId) {
+  const handleCategoryChange = async (catIds: string[]) => {
+    setCategoryIds(catIds);
+    setSkillServiceIds([]);
+    setSubCategoryIds([]);
+    setSkillServiceGroups([]);
+    setSubCategoryGroups([]);
+    if (catIds.length > 0) {
       try {
-        const res = await authApi.getSkillServices(catId);
-        setSkillServices(res?.data || res || []);
+        const results = await Promise.all(
+          catIds.map(async (catId) => {
+            const res = await authApi.getSkillServices(catId);
+            const cat = categories.find(c => (c.id || c._id) === catId);
+            return {
+              groupId: catId,
+              groupName: cat?.name || catId,
+              items: (res?.data || res || []).map((s: any) => ({ id: s.id || s._id, name: s.name, parentId: catId })),
+            };
+          })
+        );
+        setSkillServiceGroups(results);
       } catch (err) {
         console.error("Failed to fetch skills", err);
       }
     }
   };
 
-  const handleSkillChange = async (skillId: string) => {
-    setSkillServiceId(skillId);
-    setSubCategoryId("");
-    setSubCategories([]);
-    if (skillId) {
+  const handleSkillChange = async (skillIds: string[]) => {
+    setSkillServiceIds(skillIds);
+    setSubCategoryIds([]);
+    setSubCategoryGroups([]);
+    if (skillIds.length > 0) {
       try {
-        const res = await authApi.getSubCategories(skillId);
-        setSubCategories(res?.data || res || []);
+        // Flatten all skill service items for name lookup
+        const allSkills = skillServiceGroups.flatMap(g => g.items);
+        const results = await Promise.all(
+          skillIds.map(async (skillId) => {
+            const res = await authApi.getSubCategories(skillId);
+            const skill = allSkills.find(s => s.id === skillId);
+            return {
+              groupId: skillId,
+              groupName: skill?.name || skillId,
+              items: (res?.data || res || []).map((s: any) => ({ id: s.id || s._id, name: s.name, parentId: skillId })),
+            };
+          })
+        );
+        setSubCategoryGroups(results);
       } catch (err) {
         console.error("Failed to fetch sub categories", err);
       }
@@ -229,16 +479,16 @@ export default function PostJobPage() {
 
   // Keep skill and subcategories synced when loaded from sessionStorage
   useEffect(() => {
-    if (categoryId && skillServices.length === 0) {
-      authApi.getSkillServices(categoryId).then(res => setSkillServices(res?.data || res || []));
+    if (categoryIds.length > 0 && skillServiceGroups.length === 0) {
+      handleCategoryChange(categoryIds);
     }
-  }, [categoryId]);
+  }, [categoryIds]);
 
   useEffect(() => {
-    if (skillServiceId && subCategories.length === 0) {
-      authApi.getSubCategories(skillServiceId).then(res => setSubCategories(res?.data || res || []));
+    if (skillServiceIds.length > 0 && subCategoryGroups.length === 0) {
+      handleSkillChange(skillServiceIds);
     }
-  }, [skillServiceId]);
+  }, [skillServiceIds]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
@@ -268,13 +518,13 @@ export default function PostJobPage() {
       return;
     }
 
-    if (!categoryId) {
-      toast.error("Please select a Category.");
+    if (categoryIds.length === 0) {
+      toast.error("Please select at least one Category.");
       return;
     }
 
-    if (!skillServiceId) {
-      toast.error("Please select a Service Type.");
+    if (skillServiceIds.length === 0) {
+      toast.error("Please select at least one Service Type.");
       return;
     }
 
@@ -306,9 +556,9 @@ export default function PostJobPage() {
     try {
       setIsSubmitting(true);
       const formData = new FormData();
-      formData.append('categoryId', categoryId);
-      formData.append('skillServiceId', skillServiceId);
-      if (subCategoryId) formData.append('subCategoryId', subCategoryId);
+      categoryIds.forEach(id => formData.append('categoryIds', id));
+      skillServiceIds.forEach(id => formData.append('skillServiceIds', id));
+      subCategoryIds.forEach(id => formData.append('subCategoryIds', id));
       if (postcode) formData.append('postcode', postcode);
       formData.append('title', title);
       formData.append('description', description);
@@ -391,7 +641,7 @@ export default function PostJobPage() {
                 type="button"
                 onClick={() => {
                   sessionStorage.setItem('pendingJobPost', JSON.stringify({
-                    categoryId, skillServiceId, subCategoryId, postcode, title, description, timescale, budgetRange, emergency
+                    categoryIds, skillServiceIds, subCategoryIds, postcode, title, description, timescale, budgetRange, emergency
                   }));
                   router.push('/auth/login?redirect=/post-job');
                 }}
@@ -403,7 +653,7 @@ export default function PostJobPage() {
                 type="button"
                 onClick={() => {
                   sessionStorage.setItem('pendingJobPost', JSON.stringify({
-                    categoryId, skillServiceId, subCategoryId, postcode, title, description, timescale, budgetRange, emergency
+                    categoryIds, skillServiceIds, subCategoryIds, postcode, title, description, timescale, budgetRange, emergency
                   }));
                   router.push('/auth/signup?redirect=/post-job');
                 }}
@@ -447,22 +697,22 @@ export default function PostJobPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col gap-2">
                 <label className="text-[12px] font-bold text-[#243A24]">Category *</label>
-                <CustomDropdown
+                <MultiSelectDropdown
                   options={categories.map(c => ({ id: c.id || c._id, name: c.name }))}
-                  value={categoryId}
+                  value={categoryIds}
                   onChange={handleCategoryChange}
-                  placeholder="Categories.."
+                  placeholder="Select Categories.."
                 />
               </div>
 
               <div className="flex flex-col gap-2">
                 <label className="text-[12px] font-bold text-[#243A24]">Service Type *</label>
-                <CustomDropdown
-                  options={skillServices.map(s => ({ id: s.id || s._id, name: s.name }))}
-                  value={skillServiceId}
+                <GroupedMultiSelectDropdown
+                  groups={skillServiceGroups}
+                  value={skillServiceIds}
                   onChange={handleSkillChange}
-                  placeholder="Service Type.."
-                  disabled={!categoryId}
+                  placeholder="Select Service Types.."
+                  disabled={categoryIds.length === 0}
                 />
               </div>
             </div>
@@ -471,12 +721,12 @@ export default function PostJobPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col gap-2">
                 <label className="text-[12px] font-bold text-[#243A24]">Sub Category </label>
-                <CustomDropdown
-                  options={subCategories.map(s => ({ id: s.id || s._id, name: s.name }))}
-                  value={subCategoryId}
-                  onChange={setSubCategoryId}
-                  placeholder="Sub Categories.."
-                  disabled={!skillServiceId}
+                <GroupedMultiSelectDropdown
+                  groups={subCategoryGroups}
+                  value={subCategoryIds}
+                  onChange={setSubCategoryIds}
+                  placeholder="Select Sub Categories.."
+                  disabled={skillServiceIds.length === 0}
                 />
               </div>
 

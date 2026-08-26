@@ -35,7 +35,7 @@ const ActionCards = () => {
   useEffect(() => {
     const handleResize = () => {
       let cardsCount = 1;
-      if (window.innerWidth >= 640) {
+      if (window.innerWidth >= 768) {
         cardsCount = 2;
       }
       setVisibleCards(cardsCount);
@@ -58,8 +58,8 @@ const ActionCards = () => {
     <section className="bg-[#F9FAFB] py-12 px-6 lg:px-10 xl:px-20">
       <div className="max-w-[1440px] mx-auto">
 
-        {/* Desktop Grid Layout (1024px and above) */}
-        <div className="hidden lg:grid grid-cols-3 gap-4 xl:gap-6 justify-items-center">
+        {/* Desktop Grid Layout (1280px and above) */}
+        <div className="hidden xl:grid grid-cols-3 gap-4 xl:gap-6 justify-items-center">
           {cards.map((card, index) => (
             <div key={index} className="w-full max-w-[400px] bg-[#D6DED0] rounded-[24px] p-6 xl:p-8 flex flex-col justify-start border border-[#6E96254D]">
               <div className="w-12 h-12 xl:w-14 xl:h-14 bg-[#FFFFFF] rounded-[16px] flex text-[#65A30D] items-center justify-center mb-4 xl:mb-6 shadow-sm">
@@ -78,9 +78,9 @@ const ActionCards = () => {
           ))}
         </div>
 
-        {/* Mobile/Tablet Slider/Carousel Layout (Below 1024px) */}
+        {/* Mobile/Tablet Slider/Carousel Layout (Below 1280px) */}
         <div
-          className="lg:hidden relative w-full mx-auto overflow-hidden"
+          className="xl:hidden relative w-full mx-auto overflow-hidden"
           style={{ maxWidth: visibleCards === 2 ? '840px' : '400px' }}
         >
           <div

@@ -72,7 +72,7 @@ function ChatDashboardContent() {
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
 
   // Load conversations and profile
-  const loadData = async () => {
+  const loadData = async (targetConvId?: string) => {
     try {
       setLoading(true);
 
@@ -101,24 +101,30 @@ function ChatDashboardContent() {
       const convsRes = await authApi.getConversations();
       const list = convsRes?.data || convsRes || [];
       if (Array.isArray(list)) {
-        // Map to ensure conversation object is clean
         const mappedList = list.map((c: any) => ({
           ...c,
           id: c.id || c._id,
         }));
-        // Deduplicate by traderId — keep only the most recent conversation per trader
+
+        // Deduplicate by traderId — but always keep the active conversation
+        const activeId = targetConvId || activeConversationId;
         const seenTraders = new Map<string, typeof mappedList[0]>();
         for (const conv of mappedList) {
           const tid = conv.trader?.id || conv.trader?._id || conv.traderId || conv.id;
           if (!seenTraders.has(tid)) {
             seenTraders.set(tid, conv);
           } else {
-            // Keep whichever has the more recent lastMessage
             const existing = seenTraders.get(tid)!;
-            const existingTime = existing.lastMessage?.createdAt ? new Date(existing.lastMessage.createdAt).getTime() : 0;
-            const newTime = conv.lastMessage?.createdAt ? new Date(conv.lastMessage.createdAt).getTime() : 0;
-            if (newTime > existingTime) {
+            // Prefer the conversation matching the active ID
+            if (conv.id === activeId) {
               seenTraders.set(tid, conv);
+            } else if (existing.id !== activeId) {
+              // Otherwise keep the most recent
+              const existingTime = existing.lastMessage?.createdAt ? new Date(existing.lastMessage.createdAt).getTime() : 0;
+              const newTime = conv.lastMessage?.createdAt ? new Date(conv.lastMessage.createdAt).getTime() : 0;
+              if (newTime > existingTime) {
+                seenTraders.set(tid, conv);
+              }
             }
           }
         }
@@ -131,13 +137,10 @@ function ChatDashboardContent() {
     }
   };
 
-  const initializingRef = React.useRef(false);
-
+  // Reload conversations whenever the active conversation changes (e.g., navigated from quote modal)
   useEffect(() => {
-    if (initializingRef.current) return;
-    initializingRef.current = true;
     loadData();
-  }, []);
+  }, [activeConversationId]);
 
   // Set up root socket listeners for the sidebar changes (like other users coming online/offline)
   const { isConnected } = useSocket({

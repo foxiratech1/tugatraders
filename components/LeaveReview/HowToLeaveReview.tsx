@@ -298,7 +298,7 @@ const HowToLeaveReview = () => {
         </div>
 
         {/* Flow Cards Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 mb-10 sm:mb-16">
+        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 xl:gap-8 mb-10 sm:mb-16">
 
           {/* Left Card: Direct Contact (Sage Green) */}
           <div className="bg-[#D6DED0] rounded-[22px] p-5 sm:p-6 border border-[#C4CEBE] shadow-sm flex flex-col justify-between h-full min-h-[460px] w-full">
@@ -359,7 +359,7 @@ const HowToLeaveReview = () => {
           </div>
 
           {/* Right Card: Post a Job (Sage Green) */}
-          <div className="bg-[#D6DED0] rounded-[22px] p-5 sm:p-6 border border-[#C4CEBE] shadow-sm flex flex-col justify-between h-full min-h-[460px] w-full mt-6 lg:mt-0">
+          <div className="bg-[#D6DED0] rounded-[22px] p-5 sm:p-6 border border-[#C4CEBE] shadow-sm flex flex-col justify-between h-full min-h-[460px] w-full">
             <div>
               {/* Title */}
               <h3 className="text-[22px] sm:text-[25px] md:text-[28px] font-bold text-[#243A24] leading-snug mb-3 min-h-[72px]" style={{ fontFamily: 'var(--font-bricolage)' }}>

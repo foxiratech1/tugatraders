@@ -50,6 +50,21 @@ const formatTimeAgo = (iso: string) => {
   return `${diffDays}d ago`;
 };
 
+const formatBudget = (budget?: string) => {
+  if (!budget) return "Under €500";
+  if (budget.includes("UNDER_")) return "Under €500";
+  if (budget.includes("OVER_")) return "Over €50,000";
+  if (budget.startsWith("BETWEEN_")) {
+    const parts = budget.replace("BETWEEN_", "").split("_");
+    if (parts.length === 2) {
+      const p1 = Number(parts[0]).toLocaleString();
+      const p2 = Number(parts[1]).toLocaleString();
+      return `€${p1} - €${p2}`;
+    }
+  }
+  return budget;
+};
+
 const getImageUrl = (path: string | null | undefined) => {
   if (!path) return "/avt.png";
   if (path.startsWith('http')) return path;
@@ -127,7 +142,7 @@ export default function JobsLeads() {
     postedDate: formatPostedDate(item.createdAt),
     description: item.description || "",
     timescale: item.timescale ? item.timescale.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase()) : "Flexible",
-    budgetRange: item.budgetRange ? item.budgetRange.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase()) : "Under €500",
+    budgetRange: item.budgetRange || "Under €500",
     hasQuoted: Boolean(
       item.hasQuoted ||
       item.isQuoted ||
@@ -559,7 +574,7 @@ export default function JobsLeads() {
                             <span className="text-gray-300">•</span>
                             <span className="flex items-center gap-1">
                               <Euro size={14} className="text-gray-400" />
-                              {job.budgetRange || "Under €500"}
+                              {formatBudget(job.budgetRange)}
                             </span>
                           </div>
 
@@ -721,7 +736,7 @@ export default function JobsLeads() {
                         <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-0.5">
                           BUDGET
                         </span>
-                        <span className="text-[13px] font-bold text-[#1C2C1C] leading-none">{selectedJob.budgetRange || "Under €500"}</span>
+                        <span className="text-[13px] font-bold text-[#1C2C1C] leading-none">{formatBudget(selectedJob.budgetRange)}</span>
                       </div>
                     </div>
                   </div>
@@ -907,7 +922,7 @@ export default function JobsLeads() {
                             {buttonText}
                           </button>
 
-                          {isAccepted && (
+                          {isAccepted && !isCompleted && (
                             <button
                               disabled={isStartingJob || selectedJob.rawStatus === "IN_PROGRESS"}
                               onClick={async () => {
@@ -1280,7 +1295,7 @@ export default function JobsLeads() {
                 <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
                   <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Budget</span>
                   <span className="text-[13px] font-bold text-[#1C2C1C]">
-                    {fullJobData.budgetRange?.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase()) || "—"}
+                    {formatBudget(fullJobData.budgetRange)}
                   </span>
                 </div>
                 <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
