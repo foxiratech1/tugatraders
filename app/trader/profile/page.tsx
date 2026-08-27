@@ -63,6 +63,7 @@ interface MultiSelectProps {
   onChange: (selectedIds: string[]) => void;
   placeholder: string;
   disabled?: boolean;
+  enableSelectAll?: boolean;
 }
 
 const MultiSelect = ({
@@ -71,6 +72,7 @@ const MultiSelect = ({
   onChange,
   placeholder,
   disabled = false,
+  enableSelectAll = false,
 }: MultiSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -163,6 +165,44 @@ const MultiSelect = ({
           )}
 
           <div className="overflow-y-auto p-1.5 space-y-0.5 flex-1">
+            {enableSelectAll && options.length > 0 && (
+              <div
+                onClick={() => {
+                  if (selectedIds.length === options.length) {
+                    onChange([]);
+                  } else {
+                    onChange(options.map((opt) => opt.id));
+                  }
+                }}
+                className={`flex items-center justify-between px-3 py-2 rounded-lg text-[13px] font-medium cursor-pointer transition-colors mb-1 ${
+                  selectedIds.length === options.length
+                    ? "bg-[#6E9625]/10 text-[#1C2C1C] font-semibold"
+                    : "text-[#1C2C1C]/80 hover:bg-gray-100"
+                }`}
+              >
+                <span>Select All</span>
+                <div
+                  className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                    selectedIds.length === options.length
+                      ? "bg-[#6E9625] border-[#6E9625] text-white"
+                      : "border-gray-300 bg-white"
+                  }`}
+                >
+                  {selectedIds.length === options.length && (
+                    <svg
+                      className="w-3 h-3"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={3}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  )}
+                </div>
+              </div>
+            )}
+
             {filteredOptions.length === 0 ? (
               <div className="p-3 text-[12px] text-center text-gray-400">
                 {options.length === 0 ? "No options available" : "No results found"}
@@ -771,18 +811,18 @@ export default function TraderProfilePage() {
 
       const normalizeGroups = (groups: CategoryGroup[]) => {
         return groups
-          .filter(g => g.categoryId && g.selectedSkillServices.length > 0 && g.selectedSubCategories.length > 0)
+          .filter(g => g.categoryId && g.selectedSkillServices.length > 0 /* && g.selectedSubCategories.length > 0 */)
           .map(g => ({
             categoryId: g.categoryId,
             selectedSkillServices: [...g.selectedSkillServices].sort(),
-            selectedSubCategories: [...g.selectedSubCategories].sort()
+            // selectedSubCategories: [...g.selectedSubCategories].sort()
           }))
           .sort((a, b) => a.categoryId.localeCompare(b.categoryId));
       };
 
       const getTradeCategoriesOnly = (groups: CategoryGroup[]) => {
         return groups
-          .filter(g => g.categoryId && g.selectedSkillServices.length > 0 && g.selectedSubCategories.length > 0)
+          .filter(g => g.categoryId && g.selectedSkillServices.length > 0 /* && g.selectedSubCategories.length > 0 */)
           .map(g => g.categoryId)
           .sort((a, b) => a.localeCompare(b));
       };
@@ -791,11 +831,11 @@ export default function TraderProfilePage() {
       const tradeCategoriesChanged = JSON.stringify(getTradeCategoriesOnly(categoryGroups)) !== JSON.stringify(getTradeCategoriesOnly(initialCategoryGroups));
 
       if (traderStatus !== "MANUAL_CHECK" && categoriesChanged && !isCategoryChangePending) {
-        const validGroups = categoryGroups.filter(g => g.categoryId && g.selectedSkillServices.length > 0 && g.selectedSubCategories.length > 0);
+        const validGroups = categoryGroups.filter(g => g.categoryId && g.selectedSkillServices.length > 0 /* && g.selectedSubCategories.length > 0 */);
 
         const tradeCategories = validGroups.map(g => g.categoryId);
         const skillServiceIds = validGroups.flatMap(g => g.selectedSkillServices);
-        const subCategoryIds = validGroups.flatMap(g => g.selectedSubCategories);
+        // const subCategoryIds = validGroups.flatMap(g => g.selectedSubCategories);
 
         if (tradeCategoriesChanged && tradeCategories.length > 0) {
           fd.append("tradeCategories", JSON.stringify(tradeCategories));
@@ -803,9 +843,9 @@ export default function TraderProfilePage() {
         if (skillServiceIds.length > 0) {
           fd.append("skillsServices", JSON.stringify(skillServiceIds));
         }
-        if (subCategoryIds.length > 0) {
-          fd.append("subCategories", JSON.stringify(subCategoryIds));
-        }
+        // if (subCategoryIds.length > 0) {
+        //   fd.append("subCategories", JSON.stringify(subCategoryIds));
+        // }
       }
 
       const numericRadius = Number(personalForm.workRadius);
@@ -1498,6 +1538,7 @@ export default function TraderProfilePage() {
                                 options={skillServices}
                                 selectedIds={group.selectedSkillServices}
                                 disabled={isCategoryChangePending}
+                                enableSelectAll={true}
                                 onChange={(ids) => {
                                   setIsCategoriesDirty(true);
                                   handleCategoryGroupChange(group.id, 'selectedSkillServices', ids);
@@ -1506,7 +1547,8 @@ export default function TraderProfilePage() {
                               />
                             </div>
 
-                            {group.selectedSkillServices.length === 0 ? (
+                            {/* 
+                            group.selectedSkillServices.length === 0 ? (
                               <div>
                                 <label className="block text-[12px] font-medium text-gray-500 mb-2 uppercase tracking-wide">
                                   Select Sub Categories *
@@ -1544,7 +1586,8 @@ export default function TraderProfilePage() {
                                   </div>
                                 );
                               })
-                            )}
+                            ) 
+                            */}
                           </div>
                         </div>
                       );

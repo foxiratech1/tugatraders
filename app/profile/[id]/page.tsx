@@ -396,23 +396,23 @@ export default function PublicTraderProfilePage() {
           {isCurrentUserTrader ? "Back to Dashboard" : "Back to Search Results"}
         </button>
 
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+        <div className="flex flex-col md:flex-row gap-6 lg:gap-8">
 
           {/* ── Left Sidebar ── */}
-          <div className="w-full lg:w-[320px] flex-shrink-0 flex flex-col gap-6">
+          <div className="w-full md:w-[280px] lg:w-[320px] flex-shrink-0 flex flex-col gap-6">
 
             {/* Top Info Card */}
             <div className="bg-white rounded-3xl shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-col items-center text-center overflow-hidden">
 
               {/* Dark Green Banner */}
-              <div className="w-full h-32 bg-[#1C2C1C] relative overflow-hidden shrink-0">
+              <div className="w-full h-24 sm:h-32 bg-[#1C2C1C] relative overflow-hidden shrink-0">
                 <div className="absolute -bottom-12 -left-[10%] w-[120%] h-24 bg-white" style={{ borderRadius: '50% 50% 0 0' }}></div>
               </div>
 
-              <div className="px-6 pb-6 sm:px-8 sm:pb-8 flex flex-col items-center -mt-16 relative w-full z-10">
+              <div className="px-5 pb-6 sm:px-8 sm:pb-8 flex flex-col items-center -mt-12 sm:-mt-16 relative w-full z-10">
                 {/* Avatar with Verified Shield */}
                 <div className="relative mb-3">
-                  <div className="w-28 h-28 rounded-full overflow-hidden bg-[#1C2C1C] flex items-center justify-center border-4 border-white shadow-sm">
+                  <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden bg-[#1C2C1C] flex items-center justify-center border-4 border-white shadow-sm">
                     <img src={avatarUrl} alt={fullName} className="w-full h-full object-cover" />
                   </div>
                   {isVerified && (
@@ -422,7 +422,7 @@ export default function PublicTraderProfilePage() {
                   )}
                 </div>
 
-                <h1 className="text-[22px] font-extrabold text-[#1C2C1C] mb-1">{fullName}</h1>
+                <h1 className="text-[20px] sm:text-[22px] font-extrabold text-[#1C2C1C] mb-1">{fullName}</h1>
 
                 {/* Verified Badge */}
                 {isVerified && (
@@ -520,8 +520,8 @@ export default function PublicTraderProfilePage() {
           <div className="flex-1 flex flex-col gap-6">
 
             {/* Top Vetting Header */}
-            <div className="bg-white rounded-3xl p-6 sm:px-8 sm:py-6 shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-wrap items-center justify-between gap-6">
-              <div className="flex flex-wrap items-center gap-8 lg:gap-12">
+            <div className="bg-white rounded-3xl p-5 sm:p-6 lg:px-8 lg:py-6 shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-5 lg:gap-6">
+              <div className="flex flex-wrap items-center gap-5 sm:gap-6 lg:gap-10">
                 {/* Individual Checks */}
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isVerified ? 'bg-[#6E9625]' : 'bg-gray-200'}`}>
@@ -562,7 +562,7 @@ export default function PublicTraderProfilePage() {
             </div>
 
             {/* Main Content Grid 1: Services & Hero Image */}
-            <div className={`grid grid-cols-1 ${portfolio && portfolio.length > 0 ? 'lg:grid-cols-[1.2fr_1fr]' : 'lg:grid-cols-1'} gap-6`}>
+            <div className={`grid grid-cols-1 ${portfolio && portfolio.length > 0 ? 'xl:grid-cols-[1.2fr_1fr]' : 'xl:grid-cols-1'} gap-6`}>
 
               {/* Services & Expertise */}
               <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-col h-full">
@@ -597,7 +597,7 @@ export default function PublicTraderProfilePage() {
 
               {/* Hero Image */}
               {portfolio && portfolio.length > 0 && (
-                <div className="bg-white rounded-3xl overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100 h-48 lg:h-auto max-h-[220px]">
+                <div className="bg-white rounded-3xl overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100 h-48 sm:h-56 xl:h-auto xl:max-h-[220px]">
                   <img
                     src={getImageUrl(portfolio[0]?.url || portfolio[0])}
                     alt="Trader Work"
@@ -608,7 +608,7 @@ export default function PublicTraderProfilePage() {
             </div>
 
             {/* Main Content Grid 2: About & Gallery */}
-            <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-6">
+            <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-6">
 
               {/* About */}
               <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-col justify-between">
@@ -623,7 +623,7 @@ export default function PublicTraderProfilePage() {
                 </div>
 
                 {/* About Badges */}
-                <div className="flex flex-wrap items-center gap-6 border-t border-gray-100 pt-6">
+                <div className="flex flex-wrap items-center gap-4 sm:gap-6 border-t border-gray-100 pt-6">
                   <div className="flex items-center gap-3">
                     {/* <Award size={32} className="text-[#6E9625] stroke-[1.5]" /> */}
                     <div className="flex flex-col">

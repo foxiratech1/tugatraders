@@ -162,11 +162,9 @@ const MultiSelectDropdown = ({
     <div className="relative w-full" ref={dropdownRef}>
       <div
         onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`min-h-[48px] w-full rounded-[12px] border ${
-          isOpen ? "border-[#6E9625]" : "border-[#E5E7EB]"
-        } bg-[#F7F5F04D]/30 px-4 py-2 flex flex-wrap items-center gap-2 transition-all ${
-          disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-        }`}
+        className={`min-h-[48px] w-full rounded-[12px] border ${isOpen ? "border-[#6E9625]" : "border-[#E5E7EB]"
+          } bg-[#F7F5F04D]/30 px-4 py-2 flex flex-wrap items-center gap-2 transition-all ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+          }`}
       >
         {selectedOptions.length > 0 ? (
           <div className="flex flex-wrap gap-2 flex-1">
@@ -192,9 +190,8 @@ const MultiSelectDropdown = ({
                 onClick={(e) => { e.stopPropagation(); toggleOption(opt.id); }}
                 className="flex items-center gap-3 px-4 py-3 hover:bg-[#F9FAFB] cursor-pointer transition-colors"
               >
-                <div className={`w-[18px] h-[18px] rounded-[4px] border flex items-center justify-center shrink-0 transition-colors ${
-                  isSelected ? "bg-[#111827] border-[#111827]" : "border-[#D1D5DB] bg-white"
-                }`}>
+                <div className={`w-[18px] h-[18px] rounded-[4px] border flex items-center justify-center shrink-0 transition-colors ${isSelected ? "bg-[#111827] border-[#111827]" : "border-[#D1D5DB] bg-white"
+                  }`}>
                   {isSelected && (
                     <svg viewBox="0 0 14 14" fill="none" className="w-3 h-3 text-white">
                       <path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -261,11 +258,9 @@ const GroupedMultiSelectDropdown = ({
     <div className="relative w-full" ref={dropdownRef}>
       <div
         onClick={() => !disabled && setIsOpen(!isOpen)}
-        className={`min-h-[48px] w-full rounded-[12px] border ${
-          isOpen ? "border-[#6E9625]" : "border-[#E5E7EB]"
-        } bg-[#F7F5F04D]/30 px-4 py-2 flex flex-wrap items-center gap-2 transition-all ${
-          disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
-        }`}
+        className={`min-h-[48px] w-full rounded-[12px] border ${isOpen ? "border-[#6E9625]" : "border-[#E5E7EB]"
+          } bg-[#F7F5F04D]/30 px-4 py-2 flex flex-wrap items-center gap-2 transition-all ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+          }`}
       >
         {selectedItems.length > 0 ? (
           <div className="flex flex-wrap gap-2 flex-1">
@@ -307,18 +302,16 @@ const GroupedMultiSelectDropdown = ({
                         onClick={(e) => { e.stopPropagation(); toggleOption(opt.id); }}
                         className="flex items-center gap-3 pl-6 pr-4 py-2.5 hover:bg-[#F9FAFB] cursor-pointer transition-colors"
                       >
-                        <div className={`w-[16px] h-[16px] rounded-[4px] border flex items-center justify-center shrink-0 transition-colors ${
-                          isSelected ? "bg-[#111827] border-[#111827]" : "border-[#D1D5DB] bg-white"
-                        }`}>
+                        <div className={`w-[16px] h-[16px] rounded-[4px] border flex items-center justify-center shrink-0 transition-colors ${isSelected ? "bg-[#111827] border-[#111827]" : "border-[#D1D5DB] bg-white"
+                          }`}>
                           {isSelected && (
                             <svg viewBox="0 0 14 14" fill="none" className="w-2.5 h-2.5 text-white">
                               <path d="M2.5 7.5L5.5 10.5L11.5 3.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                           )}
                         </div>
-                        <span className={`text-[13px] ${
-                          isSelected ? "text-[#111827] font-medium" : "text-[#4B5563]"
-                        }`}>
+                        <span className={`text-[13px] ${isSelected ? "text-[#111827] font-medium" : "text-[#4B5563]"
+                          }`}>
                           {opt.name}
                         </span>
                       </div>
@@ -412,6 +405,9 @@ export default function PostJobPage() {
           if (parsed.timescale) setTimescale(parsed.timescale);
           if (parsed.budgetRange) setBudgetRange(parsed.budgetRange);
           if (parsed.emergency !== undefined) setEmergency(parsed.emergency);
+
+          // Clear it so it doesn't persist on subsequent refreshes
+          sessionStorage.removeItem('pendingJobPost');
         } catch (e) {
           console.error('Failed to parse pending job post data', e);
         }

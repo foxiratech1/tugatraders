@@ -307,6 +307,7 @@ const DirectorySearchResults = () => {
   }, []);
 
   // Login-prompt modal state
+  const [showFiltersMobile, setShowFiltersMobile] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [pendingTraderId, setPendingTraderId] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<"leave-review" | "view-profile" | "contact-trader" | "save-trader">("leave-review");
@@ -578,18 +579,18 @@ const DirectorySearchResults = () => {
             <h2 className="text-[20px] sm:text-[24px] font-extrabold text-[#1C2C1C]">
               {filteredResults.length} Professional{filteredResults.length !== 1 && 's'} found
             </h2>
-            <div className="flex items-center gap-3 mt-4 sm:mt-0 text-[14px]">
+            <div className="flex items-center gap-3 mt-4 sm:mt-0 text-[14px] w-full sm:w-auto">
               <span className="text-[#4B5563] font-medium hidden sm:inline">Sort by:</span>
-              <div className="relative" ref={sortDropdownRef}>
+              <div className="relative w-full sm:w-auto" ref={sortDropdownRef}>
                 <button
                   onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
-                  className="bg-white border border-gray-200 hover:border-[#6E9625] px-4 py-2.5 rounded-xl font-bold text-[#243A24] flex items-center justify-between gap-3 min-w-[200px] shadow-sm transition-all cursor-pointer outline-none focus:ring-2 focus:ring-[#6E9625]/20"
+                  className="bg-white border border-gray-200 hover:border-[#6E9625] px-4 py-2.5 rounded-xl font-bold text-[#243A24] flex items-center justify-between gap-3 min-w-[200px] w-full sm:w-auto shadow-sm transition-all cursor-pointer outline-none focus:ring-2 focus:ring-[#6E9625]/20"
                 >
                   <span className="truncate">{sortOption}</span>
                   <ChevronDown size={16} className={`text-[#9CA3AF] transition-transform ${isSortDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {isSortDropdownOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-[0_15px_60px_rgba(0,0,0,0.12)] border border-gray-100 z-50 py-2">
+                  <div className="absolute right-0 sm:right-0 left-0 sm:left-auto top-full mt-2 w-full sm:w-48 bg-white rounded-xl shadow-[0_15px_60px_rgba(0,0,0,0.12)] border border-gray-100 z-50 py-2">
                     {["Highest Review", "Lowest Review"].map(option => (
                       <div
                         key={option}
@@ -612,8 +613,18 @@ const DirectorySearchResults = () => {
 
           <div className="flex flex-col lg:flex-row gap-6 xl:gap-8">
             {/* Left Sidebar (Filters) */}
-            <div className="w-full lg:w-[260px] xl:w-[320px] shrink-0">
-              <div className="bg-white rounded-[24px] p-6 shadow-sm border border-[#F3F4F6] mb-6">
+            <div className="w-full lg:w-[260px] xl:w-[320px] shrink-0 lg:sticky lg:top-28 lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <div className="lg:hidden mb-4">
+                <button
+                  onClick={() => setShowFiltersMobile(!showFiltersMobile)}
+                  className="w-full bg-white border border-[#E5E7EB] rounded-2xl py-3.5 px-5 flex items-center justify-between text-[#1C2C1C] font-bold shadow-sm cursor-pointer"
+                >
+                  <span className="flex items-center gap-2"><Filter size={18} /> Filters & Search</span>
+                  <ChevronDown size={18} className={`transition-transform ${showFiltersMobile ? 'rotate-180' : ''}`} />
+                </button>
+              </div>
+
+              <div className={`bg-white rounded-[24px] p-6 shadow-sm border border-[#F3F4F6] mb-6 ${showFiltersMobile ? 'block' : 'hidden lg:block'}`}>
                 <h3 className="text-[20px] font-bold text-[#243A24] mb-6">Filters</h3>
                 <div className="flex flex-col gap-5">
                   {/* Search by Name */}
@@ -806,7 +817,7 @@ const DirectorySearchResults = () => {
                   </div>
                 </div>
               </div>
-              <p className="text-[12px] text-[#6B7280] leading-relaxed px-2">
+              <p className={`text-[12px] text-[#6B7280] leading-relaxed px-2 ${showFiltersMobile ? 'block' : 'hidden lg:block'}`}>
                 TradeTrust is a platform connecting customers with independent traders. Any services agreed are provided by the trader, not TradeTrust.
               </p>
             </div>
@@ -847,10 +858,10 @@ const DirectorySearchResults = () => {
                   {filteredResults.slice(0, displayCount).map((trader) => (
                     <div
                       key={trader.id}
-                      className="bg-white rounded-2xl p-5 shadow-sm border border-[#E5E7EB] flex flex-col md:flex-row gap-6"
+                      className="bg-white rounded-2xl p-5 shadow-sm border border-[#E5E7EB] flex flex-col md:flex-row gap-5 xl:gap-6"
                     >
                       {/* ── Left: Image Gallery ── */}
-                      <div className="w-full md:w-[280px] shrink-0 flex flex-col gap-2">
+                      <div className="w-full md:w-[180px] lg:w-[220px] xl:w-[280px] shrink-0 flex flex-col gap-2">
                         <div className="w-full aspect-[4/3] rounded-xl overflow-hidden relative bg-gray-100">
                           <Image
                             src={
@@ -913,10 +924,10 @@ const DirectorySearchResults = () => {
 
                         <div className="flex justify-between items-start">
                           <div>
-                            <div className="flex items-center gap-3 mb-1">
-                              <h3 className="text-[22px] font-bold text-[#1C2C1C]">{trader.fullName}</h3>
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                              <h3 className="text-[18px] lg:text-[20px] xl:text-[22px] font-bold text-[#1C2C1C] leading-tight">{trader.fullName}</h3>
                               {trader.isVerified && (
-                                <span className="flex items-center gap-1 text-[#6E9625] bg-[#F4F7F1] border border-[#6E9625]/20 px-3 py-1 rounded-full text-[12px] font-bold">
+                                <span className="flex items-center gap-1 text-[#6E9625] bg-[#F4F7F1] border border-[#6E9625]/20 px-3 py-1 rounded-full text-[11px] xl:text-[12px] font-bold w-fit">
                                   <CheckCircle size={14} /> Vetted Trader
                                 </span>
                               )}
@@ -936,10 +947,10 @@ const DirectorySearchResults = () => {
                         </div>
 
                         {/* Checks */}
-                        <div className="flex flex-wrap gap-4 sm:gap-6 mb-5">
-                          <span className="flex items-center gap-1.5 text-[13px] font-medium text-gray-500"><CheckCircle size={16} className="text-[#6E9625]" /> ID Check</span>
-                          <span className="flex items-center gap-1.5 text-[13px] font-medium text-gray-500"><CheckCircle size={16} className="text-[#6E9625]" /> Trade Check</span>
-                          <span className="flex items-center gap-1.5 text-[13px] font-medium text-gray-500"><CheckCircle size={16} className="text-[#6E9625]" /> Insurance Verified</span>
+                        <div className="flex flex-wrap gap-2 lg:gap-4 xl:gap-6 mb-4 xl:mb-5">
+                          <span className="flex items-center gap-1 text-[12px] xl:text-[13px] font-medium text-gray-500"><CheckCircle size={14} className="text-[#6E9625]" /> ID Check</span>
+                          <span className="flex items-center gap-1 text-[12px] xl:text-[13px] font-medium text-gray-500"><CheckCircle size={14} className="text-[#6E9625]" /> Trade Check</span>
+                          <span className="flex items-center gap-1 text-[12px] xl:text-[13px] font-medium text-gray-500"><CheckCircle size={14} className="text-[#6E9625]" /> Insurance Verified</span>
                         </div>
 
                         {/* Categories / Skills */}
@@ -1029,7 +1040,7 @@ const DirectorySearchResults = () => {
                       </div>
 
                       {/* ── Right: Action Buttons ── */}
-                      <div className="w-full md:w-[200px] shrink-0 flex flex-col justify-start gap-3 pt-6 md:pt-0 md:pl-6 md:border-l border-gray-100">
+                      <div className="w-full md:w-[150px] lg:w-[180px] xl:w-[200px] shrink-0 flex flex-col justify-start gap-3 pt-5 md:pt-0 md:pl-4 xl:pl-6 border-t md:border-t-0 md:border-l border-gray-100 mt-2 md:mt-0">
 
                         {/* Save Button */}
                         <div className="flex justify-end mb-2">
@@ -1088,10 +1099,10 @@ const DirectorySearchResults = () => {
                         </button>
 
                         {/* Leave a Review */}
-                        <div className="mt-2 text-center">
+                        <div className="mt-1 xl:mt-2 text-center">
                           <button
                             onClick={(e) => handleProtectedAction(e, trader.id, "leave-review")}
-                            className="text-gray-500 text-[14px] font-semibold underline underline-offset-4 hover:text-gray-700 transition-colors cursor-pointer"
+                            className="text-gray-500 text-[13px] xl:text-[14px] font-semibold underline underline-offset-4 hover:text-gray-700 transition-colors cursor-pointer"
                           >
                             Leave a review
                           </button>
@@ -1101,17 +1112,25 @@ const DirectorySearchResults = () => {
                   ))}
                 </div>
               )}
-              {/* Load More Button */}
-              {displayCount < filteredResults.length && (
-                <div className="mt-8 flex justify-center">
+              {/* Pagination Buttons */}
+              <div className="mt-8 flex justify-center gap-4">
+                {displayCount > 3 && (
+                  <button
+                    onClick={() => setDisplayCount(3)}
+                    className="w-full sm:w-auto bg-white text-[#243A24] font-bold py-3 px-8 rounded-xl border-2 border-[#243A24] hover:bg-gray-50 transition-colors text-[14px] cursor-pointer transform hover:scale-105"
+                  >
+                    Show Less
+                  </button>
+                )}
+                {displayCount < filteredResults.length && (
                   <button
                     onClick={handleLoadMore}
                     className="w-full sm:w-auto bg-white text-[#243A24] font-bold py-3 px-8 rounded-xl border-2 border-[#243A24] hover:bg-gray-50 transition-colors text-[14px] cursor-pointer transform hover:scale-105"
                   >
                     Load More Professionals
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </div>
