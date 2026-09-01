@@ -323,6 +323,11 @@ export const authApi = {
     return fetchWithAuth(url.toString());
   },
 
+  getInteractedTraders: async () => {
+    const url = `${process.env.NEXT_PUBLIC_API_URL}api/customer/interacted-traders`;
+    return fetchWithAuth(url);
+  },
+
   // Toggle save/bookmark trader
   toggleSaveTrader: async (traderId: string) => {
     const url = `${process.env.NEXT_PUBLIC_API_URL}api/customer/${traderId}/toggle-save`;
@@ -430,6 +435,11 @@ export const authApi = {
   logout: async () => {
     const { data } = await api.post('/api/auth/logout');
     return data;
+  },
+
+  deactivateAccount: async () => {
+    const url = `${process.env.NEXT_PUBLIC_API_URL}api/auth/deactivate`;
+    return fetchWithAuth(url, { method: 'POST' });
   },
   // Submit contact form
   submitContactForm: async (formData: FormData) => {

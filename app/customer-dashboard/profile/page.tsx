@@ -125,7 +125,7 @@ export default function CustomerProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F5F5F0] p-8">
+      <div className="min-h-screen bg-[#F8F9F5] p-8">
         <div className="max-w-3xl mx-auto space-y-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-24 rounded-2xl bg-white animate-pulse border border-gray-100" />
@@ -136,7 +136,7 @@ export default function CustomerProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#F5F5F0]">
+    <div className="min-h-screen bg-[#F8F9F5]">
       <div className="max-w-4xl mx-auto px-6 py-10">
 
         {/* Page Title */}

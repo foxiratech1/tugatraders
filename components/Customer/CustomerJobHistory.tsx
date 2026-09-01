@@ -141,61 +141,52 @@ const timeAgo = (iso: string) => {
 
 const statusConfig: Record<
   string,
-  { label: string; bg: string; text: string; dot: string }
+  { label: string; bg: string; text: string }
 > = {
   OPEN: {
     label: "Open",
     bg: "bg-emerald-50",
     text: "text-emerald-700",
-    dot: "bg-emerald-500",
   },
   POSTED: {
-    label: "Posted",
-    bg: "bg-emerald-50",
-    text: "text-emerald-700",
-    dot: "bg-emerald-500",
+    label: "Job Posted",
+    bg: "bg-[#F1AF70]",
+    text: "text-[#C55B18]",
   },
   QUOTE_RECEIVED: {
     label: "Quote Received",
     bg: "bg-amber-50",
     text: "text-amber-700",
-    dot: "bg-amber-500",
   },
   IN_PROGRESS: {
     label: "In Progress",
     bg: "bg-blue-50",
     text: "text-blue-700",
-    dot: "bg-blue-500",
   },
   ASSIGNED: {
     label: "Live",
     bg: "bg-blue-50",
     text: "text-blue-700",
-    dot: "bg-blue-500",
   },
   ACTIVE: {
     label: "Active",
     bg: "bg-emerald-50",
     text: "text-emerald-700",
-    dot: "bg-emerald-500",
   },
   COMPLETED: {
     label: "Completed",
-    bg: "#7ca13a",
-    text: "text-purple-700",
-    dot: "#7ca13a",
+    bg: "bg-[#1B4B22]",
+    text: "text-white",
   },
   CLOSED: {
     label: "Closed",
-    bg: "bg-red-50",
-    text: "text-red-600",
-    dot: "bg-red-400",
+    bg: "bg-[#9CA3AF]",
+    text: "text-gray-600",
   },
   EXPIRED: {
     label: "Expired",
     bg: "bg-gray-100",
     text: "text-gray-500",
-    dot: "bg-gray-400",
   },
 };
 
@@ -213,13 +204,11 @@ function StatusBadge({ status }: { status: string }) {
     label: status,
     bg: "bg-gray-100",
     text: "text-gray-600",
-    dot: "bg-gray-400",
   };
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${cfg.bg} ${cfg.text}`}
+      className={`inline-flex items-center justify-center px-2 py-1 text-[12px] font-bold border border-gray-300 min-w-[90px] rounded-md ${cfg.bg} ${cfg.text}`}
     >
-      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
       {cfg.label}
     </span>
   );
@@ -485,7 +474,7 @@ export default function CustomerJobHistory() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F7F7F5]">
+    <div className="min-h-screen bg-[#F8F9F5]">
       <div className="max-w-[1200px] mx-auto px-6 py-8">
         {/* ── Page Header ─────────────────────────────────────────────── */}
         <div className="flex items-start justify-between mb-8">

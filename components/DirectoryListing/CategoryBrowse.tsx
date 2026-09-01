@@ -135,40 +135,40 @@ const CategoryBrowse = () => {
           {categories.map((cat, index) => {
             const Icon = getCategoryIcon(cat.name);
             return (
-            <Link
-              href={`/directory-listing/search?categoryId=${cat.id}`}
-              key={index}
-              className="group relative block min-w-[180px] sm:min-w-[220px] h-[170px] sm:h-[190px] bg-white rounded-[24px] sm:rounded-[30px] p-5 sm:p-6 overflow-hidden flex-shrink-0 shadow-2xl cursor-pointer transition-all duration-500 hover:bg-[#F5F8F2] hover:-translate-y-1"
-            >
-              {/* CONTENT */}
-              <div className="relative z-10 h-full flex flex-col justify-between">
+              <Link
+                href={`/directory-listing/search?categoryId=${cat.id}`}
+                key={index}
+                className="group relative block min-w-[160px] sm:min-w-[190px] h-[150px] sm:h-[170px] bg-white rounded-[20px] sm:rounded-[24px] p-4 sm:p-5 overflow-hidden flex-shrink-0 shadow-2xl cursor-pointer transition-all duration-500 hover:bg-[#F5F8F2] hover:-translate-y-1"
+              >
+                {/* CONTENT */}
+                <div className="relative z-10 h-full flex flex-col justify-between">
 
-                {/* TOP */}
-                <div className="transition-all duration-500 group-hover:-translate-x-2">
-                  <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-[#F4F7F1] flex items-center justify-center overflow-hidden mb-4 sm:mb-5 transition-all duration-500 group-hover:bg-[#6E9625]/10 group-hover:scale-105">
-                    {cat.image ? (
-                      <img
-                        src={
-                          cat.image.startsWith("http")
-                            ? cat.image
-                            : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "")}${cat.image.startsWith("/") ? cat.image : `/${cat.image}`}`
-                        }
-                        alt={cat.name}
-                        className="w-7 h-7 sm:w-8 sm:h-8 object-contain"
-                        crossOrigin="anonymous"
-                      />
-                    ) : (
-                      <Icon className="text-[#064E3B] w-5 h-5 sm:w-6 sm:h-6" />
-                    )}
+                  {/* TOP */}
+                  <div className="transition-all duration-500 group-hover:-translate-x-2">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-[#F4F7F1] flex items-center justify-center overflow-hidden mb-3 sm:mb-4 transition-all duration-500 group-hover:bg-[#6E9625]/10 group-hover:scale-105">
+                      {cat.image ? (
+                        <img
+                          src={
+                            cat.image.startsWith("http")
+                              ? cat.image
+                              : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "")}${cat.image.startsWith("/") ? cat.image : `/${cat.image}`}`
+                          }
+                          alt={cat.name}
+                          className="w-6 h-6 sm:w-7 sm:h-7 object-contain"
+                          crossOrigin="anonymous"
+                        />
+                      ) : (
+                        <Icon className="text-[#064E3B] w-4 h-4 sm:w-5 sm:h-5" />
+                      )}
+                    </div>
+
+                    <h3 className="text-[#064E3B] font-bold text-[18px] sm:text-[20px] leading-tight">
+                      {cat.name}
+                    </h3>
                   </div>
 
-                  <h3 className="text-[#064E3B] font-bold text-[20px] sm:text-[24px] leading-tight">
-                    {cat.name}
-                  </h3>
-                </div>
-
-                {/* HOVER CONTENT */}
-                <div className="opacity-0 translate-y-6 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500">
+                  {/* HOVER CONTENT */}
+                  {/* <div className="opacity-0 translate-y-6 group-hover:opacity-100 group-hover:translate-y-0 transition-all duration-500">
                   <div className="flex items-center gap-2 text-[#6E9625] font-semibold text-[14px]">
                     View trades
                     <ArrowRight
@@ -176,13 +176,14 @@ const CategoryBrowse = () => {
                       className="group-hover:translate-x-1 transition-transform"
                     />
                   </div>
+                </div> */}
                 </div>
-              </div>
 
-              {/* HOVER BACKGROUND EFFECT */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-gradient-to-br from-[#6E9625]/5 to-transparent transition-opacity duration-500" />
-            </Link>
-          )})}
+                {/* HOVER BACKGROUND EFFECT */}
+                <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-gradient-to-br from-[#6E9625]/5 to-transparent transition-opacity duration-500" />
+              </Link>
+            )
+          })}
         </div>
 
         {/* BOTTOM LINE */}

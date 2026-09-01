@@ -100,12 +100,28 @@ function ChatDashboardContent() {
       // 2. Get active chats
       const convsRes = await authApi.getConversations();
       const list = convsRes?.data || convsRes || [];
+      let mappedList: any[] = [];
       if (Array.isArray(list)) {
-        const mappedList = list.map((c: any) => ({
+        mappedList = list.map((c: any) => ({
           ...c,
           id: c.id || c._id,
         }));
+      }
 
+      // If the active conversation is not in the mapped list, but we have traderIdParam, fetch it explicitly
+      if (activeConversationId && !mappedList.some((c) => c.id === activeConversationId) && traderIdParam) {
+        try {
+          const newOrExisting = await authApi.getOrCreateConversation(traderIdParam, fallbackJobId || undefined);
+          const conv = newOrExisting?.data || newOrExisting;
+          if (conv && (conv.id || conv._id)) {
+            mappedList.unshift({ ...conv, id: conv.id || conv._id });
+          }
+        } catch (e) {
+          console.error("Failed to fetch missing active conversation", e);
+        }
+      }
+
+      if (mappedList.length > 0) {
         // Deduplicate by traderId — but always keep the active conversation
         const activeId = targetConvId || activeConversationId;
         const seenTraders = new Map<string, typeof mappedList[0]>();
@@ -129,6 +145,8 @@ function ChatDashboardContent() {
           }
         }
         setConversations(Array.from(seenTraders.values()));
+      } else {
+        setConversations([]);
       }
     } catch (error) {
       console.error("Failed to load dashboard chat data:", error);
@@ -216,7 +234,7 @@ function ChatDashboardContent() {
   };
 
   return (
-    <div className="flex-1 flex bg-[#F9FAFB] p-6 mt-[60px] h-[calc(100vh-60px)] overflow-hidden">
+    <div className="flex-1 flex bg-[#F8F9F5] p-6 mt-[60px] h-[calc(100vh-60px)] overflow-hidden">
       <div className="flex-1 flex gap-6 max-w-7xl mx-auto w-full h-full overflow-hidden">
 
         {/* Sidebar - Recent Chats */}
@@ -226,11 +244,11 @@ function ChatDashboardContent() {
           <div className="p-5 pb-3">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-[18px] font-bold text-[#1C2C1C]">Recent Chats</h2>
-              <div className="flex gap-2">
+              {/* <div className="flex gap-2">
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${isConnected ? "bg-emerald-50 text-emerald-700" : "bg-gray-150 text-gray-500"}`}>
                   {isConnected ? "Connected" : "Reconnecting"}
                 </span>
-              </div>
+              </div> */}
             </div>
 
             <div className="relative flex items-center">
@@ -365,7 +383,7 @@ function ChatDashboardContent() {
 export default function CustomerInboxPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB]">
+      <div className="min-h-screen flex items-center justify-center bg-[#F8F9F5]">
         <p className="text-gray-400 animate-pulse text-[14px]">Loading messages workspace...</p>
       </div>
     }>

@@ -106,7 +106,7 @@ function formatPrice(price?: number) {
   return new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(price);
 }
 
-function QuoteCard({ quote, onEdit }: { quote: Quote; onEdit: (quote: Quote) => void }) {
+function QuoteCard({ quote, onEdit, onView }: { quote: Quote; onEdit: (quote: Quote) => void; onView: (quote: Quote) => void }) {
   const jobTitle = quote.job?.title || quote.jobTitle || "Job";
   const jobPostcode = quote.job?.postcode || quote.jobPostcode || "";
   const jobId = quote.job?.id || quote.jobId || "";
@@ -151,14 +151,16 @@ function QuoteCard({ quote, onEdit }: { quote: Quote; onEdit: (quote: Quote) => 
           )}
 
           {/* View Quote */}
-          <Link
-            href={`/trader/quotes/${jobId}`}
-            onClick={(e) => e.stopPropagation()}
-            className="flex items-center gap-1 text-[#6E9625] hover:text-[#4A6B0A] transition-colors"
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onView(quote);
+            }}
+            className="flex items-center gap-1 text-[#6E9625] hover:text-[#4A6B0A] transition-colors bg-transparent border-none cursor-pointer"
           >
             View Quote
             <ArrowRight size={12} />
-          </Link>
+          </button>
         </div>
       </div>
     </div>
@@ -175,6 +177,12 @@ export default function TraderQuotesComponent() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // View quote states
+  const [viewingQuote, setViewingQuote] = useState<Quote | null>(null);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [viewQuoteDetails, setViewQuoteDetails] = useState<any>(null);
+  const [viewModalLoading, setViewModalLoading] = useState(false);
 
   // Form states
   const [price, setPrice] = useState("");
@@ -266,6 +274,26 @@ export default function TraderQuotesComponent() {
       }
     } finally {
       setModalLoading(false);
+    }
+  };
+
+  const handleViewClick = async (quote: Quote) => {
+    setViewingQuote(quote);
+    setIsViewModalOpen(true);
+    setViewModalLoading(true);
+    setViewQuoteDetails(null);
+
+    try {
+      const jobId = quote.job?.id || quote.jobId || "";
+      if (jobId) {
+        const detail = await authApi.getMyQuoteByJobId(jobId);
+        setViewQuoteDetails(detail?.data ?? detail);
+      }
+    } catch (err) {
+      console.error("Failed to load quote details", err);
+      toast.error("Failed to load detailed quote information");
+    } finally {
+      setViewModalLoading(false);
     }
   };
 
@@ -389,7 +417,7 @@ export default function TraderQuotesComponent() {
         ) : (
           <div className="space-y-4">
             {quotes.map(q => (
-              <QuoteCard key={q.id} quote={q} onEdit={handleEditClick} />
+              <QuoteCard key={q.id} quote={q} onEdit={handleEditClick} onView={handleViewClick} />
             ))}
           </div>
         )}
@@ -536,8 +564,9 @@ export default function TraderQuotesComponent() {
                       Current Attachments
                     </label>
                     <div className="flex flex-col gap-1.5 max-h-[100px] overflow-y-auto">
-                      {existingAttachments.map((url, idx) => {
-                        const fileName = url.substring(url.lastIndexOf("/") + 1) || `attachment-${idx + 1}`;
+                      {existingAttachments.map((urlItem: any, idx) => {
+                        const urlString = typeof urlItem === 'string' ? urlItem : (urlItem?.url || urlItem?.fileUrl || urlItem?.path || String(urlItem));
+                        const fileName = urlString.substring(urlString.lastIndexOf("/") + 1) || `attachment-${idx + 1}`;
                         return (
                           <div
                             key={idx}
@@ -638,6 +667,102 @@ export default function TraderQuotesComponent() {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* ── View Quote Modal ──────────────────────────────────────── */}
+      {isViewModalOpen && viewingQuote && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300"
+            onClick={() => setIsViewModalOpen(false)}
+          />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 z-10 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between mb-6 border-b border-gray-100 pb-4">
+              <div>
+                <h2 className="text-[18px] font-bold text-[#1C2C1C]">View Quote</h2>
+                <p className="text-[12px] text-gray-400 mt-0.5 truncate max-w-[280px]">
+                  {viewingQuote.job?.title || viewingQuote.jobTitle || "Job Quote"}
+                </p>
+              </div>
+              <button
+                onClick={() => setIsViewModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {viewModalLoading ? (
+              <div className="flex flex-col items-center justify-center py-10 gap-3">
+                <Loader2 size={32} className="animate-spin text-[#6E9625]" />
+                <p className="text-[13px] text-gray-500 font-medium">Loading quote details...</p>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Price</span>
+                    <span className="text-[15px] font-bold text-[#1C2C1C]">{formatPrice(viewQuoteDetails?.price || viewingQuote.price)}</span>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Status</span>
+                    <QuoteStatusBadge status={viewQuoteDetails?.status || viewingQuote.status || "PENDING"} />
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Estimated Days</span>
+                    <span className="text-[14px] font-bold text-[#1C2C1C]">{viewQuoteDetails?.estimatedDays || viewingQuote.estimatedDays || "—"}</span>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Submitted</span>
+                    <span className="text-[14px] font-bold text-[#1C2C1C]">{formatDate(viewingQuote.createdAt)}</span>
+                  </div>
+                </div>
+
+                {viewQuoteDetails?.message && (
+                  <div>
+                    <span className="block text-[12px] font-bold text-[#1C2C1C] uppercase tracking-wider mb-2">Message</span>
+                    <div className="p-4 rounded-xl border border-gray-100 bg-gray-50">
+                      <p className="text-[13px] leading-relaxed text-gray-600 whitespace-pre-wrap">{viewQuoteDetails.message}</p>
+                    </div>
+                  </div>
+                )}
+
+                {viewQuoteDetails?.attachments && viewQuoteDetails.attachments.length > 0 && (
+                  <div>
+                    <span className="block text-[12px] font-bold text-[#1C2C1C] uppercase tracking-wider mb-2">Attachments</span>
+                    <div className="flex flex-col gap-1.5 max-h-[100px] overflow-y-auto">
+                      {viewQuoteDetails.attachments.map((urlItem: any, idx: number) => {
+                        const urlString = typeof urlItem === 'string' ? urlItem : (urlItem?.url || urlItem?.fileUrl || urlItem?.path || String(urlItem));
+                        const fileName = urlString.substring(urlString.lastIndexOf("/") + 1) || `attachment-${idx + 1}`;
+                        const isImage = /\.(jpeg|jpg|gif|png|webp)$/i.test(urlString);
+                        return (
+                          <a
+                            key={idx}
+                            href={urlString.startsWith("http") ? urlString : `${process.env.NEXT_PUBLIC_API_URL || ""}${urlString.startsWith("/") ? urlString : `/${urlString}`}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-2 bg-[#F9FAFB] rounded-lg px-3 py-1.5 border border-gray-100 hover:border-[#C8D9A8] transition-colors"
+                          >
+                            <FileText size={14} className="text-gray-400 flex-shrink-0" />
+                            <span className="text-[12px] text-[#1C2C1C] truncate flex-1">{fileName}</span>
+                          </a>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+            <div className="mt-6">
+              <button
+                onClick={() => setIsViewModalOpen(false)}
+                className="w-full h-[46px] rounded-xl bg-gray-100 hover:bg-gray-200 text-[#1C2C1C] text-[14px] font-bold transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

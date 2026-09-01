@@ -1,7 +1,8 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
-import { Star, MapPin, Calendar, DollarSign, Shield, ShieldCheck, Mail, Info, AlertTriangle, CheckCircle, Phone } from "lucide-react";
+import { Star, MapPin, Calendar, DollarSign, Shield, ShieldCheck, Mail, Info, AlertTriangle, CheckCircle, Phone, X } from "lucide-react";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
 import { authApi } from "@/app/api/authApi";
@@ -86,8 +87,14 @@ export default function ChatWindow({
   isTraderView = false,
   fallbackJobId,
 }: ChatWindowProps) {
+  const router = useRouter();
   const conversationId = conversation.id || conversation._id || "";
-  const partner = isTraderView ? (conversation.customer || conversation.trader) : conversation.trader;
+  let partner: any = isTraderView ? (conversation.customer || conversation.trader) : conversation.trader;
+  if (conversation.customer && (conversation.customer.id === currentUserId || conversation.customer._id === currentUserId)) {
+    partner = conversation.trader;
+  } else if (conversation.trader && (conversation.trader.id === currentUserId || conversation.trader._id === currentUserId)) {
+    partner = conversation.customer;
+  }
   const partnerId = partner?.id || partner?._id || "";
   const job = conversation.job;
   const activeJobId = job?.id || job?._id || conversation.jobId || fallbackJobId;
@@ -99,6 +106,7 @@ export default function ChatWindow({
 
   // Modals state
   const [showReportModal, setShowReportModal] = useState(false);
+  const [isCloseJobModalOpen, setIsCloseJobModalOpen] = useState(false);
   const [reportType, setReportType] = useState("TRADER_PROFILE");
   const [reportReason, setReportReason] = useState("SPAM");
   const [customReason, setCustomReason] = useState("");
@@ -233,10 +241,14 @@ export default function ChatWindow({
 
       if (newMessage) {
         // 1. Update local list
-        setMessages((prev) => [...prev, newMessage]);
-        // 2. Broadcast via socket
-        emitSocketMessage(newMessage);
-        // 3. Trigger conversation list update in parent sidebar
+        setMessages((prev) => {
+          // Double check to ensure the REST response isn't already added via socket
+          const exists = prev.some((m) => (m.id && m.id === newMessage.id) || (m._id && m._id === newMessage._id));
+          if (exists) return prev;
+          return [...prev, newMessage];
+        });
+
+        // 2. Trigger conversation list update in parent sidebar
         if (onRefreshConversations) onRefreshConversations();
       }
     } catch (error: any) {
@@ -305,7 +317,7 @@ export default function ChatWindow({
   };
 
   // Job Close / Cancel Action
-  const handleJobClose = async () => {
+  const handleCloseJobSubmit = async (data: { isWorkCarriedOut: boolean; cancelReason?: string } = { isWorkCarriedOut: true }) => {
     if (!activeJobId) {
       toast.error("No job is linked to this conversation", { id: "job-action-error" });
       return;
@@ -313,7 +325,7 @@ export default function ChatWindow({
 
     try {
       setLoadingClose(true);
-      await authApi.cancelJob(activeJobId);
+      await authApi.closeJob(activeJobId, data);
       setJobStatus("CANCELLED");
       toast.success("Job closed successfully!", { id: "job-action-success" });
       if (onRefreshConversations) onRefreshConversations();
@@ -426,7 +438,7 @@ export default function ChatWindow({
                 if (!activeJobId) return null;
 
                 const status = jobStatus?.toUpperCase();
-                const isInProgress = status === "IN_PROGRESS";
+                const isInProgress = status === "IN_PROGRESS" || status === "ASSIGNED";
                 const isCompleted = status === "COMPLETED";
                 const isClosed = status === "CANCELLED" || status === "CLOSED";
 
@@ -462,7 +474,7 @@ export default function ChatWindow({
                       </button>
 
                       <button
-                        onClick={handleJobClose}
+                        onClick={() => setIsCloseJobModalOpen(true)}
                         disabled={loadingComplete || loadingClose || loadingStartJob}
                         className="px-4 py-1.5 bg-[#1C2C1C] hover:bg-[#2C422C] text-white rounded-xl text-[12px] font-bold transition-all shadow-xs flex items-center gap-1.5 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
@@ -592,6 +604,51 @@ export default function ChatWindow({
           </div>
         )
       }
+
+      {/* Close Job Modal */}
+      {isCloseJobModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-[2px] p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl relative">
+            <button
+              onClick={() => setIsCloseJobModalOpen(false)}
+              className="absolute top-4 right-4 text-gray-400 hover:bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center transition-colors"
+            >
+              <X size={20} />
+            </button>
+
+            <h2 className="text-xl font-bold text-[#1C2C1C] mb-4">
+              Was any work carried out?
+            </h2>
+
+            <div className="flex flex-col gap-3 mt-6">
+              <button
+                onClick={async () => {
+                  setIsCloseJobModalOpen(false);
+                  await handleCloseJobSubmit({ isWorkCarriedOut: true });
+                  if (!isTraderView) {
+                    router.push(`/customer-dashboard/leave-review?jobId=${activeJobId}&traderId=${partnerId}&workCarriedOut=true&hideWorkCarriedOut=true`);
+                  }
+                }}
+                className="w-full py-3 bg-[#4CAF50] text-white rounded-xl font-bold hover:bg-[#43A047] transition-colors cursor-pointer"
+              >
+                Yes
+              </button>
+              <button
+                onClick={async () => {
+                  setIsCloseJobModalOpen(false);
+                  await handleCloseJobSubmit({ isWorkCarriedOut: false });
+                  if (!isTraderView) {
+                    router.push(`/customer-dashboard/leave-review?jobId=${activeJobId}&traderId=${partnerId}&workCarriedOut=false&hideWorkCarriedOut=true`);
+                  }
+                }}
+                className="w-full py-3 border border-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-colors cursor-pointer"
+              >
+                No
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
 
   );

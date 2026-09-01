@@ -292,7 +292,7 @@ const DirectorySearchResults = () => {
   const [displayCount, setDisplayCount] = useState(15);
 
   // Sort state
-  const [sortOption, setSortOption] = useState("Highest Review");
+  const [sortOption, setSortOption] = useState("Highest rated");
   const [isSortDropdownOpen, setIsSortDropdownOpen] = useState(false);
   const sortDropdownRef = useRef<HTMLDivElement>(null);
 
@@ -547,8 +547,7 @@ const DirectorySearchResults = () => {
     .filter(t => appliedMinRating === null || (t.averageRating || 0) >= appliedMinRating)
     .filter(t => !searchName || (t.fullName || '').toLowerCase().includes(searchName.toLowerCase()))
     .sort((a, b) => {
-      if (sortOption === "Highest Review") return (b.averageRating || 0) - (a.averageRating || 0);
-      if (sortOption === "Lowest Review") return (a.averageRating || 0) - (b.averageRating || 0);
+      if (sortOption === "Highest rated") return (b.averageRating || 0) - (a.averageRating || 0);
       return 0;
     });
 
@@ -591,7 +590,7 @@ const DirectorySearchResults = () => {
                 </button>
                 {isSortDropdownOpen && (
                   <div className="absolute right-0 sm:right-0 left-0 sm:left-auto top-full mt-2 w-full sm:w-48 bg-white rounded-xl shadow-[0_15px_60px_rgba(0,0,0,0.12)] border border-gray-100 z-50 py-2">
-                    {["Highest Review", "Lowest Review"].map(option => (
+                    {["Highest rated", "Most Relevant"].map(option => (
                       <div
                         key={option}
                         onClick={() => {
@@ -735,6 +734,7 @@ const DirectorySearchResults = () => {
                     />
                   </div>
                   {/* Rating */}
+                  {/* 
                   <div className="mt-2">
                     <label className="block text-[13px] font-medium text-[#4B5563] mb-4">Rating</label>
                     <div className="flex flex-col gap-3.5">
@@ -794,6 +794,7 @@ const DirectorySearchResults = () => {
                       </label>
                     </div>
                   </div>
+                  */}
                   {/* Action Buttons */}
                   <div className="flex flex-col gap-3 mt-4">
                     <button
@@ -818,7 +819,7 @@ const DirectorySearchResults = () => {
                 </div>
               </div>
               <p className={`text-[12px] text-[#6B7280] leading-relaxed px-2 ${showFiltersMobile ? 'block' : 'hidden lg:block'}`}>
-                TradeTrust is a platform connecting customers with independent traders. Any services agreed are provided by the trader, not TradeTrust.
+                TugaTrades connects customers with independent tradespeople. Services are provided directly by the tradesperson, not TugaTrades.
               </p>
             </div>
             {/* Right Content (Results) */}

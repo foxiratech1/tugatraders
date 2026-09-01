@@ -93,7 +93,8 @@ const PlatformRoleSection = () => {
                   src="/Contact Support.png"
                   alt="Contact Support"
                   fill
-                  className="object-cover"
+                  style={{ objectFit: "cover", objectPosition: "center" }}
+                  className="object-cover object-center"
                 />
               </div>
 

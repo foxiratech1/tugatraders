@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Star, MapPin, Bookmark, List, Map as MapIcon } from 'lucide-react';
+import { Star, MapPin, Heart, List, Map as MapIcon } from 'lucide-react';
 import { authApi } from '@/app/api/authApi';
 
 const getImageUrl = (path: string | null | undefined) => {
@@ -94,7 +94,7 @@ const LoginModal = ({
 
         {/* Dynamic icon */}
         <div className="w-12 h-12 rounded-full bg-[#F3F8EC] flex items-center justify-center mb-4">
-          {icon || <Bookmark size={22} className="text-[#6E9625]" fill="#6E9625" />}
+          {icon || <Heart size={22} className="text-[#6E9625]" fill="#6E9625" />}
         </div>
 
         <h3 className="text-[22px] font-bold text-[#1C2C1C] mb-1" style={{ fontFamily: 'var(--font-bricolage), sans-serif' }}>
@@ -335,12 +335,16 @@ const DirectoryListings = () => {
                       </span>
                     )}
                   </div>
-                  {/* Bookmark */}
+                  {/* Heart */}
                   <button
-                    onClick={() => handleToggleSave(pro.id)}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleToggleSave(pro.id);
+                    }}
                     className="absolute top-4 right-4 w-8 h-8 bg-black/20 backdrop-blur-md rounded-full flex items-center justify-center text-white hover:bg-black/40 transition-colors cursor-pointer"
                   >
-                    <Bookmark
+                    <Heart
                       size={16}
                       fill={pro.isSaved ? "currentColor" : "none"}
                       className={pro.isSaved ? "text-[#6E9625]" : "text-white"}

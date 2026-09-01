@@ -215,109 +215,7 @@ export default function TraderNavbar() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 font-sans">
-      {/* ── Top utility bar ─────────────────────────────── */}
-      <div className="bg-[#1C2C1C] text-white text-[12px]">
-        <div className="max-w-[1280px] mx-auto px-4 h-9 flex items-center justify-end gap-6">
-          {isApproved && (
-            <>
-              {/* <Link
-                href="/trader/account"
-                className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors"
-              >
-                <User2 size={12} />
-                Account
-              </Link> */}
-              <Link
-                href="/trader/settings"
-                className="flex items-center gap-1.5 text-white/70 hover:text-white transition-colors"
-              >
-                <Settings size={12} />
-                Settings
-              </Link>
-
-              {/* <div className="relative" ref={reportDropdownRef}>
-                <button
-                  onClick={async () => {
-                    if (!reportOpen) {
-                      await fetchReports();
-                    }
-                    setReportOpen(!reportOpen);
-                  }}
-                  className="text-white/70 hover:text-white transition-colors"
-                >
-                  Report
-                </button>
-
-                {reportOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-[420px] bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden z-50">
-                    <div className="px-5 py-4 border-b">
-                      <h3 className="font-bold text-[16px] text-[#1C2C1C]">
-                        My Reports
-                      </h3>
-                    </div>
-
-                    <div className="max-h-[400px] overflow-y-auto">
-                      {reports.length === 0 ? (
-                        <div className="py-10 text-center text-gray-500">
-                          No reports found
-                        </div>
-                      ) : (
-                        reports.map((report) => (
-                          <div
-                            key={report.id}
-                            className="px-5 py-4 border-b hover:bg-gray-50"
-                          >
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="font-semibold text-[#1C2C1C]">
-                                {report.reportType}
-                              </span>
-
-                              <span
-                                className={`text-xs px-2 py-1 rounded-full ${report.status === "PENDING"
-                                  ? "bg-yellow-100 text-yellow-700"
-                                  : report.status === "APPROVED"
-                                    ? "bg-green-100 text-green-700"
-                                    : "bg-red-100 text-red-700"
-                                  }`}
-                              >
-                                {report.status}
-                              </span>
-                            </div>
-
-                            <p className="text-sm text-gray-600">
-                              <strong>Reason:</strong> {report.reason}
-                            </p>
-
-                            {report.customReason && (
-                              <p className="text-sm text-gray-600 mt-1">
-                                <strong>Custom:</strong> {report.customReason}
-                              </p>
-                            )}
-
-                            <p className="text-xs text-gray-400 mt-2">
-                              {new Date(report.createdAt).toLocaleString()}
-                            </p>
-                          </div>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div> */}
-              <div className="relative" ref={reportDropdownRef}>
-
-                {/* <Link
-                  href="/trader/reports"
-                  className="text-white/70 hover:text-white transition-colors"
-                >
-                  Report
-                </Link> */}
-
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+      {/* ── Top utility bar removed ─────────────────────────────── */}
 
       {/* ── Main navbar ─────────────────────────────────── */}
       <div className="bg-[#FFFFFFCC]/80 border-b border-[#E5E7EB] shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
@@ -371,13 +269,13 @@ export default function TraderNavbar() {
               <div className="relative" ref={notifDropdownRef}>
                 <button
                   onClick={() => setNotifOpen(!notifOpen)}
-                  className="relative w-9 h-9 rounded-full flex items-center justify-center text-[#1C2C1C]/60 hover:bg-[#F5F5F5] hover:text-[#1C2C1C] transition-all hover:scale-105 active:scale-95"
+                  className="relative w-10 h-10 rounded-full flex items-center justify-center text-[#1C2C1C]/60 hover:bg-[#F5F5F5] hover:text-[#1C2C1C] transition-all hover:scale-105 active:scale-95"
                   aria-label="Notifications"
                 >
-                  <Bell size={21} />
+                  <Bell size={26} />
                   {/* Unread dot with pulse */}
                   {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 w-4 h-4 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-[8px] text-white font-bold animate-pulse">
+                    <span className="absolute top-0 right-0 w-5 h-5 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-[10px] text-white font-bold animate-pulse">
                       {unreadCount}
                     </span>
                   )}

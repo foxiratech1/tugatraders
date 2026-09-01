@@ -5,25 +5,75 @@ import { useParams, useRouter } from "next/navigation";
 import { authApi } from "@/app/api/authApi";
 import {
   Star, MapPin, Phone, Briefcase, Wrench, ShieldCheck,
-  Mail, ArrowLeft, CheckCircle, FileText, Heart, MessageSquare, Image as ImageIcon,
-  ThumbsUp, Award,
-  CheckCircle2,
-  MessageCircle,
-  HeartIcon,
-  Check
+  Mail, ArrowLeft, CheckCircle, FileText, Check, Info, Image as ImageIcon, X, MessageSquare, Heart, ThumbsUp, Award, Shield, ChevronLeft, ChevronRight
 } from "lucide-react";
 import toast from "react-hot-toast";
-import Image from "next/image";
+import Link from "next/link";
 import VettingModal from "@/components/modal/VettingModal";
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-function getImageUrl(path: string | null | undefined): string {
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://api.tugatraders.server24.in";
+function getImageUrl(path: any): string {
   if (!path) return "/avt.png";
-  if (path.startsWith("http") || path.startsWith("data:")) return path;
+
+  let stringPath = path;
+  if (typeof path === 'object') {
+    stringPath = path.url || path.path || path.imagePath || path.src || path.fileUrl;
+  }
+
+  if (typeof stringPath !== 'string') return "/placeholder.png";
+
+  if (stringPath.startsWith("http") || stringPath.startsWith("data:")) return stringPath;
   const baseUrl = API_BASE.endsWith('/') ? API_BASE.slice(0, -1) : API_BASE;
-  let imagePath = path.startsWith('/') ? path : `/${path}`;
+  let imagePath = stringPath.startsWith('/') ? stringPath : `/${stringPath}`;
   imagePath = imagePath.replace(/\/\//g, '/');
   return `${baseUrl}${imagePath}`;
 }
+
+const LightboxModal = ({
+  images,
+  currentIndex,
+  onClose,
+  onNext,
+  onPrev
+}: {
+  images: any[];
+  currentIndex: number;
+  onClose: () => void;
+  onNext: () => void;
+  onPrev: () => void;
+}) => {
+  if (currentIndex === -1 || !images?.length) return null;
+
+  const currentImg = images[currentIndex];
+
+  return (
+    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/95 backdrop-blur-md">
+      <button onClick={onClose} className="absolute top-6 right-6 w-12 h-12 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer z-50">
+        <X size={24} />
+      </button>
+
+      <button onClick={onPrev} className="absolute left-6 top-1/2 -translate-y-1/2 w-14 h-14 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer z-50" disabled={images.length <= 1}>
+        <ChevronLeft size={36} />
+      </button>
+
+      <div className="relative max-w-[90vw] max-h-[85vh] w-full h-full flex items-center justify-center p-4">
+        <img
+          src={getImageUrl(currentImg)}
+          alt="Gallery Image"
+          className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+        />
+      </div>
+
+      <button onClick={onNext} className="absolute right-6 top-1/2 -translate-y-1/2 w-14 h-14 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer z-50" disabled={images.length <= 1}>
+        <ChevronRight size={36} />
+      </button>
+
+      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white font-semibold bg-black/60 px-5 py-2 rounded-full text-sm backdrop-blur-sm">
+        {currentIndex + 1} / {images.length}
+      </div>
+    </div>
+  );
+};
 
 export default function CustomerTraderProfilePage() {
   const params = useParams();
@@ -32,9 +82,24 @@ export default function CustomerTraderProfilePage() {
 
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [isVettingModalOpen, setIsVettingModalOpen] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [isVettingModalOpen, setIsVettingModalOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState<number>(-1);
+  const [showAllGallery, setShowAllGallery] = useState(false);
+
+  const openLightbox = (index: number) => setLightboxIndex(index);
+  const closeLightbox = () => setLightboxIndex(-1);
+  const nextLightboxImage = () => {
+    if (portfolio?.length > 0) {
+      setLightboxIndex((prev) => (prev === portfolio.length - 1 ? 0 : prev + 1));
+    }
+  };
+  const prevLightboxImage = () => {
+    if (portfolio?.length > 0) {
+      setLightboxIndex((prev) => (prev === 0 ? portfolio.length - 1 : prev - 1));
+    }
+  };
 
   useEffect(() => {
     if (!traderId) return;
@@ -59,9 +124,27 @@ export default function CustomerTraderProfilePage() {
     fetchProfile();
   }, [traderId]);
 
+  const handleSaveTrader = async () => {
+    try {
+      setIsSaving(true);
+      await authApi.toggleSaveTrader(traderId);
+      setIsSaved((prev) => !prev);
+      toast.success(isSaved ? "Trader removed from saved." : "Trader saved successfully.");
+    } catch (error) {
+      console.error("Failed to toggle save status", error);
+      toast.error("Failed to update saved status.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleSendMessage = () => {
+    router.push(`/customer-dashboard/inbox?traderId=${traderId}`);
+  };
+
   if (loading) {
     return (
-      <div className="min-h-[70vh] bg-[#F9FAFB] flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-12 h-12 border-4 border-[#243A24]/20 border-t-[#243A24] rounded-full animate-spin" />
           <p className="text-[#243A24] font-semibold tracking-wide animate-pulse">Loading Profile...</p>
@@ -72,7 +155,7 @@ export default function CustomerTraderProfilePage() {
 
   if (!profile) {
     return (
-      <div className="min-h-[70vh] bg-[#F9FAFB] flex flex-col items-center justify-center gap-6 px-4">
+      <div className="min-h-screen bg-white flex flex-col items-center justify-center gap-6 px-4">
         <div className="w-24 h-24 bg-red-100 text-red-500 rounded-full flex items-center justify-center">
           <ShieldCheck size={48} />
         </div>
@@ -91,302 +174,371 @@ export default function CustomerTraderProfilePage() {
     );
   }
 
-  // Extract variables defensively
+  // Extract variables carefully based on provided JSON structure
   const tp = profile?.profile || profile?.traderProfile || profile;
-
-  const handleSaveTrader = async () => {
-    try {
-      setIsSaving(true);
-      await authApi.toggleSaveTrader(traderId);
-      setIsSaved((prev) => !prev);
-      toast.success(isSaved ? "Trader removed from saved." : "Trader saved successfully.");
-    } catch (error) {
-      console.error("Failed to toggle save status", error);
-      toast.error("Failed to update saved status.");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
   const user = profile?.user || profile || {};
   const metrics = profile?.metrics || {};
 
   const fullName = user?.fullName || tp?.fullName || "Professional";
+  const email = user?.email;
+  const phone = user?.phone;
   const companyName = tp?.companyName || tp?.businessName;
   const avatarUrl = getImageUrl(user?.profileImage || tp?.logo || tp?.profileImage);
   const location = tp?.location || tp?.workLocation || user?.city || user?.location || "Location not specified";
   const bio = tp?.about || tp?.aboutUs || tp?.bio || tp?.description || "No description provided.";
-
-  // Rating logic
+  
   const rating = metrics?.averageRating || tp?.ratingAvg || user?.ratingAvg || 0;
   const reviewCount = metrics?.totalReviews || tp?.reviewCount || user?.reviewCount || 0;
 
-  const jobsCompleted = metrics?.completedJobs || tp?.jobsCompleted || 0;
-  const responseRate = metrics?.responseRate ? `${Math.round(metrics.responseRate * 100)}%` : 'N/A';
-
   const isVerified = (tp?.verificationStatus === "APPROVED") || tp?.isVerified || user?.isVerified || false;
-
-  const email = user?.email || "Email not specified";
-  const phone = user?.phone || "Phone not specified";
-
+  const isInsured = tp?.insured || false;
   const portfolio = tp?.portfolio || [];
-  const featuredImage = portfolio.length > 0 ? getImageUrl(portfolio[0].fileUrl) : "/placeholder.png";
+  const certificates = tp?.certificates || [];
+  const insuranceDocuments = tp?.insuranceDocuments || [];
 
   return (
-    <div className="bg-[#F9FAFB] font-sans selection:bg-[#6E9625]/20 selection:text-[#1C2C1C] min-h-[calc(100vh-96px)] py-8 pb-16">
-      <main className="max-w-[1440px] mx-auto px-6">
-
-        {/* Back Button */}
+    <div className="min-h-screen bg-[#E2E8DC] font-sans selection:bg-[#6E9625]/20 selection:text-[#1C2C1C]">
+      <main className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
         <button
-          onClick={() => router.back()}
-          className="flex items-center gap-2 text-gray-500 hover:text-[#243A24] text-[14px] font-semibold transition-colors mb-6 cursor-pointer"
+          onClick={() => router.push("/customer-dashboard/jobs")}
+          className="flex items-center gap-2 text-gray-500 hover:text-[#243A24] font-medium cursor-pointer transition-colors mb-6 lg:mb-8"
         >
-          <ArrowLeft size={16} />
-          Back to Dashboard
+          <ArrowLeft size={18} />
+          Back to Jobs
         </button>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6 items-start">
+        <div className="flex flex-col md:flex-row gap-6 lg:gap-8">
 
-          {/* ── Left Sidebar (Overview) ── */}
-          <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 flex flex-col overflow-hidden">
-            <div className="p-8 flex flex-col items-center relative">
-              {/* Avatar */}
-              <div className="relative w-[130px] h-[130px] rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.08)] overflow-hidden mb-4 bg-gray-100 flex items-center justify-center">
-                <Image src={avatarUrl} alt={fullName} fill className="object-cover" unoptimized />
-                {/* <div className="absolute bottom-0 w-full h-8 bg-[#1A5CBA] flex items-center justify-center bg-opacity-95">
-                  <span className="text-white text-[11px] font-bold tracking-widest flex items-center gap-1">
-                    <span className="w-2.5 h-2.5 rounded-full bg-white flex items-center justify-center">
-                      <span className="w-1 h-1 rounded-full bg-[#1A5CBA]" />
-                    </span>
-                    PIMIO
-                  </span>
-                </div> */}
+          {/* ── Left Sidebar ── */}
+          <div className="w-full md:w-[280px] lg:w-[320px] flex-shrink-0 flex flex-col gap-6">
+
+            {/* Top Info Card */}
+            <div className="bg-white rounded-3xl shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-col items-center text-center overflow-hidden">
+
+              {/* Dark Green Banner */}
+              <div className="w-full h-24 sm:h-32 bg-[#1C2C1C] relative overflow-hidden shrink-0">
+                <div className="absolute -bottom-12 -left-[10%] w-[120%] h-24 bg-white" style={{ borderRadius: '50% 50% 0 0' }}></div>
               </div>
 
-              <h1 className="text-[22px] font-extrabold text-[#1C2C1C] tracking-tight mb-1 text-center">
-                {fullName}
-              </h1>
-
-              {isVerified && (
-                <div className="flex items-center gap-1.5 text-[#1C2C1C] font-semibold text-[13px] mb-4">
-                  <CheckCircle2 size={16} className="text-[#1C2C1C]" />
-                  Vetted Trader
+              <div className="px-5 pb-6 sm:px-8 sm:pb-8 flex flex-col items-center -mt-12 sm:-mt-16 relative w-full z-10">
+                {/* Avatar with Verified Shield */}
+                <div className="relative mb-3">
+                  <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-full overflow-hidden bg-[#1C2C1C] flex items-center justify-center border-4 border-white shadow-sm">
+                    <img src={avatarUrl} alt={fullName} className="w-full h-full object-cover" />
+                  </div>
+                  {isVerified && (
+                    <div className="absolute bottom-1 right-1 bg-[#6E9625] text-white p-1 rounded-full border-2 border-white shadow-sm">
+                      <ShieldCheck size={14} />
+                    </div>
+                  )}
                 </div>
-              )}
 
-              {/* Rating */}
-              <div className="flex items-center gap-1.5 mb-6">
-                <div className="flex text-[#F59E0B]">
+                <h1 className="text-[20px] sm:text-[22px] font-extrabold text-[#1C2C1C] mb-1">{fullName}</h1>
+
+                {/* Verified Badge */}
+                {isVerified && (
+                  <div className="flex items-center gap-1.5 text-[#6E9625] font-bold text-[13px] mb-4">
+                    <CheckCircle size={15} className="fill-[#6E9625] text-white" />
+                    Vetted Trader
+                  </div>
+                )}
+
+                {/* Rating */}
+                <div className="flex items-center gap-1 mb-6">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} size={16} className={i < Math.max(1, rating) ? "fill-current" : "text-gray-300 fill-gray-300"} />
+                    <Star key={i} size={16} fill={i < Math.round(rating) ? "#F59E0B" : "none"} className={i < Math.round(rating) ? "text-[#F59E0B]" : "text-gray-200"} />
                   ))}
+                  <span className="text-[13px] font-medium text-gray-500 ml-1">
+                    {rating > 0 ? rating.toFixed(1) : 'New'} ({reviewCount} reviews)
+                  </span>
                 </div>
-                <span className="text-[#6B7280] text-[13px] font-medium ml-1">
-                  <span className="text-[#1C2C1C] font-bold">{rating.toFixed(1)}</span> ({reviewCount} reviews)
-                </span>
-              </div>
 
-              {/* Action Buttons */}
-              <div className="w-full flex flex-col gap-3 mb-8">
-                <button 
-                  onClick={() => router.push("/customer-dashboard/inbox")}
-                  className="w-full h-[46px] bg-[#1C2C1C] text-white rounded-xl font-bold text-[14px] flex items-center justify-center gap-2 hover:bg-[#2A412A] transition-colors cursor-pointer"
+                {/* Action Buttons */}
+                <button
+                  onClick={handleSendMessage}
+                  className="w-full bg-[#1C2C1C] text-white rounded-xl py-3.5 font-bold text-[14px] mb-3 flex items-center justify-center gap-2 hover:bg-black transition-colors"
                 >
-                  <MessageCircle size={16} />
-                  Send Message
+                  <MessageSquare size={18} /> Send Message
                 </button>
-                <button 
+                <button
                   onClick={handleSaveTrader}
                   disabled={isSaving}
-                  className={`w-full h-[46px] rounded-xl font-bold text-[14px] flex items-center justify-center gap-2 transition-colors ${
-                    isSaved 
-                      ? "bg-[#E5F0DA] text-[#6E9625] hover:bg-[#D4E6C5]" 
-                      : "bg-[#F4F7F1] text-[#1C2C1C] hover:bg-[#E5F0DA] cursor-pointer"
-                  }`}
+                  className={`w-full rounded-xl py-3.5 font-bold text-[14px] flex items-center justify-center gap-2 transition-colors ${isSaved
+                    ? "bg-[#F4F7F1] text-[#6E9625] hover:bg-[#e9f0e1] border border-[#6E9625]"
+                    : "bg-[#F3F4F6] text-[#4B5563] hover:bg-gray-200"
+                    }`}
                 >
-                  <HeartIcon size={16} className={isSaved ? "fill-[#6E9625]" : ""} />
+                  <Heart size={18} fill={isSaved ? "currentColor" : "none"} className={isSaved ? "text-[#6E9625]" : "text-[#4B5563]"} />
                   {isSaved ? "Saved" : "Save Trader"}
                 </button>
+
+                <hr className="w-full border-gray-100 my-6" />
+
+                {/* Contact info */}
+                <div className="w-full text-left space-y-5">
+                  {email && (
+                    <div className="flex items-start gap-4">
+                      <div className="w-8 h-8 rounded-full bg-[#F4F7F1] flex items-center justify-center text-[#6E9625] flex-shrink-0 mt-0.5">
+                        <Mail size={16} />
+                      </div>
+                      <div>
+                        <p className="text-[12px] text-gray-500 font-medium mb-0.5">Email</p>
+                        <a href={`mailto:${email}`} className="text-[14px] font-medium text-[#6E9625] hover:underline break-all">{email}</a>
+                      </div>
+                    </div>
+                  )}
+                  {phone && (
+                    <div className="flex items-start gap-4">
+                      <div className="w-8 h-8 rounded-full bg-[#F4F7F1] flex items-center justify-center text-[#6E9625] flex-shrink-0 mt-0.5">
+                        <Phone size={16} />
+                      </div>
+                      <div>
+                        <p className="text-[12px] text-gray-500 font-medium mb-0.5">Phone</p>
+                        <a href={`tel:${phone}`} className="text-[14px] font-medium text-[#6E9625] hover:underline">{phone}</a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Stats Card */}
+                <div className="w-full mt-8 bg-[#F4F7F1] rounded-3xl p-6 sm:p-7 shadow-sm border border-[#E9F0E1] flex flex-col gap-5 text-left">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-gray-500 font-medium text-[12px]">Company</span>
+                    <span className="font-bold text-[#1C2C1C] text-[14px]">{companyName || '-'}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-gray-500 font-medium text-[12px]">Location</span>
+                    <span className="font-bold text-[#1C2C1C] text-[14px]">{location || '-'}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-gray-500 font-medium text-[12px]">Jobs Completed</span>
+                    <span className="font-bold text-[#1C2C1C] text-[14px]">{metrics?.completedJobs || tp?.jobsCompleted || 0}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-gray-500 font-medium text-[12px]">Response Rate</span>
+                    <span className="font-bold text-[#1C2C1C] text-[14px]">{metrics?.responseRate ? `${Math.round(metrics.responseRate * 100)}%` : 'N/A'}</span>
+                  </div>
+                </div>
               </div>
-
-              {/* Contact Info */}
-              <div className="w-full flex flex-col gap-5 border-t border-gray-100 pt-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-full bg-[#F4F7F1] flex items-center justify-center text-[#6E9625] flex-shrink-0">
-                    <Mail size={16} />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Email</span>
-                    <a href={`mailto:${email}`} className="text-[14px] font-bold text-[#6E9625] hover:underline break-all">
-                      {email}
-                    </a>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-full bg-[#F4F7F1] flex items-center justify-center text-[#6E9625] flex-shrink-0">
-                    <Phone size={16} />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Phone</span>
-                    <a href={`tel:${phone}`} className="text-[14px] font-bold text-[#6E9625] hover:underline">
-                      {phone}
-                    </a>
-                  </div>
-                </div>
-              </div>
-
-              {/* Meta Info */}
-              <div className="w-full flex flex-col gap-4 border-t border-gray-100 pt-6 mt-6">
-                <div className="flex flex-col">
-                  <span className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Company</span>
-                  <span className="text-[14px] font-bold text-[#1C2C1C]">{companyName || "Independent"}</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Location</span>
-                  <span className="text-[14px] font-bold text-[#1C2C1C]">{location}</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Jobs Completed</span>
-                  <span className="text-[14px] font-bold text-[#1C2C1C]">{jobsCompleted}</span>
-                </div>
-                <div className="flex flex-col">
-                  <span className="text-[11px] text-gray-500 font-bold uppercase tracking-wider mb-0.5">Response Rate</span>
-                  <span className="text-[14px] font-bold text-[#1C2C1C]">{responseRate}</span>
-                </div>
-              </div>
-
             </div>
           </div>
 
           {/* ── Right Content ── */}
-          <div className="flex flex-col gap-6">
+          <div className="flex-1 flex flex-col gap-6">
 
-            {/* Vetting Checks Bar */}
-            <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 p-6 flex flex-wrap lg:flex-nowrap items-center justify-between gap-6">
-              <div className="flex flex-wrap gap-8">
+            {/* Top Vetting Header */}
+            <div className="bg-white rounded-3xl p-5 sm:p-6 lg:px-8 lg:py-6 shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-col sm:flex-row flex-wrap items-start sm:items-center justify-between gap-5 lg:gap-6">
+              <div className="flex flex-wrap items-center gap-5 sm:gap-6 lg:gap-10">
+                {/* Individual Checks */}
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-[#6E9625] flex items-center justify-center text-white">
-                    <Check size={16} strokeWidth={3} />
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isVerified ? 'bg-[#6E9625]' : 'bg-gray-200'}`}>
+                    {isVerified ? <Check size={20} className="text-white" strokeWidth={3} /> : <X size={20} className="text-gray-400" strokeWidth={3} />}
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[14px] font-extrabold text-[#1C2C1C]">Individual Checks</span>
-                    <span className="text-[12px] text-gray-500 font-medium">Verified</span>
+                    <span className="font-bold text-[#1C2C1C] text-[14px]">Individual Checks</span>
+                    <span className="text-gray-500 text-[12px] font-medium">{isVerified ? 'Verified' : 'Pending'}</span>
                   </div>
                 </div>
+
+                {/* Trade Checks */}
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-[#6E9625] flex items-center justify-center text-white">
-                    <Check size={16} strokeWidth={3} />
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isVerified ? 'bg-[#6E9625]' : 'bg-gray-200'}`}>
+                    {isVerified ? <Check size={20} className="text-white" strokeWidth={3} /> : <X size={20} className="text-gray-400" strokeWidth={3} />}
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[14px] font-extrabold text-[#1C2C1C]">Trade Checks</span>
-                    <span className="text-[12px] text-gray-500 font-medium">Verified</span>
+                    <span className="font-bold text-[#1C2C1C] text-[14px]">Trade Checks</span>
+                    <span className="text-gray-500 text-[12px] font-medium">{isVerified ? 'Verified' : 'Pending'}</span>
                   </div>
                 </div>
+
+                {/* Insured */}
                 <div className="flex items-center gap-3">
-                  <ShieldCheck size={28} className="text-[#6E9625]" strokeWidth={2} />
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isInsured ? 'bg-white border-2 border-[#6E9625]' : 'bg-gray-200'}`}>
+                    {isInsured ? <Shield size={20} className="text-[#6E9625]" strokeWidth={2.5} /> : <X size={20} className="text-gray-400" strokeWidth={3} />}
+                  </div>
                   <div className="flex flex-col">
-                    <span className="text-[14px] font-extrabold text-[#1C2C1C]">Insured</span>
-                    <span className="text-[12px] text-gray-500 font-medium">Up to date</span>
+                    <span className="font-bold text-[#1C2C1C] text-[14px]">Insured</span>
+                    <span className="text-gray-500 text-[12px] font-medium">{isInsured ? 'Up to date' : 'Pending'}</span>
                   </div>
                 </div>
               </div>
-              <button onClick={() => setIsVettingModalOpen(true)} className="text-[13px] text-gray-500 font-medium hover:underline whitespace-nowrap cursor-pointer">
-                Learn more about traders <span className="font-bold text-[#6E9625]">Vetting & badges.</span>
-              </button>
+
+              <div className="text-sm text-gray-500 font-medium">
+                Learn more about traders <button onClick={(e) => { e.preventDefault(); setIsVettingModalOpen(true); }} className="text-[#6E9625] font-bold hover:underline">Vetting & badges.</button>
+              </div>
             </div>
 
-            {/* Services & Expertise */}
-            <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 p-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="flex flex-col">
-                <h3 className="text-[18px] font-extrabold text-[#1C2C1C] mb-6 flex items-center gap-2">
+            {/* Main Content Grid 1: Services & Expertise Hero Image */}
+            <div className={`grid grid-cols-1 ${portfolio && portfolio.length > 0 ? 'xl:grid-cols-[1.2fr_1fr]' : 'xl:grid-cols-1'} gap-6`}>
+
+              {/* Services & Expertise */}
+              <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-col h-full">
+                <h3 className="text-[17px] font-bold text-[#1C2C1C] mb-6 flex items-center gap-3">
                   <Wrench className="text-[#6E9625]" size={20} />
                   Services & Expertise
                 </h3>
+
                 <div className="flex flex-wrap gap-2.5">
+                  {/* Render Categories */}
                   {tp?.tradeCategories?.map((cat: any, i: number) => (
-                    <span key={`cat-${i}`} className="inline-flex items-center justify-center bg-[#1C2C1C] text-white px-4 py-2 rounded-xl text-[13px] font-bold tracking-wide">
+                    <span key={`cat-${i}`} className="inline-flex items-center bg-[#1C2C1C] text-white px-5 py-2.5 rounded-[12px] text-[13px] font-bold shadow-sm">
                       {typeof cat === 'object' ? cat.name : cat}
                     </span>
                   ))}
+
+                  {/* Render Skills */}
                   {tp?.skillsServices?.map((skill: any, i: number) => (
-                    <span key={`skill-${i}`} className="inline-flex items-center justify-center bg-[#F4F7F1] text-[#243A24] px-4 py-2 rounded-xl text-[13px] font-bold tracking-wide border border-transparent">
+                    <span key={`skill-${i}`} className="inline-flex items-center bg-[#F4F7F1] text-[#1C2C1C] px-5 py-2.5 rounded-[12px] text-[13px] font-bold border border-[#E9F0E1]">
                       {typeof skill === 'object' ? skill.name : skill}
                     </span>
                   ))}
+                  
                   {tp?.subCategories?.map((sub: any, i: number) => (
-                    <span key={`sub-${i}`} className="inline-flex items-center justify-center bg-[#F3F4F6] text-[#4B5563] px-4 py-2 rounded-xl text-[13px] font-bold tracking-wide border border-transparent">
+                    <span key={`sub-${i}`} className="inline-flex items-center bg-[#F9FAFB] text-[#4B5563] px-5 py-2.5 rounded-[12px] text-[13px] font-bold border border-gray-100">
                       {typeof sub === 'object' ? sub.name : sub}
                     </span>
                   ))}
                 </div>
               </div>
-              <div className="rounded-[16px] overflow-hidden h-[300px] bg-gray-100 w-full relative border border-gray-100">
-                <Image src={featuredImage} alt="Featured Work" fill className="object-cover" unoptimized />
-              </div>
+
+              {/* Hero Image */}
+              {portfolio && portfolio.length > 0 && (
+                <div className="bg-white rounded-3xl overflow-hidden shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100 h-48 sm:h-56 xl:h-auto xl:max-h-[220px]">
+                  <img
+                    src={getImageUrl(portfolio[0]?.url || portfolio[0]?.fileUrl || portfolio[0])}
+                    alt="Trader Work"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
             </div>
 
-            {/* Bottom Row Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+            {/* Main Content Grid 2: About & Gallery */}
+            <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_1fr] gap-6">
 
-              {/* About Section */}
-              <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 p-8 flex flex-col">
-                <h3 className="text-[18px] font-extrabold text-[#1C2C1C] mb-4 flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full border-[1.5px] border-[#1C2C1C] flex items-center justify-center opacity-70">
-                    <div className="w-2.5 h-2.5 rounded-full bg-transparent border-[1.5px] border-[#1C2C1C] mt-[-6px]" />
+              {/* About */}
+              <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-col justify-between">
+                <div>
+                  <h3 className="text-[17px] font-bold text-[#1C2C1C] mb-5 flex items-center gap-3">
+                    About {fullName.split(' ')[0]}
+                  </h3>
+                  <div className="text-gray-600 font-medium text-[14px] leading-relaxed mb-8 whitespace-pre-wrap">
+                    {bio}
                   </div>
-                  About {fullName.split(' ')[0]}
-                </h3>
-                <div className="text-[14px] text-gray-500 leading-relaxed font-medium mb-8 whitespace-pre-wrap">
-                  {bio}
                 </div>
-                <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-6 border-t border-gray-100 mt-auto">
-                  <div className="flex flex-col items-center text-center gap-1.5">
-                    <Award size={28} className="text-[#6E9625]" strokeWidth={1.5} />
-                    <span className="text-[12px] font-extrabold text-[#1C2C1C]">10+</span>
-                    <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Years Experience</span>
+
+                {/* About Badges */}
+                <div className="flex flex-wrap items-center gap-4 sm:gap-6 border-t border-gray-100 pt-6">
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-[#1C2C1C] text-[13px]">10+</span>
+                      <span className="text-[11px] font-medium text-gray-500">Years Experience</span>
+                    </div>
                   </div>
-                  <div className="flex flex-col items-center text-center gap-1.5">
-                    <ThumbsUp size={28} className="text-[#6E9625]" strokeWidth={1.5} />
-                    <span className="text-[12px] font-extrabold text-[#1C2C1C]">High</span>
-                    <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Customer Satisfaction</span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-[#1C2C1C] text-[13px]">High</span>
+                      <span className="text-[11px] font-medium text-gray-500">Customer Satisfaction</span>
+                    </div>
                   </div>
-                  <div className="flex flex-col items-center text-center gap-1.5">
-                    <ShieldCheck size={28} className="text-[#6E9625]" strokeWidth={1.5} />
-                    <span className="text-[12px] font-extrabold text-[#1C2C1C]">Fully</span>
-                    <span className="text-[10px] text-gray-500 uppercase tracking-wider font-bold">Insured</span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-[#1C2C1C] text-[13px]">Fully</span>
+                      <span className="text-[11px] font-medium text-gray-500">Insured</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Gallery Section */}
-              <div className="bg-white rounded-[24px] shadow-sm border border-gray-100 p-8 flex flex-col">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-[18px] font-extrabold text-[#1C2C1C] flex items-center gap-2">
+              {/* Gallery */}
+              <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-col">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-[17px] font-bold text-[#1C2C1C] flex items-center gap-3">
                     <ImageIcon className="text-[#6E9625]" size={20} />
                     Gallery
                   </h3>
-                  <a href="#" className="text-[13px] font-bold text-[#6E9625] hover:underline cursor-pointer">View all</a>
+                  {portfolio && portfolio.length > 3 && (
+                    <button
+                      onClick={() => setShowAllGallery(!showAllGallery)}
+                      className="text-[#6E9625] font-bold text-[13px] hover:underline cursor-pointer"
+                    >
+                      {showAllGallery ? "Show less" : "View all"}
+                    </button>
+                  )}
                 </div>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                  {portfolio.slice(0, 4).map((img: any, i: number) => (
-                    <div key={i} className="aspect-square rounded-[16px] overflow-hidden bg-gray-100 relative group cursor-pointer border border-gray-100">
-                      <Image src={getImageUrl(img.fileUrl)} alt="Portfolio" fill className="object-cover group-hover:scale-105 transition-transform duration-300" unoptimized />
+
+                {portfolio && portfolio.length > 0 ? (
+                  <div className="flex flex-wrap gap-4 h-full content-start">
+                    {portfolio.slice(0, showAllGallery ? portfolio.length : 3).map((img: any, i: number) => (
+                      <div key={i} className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl bg-gray-50 overflow-hidden border border-gray-100 relative group flex-shrink-0">
+                        <img src={getImageUrl(img?.url || img?.fileUrl || img)} alt="Gallery Image" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer" onClick={() => openLightbox(i)}>
+                          <button className="bg-white text-[#1C2C1C] px-3 py-1.5 rounded-lg text-sm font-bold">View</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex-1 flex items-center justify-center border-2 border-dashed border-gray-200 rounded-2xl">
+                    <p className="text-gray-400 font-medium text-sm">No images uploaded</p>
+                  </div>
+                )}
+              </div>
+
+            </div>
+
+            {/* Insurance & Certificates */}
+            {(certificates.length > 0 || insuranceDocuments.length > 0) && (
+              <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-[0_2px_20px_rgba(0,0,0,0.02)] border border-gray-100 flex flex-col">
+                <h3 className="text-[17px] font-bold text-[#1C2C1C] flex items-center gap-3 mb-6">
+                  <ShieldCheck className="text-[#6E9625]" size={20} />
+                  Insurance & Certificates
+                </h3>
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {insuranceDocuments.map((doc: any, i: number) => (
+                    <div key={`ins-${i}`} className="flex flex-col gap-2">
+                      <div className="rounded-2xl bg-gray-50 overflow-hidden border border-gray-100 aspect-[3/4] relative group">
+                        <img src={getImageUrl(doc)} alt="Insurance Document" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <a href={getImageUrl(doc)} target="_blank" rel="noreferrer" className="bg-white text-[#1C2C1C] px-3 py-1.5 rounded-lg text-sm font-bold">View</a>
+                        </div>
+                      </div>
+                      <span className="text-[13px] font-bold text-center text-[#1C2C1C]">Insurance</span>
+                    </div>
+                  ))}
+                  {certificates.map((cert: any, i: number) => (
+                    <div key={`cert-${i}`} className="flex flex-col gap-2">
+                      <div className="rounded-2xl bg-gray-50 overflow-hidden border border-gray-100 aspect-[3/4] relative group">
+                        <img src={getImageUrl(cert)} alt="Certificate" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <a href={getImageUrl(cert)} target="_blank" rel="noreferrer" className="bg-white text-[#1C2C1C] px-3 py-1.5 rounded-lg text-sm font-bold">View</a>
+                        </div>
+                      </div>
+                      <span className="text-[13px] font-bold text-center text-[#1C2C1C]">Certificate</span>
                     </div>
                   ))}
                 </div>
               </div>
-
-            </div>
+            )}
 
           </div>
         </div>
+
       </main>
-      
-      <VettingModal 
-        isOpen={isVettingModalOpen} 
-        onClose={() => setIsVettingModalOpen(false)} 
+
+      <VettingModal
+        isOpen={isVettingModalOpen}
+        onClose={() => setIsVettingModalOpen(false)}
       />
-    </div>
+
+      <LightboxModal
+        images={portfolio}
+        currentIndex={lightboxIndex}
+        onClose={closeLightbox}
+        onNext={nextLightboxImage}
+        onPrev={prevLightboxImage}
+      />
+
+    </div >
   );
 }

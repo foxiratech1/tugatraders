@@ -250,7 +250,7 @@ export default function TraderDashboard() {
                         <h4 className="text-[14px] font-bold text-[#1C2C1C] mb-2">{job.title || "Untitled Job"}</h4>
                         <div className="flex flex-wrap items-center gap-3 text-[12px] text-gray-500">
                           <span className="flex items-center gap-1"><MapPin size={12} /> {job.location || "N/A"}</span>
-                          <span className="flex items-center gap-1"><Clock size={12} /> {job.createdAt ? new Date(job.createdAt).toLocaleDateString() : "Just now"}</span>
+                          <span className="flex items-center gap-1"><Clock size={12} /> {job.postedAgo || (job.createdAt ? new Date(job.createdAt).toLocaleDateString() : "Just now")}</span>
                           <span className="flex items-center gap-1 text-[#E65100] font-medium"><MessageSquare size={12} /> {job.quotesCount || 0} quotes</span>
                         </div>
                       </div>

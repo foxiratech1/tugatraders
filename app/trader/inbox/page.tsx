@@ -192,9 +192,9 @@ function TraderInboxContent() {
             <div className="p-5 pb-3">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-[18px] font-bold text-[#1C2C1C]">Recent Chats</h2>
-                <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${isConnected ? "bg-emerald-50 text-emerald-700" : "bg-gray-150 text-gray-500"}`}>
+                {/* <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${isConnected ? "bg-emerald-50 text-emerald-700" : "bg-gray-150 text-gray-500"}`}>
                   {isConnected ? "Connected" : "Reconnecting"}
-                </span>
+                </span> */}
               </div>
 
               <div className="relative flex items-center">
@@ -224,7 +224,12 @@ function TraderInboxContent() {
                 <div className="space-y-1.5">
                   {filteredConversations.map((c) => {
                     const isSelected = c.id === activeConversationId;
-                    const partner = c.customer || c.trader;
+                    let partner: any = c.customer || c.trader;
+                    if (c.customer && (c.customer.id === currentUserId || c.customer._id === currentUserId)) {
+                      partner = c.trader;
+                    } else if (c.trader && (c.trader.id === currentUserId || c.trader._id === currentUserId)) {
+                      partner = c.customer;
+                    }
                     const partnerId = partner?.id || partner?._id || "";
                     const isOnline = onlineUsers.has(partnerId);
 

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { Inbox, Briefcase, Bookmark, User, Star, Settings, Bell, FileText, Mail, LayoutDashboard } from "lucide-react";
+import { Inbox, Briefcase, Heart, User, Star, Settings, Bell, FileText, Mail, LayoutDashboard } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { authApi } from "@/app/api/authApi";
 import { ChevronDown, LogOut } from "lucide-react";
@@ -20,6 +20,9 @@ export default function CustomerNavbar() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifDropdown, setShowNotifDropdown] = useState(false);
 
+  const [inboxUnread, setInboxUnread] = useState(0);
+  const [jobsUnread, setJobsUnread] = useState(0);
+
   // Hook up socket for new notifications
   useSocket({
     onNewNotification: (notif) => {
@@ -29,6 +32,15 @@ export default function CustomerNavbar() {
       });
       setUnreadCount((prev) => prev + 1);
     },
+    onCustomerDashboardUpdate: (data) => {
+      if (data?.actionRequired) {
+        const { activeJobsCount = 0, quotesAwaitingResponseCount = 0, unreviewedJobsCount = 0 } = data.actionRequired;
+        setJobsUnread(activeJobsCount + quotesAwaitingResponseCount + unreviewedJobsCount);
+      }
+    },
+    onNewMessage: () => {
+      setInboxUnread((prev) => prev + 1);
+    }
   });
 
   const notifDropdownRef = useRef<HTMLDivElement>(null);
@@ -52,7 +64,7 @@ export default function CustomerNavbar() {
     { name: "Inbox", href: "/customer-dashboard/inbox", icon: Inbox },
     { name: "Jobs", href: "/customer-dashboard/job-history", icon: Briefcase },
     // { name: "Quotes", href: "/customer-dashboard/quotes", icon: FileText },
-    { name: "Saved", href: "/customer-dashboard/saved", icon: Bookmark },
+    { name: "Saved", href: "/customer-dashboard/saved", icon: Heart },
     // { name: "Profile", href: "/customer-dashboard/profile", icon: User },
     { name: "Reviews", href: "/customer-dashboard/reviews", icon: Star },
     { name: "Setting", href: "/customer-dashboard/account", icon: Settings },
@@ -85,19 +97,34 @@ export default function CustomerNavbar() {
     const loadProfile = async () => {
       try {
         const res = await authApi.getMyProfile();
-        console.log("Profile Response:", res?.data || res);
-        console.log("Profile Image:", (res?.data || res)?.profileImage);
-        console.log("Avatar:", (res?.data || res)?.avatar);
-        console.log("Profile Response:", res);
         setProfile(res?.data || res);
-        console.log(res?.data || res);
       } catch (error) {
         console.error("Failed to load profile", error);
       }
     };
 
+    const fetchBadges = async () => {
+      try {
+        const [dashRes, convRes] = await Promise.all([
+          authApi.getCustomerDashboard(),
+          authApi.getConversations()
+        ]);
+        const dashData = dashRes?.data || dashRes;
+        if (dashData?.actionRequired) {
+          const { activeJobsCount = 0, quotesAwaitingResponseCount = 0, unreviewedJobsCount = 0 } = dashData.actionRequired;
+          setJobsUnread(activeJobsCount + quotesAwaitingResponseCount + unreviewedJobsCount);
+        }
+        const convos = convRes?.data || convRes || [];
+        const unreadMsgs = convos.reduce((acc: number, c: any) => acc + (c.unreadCount || 0), 0);
+        setInboxUnread(unreadMsgs);
+      } catch (err) {
+        console.error("Failed to fetch badges", err);
+      }
+    };
+
     loadProfile();
     fetchNotifications();
+    fetchBadges();
 
     const handleOutsideClick = (e: MouseEvent) => {
       if (notifDropdownRef.current && !notifDropdownRef.current.contains(e.target as Node)) {
@@ -123,13 +150,11 @@ export default function CustomerNavbar() {
     ).toString()
     : fallbackAvatar;
 
-  console.log("Image URL:", imageUrl);
-
   return (
-    <header className="sticky top-0 z-50 w-full bg-white border-b border-[#F0EDE8] py-4 px-6 md:px-10 flex items-center justify-between">
+    <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-sm border-b border-[#E5E7EB] shadow-[0_2px_12px_rgba(0,0,0,0.06)] h-[60px] px-6 md:px-10 flex items-stretch">
 
       {/* Left: Logo */}
-      <Link href="/" className="flex items-center flex-shrink-0">
+      <Link href="/" className="flex items-center flex-shrink-0 self-center mr-4">
         <Image
           src="/customerNavLogo.png"
           alt="TugaTrades Customer Logo"
@@ -139,8 +164,8 @@ export default function CustomerNavbar() {
         />
       </Link>
 
-      {/* Middle: Navigation Pill */}
-      <div className="hidden lg:flex items-center bg-[#F9F9F9] rounded-full p-1 border border-[#F0EDE8]">
+      {/* Middle: Navigation */}
+      <nav className="hidden lg:flex items-stretch h-full flex-1 justify-center gap-1">
         {navLinks.map((link) => {
           const isActive = pathname === link.href;
           const Icon = link.icon;
@@ -149,20 +174,37 @@ export default function CustomerNavbar() {
             <Link
               key={link.name}
               href={link.href}
-              className={`flex items-center gap-2 px-5 py-2.5 rounded-full text-[14px] font-semibold transition-colors ${isActive
-                ? "bg-[#7ca13a] text-white shadow-sm"
-                : "text-[#1C2C1C]/60 hover:text-[#1C2C1C] hover:bg-gray-100/50"
-                }`}
+              className={`
+                  relative flex items-center gap-1.5 px-4 text-[13px] font-semibold
+                  transition-all duration-200 whitespace-nowrap h-full group
+                  ${isActive ? "text-[#1C2C1C]" : "text-[#1C2C1C]/60 hover:text-[#1C2C1C] hover:scale-[1.02]"}
+                `}
             >
-              <Icon size={16} strokeWidth={isActive ? 2.5 : 2} className={isActive ? "text-white" : "text-[#1C2C1C]/50"} />
-              {link.name}
+              <Icon size={14} className={`transition-all duration-200 ${isActive ? "text-[#6E9625] scale-110" : "text-current group-hover:text-[#6E9625]"}`} />
+              <div className="flex items-center gap-1.5 relative">
+                {link.name}
+                {link.name === "Inbox" && inboxUnread > 0 && (
+                  <span className="flex items-center justify-center min-w-[15px] h-[15px] px-1 bg-[#E53935] rounded-full text-[9px] font-bold text-white shadow-sm">
+                    {inboxUnread > 99 ? "99+" : inboxUnread}
+                  </span>
+                )}
+                {link.name === "Jobs" && jobsUnread > 0 && (
+                  <span className="flex items-center justify-center min-w-[15px] h-[15px] px-1 bg-[#E53935] rounded-full text-[9px] font-bold text-white shadow-sm">
+                    {jobsUnread > 99 ? "99+" : jobsUnread}
+                  </span>
+                )}
+              </div>
+              {/* Active underline */}
+              {isActive && (
+                <span className="absolute bottom-0 left-2 right-2 h-[3px] rounded-t-full bg-[#6E9625] shadow-[0_-2px_8px_rgba(110,150,37,0.4)]" />
+              )}
             </Link>
           );
         })}
-      </div>
+      </nav>
 
       {/* Right: Actions & User Profile */}
-      <div className="flex items-center gap-6">
+      <div className="ml-auto flex items-center gap-4 self-center">
 
         {/* Notification Bell with Dropdown */}
         <div className="relative" ref={notifDropdownRef}>

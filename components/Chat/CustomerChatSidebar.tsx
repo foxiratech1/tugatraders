@@ -205,7 +205,7 @@ export default function CustomerChatSidebar({ jobId, traderId }: SidebarProps) {
               href="/contact"
               className="block w-full py-2.5 px-4 bg-white/10 hover:bg-white/20 transition-colors rounded-xl text-center text-[12px] font-bold border border-white/10"
             >
-              Contact Tuga Support
+              Contact Support
             </Link>
           </div>
         </>

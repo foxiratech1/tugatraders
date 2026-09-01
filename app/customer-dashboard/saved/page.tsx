@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { authApi } from "@/app/api/authApi";
-import { Star, MapPin, Wrench, Search, ChevronDown, BookmarkX, Bookmark } from "lucide-react";
+import { Star, MapPin, Wrench, Search, ChevronDown, HeartOff, Heart } from "lucide-react";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://api.tugatraders.server24.in";
 
@@ -77,46 +77,47 @@ function TraderCard({ trader, onRemove }: { trader: SavedTrader; onRemove: (id: 
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-[#F0EDE8] shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col relative">
+    <div className="bg-white rounded-xl border border-[#F0EDE8] shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col p-4 relative gap-3">
       <button
         onClick={handleToggleSave}
         disabled={isToggling}
-        className="absolute top-4 right-4 z-10 w-9 h-9 rounded-[10px] bg-[#F8F9F5] flex items-center justify-center hover:bg-[#F0EDE8] transition-colors disabled:opacity-50"
+        className="absolute top-4 right-4 z-10 hover:opacity-70 transition-opacity disabled:opacity-50"
       >
-        <Bookmark size={18} className="text-[#1C2C1C] fill-[#1C2C1C]" />
+        <Heart size={20} className="text-[#374151] fill-[#374151]" />
       </button>
 
-      {/* Avatar */}
-      <div className="relative w-14 h-14 mx-6 mt-6 rounded-full overflow-hidden bg-gray-100 flex-shrink-0 border border-[#F0EDE8]">
-        <Image
-          src={src}
-          alt={trader.fullName || trader.companyName || "Trader profile image"}
-          fill
-          className={imgError ? "object-contain p-2 opacity-60" : "object-cover"}
-          unoptimized
-          onError={() => setImgError(true)}
-        />
+      {/* Top Row: Avatar + Name/Rating */}
+      <div className="flex items-center gap-3 pr-8">
+        <div className="relative w-14 h-14 rounded-full overflow-hidden bg-gray-100 flex-shrink-0 border-[2px] border-gray-100">
+          <Image
+            src={src}
+            alt={trader.fullName || trader.companyName || "Trader profile image"}
+            fill
+            className={imgError ? "object-contain p-2 opacity-60" : "object-cover"}
+            unoptimized
+            onError={() => setImgError(true)}
+          />
+        </div>
+
+        <div className="flex flex-col justify-center">
+          <div className="flex items-center gap-1.5">
+            <h3 className="text-[15px] font-bold text-[#1C2C1C] truncate">{trader.companyName || trader.fullName}</h3>
+            {trader.isVerified && (
+              <svg className="w-3.5 h-3.5 text-[#6E9625] flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </div>
+          <div className="flex items-center gap-1.5 mt-0.5">
+            <StarRating rating={trader.ratingAvg ?? 0} />
+            <span className="text-[12px] font-bold text-[#1C2C1C]">{(trader.ratingAvg ?? 0).toFixed(1)}</span>
+            <span className="text-[12px] text-[#1C2C1C]/50">({trader.reviewCount ?? 0} reviews)</span>
+          </div>
+        </div>
       </div>
 
-      <div className="px-6 py-4 flex flex-col gap-2 flex-1">
-        {/* Name & verified */}
-        <div className="flex items-center gap-2">
-          <h3 className="text-[15px] font-bold text-[#1C2C1C] truncate">{trader.companyName || trader.fullName}</h3>
-          {trader.isVerified && (
-            <svg className="w-4 h-4 text-[#6E9625] flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          )}
-        </div>
-
-        {/* Rating */}
-        <div className="flex items-center gap-2">
-          <StarRating rating={trader.ratingAvg ?? 0} />
-          <span className="text-[12px] font-bold text-[#1C2C1C]">{(trader.ratingAvg ?? 0).toFixed(1)}</span>
-          <span className="text-[12px] text-[#1C2C1C]/50">({trader.reviewCount ?? 0} reviews)</span>
-        </div>
-
-        {/* Location */}
+      {/* Info Rows */}
+      <div className="flex flex-col gap-1.5 mt-1">
         {trader.location && (
           <div className="flex items-center gap-1.5 text-[12px] text-[#1C2C1C]/60">
             <MapPin size={13} className="text-[#1C2C1C]/40 flex-shrink-0" />
@@ -124,7 +125,6 @@ function TraderCard({ trader, onRemove }: { trader: SavedTrader; onRemove: (id: 
           </div>
         )}
 
-        {/* All Skills / Categories */}
         {allSkills.length > 0 && (
           <div className="flex items-center gap-1.5 text-[12px] text-[#1C2C1C]/60">
             <Wrench size={13} className="text-[#1C2C1C]/40 flex-shrink-0" />
@@ -134,10 +134,10 @@ function TraderCard({ trader, onRemove }: { trader: SavedTrader; onRemove: (id: 
       </div>
 
       {/* CTA */}
-      <div className="px-6 pb-6">
+      <div className="mt-1">
         <Link
           href={`/customer-dashboard/trader-profile/${trader.id}`}
-          className="block w-full text-center py-2.5 rounded-xl bg-[#1C2C1C] text-white text-[13px] font-bold hover:bg-[#121E12] transition-colors"
+          className="block w-full text-center py-2.5 rounded-lg bg-[#1C2C1C] text-white text-[13px] font-bold hover:bg-[#121E12] transition-colors"
         >
           View Profile
         </Link>
@@ -312,15 +312,15 @@ export default function SavedTradersPage() {
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 gap-4">
             <div className="w-20 h-20 rounded-full bg-[#F0EDE8] flex items-center justify-center">
-              <BookmarkX size={36} className="text-[#1C2C1C]/30" />
+              <HeartOff size={36} className="text-[#1C2C1C]/30" />
             </div>
             <h2 className="text-[20px] font-bold text-[#1C2C1C]">
               {search ? "No traders found" : "No saved traders yet"}
             </h2>
             <p className="text-[14px] text-[#1C2C1C]/50 text-center max-w-sm">
               {search
-                ? "Try a different search term."
-                : "Browse the directory and click the bookmark icon to save traders you like."}
+                ? "Try adjusting your search or filters to find what you're looking for."
+                : "Browse the directory and click the heart icon to save traders you like."}
             </p>
             {!search && (
               <Link

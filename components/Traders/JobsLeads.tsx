@@ -91,6 +91,7 @@ function getUIStatus(item: any): string {
   if (item.status === "IN_PROGRESS") return "In Progress";
   if (item.status === "CANCELLED" || item.status === "CLOSED" || item.status === "EXPIRED") return "Closed";
   if (item.matchStatus === "REJECTED") return "Live";
+  if (item.status === "LIVE") return "Live";
   if (item.status === "ASSIGNED" || item.status === "QUOTE_RECEIVED" || item.matchStatus === "ACCEPTED" || item.matchStatus === "QUOTED") {
     return "Contacted";
   }
@@ -158,8 +159,8 @@ export default function JobsLeads() {
     ),
     customer: {
       id: item.customerId || item.customer?.id || item.customer?._id || "",
-      name: item.customer?.fullName || "Valued Customer",
-      avatar: item.customer?.profileImage || undefined,
+      name: item.customer?.fullName || item.customer?.firstName || item.customer?.name || "Valued Customer",
+      avatar: item.customer?.profileImage || item.customer?.avatar || undefined,
       rating: item.customer?.rating ?? 10.0,
       reviewsCount: item.customer?.reviewsCount ?? 2,
       jobsPosted: item.customer?.jobsPosted ?? 1,
@@ -411,7 +412,7 @@ export default function JobsLeads() {
     setCurrentPage(1);
   }, [activeTab, searchQuery]);
 
-  const tabs = ["All", "New", "Contacted", "Completed", "Closed"];
+  const tabs = ["All", "Live", "New", "Contacted", "Completed", "Closed"];
 
   // Helper to count jobs for tabs
   const getTabCount = (tab: string) => {
@@ -659,15 +660,15 @@ export default function JobsLeads() {
             {/* Right Column: Job Details */}
             {filteredJobs.length > 0 && (
               selectedJob ? (
-                <div className="bg-white rounded-[24px] p-6 sm:p-8 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-[#E5E5E5] sticky top-[100px] max-h-[calc(100vh-120px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <div className="bg-white rounded-[24px] p-5 sm:p-6 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-[#E5E5E5] sticky top-[100px] max-h-[calc(100vh-120px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
 
                   {/* Header */}
-                  <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-start justify-between mb-3">
                     <div>
                       <span className="inline-block bg-[#EAF3DE] text-[#557A18] font-bold text-[11px] px-3 py-1 rounded-full mb-2 tracking-wide">
                         JOB-{selectedJob.jobId}
                       </span>
-                      <h2 className="text-[24px] font-bold text-[#1C2C1C] leading-tight mb-2.5">
+                      <h2 className="text-[20px] font-bold text-[#1C2C1C] leading-tight mb-1.5">
                         {selectedJob.title}
                       </h2>
                       <div className="flex items-center gap-3">
@@ -691,9 +692,9 @@ export default function JobsLeads() {
                   </div>
 
                   {/* Info Grid - 2x2 grid to prevent truncation */}
-                  <div className="grid grid-cols-2 gap-3.5 mb-8">
-                    <div className="p-3.5 rounded-2xl bg-[#F8F9FA] border border-gray-100 flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-sm shrink-0">
+                  <div className="grid grid-cols-2 gap-2.5 mb-4">
+                    <div className="p-2.5 rounded-xl bg-[#F8F9FA] border border-gray-100 flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm shrink-0">
                         <MapPin size={16} className="text-[#6E9625]" />
                       </div>
                       <div>
@@ -742,12 +743,12 @@ export default function JobsLeads() {
                   </div>
 
                   {/* Job Description */}
-                  <div className="mb-8">
-                    <span className="text-[12px] font-bold text-[#1C2C1C] uppercase tracking-wider mb-3 block">
+                  <div className="mb-4">
+                    <span className="text-[12px] font-bold text-[#1C2C1C] uppercase tracking-wider mb-2 block">
                       Job Description
                     </span>
-                    <div className="p-5 rounded-2xl border border-gray-100 bg-white shadow-sm">
-                      <p className="text-[14px] leading-relaxed text-gray-600 mb-4 line-clamp-4">
+                    <div className="p-4 rounded-xl border border-gray-100 bg-white shadow-sm">
+                      <p className="text-[13px] leading-relaxed text-gray-600 mb-3 line-clamp-3">
                         {selectedJob.description}
                       </p>
                       <button
@@ -828,28 +829,28 @@ export default function JobsLeads() {
                     </div>
                   )}
                   {/* Customer Details */}
-                  <div className="mb-8">
-                    <span className="text-[12px] font-bold text-[#1C2C1C] uppercase tracking-wider mb-3 block">
+                  <div className="mb-4">
+                    <span className="text-[12px] font-bold text-[#1C2C1C] uppercase tracking-wider mb-2 block">
                       CUSTOMER
                     </span>
-                    <div className="p-5 rounded-2xl border border-gray-100 flex items-center justify-between bg-white shadow-sm gap-4">
+                    <div className="p-3.5 rounded-xl border border-gray-100 flex items-center justify-between bg-white shadow-sm gap-3">
                       <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 flex items-center justify-center font-bold text-gray-600 text-lg">
-                          {selectedJob.customer?.avatar ? (
+                        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 flex items-center justify-center font-bold text-gray-600 text-base">
+                          {fullJobData?.customer?.profileImage || selectedJob.customer?.avatar ? (
                             <img
-                              src={getImageUrl(selectedJob.customer.avatar)}
-                              alt={selectedJob.customer?.name ?? ''}
+                              src={getImageUrl(fullJobData?.customer?.profileImage || selectedJob.customer?.avatar)}
+                              alt={fullJobData?.customer?.fullName || selectedJob.customer?.name || ''}
                               className="w-full h-full object-cover"
                             />
                           ) : (
                             <span>
-                              {selectedJob.customer?.name ? selectedJob.customer.name.charAt(0) : ''}
+                              {(fullJobData?.customer?.fullName || selectedJob.customer?.name) ? (fullJobData?.customer?.fullName || selectedJob.customer?.name).charAt(0).toUpperCase() : ''}
                             </span>
                           )}
                         </div>
                         <div>
                           <h4 className="text-[15px] font-bold text-[#1C2C1C] mb-0.5">
-                            {selectedJob.customer?.name ?? ''}
+                            {fullJobData?.customer?.fullName || selectedJob.customer?.name || ''}
                           </h4>
                         </div>
                       </div>
@@ -882,7 +883,7 @@ export default function JobsLeads() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex flex-col gap-3">
+                  <div className="flex flex-col gap-2.5">
                     {(() => {
                       const isRejected = selectedJob.matchStatus === "REJECTED";
                       const isClosed =
@@ -913,7 +914,7 @@ export default function JobsLeads() {
                           <button
                             onClick={openQuoteModal}
                             disabled={isSendDisabled}
-                            className={`w-full h-[48px] rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 transition-colors ${isSendDisabled
+                            className={`w-full h-[42px] rounded-xl text-[13px] font-bold flex items-center justify-center gap-2 transition-colors ${isSendDisabled
                               ? "bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300"
                               : "bg-[#1C2C1C] hover:bg-[#2A412A] text-white cursor-pointer"
                               }`}
@@ -922,7 +923,7 @@ export default function JobsLeads() {
                             {buttonText}
                           </button>
 
-                          {isAccepted && !isCompleted && (
+                          {isAccepted && !isCompleted && !isClosed && (
                             <button
                               disabled={isStartingJob || selectedJob.rawStatus === "IN_PROGRESS"}
                               onClick={async () => {
@@ -946,7 +947,7 @@ export default function JobsLeads() {
                                   setIsStartingJob(false);
                                 }
                               }}
-                              className={`w-full h-[48px] rounded-xl text-[14px] font-extrabold flex items-center justify-center gap-2 transition-all ${isStartingJob || selectedJob.rawStatus === "IN_PROGRESS"
+                              className={`w-full h-[42px] rounded-xl text-[13px] font-extrabold flex items-center justify-center gap-2 transition-all ${isStartingJob || selectedJob.rawStatus === "IN_PROGRESS"
                                 ? "bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300"
                                 : "bg-gradient-to-r from-[#6E9625] to-[#8BC34A] hover:from-[#58791C] hover:to-[#6E9625] text-white shadow-[0_4px_12px_rgba(110,150,37,0.3)] hover:shadow-[0_6px_16px_rgba(110,150,37,0.4)] cursor-pointer scale-100 hover:scale-[1.02]"
                                 }`}
@@ -968,7 +969,9 @@ export default function JobsLeads() {
                     })()}
                     <button
                       onClick={async () => {
-                        if (!selectedJob?.customer?.id) {
+                        const targetCustomerId = fullJobData?.customer?.id || fullJobData?.customer?._id || fullJobData?.customerId || selectedJob?.customer?.id;
+
+                        if (!targetCustomerId) {
                           toast.error("Could not find customer contact details.");
                           return;
                         }
@@ -979,7 +982,7 @@ export default function JobsLeads() {
                           });
 
                           const res = await authApi.getOrCreateConversation(
-                            selectedJob.customer.id,
+                            targetCustomerId,
                             selectedJob.id
                           );
 
@@ -1000,7 +1003,7 @@ export default function JobsLeads() {
                           });
 
                           router.push(
-                            `/trader/inbox?conversationId=${conversationId}&customerId=${selectedJob.customer.id}&jobId=${selectedJob.id}`
+                            `/trader/inbox?conversationId=${conversationId}&customerId=${targetCustomerId}&jobId=${selectedJob.id}`
                           );
                         } catch (error: any) {
                           console.error("Failed to open customer conversation:", error);
@@ -1015,7 +1018,7 @@ export default function JobsLeads() {
                           );
                         }
                       }}
-                      className="w-full h-[48px] rounded-xl bg-white border border-[#E5E5E5] hover:bg-gray-50 text-[#1C2C1C] text-[14px] font-bold flex items-center justify-center gap-2 transition-colors shadow-sm cursor-pointer"
+                      className="w-full h-[42px] rounded-xl bg-white border border-[#E5E5E5] hover:bg-gray-50 text-[#1C2C1C] text-[13px] font-bold flex items-center justify-center gap-2 transition-colors shadow-sm cursor-pointer"
                     >
                       <MessageCircle size={16} />
                       Contact Customer
@@ -1077,6 +1080,25 @@ export default function JobsLeads() {
                     placeholder="e.g. 5000"
                     value={quoteForm.price}
                     onChange={(e) => setQuoteForm((f) => ({ ...f, price: e.target.value }))}
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] placeholder:text-gray-400 focus:outline-none focus:border-[#8BC34A] focus:ring-2 focus:ring-[#8BC34A]/20 transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Estimated Days */}
+              <div>
+                <label className="block text-[12px] font-semibold text-[#1C2C1C] mb-1.5">
+                  Estimated Days
+                </label>
+                <div className="relative">
+                  <Clock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="number"
+                    min={1}
+                    required
+                    placeholder="e.g. 7"
+                    value={quoteForm.estimatedDays}
+                    onChange={(e) => setQuoteForm((f) => ({ ...f, estimatedDays: e.target.value }))}
                     className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] placeholder:text-gray-400 focus:outline-none focus:border-[#8BC34A] focus:ring-2 focus:ring-[#8BC34A]/20 transition-all"
                   />
                 </div>
@@ -1444,6 +1466,7 @@ export default function JobsLeads() {
                   <div className="bg-[#F8F9F5] rounded-2xl p-4 flex flex-col gap-3">
                     <h4 className="text-[11px] font-extrabold text-gray-400 uppercase tracking-wider">Details</h4>
 
+                    {/* Email hidden
                     {customerProfileData.email && (
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center flex-shrink-0">
@@ -1451,8 +1474,9 @@ export default function JobsLeads() {
                         </div>
                         <span className="text-[13px] font-semibold text-[#1C2C1C]">{customerProfileData.email}</span>
                       </div>
-                    )}
+                    )} */}
 
+                    {/* Phone hidden
                     {customerProfileData.phone && (
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center flex-shrink-0">
@@ -1462,7 +1486,7 @@ export default function JobsLeads() {
                           {customerProfileData.phone}
                         </span>
                       </div>
-                    )}
+                    )} */}
 
                     <div className="flex items-center gap-3 mt-2 border-t border-gray-200 pt-3">
                       <div className="w-8 h-8 rounded-full bg-[#EAF3DE] flex items-center justify-center flex-shrink-0">

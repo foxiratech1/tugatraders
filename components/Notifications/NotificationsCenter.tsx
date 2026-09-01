@@ -1,16 +1,41 @@
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { authApi } from "@/app/api/authApi";
 import { Bell, MessageSquare, AlertCircle, MoreVertical } from "lucide-react";
 import { useSocket } from "@/hooks/useSocket";
 
 function NotificationsCenterContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const highlightId = searchParams.get("id");
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const handleNotificationClick = (n: any, isUnread: boolean) => {
+    if (isUnread) {
+      toggleReadStatus(n.id, true);
+    }
+    
+    // Explicit URLs from the backend
+    if (n.link || n.actionUrl || n.url) {
+      router.push(n.link || n.actionUrl || n.url);
+      return;
+    }
+
+    const t = (n.title || "").toLowerCase();
+    const typeStr = (n.type || "").toLowerCase();
+
+    // Heuristics based on title/type
+    if (t.includes("review") || typeStr.includes("review")) {
+      router.push("/customer-dashboard/reviews");
+    } else if (t.includes("quote") || typeStr.includes("quote") || t.includes("job") || typeStr.includes("job")) {
+      router.push("/customer-dashboard/jobs");
+    } else if (t.includes("message") || typeStr.includes("message")) {
+      router.push("/customer-dashboard/inbox");
+    }
+  };
 
   const [filter, setFilter] = useState<"ALL" | "UNREAD">("ALL");
   const [currentPage, setCurrentPage] = useState(1);
@@ -170,7 +195,7 @@ function NotificationsCenterContent() {
               <div
                 key={n.id}
                 id={`notification-${n.id}`}
-                onClick={() => toggleReadStatus(n.id, isUnread)}
+                onClick={() => handleNotificationClick(n, isUnread)}
                 className={`cursor-pointer relative flex items-start gap-4 p-5 rounded-2xl border transition-all ${isHighlighted ? "border-[#6E9625] shadow-md bg-white scale-[1.01]" : "border-gray-100 bg-white"
                   } ${isUnread && !isHighlighted ? "border-l-4 border-l-[#6E9625]" : "hover:border-gray-300"}`}
               >

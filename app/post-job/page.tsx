@@ -777,7 +777,7 @@ export default function PostJobPage() {
             {/* Row 5: Timescale & Budget */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col gap-2">
-                <label className="text-[12px] font-bold text-[#243A24]">Project Timescale</label>
+                <label className="text-[12px] font-bold text-[#243A24]">Project Timescale *</label>
                 <CustomDropdown
                   options={[
                     { id: "FLEXIBLE", name: "Flexible / Planning stage" },

@@ -174,19 +174,17 @@ const MultiSelect = ({
                     onChange(options.map((opt) => opt.id));
                   }
                 }}
-                className={`flex items-center justify-between px-3 py-2 rounded-lg text-[13px] font-medium cursor-pointer transition-colors mb-1 ${
-                  selectedIds.length === options.length
+                className={`flex items-center justify-between px-3 py-2 rounded-lg text-[13px] font-medium cursor-pointer transition-colors mb-1 ${selectedIds.length === options.length
                     ? "bg-[#6E9625]/10 text-[#1C2C1C] font-semibold"
                     : "text-[#1C2C1C]/80 hover:bg-gray-100"
-                }`}
+                  }`}
               >
                 <span>Select All</span>
                 <div
-                  className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                    selectedIds.length === options.length
+                  className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedIds.length === options.length
                       ? "bg-[#6E9625] border-[#6E9625] text-white"
                       : "border-gray-300 bg-white"
-                  }`}
+                    }`}
                 >
                   {selectedIds.length === options.length && (
                     <svg
@@ -304,6 +302,9 @@ export default function TraderProfilePage() {
   const [saving, setSaving] = useState(false);
   const [traderStatus, setTraderStatus] = useState("PENDING");
   const [isStep2Done, setIsStep2Done] = useState(false);
+
+  const [profileCompleteness, setProfileCompleteness] = useState<number>(0);
+  const [profileNextStep, setProfileNextStep] = useState<string>("");
 
   /* profile photo */
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -468,6 +469,13 @@ export default function TraderProfilePage() {
         const vStatus = unwrappedReg?.verificationStatus ?? unwrappedReg?.status ?? "PENDING";
         setTraderStatus(vStatus);
         setIsStep2Done(unwrappedReg?.step2Completed === true || unwrappedReg?.currentStep === 3 || vStatus === "MANUAL_CHECK" || vStatus === "APPROVED");
+
+        const percentage = unwrappedReg?.profileCompletionPercentage ?? unwrappedReg?.completedPercentage ?? unwrappedReg?.profileCompletion?.overallPercentage ?? 0;
+        setProfileCompleteness(percentage);
+
+        const stages = unwrappedReg?.profileCompletion?.stages || [];
+        const nextIncompleteStage = stages.find((s: any) => !s.isCompleted);
+        setProfileNextStep(nextIncompleteStage?.title ?? "Complete your profile");
 
 
 
@@ -984,6 +992,24 @@ export default function TraderProfilePage() {
                   {label}
                 </button>
               ))}
+
+              {/* Profile Completeness Bar */}
+              <div className="mt-8 pt-6 border-t border-gray-200">
+                <h3 className="text-[13px] font-bold text-[#1C2C1C] mb-4">Profile Completeness</h3>
+                <div className="flex items-baseline gap-1 mb-3">
+                  <span className="text-[24px] font-black text-[#1C2C1C] leading-none">{profileCompleteness}%</span>
+                  <span className="text-[12px] font-medium text-gray-500">Complete</span>
+                </div>
+                <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden mb-3">
+                  <div
+                    className="h-full bg-[#6E9625] rounded-full transition-all duration-500 ease-in-out"
+                    style={{ width: `${profileCompleteness}%` }}
+                  />
+                </div>
+                <p className="text-[11.5px] text-gray-500 leading-tight">
+                  <span className="font-semibold text-gray-700">Next step:</span> {profileNextStep}
+                </p>
+              </div>
             </div>
 
             {/* ── Right content ── */}

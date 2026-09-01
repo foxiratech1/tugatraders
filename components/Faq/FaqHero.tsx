@@ -49,7 +49,6 @@ const FaqHero = () => {
         <div className="xl:col-span-6 flex justify-center xl:justify-end items-center w-full mt-6 xl:mt-0">
 
           <div className="relative w-full max-w-[420px] sm:max-w-[500px] lg:max-w-[550px] aspect-[550/330] rounded-[24px] sm:rounded-[28px] lg:rounded-[32px] overflow-hidden shadow-[0_15px_40px_rgba(0,0,0,0.04)] border border-[#243A240A]">
-
             <Image
               src="/faq.png"
               alt="Frequently Asked Questions"

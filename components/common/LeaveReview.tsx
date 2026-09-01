@@ -25,7 +25,8 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
 
   const [selectedReason, setSelectedReason] = useState<string>('');
   const [otherReason, setOtherReason] = useState<string>('');
-  const [reviewType, setReviewType] = useState<string>('JOB');
+  const initialReviewType = searchParams.get('reviewType') || reviewTypeProp || (jobId ? 'JOB' : 'DIRECTORY');
+  const [reviewType, setReviewType] = useState<string>(initialReviewType);
   const [interactionSource, setInteractionSource] = useState<string>('');
   const [completionDate, setCompletionDate] = useState<string>('');
   const [title, setTitle] = useState<string>('');
@@ -122,7 +123,7 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
   useEffect(() => {
     const fetchTraders = async () => {
       try {
-        const res = await authApi.searchTraders({ page: 1, limit: 100 });
+        const res = reviewType === 'JOB' ? await authApi.getInteractedTraders() : await authApi.searchTraders();
         let tradersList = [];
         if (Array.isArray(res)) {
           tradersList = res;
@@ -141,7 +142,7 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
       }
     };
     fetchTraders();
-  }, []);
+  }, [reviewType]);
 
   useEffect(() => {
     const fetchCategories = async () => {

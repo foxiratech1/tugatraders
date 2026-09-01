@@ -287,7 +287,7 @@ function QuotesModal({
   const formatPrice = (p: string) =>
     isNaN(Number(p)) ? p : `£${Number(p).toLocaleString()}`;
 
-  const getAttachmentUrl = (url: string | undefined, file: string) => {
+  const getQuoteAttachmentUrl = (url: string | undefined, file: string) => {
     if (url && !url.startsWith("undefined")) return url;
     const base = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000").replace(/\/+$/, "");
     const cleanPath = file.replace(/^\/+/, "");
@@ -331,8 +331,12 @@ function QuotesModal({
                 {/* Trader row */}
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#4CAF50] flex items-center justify-center text-white text-[13px] font-bold flex-shrink-0">
-                      {quote.trader?.fullName?.[0]?.toUpperCase() ?? "T"}
+                    <div className="relative w-10 h-10 rounded-full bg-[#4CAF50] flex items-center justify-center text-white text-[13px] font-bold flex-shrink-0 overflow-hidden">
+                      {quote.trader?.profileImage ? (
+                        <img src={getAttachmentUrl(quote.trader.profileImage)} alt={quote.trader.fullName} className="w-full h-full object-cover" />
+                      ) : (
+                        quote.trader?.fullName?.[0]?.toUpperCase() ?? "T"
+                      )}
                     </div>
                     <div>
                       <Link href={`/customer-dashboard/trader-profile/${quote.trader?.id}`}>
@@ -395,7 +399,7 @@ function QuotesModal({
                       {quote.attachments.map((att) => (
                         <a
                           key={att.id}
-                          href={getAttachmentUrl(att.url, att.file)}
+                          href={getQuoteAttachmentUrl(att.url, att.file)}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-[#8BC34A] transition-colors max-w-full"
@@ -520,8 +524,12 @@ function TraderQuoteCard({
       {/* Header Row */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-start gap-3">
-          <div className="w-11 h-11 rounded-full bg-[#7CB342] flex items-center justify-center text-white text-[16px] font-bold flex-shrink-0 mt-0.5">
-            {trader?.fullName?.[0]?.toUpperCase() ?? "T"}
+          <div className="relative w-11 h-11 rounded-full bg-[#7CB342] flex items-center justify-center text-white text-[16px] font-bold flex-shrink-0 mt-0.5 overflow-hidden">
+            {trader?.profileImage ? (
+              <img src={getAttachmentUrl(trader.profileImage)} alt={trader.fullName} className="w-full h-full object-cover" />
+            ) : (
+              trader?.fullName?.[0]?.toUpperCase() ?? "T"
+            )}
           </div>
           <div>
             <Link href={`/customer-dashboard/trader-profile/${trader.id}`}>
@@ -561,7 +569,7 @@ function TraderQuoteCard({
           </span>
         ) : quoteStatus ? (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFF8E1] text-[#F57C00] text-[11px] font-bold border border-[#FFECB3]">
-            {quoteStatus?.toUpperCase() === "PENDING" ? "Pending" : quoteStatus ?? "Pending"}
+            {quoteStatus?.toUpperCase() === "PENDING" ? "Quote Received" : quoteStatus ?? "Quote Received"}
           </span>
         ) : null}
       </div>
@@ -637,7 +645,7 @@ function TraderQuoteCard({
         )}
 
         <div className="flex items-center gap-3 flex-wrap">
-          {quote && quoteStatus?.toUpperCase() === "PENDING" && quoteId && onAccept && onDecline ? (
+          {quote && quoteStatus?.toUpperCase() === "PENDING" && quoteId && onAccept && onDecline && !["CLOSED", "COMPLETED", "CANCELLED", "EXPIRED"].includes(jobStatus?.toUpperCase() || "") ? (
             <>
               <button
                 onClick={async () => {
@@ -802,7 +810,7 @@ export default function CustomerJobDashboard() {
     const hideWork = targetJob.status === "CANCELLED" || targetJob.status === "CLOSED" ? "&hideWorkCarriedOut=false" : "&workCarriedOut=true";
     router.push(
       `/customer-dashboard/leave-review?jobId=${targetJob.id}${targetTraderId ? `&traderId=${targetTraderId}` : ""
-      }${hideWork}`
+      }&reviewType=JOB${hideWork}`
     );
   };
 
