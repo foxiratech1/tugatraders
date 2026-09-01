@@ -276,7 +276,7 @@ export default function ReviewSection() {
                       <FaQuoteRight className="text-gray-200 mt-2 flex-shrink-0 w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
 
-                    <p className="text-[14px] sm:text-[16px] leading-relaxed text-[#6F736C] font-medium italic">
+                    <p className="text-[14px] sm:text-[16px] leading-relaxed text-[#6F736C] font-medium italic break-words">
                       {review.text}
                     </p>
                   </div>
