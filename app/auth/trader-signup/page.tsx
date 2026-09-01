@@ -382,7 +382,7 @@ export default function TraderSignupPage() {
 
               {/* Logo */}
               <Link href="/">
-                <Image src="/logo.png" alt="TugaTrades Logo" width={177} height={40} className="object-contain" />
+                <Image src="/TugaLogo.png" alt="TugaTrades Logo" width={177} height={40} className="object-contain" />
               </Link>
 
               {/* Headings */}

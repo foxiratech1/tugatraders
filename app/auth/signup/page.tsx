@@ -319,7 +319,7 @@ export default function RegisterPage() {
 
                             {/* LOGO */}
                             <Link href="/">
-                                <Image src="/logo.png" alt="Logo" width={177} height={40} className="object-contain" />
+                                <Image src="/TugaLogo.png" alt="Logo" width={177} height={40} className="object-contain" />
                             </Link>
 
                             {/* HEADINGS */}

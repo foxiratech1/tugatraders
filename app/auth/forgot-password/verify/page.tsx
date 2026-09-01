@@ -80,7 +80,7 @@ function VerifyForgotOtpContent() {
                     <div className="mx-auto w-full max-w-[450px] bg-white rounded-[28px] p-6 sm:p-8 md:p-10 shadow-[0_8px_40px_rgba(36,58,36,0.03)] border border-[#243A240A] flex flex-col gap-[20px]">
                         {/* LOGO */}
                         <Link href="/">
-                            <Image src="/logo.png" alt="Logo" width={177} height={40} className="object-contain" />
+                            <Image src="/TugaLogo.png" alt="Logo" width={177} height={40} className="object-contain" />
                         </Link>
                         <h1 className="text-[28px] font-bold text-[#1C2C1C]">Verify OTP</h1>
                         <p className="text-[13px] sm:text-[13.5px] text-[#1C2C1C]/60 font-medium">

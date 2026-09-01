@@ -189,7 +189,7 @@ function VerifyOtpContent() {
     <div className="mx-auto w-full max-w-[450px] bg-white rounded-[28px] p-6 sm:p-8 md:p-10 shadow-[0_8px_40px_rgba(36,58,36,0.03)] border border-[#243A240A] flex flex-col gap-[20px]">
 
       <Image
-        src="/logo.png"
+        src="/TugaLogo.png"
         alt="Logo"
         width={177}
         height={40}

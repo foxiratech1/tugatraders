@@ -55,7 +55,7 @@ export default function Footer() {
             <Link href="/" className="inline-block mb-8">
               <div className="relative h-10 w-[200px]">
                 <Image
-                  src="/logo.png"
+                  src="/TugaLogo.png"
                   alt="TugaTrades Logo"
                   fill
                   className="object-contain object-left"
