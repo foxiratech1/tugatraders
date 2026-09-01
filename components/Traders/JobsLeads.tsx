@@ -678,7 +678,7 @@ export default function JobsLeads() {
                             : selectedJob.isQuoteAccepted
                               ? "Contacted"
                               : selectedJob.hasQuoted
-                                ? "Pending"
+                                ? "Contacted"
                                 : selectedJob.status
                         )}
                         <span className="text-[12px] text-gray-400 font-medium flex items-center gap-1">

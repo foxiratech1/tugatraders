@@ -276,13 +276,13 @@ export default function VerifyOtpPage() {
         </div>
 
         {/* Right side image */}
-        <div className="hidden lg:flex w-full lg:w-[50%] lg:h-auto lg:self-stretch min-h-screen relative overflow-hidden lg:block flex-shrink-0 z-0">
+        <div className="hidden lg:flex w-full lg:w-[50%] lg:h-auto lg:self-stretch min-h-screen relative overflow-hidden lg:block flex-shrink-0 z-0 bg-[#E2E8DC]">
           <div className="absolute inset-0 z-0">
             <Image
               src="/vettingimage.jfif"
               alt="Background"
               fill
-              className="object-cover"
+              className="object-cover object-[80%_80%] scale-[1.15] xl:scale-[1.2]"
               priority
             />
           </div>

@@ -23,7 +23,7 @@ export const metadata: Metadata = {
   title: "TugaTrades",
   description: "Find trusted professionals for every job",
   icons: {
-    icon: "/Tugatraderslogo.png",
+    icon: "/Tlogo.png",
   },
 };
 

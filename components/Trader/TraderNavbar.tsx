@@ -218,14 +218,14 @@ export default function TraderNavbar() {
       {/* ── Top utility bar removed ─────────────────────────────── */}
 
       {/* ── Main navbar ─────────────────────────────────── */}
-      <div className="bg-[#FFFFFFCC]/80 border-b border-[#E5E7EB] shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+      <div className="bg-white border-b border-[#E5E7EB] shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
         <div className="max-w-[1280px] mx-auto px-4 h-[60px] flex items-center gap-6">
 
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 mr-4">
-            <div className="relative h-8 w-[140px] sm:h-9 sm:w-[177px] overflow-hidden rounded-xl">
+            <div className="relative h-12 w-[200px] sm:h-[50px] sm:w-[220px] overflow-hidden">
               <Image
-                src="/logo.png"
+                src="/TugaLogo.png"
                 alt="TugaTrades Logo"
                 fill
                 className="object-contain object-left"

@@ -304,7 +304,7 @@ export default function TraderReviews() {
   // }
 
   return (
-    <div className="min-h-screen bg-[#F7F7F5] p-6 md:p-10 font-sans mt-[60px]">
+    <div className="min-h-screen bg-[#F7F7F5] p-6 md:p-10 font-sans">
       <div className="max-w-[1100px] mx-auto">
 
         {/* Header */}

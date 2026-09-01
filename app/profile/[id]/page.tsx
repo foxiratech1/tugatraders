@@ -39,7 +39,7 @@ const LoginModal = ({
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  action: "message" | "save";
+  action: "message" | "save" | "review";
 }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -73,10 +73,14 @@ const LoginModal = ({
 
   const title = action === "message"
     ? "Login to contact trader"
-    : "Login to save trader";
+    : action === "review"
+      ? "Login to leave review"
+      : "Login to save trader";
   const desc = action === "message"
     ? "Please log in to view contact info and chat with this trader."
-    : "Please log in to save this trader to your bookmarks.";
+    : action === "review"
+      ? "Please log in to leave a review for this trader."
+      : "Please log in to save this trader to your bookmarks.";
   const btnText = loading ? 'Logging in…' : 'Log In & Continue';
 
   return (
@@ -218,7 +222,7 @@ export default function PublicTraderProfilePage() {
   const [isSaved, setIsSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [pendingAction, setPendingAction] = useState<"message" | "save" | null>(null);
+  const [pendingAction, setPendingAction] = useState<"message" | "save" | "review" | null>(null);
   const [lightboxIndex, setLightboxIndex] = useState<number>(-1);
   const [showAllGallery, setShowAllGallery] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -324,8 +328,20 @@ export default function PublicTraderProfilePage() {
       executeToggleSave();
     } else if (pendingAction === "message") {
       router.push(`/customer-dashboard/inbox?traderId=${traderId}`);
+    } else if (pendingAction === "review") {
+      router.push(`/common/leave-review?reviewType=DIRECTORY&traderId=${traderId}`);
     }
     setPendingAction(null);
+  };
+
+  const handleLeaveReview = () => {
+    const token = getAccessToken();
+    if (!token) {
+      setPendingAction("review");
+      setShowLoginModal(true);
+      return;
+    }
+    router.push(`/common/leave-review?reviewType=DIRECTORY&traderId=${traderId}`);
   };
 
   if (loading) {
@@ -450,6 +466,12 @@ export default function PublicTraderProfilePage() {
                       className="w-full bg-[#1C2C1C] text-white rounded-xl py-3.5 font-bold text-[14px] mb-3 flex items-center justify-center gap-2 hover:bg-black transition-colors"
                     >
                       <MessageSquare size={18} /> Send Message
+                    </button>
+                    <button
+                      onClick={handleLeaveReview}
+                      className="w-full bg-white text-[#1C2C1C] border border-gray-200 rounded-xl py-3.5 font-bold text-[14px] mb-3 flex items-center justify-center gap-2 hover:bg-gray-50 transition-colors"
+                    >
+                      <Star size={18} /> Leave a Review
                     </button>
                     <button
                       onClick={handleToggleSave}

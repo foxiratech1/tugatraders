@@ -2,6 +2,9 @@
 
 import React, { useState } from "react";
 import { Shield, Bell } from "lucide-react";
+import { authApi } from "@/app/api/authApi";
+import toast from "react-hot-toast";
+import { useRouter } from "next/navigation";
 
 export default function TraderSettingsPage() {
   const [twoFactor, setTwoFactor] = useState(true);
@@ -12,6 +15,28 @@ export default function TraderSettingsPage() {
   const [messageNotif, setMessageNotif] = useState(false);
   const [sms, setSms] = useState(false);
   const [marketing, setMarketing] = useState(false);
+
+  const router = useRouter();
+  const [isDeactivating, setIsDeactivating] = useState(false);
+  const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+
+  const handleDeactivate = async () => {
+    try {
+      setIsDeactivating(true);
+      await authApi.deactivateAccount();
+      toast.success("Account deactivated.");
+      if (typeof authApi.handleLogout === "function") {
+        await authApi.handleLogout(router);
+      } else {
+        await authApi.logout();
+        router.push("/");
+      }
+    } catch (error: any) {
+      console.error("Deactivate failed", error);
+      toast.error(error?.response?.data?.message || "Failed to deactivate account.");
+      setIsDeactivating(false);
+    }
+  };
 
   const Toggle = ({ checked, onChange, colorClass = "peer-checked:bg-[#1C2C1C]" }: { checked: boolean, onChange: (c: boolean) => void, colorClass?: string }) => (
     <label className="relative inline-flex items-center cursor-pointer">
@@ -66,6 +91,38 @@ export default function TraderSettingsPage() {
                   <p className="text-[#6E9625] text-[14px] mt-1">Enabled via SMS</p>
                 </div>
                 <Toggle checked={twoFactor} onChange={setTwoFactor} colorClass="peer-checked:bg-[#6E9625]" />
+              </div>
+
+              <div className="flex flex-col pt-2 border-t border-gray-100 mt-6">
+                <div className="flex items-center justify-between mt-4">
+                  <div>
+                    <h3 className="text-red-600 font-bold text-[15px]">Deactivate Account</h3>
+                    <p className="text-gray-400 text-[14px] mt-1">Temporarily disable your account</p>
+                  </div>
+                  <div className="relative inline-block w-12 h-6 align-middle select-none transition duration-200 ease-in">
+                    <input
+                      type="checkbox"
+                      id="deactivateToggle"
+                      checked={isDeactivating}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setShowDeactivateModal(true);
+                        }
+                      }}
+                      disabled={isDeactivating}
+                      className="peer sr-only"
+                    />
+                    <label
+                      htmlFor="deactivateToggle"
+                      className={`block overflow-hidden h-6 rounded-full cursor-pointer transition-colors ${isDeactivating ? "bg-red-500" : "bg-gray-300"
+                        }`}
+                    ></label>
+                    <span
+                      className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 w-5 h-5 rounded-full transition-transform pointer-events-none ${isDeactivating ? "translate-x-full border-white" : ""
+                        }`}
+                    ></span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -133,6 +190,35 @@ export default function TraderSettingsPage() {
           </div>
         </div>
       </div>
+
+      {/* Deactivate Account Modal */}
+      {showDeactivateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-3xl p-6 w-full max-w-md shadow-xl border border-gray-100">
+            <h3 className="text-[20px] font-bold text-[#1C2C1C] mb-2">Deactivate Account</h3>
+            <p className="text-gray-500 text-[14px] mb-6">
+              Are you sure you want to deactivate your account? This action will temporarily disable your account and log you out.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setShowDeactivateModal(false)}
+                className="px-5 py-2.5 rounded-xl font-bold text-[14px] text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowDeactivateModal(false);
+                  handleDeactivate();
+                }}
+                className="px-5 py-2.5 rounded-xl font-bold text-[14px] text-white bg-red-600 hover:bg-red-700 transition-colors"
+              >
+                Deactivate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

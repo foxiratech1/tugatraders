@@ -156,11 +156,11 @@ export default function CustomerNavbar() {
       {/* Left: Logo */}
       <Link href="/" className="flex items-center flex-shrink-0 self-center mr-4">
         <Image
-          src="/customerNavLogo.png"
+          src="/TugaLogo.png"
           alt="TugaTrades Customer Logo"
-          width={180}
-          height={40}
-          className="h-10 w-auto object-contain"
+          width={220}
+          height={50}
+          className="h-12 w-auto object-contain"
         />
       </Link>
 

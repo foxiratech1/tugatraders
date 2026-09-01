@@ -97,9 +97,9 @@ export default function Navbar() {
           className="flex items-center gap-3 flex-shrink-0"
           onClick={closeMenu}
         >
-          <div className="relative h-8 w-[140px] sm:h-9 sm:w-[177px] overflow-hidden rounded-xl">
+          <div className="relative h-12 w-[200px] sm:h-[50px] sm:w-[220px] overflow-hidden">
             <Image
-              src="/logo.png"
+              src="/TugaLogo.png"
               alt="TugaTrades Logo"
               fill
               className="object-contain object-left"

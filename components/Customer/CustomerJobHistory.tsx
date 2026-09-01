@@ -164,9 +164,9 @@ const statusConfig: Record<
     text: "text-blue-700",
   },
   ASSIGNED: {
-    label: "Live",
-    bg: "bg-blue-50",
-    text: "text-blue-700",
+    label: "Job Posted",
+    bg: "bg-[#F1AF70]",
+    text: "text-[#C55B18]",
   },
   ACTIVE: {
     label: "Active",
@@ -192,7 +192,7 @@ const statusConfig: Record<
 
 const FILTER_TABS = [
   { key: "ALL", label: "All Jobs" },
-  { key: "ASSIGNED", label: "Live" },
+  { key: "ASSIGNED", label: "Job Posted" },
   { key: "COMPLETED", label: "Completed" },
   { key: "CLOSED", label: "Closed" },
 ];

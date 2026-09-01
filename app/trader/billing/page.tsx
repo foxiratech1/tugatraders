@@ -78,7 +78,7 @@ export default function BillingPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#F7F7F5] pt-24 pb-12 px-4 sm:px-6 lg:px-8 font-sans">
+    <div className="min-h-screen bg-[#F7F7F5] p-6 md:p-10 font-sans">
       <div className="max-w-[1280px] mx-auto space-y-6">
 
         {/* Header */}
