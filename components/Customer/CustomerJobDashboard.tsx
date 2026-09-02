@@ -32,6 +32,7 @@ import {
   MoreVertical,
   PlusCircle,
   Paperclip,
+  Ban,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import Link from "next/link";
@@ -72,6 +73,7 @@ interface SelectedTrader {
   email: string;
   profileImage?: string | null;
   traderProfile?: {
+    displayName?: string | null;
     companyName?: string | null;
   } | null;
   traderMetrics?: {
@@ -171,9 +173,9 @@ const statusConfig: Record<string, { label: string; bg: string; text: string; do
   },
 
   ASSIGNED: { label: "Contacted", bg: "bg-[#B6D5F4]", text: "text-[#1565C0]", dot: "bg-[#1565C0]" },
-  COMPLETED: { label: "COMPLETED", bg: "bg-[#D8F3D7]", text: "text-[#2E7D32]", dot: "bg-[#2E7D32]" },
-  CANCELLED: { label: "CLOSED", bg: "bg-[#BDBDBD]", text: "text-[#424242]", dot: "bg-[#424242]" },
-  CLOSED: { label: "CLOSED", bg: "bg-[#BDBDBD]", text: "text-[#424242]", dot: "bg-[#424242]" },
+  COMPLETED: { label: "Completed", bg: "bg-[#D8F3D7]", text: "text-[#2E7D32]", dot: "bg-[#2E7D32]" },
+  CANCELLED: { label: "Closed", bg: "bg-[#BDBDBD]", text: "text-[#424242]", dot: "bg-[#424242]" },
+  CLOSED: { label: "Closed", bg: "bg-[#BDBDBD]", text: "text-[#424242]", dot: "bg-[#424242]" },
   EXPIRED: { label: "EXPIRED", bg: "bg-[#BDBDBD]", text: "text-[#424242]", dot: "bg-[#424242]" },
   ACTIVE: { label: "LIVE", bg: "bg-[#FDE2D6]", text: "text-[#D32F2F]", dot: "bg-[#D32F2F]" },
 };
@@ -326,7 +328,10 @@ function QuotesModal({
             quotes.map((quote) => (
               <div
                 key={quote.id}
-                className="border border-gray-200 rounded-xl p-4 hover:border-[#8BC34A]/60 hover:shadow-sm transition-all"
+                className={`border border-gray-200 rounded-xl p-4 transition-all ${quote.status?.toUpperCase() === "REJECTED" || quote.status?.toUpperCase() === "DECLINED"
+                  ? "bg-gray-50"
+                  : "bg-white hover:border-[#8BC34A]/60 hover:shadow-sm"
+                  }`}
               >
                 {/* Trader row */}
                 <div className="flex items-center justify-between mb-3">
@@ -340,9 +345,8 @@ function QuotesModal({
                     </div>
                     <div>
                       <Link href={`/customer-dashboard/trader-profile/${quote.trader?.id}`}>
-                        <p className="text-[13px] font-bold text-[#1C2C1C] hover:underline cursor-pointer">{quote.trader?.traderProfile?.companyName || quote.trader?.fullName || "Unknown"}</p>
+                        <p className="text-[13px] font-bold text-[#1C2C1C] hover:underline cursor-pointer">{quote.trader?.traderProfile?.displayName || quote.trader?.traderProfile?.companyName || quote.trader?.fullName || "Unknown"}</p>
                       </Link>
-                      <p className="text-[11px] text-gray-400">{quote.trader?.email}</p>
                     </div>
                   </div>
 
@@ -430,8 +434,8 @@ function QuotesModal({
                   </div>
                 ) : quote.status?.toUpperCase() === "REJECTED" || quote.status?.toUpperCase() === "DECLINED" ? (
                   <div className="flex flex-col gap-2.5">
-                    <div className="flex items-center gap-1.5 text-[11px] font-semibold text-red-700 bg-red-50 px-3 py-1.5 rounded-lg border border-red-100 w-fit">
-                      <XCircle size={12} className="text-red-500" />
+                    <div className="flex items-center gap-1.5 text-[12px] font-bold text-[#FF3B30] bg-[#FF3B30]/5 px-3 py-1.5 rounded-full border border-[#FF3B30]/30 w-fit">
+                      <Ban size={14} className="text-[#FF3B30]" />
                       Quote Declined
                     </div>
                     <div>
@@ -520,7 +524,10 @@ function TraderQuoteCard({
     p ? (isNaN(Number(p)) ? p : `£${Number(p).toLocaleString()}`) : "—";
 
   return (
-    <div className="border border-gray-200 rounded-xl p-4 mb-3 last:mb-0 hover:border-[#8BC34A]/60 hover:shadow-sm transition-all bg-white">
+    <div className={`border border-gray-200 rounded-xl p-4 mb-3 last:mb-0 transition-all ${quoteStatus?.toUpperCase() === "REJECTED" || quoteStatus?.toUpperCase() === "DECLINED"
+      ? "bg-gray-50"
+      : "bg-white hover:border-[#8BC34A]/60 hover:shadow-sm"
+      }`}>
       {/* Header Row */}
       <div className="flex items-start justify-between mb-4">
         <div className="flex items-start gap-3">
@@ -534,13 +541,10 @@ function TraderQuoteCard({
           <div>
             <Link href={`/customer-dashboard/trader-profile/${trader.id}`}>
               <p className="text-[14px] font-bold text-[#1C2C1C] hover:underline cursor-pointer">
-                {trader.traderProfile?.companyName || trader.fullName || 'Unknown Trader'}
+                {trader.traderProfile?.displayName || trader.traderProfile?.companyName || trader.fullName || 'Unknown Trader'}
               </p>
             </Link>
-            {trader.email && (
-              <p className="text-[12px] text-gray-500 mb-1">{trader.email}</p>
-            )}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1.5 mt-1">
               <div className="flex text-[#FFB300]">
                 {[1, 2, 3, 4, 5].map((i) => (
                   <Star
@@ -556,21 +560,17 @@ function TraderQuoteCard({
           </div>
         </div>
 
-        {/* Status badge */}
+        {/* Top Right Action */}
         {quoteStatus?.toUpperCase() === "ACCEPTED" ? (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F5E9] text-[#2E7D32] text-[11px] font-bold border border-[#C8E6C9]">
-            <CheckCircle size={12} />
-            Quote Accepted
-          </span>
-        ) : quoteStatus?.toUpperCase() === "REJECTED" || quoteStatus?.toUpperCase() === "DECLINED" ? (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFEBEE] text-[#D32F2F] text-[11px] font-bold border border-[#FFCDD2]">
-            <XCircle size={12} />
-            Quote Declined
-          </span>
-        ) : quoteStatus ? (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFF8E1] text-[#F57C00] text-[11px] font-bold border border-[#FFECB3]">
-            {quoteStatus?.toUpperCase() === "PENDING" ? "Quote Received" : quoteStatus ?? "Quote Received"}
-          </span>
+          !hasReviewed && (
+            <button
+              onClick={() => onLeaveReview && onLeaveReview()}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#6E9625] text-white text-[11px] font-bold hover:bg-[#58791C] transition-colors"
+            >
+              <Star size={12} className="fill-current" />
+              Leave a review
+            </button>
+          )
         ) : null}
       </div>
 
@@ -638,11 +638,30 @@ function TraderQuoteCard({
 
       {/* Footer / Actions */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mt-2 pt-3 border-t border-gray-100">
-        {quote ? (
-          <p className="text-[11px] text-gray-400 font-medium">Received: {formatDate(quote.createdAt)}</p>
-        ) : (
-          <p className="text-[11px] text-gray-400 font-medium">Trader details</p>
-        )}
+        <div className="flex items-center gap-3 flex-wrap">
+          {quote ? (
+            <p className="text-[11px] text-gray-400 font-medium">Received: {formatDate(quote.createdAt)}</p>
+          ) : (
+            <p className="text-[11px] text-gray-400 font-medium">Trader details</p>
+          )}
+
+          {/* Moved badges to bottom */}
+          {quoteStatus?.toUpperCase() === "ACCEPTED" ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F5E9] text-[#2E7D32] text-[11px] font-bold border border-[#C8E6C9]">
+              <CheckCircle size={12} />
+              Quote Accepted
+            </span>
+          ) : quoteStatus?.toUpperCase() === "REJECTED" || quoteStatus?.toUpperCase() === "DECLINED" ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FF3B30]/5 text-[#FF3B30] text-[12px] font-bold border border-[#FF3B30]/30">
+              <Ban size={14} className="text-[#FF3B30]" />
+              Quote Declined
+            </span>
+          ) : quoteStatus ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFF8E1] text-[#F57C00] text-[11px] font-bold border border-[#FFECB3]">
+              {quoteStatus?.toUpperCase() === "PENDING" ? "Quote Received" : quoteStatus ?? "Quote Received"}
+            </span>
+          ) : null}
+        </div>
 
         <div className="flex items-center gap-3 flex-wrap">
           {quote && quoteStatus?.toUpperCase() === "PENDING" && quoteId && onAccept && onDecline && !["CLOSED", "COMPLETED", "CANCELLED", "EXPIRED"].includes(jobStatus?.toUpperCase() || "") ? (
@@ -1118,9 +1137,9 @@ export default function CustomerJobDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6 items-start relative">
 
           {/* ── Left: Job History (Light Green Background Container) ──────── */}
-          <div className="bg-[#F2F7EB] rounded-2xl p-4 border border-[#E2EED2] flex flex-col gap-3 sticky top-8 max-h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar">
+          <div className="bg-white rounded-2xl p-4 border border-[#E2EED2] flex flex-col gap-3 sticky top-8 max-h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar">
             <div className="mb-1">
-              <h2 className="text-[15px] font-extrabold text-[#1C2C1C]">Job History</h2>
+              <h2 className="text-[18px] font-extrabold text-[#1C2C1C]">Job History</h2>
             </div>
 
             {loading ? (
@@ -1240,9 +1259,9 @@ export default function CustomerJobDashboard() {
                     <h4 className="text-[20px] font-extrabold text-[#1C2C1C] leading-none mb-1">
                       {dashboardDetails?.actionRequired?.unreviewedJobsCount ?? 0}
                     </h4>
-                    <p className="text-[12px] text-gray-500 font-medium mb-1.5">New review received</p>
+                    <p className="text-[12px] text-gray-500 font-medium mb-1.5">Reviews Outstanding</p>
                     <button className="text-[12px] font-bold text-[#6E9625] flex items-center gap-1 hover:underline">
-                      View review <ArrowRight size={14} />
+                      Leave review <ArrowRight size={14} />
                     </button>
                   </div>
                 </div>

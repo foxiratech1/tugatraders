@@ -577,6 +577,13 @@ export const authApi = {
     return data;
   },
 
+  getOrCreateTraderConversation: async (customerId: string, jobId?: string) => {
+    console.log("customerId", customerId);
+    console.log("jobId", jobId);
+    const { data } = await api.post(`/api/conversations/trader/${customerId}`, jobId ? { jobId } : undefined);
+    return data;
+  },
+
   getChatMessages: async (conversationId: string) => {
     const { data } = await api.get(`/api/chat/${conversationId}/messages`);
     return data;

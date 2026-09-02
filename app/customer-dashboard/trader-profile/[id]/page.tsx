@@ -393,11 +393,6 @@ export default function CustomerTraderProfilePage() {
                     </span>
                   ))}
                   
-                  {tp?.subCategories?.map((sub: any, i: number) => (
-                    <span key={`sub-${i}`} className="inline-flex items-center bg-[#F9FAFB] text-[#4B5563] px-5 py-2.5 rounded-[12px] text-[13px] font-bold border border-gray-100">
-                      {typeof sub === 'object' ? sub.name : sub}
-                    </span>
-                  ))}
                 </div>
               </div>
 

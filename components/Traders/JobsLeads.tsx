@@ -437,14 +437,14 @@ export default function JobsLeads() {
     }
     if (status === "Contacted") {
       return (
-        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#E3F2FD] text-[#1565C0] text-[11px] font-bold">
+        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#89B6E5] text-[#1A4079] text-[11px] font-bold">
           Contacted
         </div>
       );
     }
     if (status === "Completed") {
       return (
-        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#E8F5E9] text-[#2E7D32] text-[11px] font-bold">
+        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#1C5624] text-white text-[11px] font-bold">
           Completed
         </div>
       );
@@ -458,14 +458,14 @@ export default function JobsLeads() {
     }
     if (status === "In Progress") {
       return (
-        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#EDE7F6] text-[#5E35B1] text-[11px] font-bold">
+        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#EED25A] text-[#A76118] text-[11px] font-bold">
           In Progress
         </div>
       );
     }
     if (status === "Closed") {
       return (
-        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#EEEEEE] text-[#424242] text-[11px] font-bold">
+        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#A8A8A8] text-[#5C5C5C] text-[11px] font-bold">
           Closed
         </div>
       );
@@ -484,7 +484,7 @@ export default function JobsLeads() {
         <div className="max-w-[1320px] mx-auto px-6">
 
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_450px] gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_600px] gap-6 items-start">
 
             {/* Left Column */}
             <div className="flex flex-col">
@@ -660,7 +660,7 @@ export default function JobsLeads() {
             {/* Right Column: Job Details */}
             {filteredJobs.length > 0 && (
               selectedJob ? (
-                <div className="bg-white rounded-[24px] p-5 sm:p-6 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-[#E5E5E5] sticky top-[100px] max-h-[calc(100vh-120px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <div className="bg-white rounded-[24px] p-4 sm:p-5 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-[#E5E5E5] sticky top-[100px] max-h-[calc(100vh-100px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
 
                   {/* Header */}
                   <div className="flex items-start justify-between mb-3">
@@ -692,7 +692,7 @@ export default function JobsLeads() {
                   </div>
 
                   {/* Info Grid - 2x2 grid to prevent truncation */}
-                  <div className="grid grid-cols-2 gap-2.5 mb-4">
+                  <div className="grid grid-cols-2 gap-2 mb-3">
                     <div className="p-2.5 rounded-xl bg-[#F8F9FA] border border-gray-100 flex items-center gap-2.5">
                       <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm shrink-0">
                         <MapPin size={16} className="text-[#6E9625]" />
@@ -743,7 +743,7 @@ export default function JobsLeads() {
                   </div>
 
                   {/* Job Description */}
-                  <div className="mb-4">
+                  <div className="mb-3">
                     <span className="text-[12px] font-bold text-[#1C2C1C] uppercase tracking-wider mb-2 block">
                       Job Description
                     </span>
@@ -774,8 +774,8 @@ export default function JobsLeads() {
                   {/* Attachments Section Trigger (Mocked representation as in figma mockup screenshot) */}
                   {/* Attachments */}
                   {fullJobData?.attachments && fullJobData.attachments.length > 0 && (
-                    <div className="mb-8">
-                      <span className="text-[12px] font-bold text-[#1C2C1C] uppercase tracking-wider mb-3 block">
+                    <div className="mb-3">
+                      <span className="text-[12px] font-bold text-[#1C2C1C] uppercase tracking-wider mb-2 block">
                         Attachments ({fullJobData.attachments.length})
                       </span>
 
@@ -829,7 +829,7 @@ export default function JobsLeads() {
                     </div>
                   )}
                   {/* Customer Details */}
-                  <div className="mb-4">
+                  <div className="mb-3">
                     <span className="text-[12px] font-bold text-[#1C2C1C] uppercase tracking-wider mb-2 block">
                       CUSTOMER
                     </span>
@@ -923,7 +923,7 @@ export default function JobsLeads() {
                             {buttonText}
                           </button>
 
-                          {isAccepted && !isCompleted && !isClosed && (
+                          {selectedJob.isQuoteAccepted && !isCompleted && !isClosed && (
                             <button
                               disabled={isStartingJob || selectedJob.rawStatus === "IN_PROGRESS"}
                               onClick={async () => {
@@ -981,7 +981,7 @@ export default function JobsLeads() {
                             id: "openConversation",
                           });
 
-                          const res = await authApi.getOrCreateConversation(
+                          const res = await authApi.getOrCreateTraderConversation(
                             targetCustomerId,
                             selectedJob.id
                           );
@@ -1091,16 +1091,22 @@ export default function JobsLeads() {
                   Estimated Days
                 </label>
                 <div className="relative">
-                  <Clock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="number"
-                    min={1}
+                  <select
                     required
-                    placeholder="e.g. 7"
                     value={quoteForm.estimatedDays}
                     onChange={(e) => setQuoteForm((f) => ({ ...f, estimatedDays: e.target.value }))}
-                    className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] placeholder:text-gray-400 focus:outline-none focus:border-[#8BC34A] focus:ring-2 focus:ring-[#8BC34A]/20 transition-all"
-                  />
+                    className="w-full px-4 py-2.5 pl-9 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] bg-white focus:outline-none focus:border-[#8BC34A] focus:ring-2 focus:ring-[#8BC34A]/20 transition-all appearance-none cursor-pointer"
+                  >
+                    <option value="" disabled>Select estimated time</option>
+                    <option value="Under 1 day">Under 1 day</option>
+                    <option value="1 - 3 days">1 - 3 days</option>
+                    <option value="Under 7 days">Under 7 days</option>
+                    <option value="1 - 2 weeks">1 - 2 weeks</option>
+                    <option value="2 - 4 weeks">2 - 4 weeks</option>
+                    <option value="Over 1 month">Over 1 month</option>
+                  </select>
+                  <Clock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  <ChevronDown size={15} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                 </div>
               </div>
 

@@ -175,15 +175,15 @@ const MultiSelect = ({
                   }
                 }}
                 className={`flex items-center justify-between px-3 py-2 rounded-lg text-[13px] font-medium cursor-pointer transition-colors mb-1 ${selectedIds.length === options.length
-                    ? "bg-[#6E9625]/10 text-[#1C2C1C] font-semibold"
-                    : "text-[#1C2C1C]/80 hover:bg-gray-100"
+                  ? "bg-[#6E9625]/10 text-[#1C2C1C] font-semibold"
+                  : "text-[#1C2C1C]/80 hover:bg-gray-100"
                   }`}
               >
                 <span>Select All</span>
                 <div
                   className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${selectedIds.length === options.length
-                      ? "bg-[#6E9625] border-[#6E9625] text-white"
-                      : "border-gray-300 bg-white"
+                    ? "bg-[#6E9625] border-[#6E9625] text-white"
+                    : "border-gray-300 bg-white"
                     }`}
                 >
                   {selectedIds.length === options.length && (
@@ -265,6 +265,7 @@ interface PersonalForm {
 
 interface BusinessForm {
   companyName: string;
+  displayName: string;
   companyType: string;
   niNumber: string;
   primarySkills: string;
@@ -350,6 +351,7 @@ export default function TraderProfilePage() {
 
   const [businessForm, setBusinessForm] = useState<BusinessForm>({
     companyName: "",
+    displayName: "",
     companyType: "",
     niNumber: "",
     primarySkills: "",
@@ -392,6 +394,7 @@ export default function TraderProfilePage() {
 
         setBusinessForm({
           companyName: tp?.companyName || tp?.businessName || "",
+          displayName: tp?.displayName || p?.displayName || "",
           companyType: tp?.companyType || "",
           niNumber: tp?.registrationNumber || tp?.niNumber || "",
           primarySkills: tp?.primarySkills || tp?.skills || "",
@@ -814,6 +817,7 @@ export default function TraderProfilePage() {
       fd.append("latitude", "22.5530");
       fd.append("longitude", "75.7569");
       fd.append("companyName", businessForm.companyName);
+      fd.append("displayName", businessForm.displayName);
       fd.append("companyType", businessForm.companyType);
       fd.append("registrationNumber", businessForm.niNumber);
 
@@ -898,6 +902,20 @@ export default function TraderProfilePage() {
         await authApi.updateTraderAssets(assetsFd);
       }
       // --------------------------
+
+      getRegistrationStatus().then((regRes) => {
+        const unwrappedReg = regRes?.data || regRes;
+        const vStatus = unwrappedReg?.verificationStatus ?? unwrappedReg?.status ?? "PENDING";
+        setTraderStatus(vStatus);
+        setIsStep2Done(unwrappedReg?.step2Completed === true || unwrappedReg?.currentStep === 3 || vStatus === "MANUAL_CHECK" || vStatus === "APPROVED");
+
+        const percentage = unwrappedReg?.profileCompletionPercentage ?? unwrappedReg?.completedPercentage ?? unwrappedReg?.profileCompletion?.overallPercentage ?? 0;
+        setProfileCompleteness(percentage);
+
+        const stages = unwrappedReg?.profileCompletion?.stages || [];
+        const nextIncompleteStage = stages.find((s: any) => !s.isCompleted);
+        setProfileNextStep(nextIncompleteStage?.title ?? "Complete your profile");
+      }).catch(console.error);
 
       const backendMessage = updateRes?.message;
       const finalMessage = tradeCategoriesChanged
@@ -1298,7 +1316,11 @@ export default function TraderProfilePage() {
                               src={src}
                               alt={`Certificate ${i + 1}`}
                               className="w-full h-full object-cover"
-                              onError={(e) => { e.currentTarget.src = "/pdf-icon.png"; }}
+                              onError={(e) => {
+                                if (!e.currentTarget.src.endsWith("/pdf-icon.png")) {
+                                  e.currentTarget.src = "/pdf-icon.png";
+                                }
+                              }}
                             />
                             <button
                               type="button"
@@ -1372,7 +1394,11 @@ export default function TraderProfilePage() {
                               src={src}
                               alt={`Insurance ${i + 1}`}
                               className="w-full h-full object-cover"
-                              onError={(e) => { e.currentTarget.src = "/pdf-icon.png"; }}
+                              onError={(e) => {
+                                if (!e.currentTarget.src.endsWith("/pdf-icon.png")) {
+                                  e.currentTarget.src = "/pdf-icon.png";
+                                }
+                              }}
                             />
                             <button
                               type="button"
@@ -1425,6 +1451,23 @@ export default function TraderProfilePage() {
                         placeholder="e.g. Santos Electrical Ltd"
                         className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none transition-all bg-gray-50 cursor-not-allowed"
                       />
+                    </div>
+
+                    {/* Display Name */}
+                    <div>
+                      <label className="block text-[12px] font-medium text-gray-500 mb-1">
+                        Display Name
+                      </label>
+                      <input
+                        id="tp-displayName"
+                        type="text"
+                        name="displayName"
+                        value={businessForm.displayName}
+                        onChange={handleBusinessChange}
+                        placeholder="e.g. ABC Plumbing"
+                        className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
+                      />
+                      <span className="text-[10px] text-gray-400 mt-1 block">This name will be displayed across platform.</span>
                     </div>
 
                     {/* Company Type */}

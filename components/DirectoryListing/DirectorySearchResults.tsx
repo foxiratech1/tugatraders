@@ -866,9 +866,9 @@ const DirectorySearchResults = () => {
                         <div className="w-full aspect-[4/3] rounded-xl overflow-hidden relative bg-gray-100">
                           <Image
                             src={
-                              trader.portfolio && trader.portfolio.length > 0
-                                ? getImageUrl(trader.portfolio[activeImageIndex[trader.id] || 0])
-                                : getImageUrl(trader.profileImage || trader.logo)
+                              activeImageIndex[trader.id] !== undefined && trader.portfolio && trader.portfolio.length > 0
+                                ? getImageUrl(trader.portfolio[activeImageIndex[trader.id]])
+                                : getImageUrl(trader.profileImage || trader.logo || (trader.portfolio && trader.portfolio.length > 0 ? trader.portfolio[0] : null))
                             }
                             alt={trader.fullName || 'Trader'}
                             fill
@@ -878,7 +878,7 @@ const DirectorySearchResults = () => {
                           />
                         </div>
 
-                        {trader.portfolio && trader.portfolio.length > 1 && (
+                        {trader.portfolio && trader.portfolio.length > 0 && (
                           <div className="grid grid-cols-4 gap-2">
                             {trader.portfolio.slice(0, expandedGallery[trader.id] ? undefined : 4).map((img: any, actualIndex: number) => {
                               const isLastThumb = !expandedGallery[trader.id] && actualIndex === 3 && trader.portfolio!.length > 4;

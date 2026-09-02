@@ -273,6 +273,7 @@ export default function Step2Page() {
 
     const [formData, setFormData] = useState({
         companyName: "",
+        displayName: "",
         companyType: "",
         registrationNumber: "",
         // location: "",
@@ -312,6 +313,7 @@ export default function Step2Page() {
                 setFormData(prev => ({
                     ...prev,
                     companyName: unwrapped.traderData.companyName || "",
+                    displayName: unwrapped.traderData.displayName || "",
                     companyType: unwrapped.traderData.companyType || "",
                     registrationNumber: unwrapped.traderData.registrationNumber || "",
                     // location: unwrapped.traderData.location || "",
@@ -451,6 +453,7 @@ export default function Step2Page() {
         try {
             const payload = new FormData();
             payload.append("companyName", formData.companyName);
+            payload.append("displayName", formData.displayName);
             payload.append("companyType", formData.companyType);
             payload.append("registrationNumber", formData.registrationNumber);
 
@@ -486,7 +489,7 @@ export default function Step2Page() {
     };
 
     return (
-        <main className="min-h-screen bg-[#F0EDE8] pt-32 pb-20 px-4 flex justify-center font-sans">
+        <main className="min-h-screen bg-[#90EE90]/10 pt-32 pb-20 px-4 flex justify-center font-sans">
             <div className="w-full max-w-[760px] bg-white rounded-[28px] shadow-[0_12px_48px_rgba(36,58,36,0.07)] border border-[#243A240A] p-8 sm:p-12 relative overflow-hidden">
 
                 {/* Top Right Decorative Icon */}
@@ -678,6 +681,16 @@ export default function Step2Page() {
                         onChange={(e) => field("companyName", e.target.value)}
                         className={inputCls}
                     />
+                    <div className="flex flex-col gap-1 w-full">
+                        <input
+                            type="text"
+                            placeholder="Display Name *"
+                            value={formData.displayName}
+                            onChange={(e) => field("displayName", e.target.value)}
+                            className={inputCls}
+                        />
+                        <span className="text-[10px] text-[#1C2C1C]/60 ml-1">This name will be displayed across platform.</span>
+                    </div>
                     <div className="relative">
                         <select
                             value={formData.companyType}

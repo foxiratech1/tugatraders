@@ -143,51 +143,18 @@ const statusConfig: Record<
   string,
   { label: string; bg: string; text: string }
 > = {
-  OPEN: {
-    label: "Open",
-    bg: "bg-emerald-50",
-    text: "text-emerald-700",
-  },
-  POSTED: {
-    label: "Job Posted",
-    bg: "bg-[#F1AF70]",
-    text: "text-[#C55B18]",
-  },
-  QUOTE_RECEIVED: {
-    label: "Quote Received",
-    bg: "bg-amber-50",
-    text: "text-amber-700",
-  },
-  IN_PROGRESS: {
-    label: "In Progress",
-    bg: "bg-blue-50",
-    text: "text-blue-700",
-  },
-  ASSIGNED: {
-    label: "Job Posted",
-    bg: "bg-[#F1AF70]",
-    text: "text-[#C55B18]",
-  },
-  ACTIVE: {
-    label: "Active",
-    bg: "bg-emerald-50",
-    text: "text-emerald-700",
-  },
-  COMPLETED: {
-    label: "Completed",
-    bg: "bg-[#1B4B22]",
-    text: "text-white",
-  },
-  CLOSED: {
-    label: "Closed",
-    bg: "bg-[#9CA3AF]",
-    text: "text-gray-600",
-  },
-  EXPIRED: {
-    label: "Expired",
-    bg: "bg-gray-100",
-    text: "text-gray-500",
-  },
+  OPEN: { label: "Job Posted", bg: "bg-[#F4B185]", text: "text-[#C45E20]" },
+  POSTED: { label: "Job Posted", bg: "bg-[#F4B185]", text: "text-[#C45E20]" },
+  ACTIVE: { label: "Job Posted", bg: "bg-[#F4B185]", text: "text-[#C45E20]" },
+  ASSIGNED: { label: "Job Posted", bg: "bg-[#F4B185]", text: "text-[#C45E20]" },
+  QUOTE_RECEIVED: { label: "Quotes Recieved", bg: "bg-[#DDEBF7]", text: "text-[#2B608F]" },
+  CONTACTED: { label: "Contacted", bg: "bg-[#8EAADB]", text: "text-[#1F3F73]" },
+  QUOTE_ACCEPTED: { label: "Quote Accepted", bg: "bg-[#E2EFDA]", text: "text-[#4F903A]" },
+  QUOTE_DECLINED: { label: "Quote Declined", bg: "bg-[#FF9999]", text: "text-[#E70000]" },
+  IN_PROGRESS: { label: "In Progress", bg: "bg-[#FFE699]", text: "text-[#C59B11]" },
+  COMPLETED: { label: "Completed", bg: "bg-[#1E5624]", text: "text-white" },
+  CLOSED: { label: "Closed", bg: "bg-[#A5A5A5]", text: "text-[#515151]" },
+  EXPIRED: { label: "Expired", bg: "bg-[#A5A5A5]", text: "text-[#515151]" },
 };
 
 const FILTER_TABS = [
@@ -514,9 +481,9 @@ export default function CustomerJobHistory() {
           </div>
           <div className="bg-white rounded-2xl border border-gray-200 px-5 py-4 shadow-sm">
             <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-              Active
+              Job Posted
             </p>
-            <p className="text-[28px] font-extrabold text-emerald-600 mt-1 leading-none">
+            <p className="text-[28px] font-extrabold text-[#C45E20] mt-1 leading-none">
               {(statusCounts["OPEN"] || 0) +
                 (statusCounts["ASSIGNED"] || 0) +
                 (statusCounts["ACTIVE"] || 0)}
@@ -526,7 +493,7 @@ export default function CustomerJobHistory() {
             <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
               Completed
             </p>
-            <p className="text-[28px] font-extrabold text-purple-600 mt-1 leading-none">
+            <p className="text-[28px] font-extrabold text-[#1E5624] mt-1 leading-none">
               {statusCounts["COMPLETED"] || 0}
             </p>
           </div>

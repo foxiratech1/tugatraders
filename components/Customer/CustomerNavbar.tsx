@@ -210,12 +210,12 @@ export default function CustomerNavbar() {
         <div className="relative" ref={notifDropdownRef}>
           <button
             onClick={() => setShowNotifDropdown(!showNotifDropdown)}
-            className="relative w-10 h-10 rounded-full border border-[#E5E5E5] bg-white flex items-center justify-center text-[#1C2C1C]/60 hover:bg-gray-50 transition-colors"
+            className="relative p-2 flex items-center justify-center text-[#555555] hover:text-[#1C2C1C] transition-colors"
           >
-            <Bell size={18} strokeWidth={2} />
+            <Bell size={22} strokeWidth={2.5} />
             {/* Notification Dot */}
             {unreadCount > 0 && (
-              <span className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#E53935] border-2 border-white flex items-center justify-center text-[8px] text-white font-bold">
+              <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[#F43F5E] flex items-center justify-center text-[10px] text-white font-bold">
                 {unreadCount}
               </span>
             )}

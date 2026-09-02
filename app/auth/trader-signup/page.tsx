@@ -490,7 +490,7 @@ export default function TraderSignupPage() {
                     )}
                   </div>
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">Location</label>
+                    <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">Location/Region</label>
                     <input
                       type="text"
                       placeholder="Enter your location"
