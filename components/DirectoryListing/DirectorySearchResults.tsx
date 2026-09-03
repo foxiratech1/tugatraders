@@ -771,7 +771,7 @@ const DirectorySearchResults = () => {
                   </div>
 
                   {/* Sub‑category */}
-                  <div>
+                  {/* <div>
                     <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Sub‑category</label>
                     <FilterDropdown
                       icon={Layers}
@@ -781,7 +781,7 @@ const DirectorySearchResults = () => {
                       placeholder="Select Sub‑category"
                       options={subCategories.map((sub) => ({ id: sub.id, name: sub.name }))}
                     />
-                  </div>
+                  </div> */}
 
                   {/* Location */}
                   <div>
