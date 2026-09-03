@@ -282,7 +282,7 @@ const HowToLeaveReview = () => {
           {/* Spelling Helper Text */}
           <p className="text-center text-[13px] text-[#555555] mb-20 font-medium">
             Can't find them?{" "}
-            <Link href="/directory-listing" className="text-[#243A24] font-semibold underline decoration-1 hover:text-[#5a7d1e] transition-colors">
+            <Link href="/directory-listing/search" className="text-[#243A24] font-semibold underline decoration-1 hover:text-[#5a7d1e] transition-colors">
               browse categories
             </Link>
           </p>

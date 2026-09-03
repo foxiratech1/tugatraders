@@ -83,45 +83,46 @@ const PlatformRoleSection = () => {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, amount: 0.2 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="lg:col-span-5 flex flex-col justify-center"
+            className="lg:col-span-5 flex items-center justify-center lg:justify-end"
           >
-            <div className="relative overflow-hidden rounded-[24px] bg-[#1a2e1c] p-6 sm:p-8 text-white shadow-[0_20px_50px_rgba(0,0,0,0.2)] flex flex-col">
+            <div className="relative overflow-hidden rounded-[28px] bg-[#162717] p-6 sm:p-7 text-white shadow-xl flex flex-col justify-between w-full max-w-[380px] min-h-[420px]">
 
               {/* Background Image with Overlay */}
-              <div className="absolute inset-0 z-0 opacity-40">
+              <div className="absolute inset-0 z-0">
                 <Image
                   src="/Contact Support.png"
                   alt="Contact Support"
                   fill
-                  className="object-cover object-center"
+                  className="object-cover object-[center_10%]"
+                  priority
                 />
+                {/* Green tinted overlay matching screenshot */}
+                <div className="absolute inset-0 bg-[#162617]/72" />
+                <div className="absolute inset-0 bg-gradient-to-b from-[#162617]/50 via-[#182a19]/70 to-[#122013]/92" />
               </div>
-
-              <div className="absolute inset-0 z-0 bg-gradient-to-t from-[#142316]/95 via-[#1a2e1c]/75 to-[#1a2e1c]/40" />
 
               {/* Card Content */}
               <div className="relative z-10 flex flex-col">
-                <h3 className="mb-4 text-[30px] md:text-[34px] font-bold leading-[1.15] tracking-tight">
+                <h3 className="mb-2.5 text-[26px] sm:text-[28px] font-bold leading-[1.18] tracking-tight text-white">
                   Have questions
                   <br /> or concerns?
                 </h3>
 
-                <p className="mb-8 text-[15px] font-medium text-white/75 leading-relaxed max-w-[340px]">
-                  Our support team is available to help you navigate the platform safely and
-                  effectively.
+                <p className="mb-6 text-[13px] font-normal text-white/80 leading-relaxed max-w-[290px]">
+                  Our support team is available to help you navigate the platform safely and effectively.
                 </p>
 
-                <p className="mb-3 text-[13px] font-bold uppercase tracking-widest text-[#6E9625]">
+                <p className="mb-2.5 text-[11px] font-extrabold uppercase tracking-wider text-[#6E9625]">
                   OFFICIAL CONTACT
                 </p>
 
                 {/* Email Box */}
-                <div className="mb-5 flex items-center gap-3.5 rounded-xl border border-white/10 bg-[#2D2D2DCC] p-3.5 backdrop-blur-md">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-transparent border border-white/10 flex-shrink-0">
-                    <FiMail className="text-[#a3e635]" size={18} />
+                <div className="mb-3.5 flex items-center gap-3 rounded-2xl border border-white/10 bg-[#252C24]/90 px-3.5 py-3 backdrop-blur-sm">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg border border-[#84cc16]/50 bg-transparent flex-shrink-0">
+                    <FiMail className="text-[#84cc16]" size={15} />
                   </div>
 
-                  <span className="text-[15px] sm:text-[17px] font-bold text-white tracking-tight break-all">
+                  <span className="text-[13.5px] sm:text-[14px] font-bold text-white tracking-tight">
                     contact@tugatrades.com
                   </span>
                 </div>
@@ -129,7 +130,7 @@ const PlatformRoleSection = () => {
                 {/* FAQ Button */}
                 <Link
                   href="/faq"
-                  className="w-full flex justify-center items-center rounded-xl bg-[#6E9625] py-3.5 text-[15px] font-bold text-white transition-all hover:bg-[#65851f] shadow-lg shadow-[#769c24]/20"
+                  className="w-full flex justify-center items-center rounded-xl bg-[#6E9625] hover:bg-[#5C7F1F] py-3 text-[14px] font-bold text-white transition-all shadow-md active:scale-[0.99]"
                 >
                   FAQs
                 </Link>
