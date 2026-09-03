@@ -566,6 +566,17 @@ function TraderQuoteCard({
 }) {
   const [accepting, setAccepting] = useState<boolean>(false);
   const [declining, setDeclining] = useState<boolean>(false);
+  const [openingChat, setOpeningChat] = useState<boolean>(false);
+
+  const targetTraderId =
+    (trader && trader !== (quote as any) && trader.id ? trader.id : "") ||
+    quote?.traderId ||
+    quote?.trader?.id ||
+    (quote?.trader as any)?.traderId ||
+    trader?.id ||
+    (trader as any)?.traderId ||
+    (trader as any)?.userId ||
+    "";
 
   const formatPrice = (p?: string) =>
     p ? (isNaN(Number(p)) ? p : `£${Number(p).toLocaleString()}`) : "—";
@@ -729,11 +740,20 @@ function TraderQuoteCard({
                 {accepting ? "Accepting..." : "Accept Quote"}
               </button>
               <button
-                onClick={() => onOpenChat && onOpenChat(trader.id)}
-                className="flex items-center justify-center gap-1.5 px-4 py-1.5 border border-[#1565C0] cursor-pointer text-[#1565C0] hover:bg-blue-50 rounded-lg text-[12px] font-semibold transition-colors bg-white"
+                onClick={async () => {
+                  if (!onOpenChat) return;
+                  setOpeningChat(true);
+                  try {
+                    await onOpenChat(targetTraderId);
+                  } finally {
+                    setOpeningChat(false);
+                  }
+                }}
+                disabled={openingChat}
+                className="flex items-center justify-center gap-1.5 px-4 py-1.5 border border-[#1565C0] cursor-pointer text-[#1565C0] hover:bg-blue-50 rounded-lg text-[12px] font-semibold transition-colors bg-white disabled:opacity-60"
               >
                 <MessageSquare size={13} />
-                Send Message
+                {openingChat ? "Opening..." : "Send Message"}
               </button>
               <button
                 onClick={async () => {
@@ -754,11 +774,20 @@ function TraderQuoteCard({
           ) : (
             <>
               <button
-                onClick={() => onOpenChat && onOpenChat(trader.id)}
-                className="flex items-center justify-center gap-1.5 px-4 py-1.5 border border-[#1565C0] cursor-pointer text-[#1565C0] hover:bg-blue-50 rounded-lg text-[12px] font-semibold transition-colors bg-white"
+                onClick={async () => {
+                  if (!onOpenChat) return;
+                  setOpeningChat(true);
+                  try {
+                    await onOpenChat(targetTraderId);
+                  } finally {
+                    setOpeningChat(false);
+                  }
+                }}
+                disabled={openingChat}
+                className="flex items-center justify-center gap-1.5 px-4 py-1.5 border border-[#1565C0] cursor-pointer text-[#1565C0] hover:bg-blue-50 rounded-lg text-[12px] font-semibold transition-colors bg-white disabled:opacity-60"
               >
                 <MessageSquare size={13} />
-                Send Message
+                {openingChat ? "Opening..." : "Send Message"}
               </button>
 
               {isAssigned && (jobStatus === "COMPLETED") && !hasReviewed && onLeaveReview && (
@@ -882,10 +911,20 @@ export default function CustomerJobDashboard() {
 
   const handleOpenChat = async (traderId: string, jobId?: string) => {
     try {
+      if (!traderId) {
+        toast.error("Trader information not found");
+        return;
+      }
       const res = await authApi.getOrCreateConversation(traderId, jobId);
       const conversation = res?.data || res;
-      if (conversation?.id || conversation?._id) {
-        let url = `/customer-dashboard/inbox?conversationId=${conversation.id || conversation._id}`;
+      const convId = conversation?.id || conversation?._id;
+      if (convId) {
+        if (typeof window !== "undefined") {
+          try {
+            sessionStorage.setItem("activeConversation", JSON.stringify({ ...conversation, id: convId }));
+          } catch (e) { }
+        }
+        let url = `/customer-dashboard/inbox?conversationId=${convId}&traderId=${traderId}`;
         if (jobId) url += `&jobId=${jobId}`;
         router.push(url);
       } else {
@@ -1530,7 +1569,7 @@ export default function CustomerJobDashboard() {
                             // onStartJob={handleStartJob}
                             onCompleteJob={handleCompleteJob}
                             onCancelJob={handleCancelJob}
-                            onOpenChat={(traderId) => handleOpenChat(traderId, selectedJob?.id)}
+                            onOpenChat={(traderId) => handleOpenChat(traderId || quote.traderId || quote.trader?.id, selectedJob?.id)}
                             hasReviewed={selectedJob ? (reviewedJobIds.has(selectedJob.id) || selectedJob.hasReviewed) : false}
                             onLeaveReview={() => handleNavigateToReview(selectedJob, quote.trader || quote)}
                           />
@@ -1544,7 +1583,7 @@ export default function CustomerJobDashboard() {
                         // onStartJob={handleStartJob}
                         onCompleteJob={handleCompleteJob}
                         onCancelJob={handleCancelJob}
-                        onOpenChat={(traderId) => handleOpenChat(traderId, selectedJob?.id)}
+                        onOpenChat={(traderId) => handleOpenChat(traderId || selectedJob.selectedTrader?.id || (selectedJob.selectedTrader as any)?.traderId, selectedJob?.id)}
                         hasReviewed={reviewedJobIds.has(selectedJob.id) || selectedJob.hasReviewed}
                         onLeaveReview={() => handleNavigateToReview(selectedJob, selectedJob.selectedTrader)}
                       />

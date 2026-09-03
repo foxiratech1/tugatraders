@@ -156,7 +156,8 @@ export default function JobsLeads() {
     isQuoteAccepted: Boolean(
       item.isQuoteAccepted ||
       item.matchStatus === "ACCEPTED" ||
-      item.status === "ASSIGNED"
+      item.status === "ASSIGNED" ||
+      (Array.isArray(item.quotes) && item.quotes.some((q: any) => q.status?.toUpperCase() === "ACCEPTED"))
     ),
     customer: {
       id: item.customerId || item.customer?.id || item.customer?._id || "",
@@ -178,18 +179,82 @@ export default function JobsLeads() {
       });
       setSelectedJob((prev) => prev || mapped);
     },
+    onQuoteUpdated: (quote) => {
+      if (!quote) return;
+      const quoteJobId = quote.jobId || quote.job?.id;
+      const isAccepted = quote.status?.toUpperCase() === "ACCEPTED";
+      if (isAccepted && quoteJobId) {
+        setJobs((prev) =>
+          prev.map((j) =>
+            j.id === quoteJobId
+              ? { ...j, isQuoteAccepted: true, matchStatus: "ACCEPTED", status: "Contacted" }
+              : j
+          )
+        );
+        setSelectedJob((prev) => {
+          if (prev && prev.id === quoteJobId) {
+            return { ...prev, isQuoteAccepted: true, matchStatus: "ACCEPTED", status: "Contacted" };
+          }
+          return prev;
+        });
+        setQuoteDetails((prev: any) => {
+          if (prev && (prev.id === quote.id || prev.jobId === quoteJobId)) {
+            return { ...prev, ...quote, status: "ACCEPTED" };
+          }
+          return { ...quote, status: "ACCEPTED" };
+        });
+      }
+    },
+    onTraderDashboardUpdate: () => {
+      if (selectedJob?.id) {
+        authApi.getMyQuoteByJobId(selectedJob.id).then((res) => {
+          const q = res?.data || res;
+          if (q) {
+            setQuoteDetails(q);
+            if (q.status?.toUpperCase() === "ACCEPTED") {
+              setSelectedJob((prev) => prev ? { ...prev, isQuoteAccepted: true, matchStatus: "ACCEPTED" } : null);
+              setJobs((prev) => prev.map((j) => j.id === selectedJob.id ? { ...j, isQuoteAccepted: true, matchStatus: "ACCEPTED" } : j));
+            }
+          }
+        }).catch(() => {});
+      }
+    },
+    onNewNotification: (notif) => {
+      const text = (notif?.message || notif?.title || notif?.content || "").toLowerCase();
+      if (text.includes("accepted") || text.includes("quote") || text.includes("job")) {
+        if (selectedJob?.id) {
+          authApi.getMyQuoteByJobId(selectedJob.id).then((res) => {
+            const q = res?.data || res;
+            if (q) {
+              setQuoteDetails(q);
+              if (q.status?.toUpperCase() === "ACCEPTED") {
+                setSelectedJob((prev) => prev ? { ...prev, isQuoteAccepted: true, matchStatus: "ACCEPTED" } : null);
+                setJobs((prev) => prev.map((j) => j.id === selectedJob.id ? { ...j, isQuoteAccepted: true, matchStatus: "ACCEPTED" } : j));
+              }
+            }
+          }).catch(() => {});
+        }
+      }
+    },
     onJobUpdated: (updated) => {
       if (!updated || !updated.id) return;
+      const isAccepted = Boolean(
+        updated.isQuoteAccepted ||
+        updated.matchStatus === "ACCEPTED" ||
+        updated.status === "ASSIGNED"
+      );
       setJobs((prev) =>
         prev.map((j) => {
           if (j.id === updated.id) {
             const rawStatus = updated.status ?? j.rawStatus;
             const matchStatus = updated.matchStatus ?? j.matchStatus;
+            const quoteAccepted = isAccepted || j.isQuoteAccepted;
             const merged = {
               ...j,
               ...updated,
               rawStatus,
               matchStatus,
+              isQuoteAccepted: quoteAccepted,
               status: getUIStatus({ ...j, ...updated, status: rawStatus, matchStatus }),
             };
             return merged;
@@ -201,11 +266,13 @@ export default function JobsLeads() {
         if (prev && prev.id === updated.id) {
           const rawStatus = updated.status ?? prev.rawStatus;
           const matchStatus = updated.matchStatus ?? prev.matchStatus;
+          const quoteAccepted = isAccepted || prev.isQuoteAccepted;
           return {
             ...prev,
             ...updated,
             rawStatus,
             matchStatus,
+            isQuoteAccepted: quoteAccepted,
             status: getUIStatus({ ...prev, ...updated, status: rawStatus, matchStatus }),
           };
         }
@@ -215,9 +282,14 @@ export default function JobsLeads() {
   });
 
   useEffect(() => {
-    if (selectedJob && selectedJob.hasQuoted) {
+    if (selectedJob && (selectedJob.hasQuoted || selectedJob.isQuoteAccepted)) {
       authApi.getMyQuoteByJobId(selectedJob.id).then((res) => {
-        setQuoteDetails(res?.data || res);
+        const q = res?.data || res;
+        setQuoteDetails(q);
+        if (q?.status?.toUpperCase() === "ACCEPTED") {
+          setSelectedJob((prev) => prev ? { ...prev, isQuoteAccepted: true, matchStatus: "ACCEPTED" } : null);
+          setJobs((prev) => prev.map((j) => j.id === selectedJob.id ? { ...j, isQuoteAccepted: true, matchStatus: "ACCEPTED" } : j));
+        }
       }).catch((err) => {
         console.error("Failed to fetch quote details for selected job", err);
         setQuoteDetails(null);
@@ -225,7 +297,24 @@ export default function JobsLeads() {
     } else {
       setQuoteDetails(null);
     }
-  }, [selectedJob?.id, selectedJob?.hasQuoted]);
+  }, [selectedJob?.id, selectedJob?.hasQuoted, selectedJob?.isQuoteAccepted]);
+
+  // Periodic poll for accepted status while viewing a quoted job so Start Job appears without refresh
+  useEffect(() => {
+    if (!selectedJob?.id || !selectedJob.hasQuoted || selectedJob.isQuoteAccepted) return;
+    const interval = setInterval(async () => {
+      try {
+        const res = await authApi.getMyQuoteByJobId(selectedJob.id);
+        const q = res?.data || res;
+        if (q?.status?.toUpperCase() === "ACCEPTED") {
+          setQuoteDetails(q);
+          setSelectedJob((prev) => prev ? { ...prev, isQuoteAccepted: true, matchStatus: "ACCEPTED" } : null);
+          setJobs((prev) => prev.map((j) => j.id === selectedJob.id ? { ...j, isQuoteAccepted: true, matchStatus: "ACCEPTED" } : j));
+        }
+      } catch (e) {}
+    }, 6000);
+    return () => clearInterval(interval);
+  }, [selectedJob?.id, selectedJob?.hasQuoted, selectedJob?.isQuoteAccepted]);
 
   useEffect(() => {
     if (isDetailsModalOpen || isQuoteModalOpen || showSuccessModal) {
@@ -889,9 +978,12 @@ export default function JobsLeads() {
                       selectedJob.status === "Completed" ||
                       selectedJob.rawStatus === "COMPLETED";
                     const isAccepted =
-                      selectedJob.isQuoteAccepted ||
-                      selectedJob.matchStatus === "ACCEPTED" ||
-                      selectedJob.rawStatus === "ASSIGNED";
+                      Boolean(
+                        selectedJob.isQuoteAccepted ||
+                        selectedJob.matchStatus === "ACCEPTED" ||
+                        selectedJob.rawStatus === "ASSIGNED" ||
+                        quoteDetails?.status?.toUpperCase() === "ACCEPTED"
+                      );
                     const hasQuoted = selectedJob.hasQuoted;
 
                     const isSendDisabled = isClosed || isCompleted || isAccepted || (hasQuoted && !isRejected);
@@ -903,7 +995,7 @@ export default function JobsLeads() {
                     else if (isCompleted) buttonText = "Job Completed";
                     else if (isClosed) buttonText = "Job Closed";
 
-                    const showStartJob = selectedJob.isQuoteAccepted && !isCompleted && !isClosed;
+                    const showStartJob = isAccepted && !isCompleted && !isClosed;
 
                     return (
                       <div className={`grid gap-3 ${showStartJob ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2"}`}>

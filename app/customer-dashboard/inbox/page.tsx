@@ -76,12 +76,27 @@ function ChatDashboardContent() {
     try {
       setLoading(true);
 
-      // 0. If traderId is passed, ensure a conversation exists
+      // Check for cached active conversation from CustomerJobDashboard or other pages
       const traderIdParam = searchParams.get("traderId");
       let initialNewConv: any = null;
       let effectiveActiveId = targetConvId || activeConversationId;
 
-      if (traderIdParam && !activeConversationId) {
+      if (typeof window !== "undefined") {
+        try {
+          const cached = sessionStorage.getItem("activeConversation");
+          if (cached) {
+            const parsed = JSON.parse(cached);
+            const cachedId = parsed.id || parsed._id;
+            if (cachedId && (!effectiveActiveId || cachedId === effectiveActiveId)) {
+              initialNewConv = { ...parsed, id: cachedId };
+              if (!effectiveActiveId) effectiveActiveId = cachedId;
+            }
+          }
+        } catch (e) {}
+      }
+
+      // 0. If traderId is passed, ensure a conversation exists
+      if (traderIdParam && !activeConversationId && !initialNewConv) {
         try {
           const newOrExisting = await authApi.getOrCreateConversation(traderIdParam, fallbackJobId || undefined);
           const conv = newOrExisting?.data || newOrExisting;
@@ -119,17 +134,21 @@ function ChatDashboardContent() {
         mappedList.unshift(initialNewConv);
       }
 
-      // If the active conversation is not in the mapped list, but we have traderIdParam, fetch it explicitly
+      // If the active conversation is not in the mapped list, fetch it explicitly
       const currentActiveId = effectiveActiveId || activeConversationId;
-      if (currentActiveId && !mappedList.some((c) => c.id === currentActiveId) && traderIdParam) {
-        try {
-          const newOrExisting = await authApi.getOrCreateConversation(traderIdParam, fallbackJobId || undefined);
-          const conv = newOrExisting?.data || newOrExisting;
-          if (conv && (conv.id || conv._id)) {
-            mappedList.unshift({ ...conv, id: conv.id || conv._id });
+      if (currentActiveId && !mappedList.some((c) => c.id === currentActiveId)) {
+        if (traderIdParam) {
+          try {
+            const newOrExisting = await authApi.getOrCreateConversation(traderIdParam, fallbackJobId || undefined);
+            const conv = newOrExisting?.data || newOrExisting;
+            if (conv && (conv.id || conv._id)) {
+              mappedList.unshift({ ...conv, id: conv.id || conv._id });
+            }
+          } catch (e) {
+            console.error("Failed to fetch missing active conversation", e);
           }
-        } catch (e) {
-          console.error("Failed to fetch missing active conversation", e);
+        } else if (initialNewConv) {
+          mappedList.unshift(initialNewConv);
         }
       }
 
@@ -167,10 +186,10 @@ function ChatDashboardContent() {
     }
   };
 
-  // Reload conversations whenever the active conversation changes (e.g., navigated from quote modal)
+  // Reload conversations whenever the active conversation or trader parameter changes
   useEffect(() => {
     loadData();
-  }, [activeConversationId]);
+  }, [activeConversationId, searchParams.get("traderId")]);
 
   // Set up root socket listeners for the sidebar changes (like other users coming online/offline)
   const { isConnected } = useSocket({
@@ -239,7 +258,7 @@ function ChatDashboardContent() {
           (c.trader as any)?._id === traderIdParam
       )
       : undefined) ||
-    (conversations.length > 0 && targetId ? conversations[0] : undefined);
+    (!targetId && !traderIdParam && conversations.length > 0 ? conversations[0] : undefined);
 
   const formatMessageTime = (dateStr?: string) => {
     if (!dateStr) return "";
@@ -337,7 +356,7 @@ function ChatDashboardContent() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <p className={`text-[13px] font-bold truncate ${isSelected ? "text-white" : "text-[#1C2C1C]"}`}>
-                            {c.trader?.fullName}
+                            {c.trader?.fullName || (c.trader as any)?.companyName || (c.trader as any)?.traderProfile?.companyName || (c.trader as any)?.traderProfile?.displayName || "Tradesperson"}
                           </p>
                           <span className={`text-[10px] ${isSelected ? "text-emerald-100" : "text-gray-400"}`}>
                             {formatMessageTime(c.lastMessage?.createdAt)}
@@ -381,7 +400,7 @@ function ChatDashboardContent() {
               </div>
               <CustomerChatSidebar
                 jobId={selectedConversation.jobId || fallbackJobId || undefined}
-                traderId={selectedConversation.traderId || selectedConversation.trader?.id}
+                traderId={selectedConversation.traderId || selectedConversation.trader?.id || (selectedConversation.trader as any)?._id || (selectedConversation.trader as any)?.traderProfileId || traderIdParam || undefined}
               />
             </div>
           ) : (

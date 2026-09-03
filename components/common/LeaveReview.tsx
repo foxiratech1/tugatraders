@@ -1,12 +1,34 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Star, ThumbsUp, ThumbsDown, ChevronDown, CheckCircle } from 'lucide-react';
 import { getUserRole } from '@/utils/auth';
 import { authApi } from '@/app/api/authApi';
 import { Role } from '@/utils/role';
 import toast from 'react-hot-toast';
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const isValidUUID = (id: any): boolean => typeof id === 'string' && UUID_REGEX.test(id.trim());
+
+const getTraderUUID = (t: any): string => {
+  if (!t) return '';
+  if (typeof t === 'string' && isValidUUID(t)) return t.trim();
+  const candidates = [
+    t.id,
+    t.traderId,
+    t.traderProfileId,
+    t.userId,
+    t.trader?.id,
+    t.trader?.traderId,
+    t.trader?.traderProfileId,
+    t.trader?.userId,
+  ];
+  for (const c of candidates) {
+    if (isValidUUID(c)) return c.trim();
+  }
+  return '';
+};
 
 export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobId?: string; reviewTypeProp?: string }) {
   const router = useRouter();
@@ -36,6 +58,7 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
   const [isSuccess, setIsSuccess] = useState<boolean>(false);
 
   const [selectedTraderId, setSelectedTraderId] = useState<string>('');
+  const pendingTraderLookup = useRef<string>('');
   const [traders, setTraders] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
@@ -67,7 +90,13 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
         if (parsed.title) setTitle(parsed.title);
         if (parsed.review) setReview(parsed.review);
         if (parsed.selectedCategory) setSelectedCategory(parsed.selectedCategory);
-        if (parsed.selectedTraderId) setSelectedTraderId(parsed.selectedTraderId);
+        if (parsed.selectedTraderId) {
+          if (isValidUUID(parsed.selectedTraderId)) {
+            setSelectedTraderId(parsed.selectedTraderId);
+          } else {
+            pendingTraderLookup.current = parsed.selectedTraderId;
+          }
+        }
 
         // Prefer URL parameter for workCarriedOut, fallback to saved session state
         if (searchParams.has('workCarriedOut')) {
@@ -94,7 +123,14 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
       if (searchParams.get('completionDate')) setCompletionDate(searchParams.get('completionDate') || '');
       if (searchParams.get('title')) setTitle(searchParams.get('title') || '');
       if (searchParams.get('review')) setReview(searchParams.get('review') || '');
-      if (searchParams.get('traderId')) setSelectedTraderId(searchParams.get('traderId') || '');
+      if (searchParams.get('traderId')) {
+        const rawTid = searchParams.get('traderId') || '';
+        if (isValidUUID(rawTid)) {
+          setSelectedTraderId(rawTid);
+        } else {
+          pendingTraderLookup.current = rawTid;
+        }
+      }
       if (searchParams.get('serviceUsed')) setSelectedCategory(searchParams.get('serviceUsed') || '');
     }
   }, [searchParams, jobId, traderId, reviewTypeProp]);
@@ -124,7 +160,7 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
     const fetchTraders = async () => {
       try {
         const res = reviewType === 'JOB' ? await authApi.getInteractedTraders() : await authApi.searchTraders();
-        let tradersList = [];
+        let tradersList: any[] = [];
         if (Array.isArray(res)) {
           tradersList = res;
         } else if (res?.data && Array.isArray(res.data)) {
@@ -136,7 +172,40 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
         } else if (res?.traders && Array.isArray(res.traders)) {
           tradersList = res.traders;
         }
-        setTraders(tradersList);
+
+        // If reviewType is JOB and list is empty, fallback to searchTraders
+        if (tradersList.length === 0 && reviewType === 'JOB') {
+          try {
+            const fallbackRes = await authApi.searchTraders();
+            const fallbackArr = Array.isArray(fallbackRes) ? fallbackRes : fallbackRes?.data || [];
+            if (fallbackArr.length > 0) tradersList = fallbackArr;
+          } catch (e) { }
+        }
+
+        const normalizedTraders = tradersList.map((t: any) => {
+          const uuid = getTraderUUID(t);
+          const companyName = t.companyName || t.trader?.companyName || t.fullName || `${t.firstName || ''} ${t.lastName || ''}`.trim() || 'Tradesperson';
+          return {
+            ...t,
+            resolvedId: uuid,
+            companyName,
+          };
+        });
+
+        setTraders(normalizedTraders);
+
+        // Auto-resolve selectedTraderId if it's currently a company name, full name, or lookup ref
+        const targetToResolve = pendingTraderLookup.current || selectedTraderId;
+        if (targetToResolve && !isValidUUID(targetToResolve)) {
+          const matched = normalizedTraders.find((t: any) =>
+            (t.companyName && t.companyName.toLowerCase() === targetToResolve.toLowerCase()) ||
+            (t.fullName && t.fullName.toLowerCase() === targetToResolve.toLowerCase())
+          );
+          if (matched?.resolvedId && isValidUUID(matched.resolvedId)) {
+            setSelectedTraderId(matched.resolvedId);
+            pendingTraderLookup.current = '';
+          }
+        }
       } catch (err) {
         console.error("Failed to fetch traders", err);
       }
@@ -176,8 +245,9 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
         if (!job) return;
 
         // Pre-fill trader if not already set from URL
-        if (!selectedTraderId && job.selectedTrader?.id) {
-          setSelectedTraderId(job.selectedTrader.id);
+        const jobTraderId = getTraderUUID(job.selectedTrader) || (isValidUUID(job.selectedTraderId) ? job.selectedTraderId : '') || (isValidUUID(job.traderId) ? job.traderId : '');
+        if (!isValidUUID(selectedTraderId) && jobTraderId) {
+          setSelectedTraderId(jobTraderId);
         }
 
         // Pre-fill category from job's category / categories
@@ -235,7 +305,12 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
       setSelectedReason(searchParams.get('noWorkReason') || '');
     }
     if (searchParams.get('traderId')) {
-      setSelectedTraderId(searchParams.get('traderId') || '');
+      const rawParam = searchParams.get('traderId') || '';
+      if (isValidUUID(rawParam)) {
+        setSelectedTraderId(rawParam);
+      } else {
+        pendingTraderLookup.current = rawParam;
+      }
     }
   }, [searchParams]);
 
@@ -304,10 +379,28 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
       const payload = new FormData();
 
       if (!editReviewId) {
-        const finalTraderId = selectedTraderId && selectedTraderId !== '00000000-0000-0000-0000-000000000000' ? selectedTraderId : '00000000-0000-0000-0000-000000000000';
-        payload.append("traderId", finalTraderId);
+        let finalTraderId = selectedTraderId;
+        if (!isValidUUID(finalTraderId)) {
+          const matched = traders.find((t: any) =>
+            (t.companyName && t.companyName.toLowerCase() === String(selectedTraderId).toLowerCase()) ||
+            (t.fullName && t.fullName.toLowerCase() === String(selectedTraderId).toLowerCase())
+          );
+          if (matched) {
+            finalTraderId = matched.resolvedId || getTraderUUID(matched);
+          }
+        }
+
+        if (workCarriedOut && !isValidUUID(finalTraderId)) {
+          toast.error('Please select a valid tradesperson or company.');
+          setIsSubmitting(false);
+          return;
+        }
+
+        if (isValidUUID(finalTraderId)) {
+          payload.append("traderId", finalTraderId);
+        }
         const finalJobId = jobId || propJobId;
-        if (finalJobId && finalJobId !== '00000000-0000-0000-0000-000000000000') {
+        if (finalJobId && isValidUUID(finalJobId)) {
           payload.append("jobId", finalJobId);
         }
         if (reviewType) payload.append("reviewType", reviewType);
@@ -415,11 +508,17 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
                   required
                 >
                   <option value="">Select Tradesperson / Company</option>
-                  {traders.map((t: any) => (
-                    <option key={t.id} value={t.id}>
-                      {t.companyName || `${t.firstName || ''} ${t.lastName || ''}`.trim() || 'Unknown Company'}
-                    </option>
-                  ))}
+                  {traders.map((t: any, idx: number) => {
+                    const traderVal = t.resolvedId || getTraderUUID(t) || '';
+                    return (
+                      <option key={traderVal || idx} value={traderVal}>
+                        {t.companyName || t.fullName || `${t.firstName || ''} ${t.lastName || ''}`.trim() || 'Unknown Company'}
+                      </option>
+                    );
+                  })}
+                  {selectedTraderId && isValidUUID(selectedTraderId) && !traders.some(t => (t.resolvedId || getTraderUUID(t)) === selectedTraderId) && (
+                    <option value={selectedTraderId}>Selected Tradesperson</option>
+                  )}
                 </select>
                 <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                   <ChevronDown size={16} />

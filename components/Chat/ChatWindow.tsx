@@ -96,6 +96,12 @@ export default function ChatWindow({
     partner = conversation.customer;
   }
   const partnerId = partner?.id || partner?._id || "";
+  const partnerName =
+    partner?.fullName ||
+    (partner as any)?.companyName ||
+    (partner as any)?.traderProfile?.companyName ||
+    (partner as any)?.traderProfile?.displayName ||
+    (isTraderView ? "Customer" : "Tradesperson");
   const job = conversation.job;
   const activeJobId = job?.id || job?._id || conversation.jobId || fallbackJobId;
   const [linkedJobId, setLinkedJobId] = useState<string | null>(null);
@@ -526,11 +532,11 @@ export default function ChatWindow({
                   return finalImgUrl ? (
                     <img
                       src={finalImgUrl}
-                      alt={partner?.fullName || "User"}
+                      alt={partnerName || "User"}
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    partner?.fullName?.charAt(0) || "U"
+                    partnerName?.charAt(0)?.toUpperCase() || "T"
                   );
                 })()}
                 {/* Online Dot overlay */}
@@ -540,7 +546,7 @@ export default function ChatWindow({
               /> */}
               </div>
               <div>
-                <h3 className="text-[15px] font-bold text-[#1C2C1C]">{partner?.fullName}</h3>
+                <h3 className="text-[15px] font-bold text-[#1C2C1C]">{partnerName}</h3>
                 {/* <p className="text-[11px] text-gray-400 flex items-center gap-1">
                 <span className={`w-1.5 h-1.5 rounded-full ${isPartnerOnline ? "bg-[#4CAF50]" : "bg-gray-300"}`} />
                 {isPartnerOnline ? "Online" : "Offline"}
@@ -562,8 +568,8 @@ export default function ChatWindow({
                 {isReported ? "Reported" : "Report"}
               </button>
 
-              {/* Job Actions — shown when a job is linked, OR directory contacted 'Start Job' option */}
-              {(() => {
+              {/* Job Actions — only shown in customer view, hidden in trader view */}
+              {!isTraderView && (() => {
                 // When contacting a trader via directory (no job linked yet)
                 if (!effectiveJobId) {
                   return (
