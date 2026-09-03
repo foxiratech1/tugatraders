@@ -112,6 +112,7 @@ export default function JobsLeads() {
   const [fullJobData, setFullJobData] = useState<any>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isStartingJob, setIsStartingJob] = useState(false);
+  const [quoteDetails, setQuoteDetails] = useState<any>(null);
   const [editingQuoteId, setEditingQuoteId] = useState<string | null>(null);
   const [quoteForm, setQuoteForm] = useState({
     price: "",
@@ -212,6 +213,19 @@ export default function JobsLeads() {
       });
     },
   });
+
+  useEffect(() => {
+    if (selectedJob && selectedJob.hasQuoted) {
+      authApi.getMyQuoteByJobId(selectedJob.id).then((res) => {
+        setQuoteDetails(res?.data || res);
+      }).catch((err) => {
+        console.error("Failed to fetch quote details for selected job", err);
+        setQuoteDetails(null);
+      });
+    } else {
+      setQuoteDetails(null);
+    }
+  }, [selectedJob?.id, selectedJob?.hasQuoted]);
 
   useEffect(() => {
     if (isDetailsModalOpen || isQuoteModalOpen || showSuccessModal) {
@@ -480,319 +494,275 @@ export default function JobsLeads() {
 
   return (
     <>
-      <div className="min-h-screen bg-[#F8F9F5] py-8 font-sans text-[#1C2C1C]">
-        <div className="max-w-[1320px] mx-auto px-6">
+      <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 font-sans text-[#1C2C1C]">
+        {/* Full-width Header: Title + Search */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+          <div>
+            <h1 className="text-[28px] sm:text-[32px] font-extrabold text-[#1C2C1C] tracking-tight">Jobs & Leads</h1>
+            <p className="text-[13px] text-gray-500 font-medium">Browse and manage matched job requests from customers</p>
+          </div>
 
-          {/* Main Content Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_600px] gap-6 items-start">
+          <div className="relative w-full sm:w-[320px]">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search leads..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-[42px] pl-10 pr-4 rounded-xl border border-gray-200 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#6E9625]/20 focus:border-[#6E9625] transition-all bg-white shadow-xs"
+            />
+          </div>
+        </div>
 
-            {/* Left Column */}
-            <div className="flex flex-col">
+        {/* Full-width Tabs Bar */}
+        <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-1 scrollbar-hide">
+          {tabs.map((tab) => {
+            const count = getTabCount(tab);
+            const isActive = activeTab === tab;
+            return (
+              <button
+                key={tab}
+                onClick={() => {
+                  setActiveTab(tab);
+                  setCurrentPage(1);
+                  const firstOfTab = jobs.find(j => tab === "All" || j.status === tab);
+                  if (firstOfTab) setSelectedJob(firstOfTab);
+                }}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all ${isActive
+                    ? "bg-[#1C2C1C] text-white shadow-xs"
+                    : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+                  }`}
+              >
+                {tab} <span className={isActive ? "text-white/70" : "text-gray-400"}>({count})</span>
+              </button>
+            );
+          })}
+        </div>
 
-              {/* Header Section */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                <h1 className="text-[32px] font-extrabold text-[#1C2C1C] tracking-tight">Jobs & Leads</h1>
+        {/* Main 2-Column Grid: Left list (340-360px) + Right details (1fr) */}
+        <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] xl:grid-cols-[360px_1fr] gap-6 items-start">
 
-                <div className="relative w-full sm:w-[320px]">
-                  <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Search leads..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full h-[42px] pl-10 pr-4 rounded-xl border border-gray-200 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#1C2C1C]/10 transition-shadow bg-white"
-                  />
-                </div>
+          {/* Left Column: Tighter & Smaller Job List */}
+          <div className="flex flex-col gap-3 min-w-0">
+            {loading ? (
+              <div className="text-center py-10 text-gray-500 text-[14px] bg-white rounded-2xl border border-gray-100">
+                Loading jobs...
               </div>
+            ) : filteredJobs.length === 0 ? (
+              <div className="text-center py-10 text-gray-500 text-[14px] bg-white rounded-2xl border border-gray-100">
+                No jobs found.
+              </div>
+            ) : (
+              paginatedJobs.map((job, idx) => {
+                const isSelected = selectedJob?.id === job.id;
+                return (
+                  <div
+                    key={`${job.id}-${idx}`}
+                    onClick={() => setSelectedJob(job)}
+                    className={`cursor-pointer rounded-2xl p-4 transition-all duration-200 border-2 flex flex-col gap-2.5 shadow-xs ${job.status === "Closed" ? "bg-[#F5F5F5]" : "bg-white"
+                      } ${isSelected
+                        ? "border-[#6E9625] bg-white ring-2 ring-[#6E9625]/20 shadow-sm"
+                        : "border-transparent hover:border-gray-200"
+                      }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      {renderStatusBadge(job.status)}
+                      <span className="text-[12px] text-gray-400 font-medium">{job.timeAgo}</span>
+                    </div>
 
-              {/* Tabs Section */}
-              <div className="flex items-center gap-2 mb-8 overflow-x-auto pb-2 scrollbar-hide">
-                {tabs.map((tab) => {
-                  const count = getTabCount(tab);
-                  const isActive = activeTab === tab;
+                    <h3 className="text-[15px] font-bold text-[#1C2C1C] leading-snug line-clamp-2">
+                      {job.title}
+                    </h3>
+
+                    <div className="flex items-center gap-1.5 text-[12px] text-gray-500 font-medium">
+                      <MapPin size={13} className="text-gray-400 shrink-0" />
+                      <span className="truncate">{job.location}</span>
+                      <span className="text-gray-300">•</span>
+                      <Tag size={13} className="text-gray-400 shrink-0" />
+                      <span className="truncate">{job.tag}</span>
+                    </div>
+
+                    <div className="pt-2 border-t border-gray-100 flex items-center justify-between mt-auto">
+                      <div className="flex items-center gap-1 text-[12px] font-bold text-[#1C2C1C]">
+                        <Euro size={13} className="text-[#6E9625]" />
+                        <span>{formatBudget(job.budgetRange)}</span>
+                      </div>
+                      <span className="text-[11px] text-gray-400 font-medium flex items-center gap-1">
+                        <Calendar size={12} />
+                        {job.postedDate}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+
+            {/* Pagination */}
+            {!loading && filteredJobs.length > 0 && totalPages > 1 && (
+              <div className="flex items-center justify-center gap-1.5 mt-3">
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  Previous
+                </button>
+
+                {Array.from({ length: totalPages }, (_, index) => {
+                  const page = index + 1;
                   return (
                     <button
-                      key={tab}
-                      onClick={() => {
-                        setActiveTab(tab);
-                        setCurrentPage(1);
-                        // Ensure we don't keep selection on a filtered out job
-                        const firstOfTab = jobs.find(j => tab === "All" || j.status === tab);
-                        if (firstOfTab) setSelectedJob(firstOfTab);
-                      }}
-                      className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-semibold whitespace-nowrap transition-colors ${isActive
-                        ? "bg-[#1C2C1C] text-white border border-[#1C2C1C]"
-                        : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-8 h-8 rounded-lg text-xs font-semibold transition-colors ${currentPage === page
+                          ? "bg-[#1C2C1C] text-white"
+                          : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
                         }`}
                     >
-                      {tab} <span className={isActive ? "text-white/70" : "text-gray-400"}>({count})</span>
+                      {page}
                     </button>
                   );
                 })}
+
+                <button
+                  onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
+                >
+                  Next
+                </button>
               </div>
+            )}
+          </div>
 
-              {/* Left Column: Job List */}
-              <div className="flex flex-col gap-3">
-                {loading ? (
-                  <div className="text-center py-10 text-gray-500 text-[14px]">Loading jobs...</div>
-                ) : filteredJobs.length === 0 ? (
-                  <div className="text-center py-10 text-gray-500 text-[14px]">No jobs found.</div>
-                ) : (
-                  paginatedJobs.map((job, idx) => {
-                    const isSelected = selectedJob?.id === job.id;
-                    return (
-                      <div
-                        key={`${job.id}-${idx}`}
-                        onClick={() => setSelectedJob(job)}
-                        className={`cursor-pointer rounded-[20px] p-5 transition-all duration-200 border-2 flex flex-col gap-3.5 shadow-sm ${job.status === "Closed" ? "bg-[#F0F0F0]" : "bg-white"} ${isSelected
-                          ? "border-[#6E9625]"
-                          : "border-transparent hover:border-gray-200"
-                          }`}
-                      >
-                        <div className="flex items-start justify-between">
-                          {renderStatusBadge(job.status)}
-                          <span className="text-[12px] text-gray-400 font-medium">{job.timeAgo}</span>
-                        </div>
+          {/* Right Column: Expansive Job Details with ALL info directly visible on page */}
+          {filteredJobs.length > 0 && (
+            selectedJob ? (
+              <div className="bg-white rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.04)] border border-gray-200/80 sticky top-[100px] max-h-[calc(100vh-115px)] flex flex-col overflow-hidden">
 
-                        <div>
-                          <h3 className="text-[18px] font-bold mb-2.5 text-[#1C2C1C] leading-snug">{job.title}</h3>
+                {/* Scrollable details container */}
+                <div className="p-6 sm:p-7 overflow-y-auto flex-1 flex flex-col gap-4 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-gray-200">
 
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[12px] text-gray-500 font-medium mb-3">
-                            <span className="flex items-center gap-1">
-                              <MapPin size={14} className="text-gray-400" />
-                              {job.location}
-                            </span>
-                            <span className="text-gray-300">•</span>
-                            <span className="flex items-center gap-1">
-                              <Tag size={14} className="text-gray-400" />
-                              {job.tag}
-                            </span>
-                            <span className="text-gray-300">•</span>
-                            <span className="flex items-center gap-1">
-                              <Clock size={14} className="text-gray-400" />
-                              {job.timescale || "Flexible"}
-                            </span>
-                            <span className="text-gray-300">•</span>
-                            <span className="flex items-center gap-1">
-                              <Euro size={14} className="text-gray-400" />
-                              {formatBudget(job.budgetRange)}
-                            </span>
-                          </div>
-
-                          <p className="text-[13px] text-gray-600 line-clamp-2 leading-relaxed">
-                            {job.description}
-                          </p>
-                        </div>
-
-                        {/* Card Footer Divider & Actions */}
-                        <div className="pt-3.5 border-t border-gray-100 flex items-center justify-between mt-auto">
-                          <span className="text-[11px] text-gray-400 font-medium flex items-center gap-1">
-                            <Calendar size={13} />
-                            Posted {job.postedDate}
-                          </span>
-                          <button
-                            onClick={async (e) => {
-                              e.stopPropagation();
-                              setSelectedJob(job);
-                              try {
-                                toast.loading("Loading job details...", { id: "jobDetails" });
-                                const data = await authApi.getCustomerJobById(job.id);
-                                setFullJobData(data?.data || data);
-                                setIsDetailsModalOpen(true);
-                                toast.success("Job details loaded", { id: "jobDetails" });
-                              } catch (error) {
-                                console.error(error);
-                                toast.error("Failed to load full details", { id: "jobDetails" });
-                              }
-                            }}
-                            className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#F5F7F2] text-[#6E9625] text-[12px] font-bold hover:bg-[#EAEFD9] transition-colors cursor-pointer"
-                          >
-                            View Details <ArrowRight size={13} />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-              {!loading && filteredJobs.length > 0 && totalPages > 1 && (
-                <div className="flex items-center justify-center gap-2 mt-6">
-
-                  <button
-                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                    disabled={currentPage === 1}
-                    className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
-                  >
-                    Previous
-                  </button>
-
-                  {Array.from({ length: totalPages }, (_, index) => {
-                    const page = index + 1;
-
-                    return (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`w-9 h-9 rounded-lg text-sm font-semibold transition-colors ${currentPage === page
-                          ? "bg-[#1C2C1C] text-white"
-                          : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
-                          }`}
-                      >
-                        {page}
-                      </button>
-                    );
-                  })}
-
-                  <button
-                    onClick={() =>
-                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
-                    }
-                    disabled={currentPage === totalPages}
-                    className="px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-semibold text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50"
-                  >
-                    Next
-                  </button>
-
-                </div>
-              )}
-            </div>
-
-            {/* Right Column: Job Details */}
-            {filteredJobs.length > 0 && (
-              selectedJob ? (
-                <div className="bg-white rounded-[24px] p-4 sm:p-5 shadow-[0_4px_24px_rgba(0,0,0,0.03)] border border-[#E5E5E5] sticky top-[100px] max-h-[calc(100vh-100px)] overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-
-                  {/* Header */}
-                  <div className="flex items-start justify-between mb-3">
-                    <div>
-                      <span className="inline-block bg-[#EAF3DE] text-[#557A18] font-bold text-[11px] px-3 py-1 rounded-full mb-2 tracking-wide">
+                  {/* Header Row: Badges & Timestamps */}
+                  <div className="flex items-center justify-between gap-3 flex-wrap pb-3 border-b border-gray-100">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="inline-block bg-[#EAF3DE] text-[#557A18] font-bold text-[11px] px-3 py-1 rounded-full tracking-wide">
                         JOB-{selectedJob.jobId}
                       </span>
-                      <h2 className="text-[20px] font-bold text-[#1C2C1C] leading-tight mb-1.5">
-                        {selectedJob.title}
-                      </h2>
-                      <div className="flex items-center gap-3">
-                        {renderStatusBadge(
-                          selectedJob.status === "Closed" || selectedJob.status === "Completed" || selectedJob.matchStatus === "REJECTED" || selectedJob.rawStatus === "IN_PROGRESS"
-                            ? selectedJob.status
-                            : selectedJob.isQuoteAccepted
+                      {renderStatusBadge(
+                        selectedJob.status === "Closed" || selectedJob.status === "Completed" || selectedJob.matchStatus === "REJECTED" || selectedJob.rawStatus === "IN_PROGRESS"
+                          ? selectedJob.status
+                          : selectedJob.isQuoteAccepted
+                            ? "Contacted"
+                            : selectedJob.hasQuoted
                               ? "Contacted"
-                              : selectedJob.hasQuoted
-                                ? "Contacted"
-                                : selectedJob.status
-                        )}
-                        <span className="text-[12px] text-gray-400 font-medium flex items-center gap-1">
-                          <Clock size={13} /> Posted {selectedJob.timeAgo}
+                              : selectedJob.status
+                      )}
+                      {fullJobData?.emergency && (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-red-50 text-red-600 text-[11px] font-bold">
+                          Emergency
                         </span>
-                      </div>
-                    </div>
-                    {/* <button className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-500 hover:bg-gray-100 transition-colors flex-shrink-0">
-                    <MoreHorizontal size={18} />
-                  </button> */}
-                  </div>
-
-                  {/* Info Grid - 2x2 grid to prevent truncation */}
-                  <div className="grid grid-cols-2 gap-2 mb-3">
-                    <div className="p-2.5 rounded-xl bg-[#F8F9FA] border border-gray-100 flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm shrink-0">
-                        <MapPin size={16} className="text-[#6E9625]" />
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-0.5">
-                          LOCATION
-                        </span>
-                        <span className="text-[13px] font-bold text-[#1C2C1C] leading-none">{selectedJob.location}</span>
-                      </div>
+                      )}
                     </div>
 
-                    <div className="p-3.5 rounded-2xl bg-[#F8F9FA] border border-gray-100 flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-sm shrink-0">
-                        <Tag size={16} className="text-[#6E9625]" />
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-0.5">
-                          CATEGORY
-                        </span>
-                        <span className="text-[13px] font-bold text-[#1C2C1C] leading-none">{selectedJob.tag}</span>
-                      </div>
-                    </div>
-
-                    <div className="p-3.5 rounded-2xl bg-[#F8F9FA] border border-gray-100 flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-sm shrink-0">
-                        <Clock size={16} className="text-[#6E9625]" />
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-0.5">
-                          TIMESCALE
-                        </span>
-                        <span className="text-[13px] font-bold text-[#1C2C1C] leading-none">{selectedJob.timescale || "Flexible"}</span>
-                      </div>
-                    </div>
-
-                    <div className="p-3.5 rounded-2xl bg-[#F8F9FA] border border-gray-100 flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-xl bg-white flex items-center justify-center shadow-sm shrink-0">
-                        <Euro size={16} className="text-[#6E9625]" />
-                      </div>
-                      <div>
-                        <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-0.5">
-                          BUDGET
-                        </span>
-                        <span className="text-[13px] font-bold text-[#1C2C1C] leading-none">{formatBudget(selectedJob.budgetRange)}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Job Description */}
-                  <div className="mb-3">
-                    <span className="text-[12px] font-bold text-[#1C2C1C] uppercase tracking-wider mb-2 block">
-                      Job Description
-                    </span>
-                    <div className="p-4 rounded-xl border border-gray-100 bg-white shadow-sm">
-                      <p className="text-[13px] leading-relaxed text-gray-600 mb-3 line-clamp-3">
-                        {selectedJob.description}
-                      </p>
-                      <button
-                        onClick={async () => {
-                          try {
-                            toast.loading("Loading job details...", { id: "jobDetails" });
-                            const data = await authApi.getCustomerJobById(selectedJob.id);
-                            setFullJobData(data?.data || data);
-                            setIsDetailsModalOpen(true);
-                            toast.success("Job details loaded", { id: "jobDetails" });
-                          } catch (error) {
-                            console.error(error);
-                            toast.error("Failed to load full details", { id: "jobDetails" });
-                          }
-                        }}
-                        className="text-[13px] font-bold text-[#6E9625] hover:text-[#58791C] flex items-center gap-1 transition-colors cursor-pointer"
-                      >
-                        View full details <ArrowRight size={14} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Attachments Section Trigger (Mocked representation as in figma mockup screenshot) */}
-                  {/* Attachments */}
-                  {fullJobData?.attachments && fullJobData.attachments.length > 0 && (
-                    <div className="mb-3">
-                      <span className="text-[12px] font-bold text-[#1C2C1C] uppercase tracking-wider mb-2 block">
-                        Attachments ({fullJobData.attachments.length})
+                    <div className="flex items-center gap-2.5 text-[12px] text-gray-400 font-medium">
+                      <span className="flex items-center gap-1">
+                        <Clock size={13} /> Posted {selectedJob.timeAgo}
                       </span>
+                      <span>•</span>
+                      <span className="flex items-center gap-1">
+                        <Calendar size={13} /> {selectedJob.postedDate}
+                      </span>
+                    </div>
+                  </div>
 
+                  {/* Title & Service Category Tags */}
+                  <div>
+                    <h2 className="text-[22px] sm:text-[25px] font-extrabold text-[#1C2C1C] leading-tight mb-2.5">
+                      {selectedJob.title}
+                    </h2>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#F4F7EE] text-[#557A18] text-[12px] font-semibold">
+                        <Tag size={12} /> {fullJobData?.category?.name || selectedJob.tag}
+                      </span>
+                      {fullJobData?.subCategory?.name && (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 text-[12px] font-medium">
+                          {fullJobData.subCategory.name}
+                        </span>
+                      )}
+                      {fullJobData?.skillService?.name && (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 text-[12px] font-medium">
+                          {fullJobData.skillService.name}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* 4 Block Info Grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="p-3 rounded-2xl bg-[#F8F9FA] border border-gray-100">
+                      <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-1">
+                        LOCATION
+                      </span>
+                      <div className="flex items-center gap-1.5 text-[13.5px] font-bold text-[#1C2C1C] truncate">
+                        <MapPin size={14} className="text-[#6E9625] shrink-0" />
+                        <span className="truncate">{fullJobData?.postcode || selectedJob.location}</span>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-[#F8F9FA] border border-gray-100">
+                      <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-1">
+                        BUDGET
+                      </span>
+                      <div className="flex items-center gap-1.5 text-[13.5px] font-bold text-[#1C2C1C] truncate">
+                        <Euro size={14} className="text-[#6E9625] shrink-0" />
+                        <span className="truncate">{formatBudget(selectedJob.budgetRange)}</span>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-[#F8F9FA] border border-gray-100">
+                      <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-1">
+                        TIMESCALE
+                      </span>
+                      <div className="flex items-center gap-1.5 text-[13.5px] font-bold text-[#1C2C1C] truncate">
+                        <Clock size={14} className="text-[#6E9625] shrink-0" />
+                        <span className="truncate">{fullJobData?.timescale?.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase()) || selectedJob.timescale || "Flexible"}</span>
+                      </div>
+                    </div>
+
+                    <div className="p-3 rounded-2xl bg-[#F8F9FA] border border-gray-100">
+                      <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-1">
+                        QUOTES
+                      </span>
+                      <div className="flex items-center gap-1.5 text-[13.5px] font-bold text-[#1C2C1C] truncate">
+                        <span className="w-2 h-2 rounded-full bg-[#6E9625]" />
+                        <span>{fullJobData?.quotesReceived ?? fullJobData?.quotesCount ?? (selectedJob.hasQuoted ? 1 : 0)} received</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Full Job Description - No View Full Details Needed */}
+                  <div>
+                    <span className="block text-[11px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">
+                      JOB DESCRIPTION
+                    </span>
+                    <div className="p-4 rounded-2xl bg-[#F8F9FA] border border-gray-100 text-[13.5px] text-gray-700 leading-relaxed whitespace-pre-wrap">
+                      {fullJobData?.description || selectedJob.description}
+                    </div>
+                  </div>
+
+                  {/* Direct Attachments Previews */}
+                  {fullJobData?.attachments && fullJobData.attachments.length > 0 && (
+                    <div>
+                      <span className="block text-[11px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">
+                        ATTACHMENTS ({fullJobData.attachments.length})
+                      </span>
                       <div className="flex flex-wrap gap-3">
                         {fullJobData.attachments.map((att: any, idx: number) => {
                           let cleanPath = att.url || att.file || att.path || "";
-
-                          if (cleanPath.startsWith("undefined")) {
-                            cleanPath = cleanPath.replace("undefined", "");
-                          }
-
+                          if (cleanPath.startsWith("undefined")) cleanPath = cleanPath.replace("undefined", "");
                           const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
-
-                          const fullUrl = cleanPath.startsWith("http")
-                            ? cleanPath
-                            : `${baseUrl}${cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`}`;
-
+                          const fullUrl = cleanPath.startsWith("http") ? cleanPath : `${baseUrl}${cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`}`;
                           const isImage = /\.(jpeg|jpg|gif|png|webp)$/i.test(cleanPath);
 
                           return (
@@ -801,26 +771,22 @@ export default function JobsLeads() {
                               href={fullUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="group block w-[110px] rounded-xl border border-gray-200 bg-white overflow-hidden hover:border-[#6E9625] transition-colors"
+                              className="group flex items-center gap-2.5 p-2.5 rounded-xl border border-gray-200 bg-white hover:border-[#6E9625] transition-all shadow-xs"
                             >
                               {isImage ? (
-                                <img
-                                  src={fullUrl}
-                                  alt={att.filename || "Attachment"}
-                                  className="w-full h-[75px] object-cover"
-                                />
+                                <img src={fullUrl} alt={att.filename || "Attachment"} className="w-10 h-10 object-cover rounded-lg border border-gray-100" />
                               ) : (
-                                <div className="w-full h-[75px] bg-gray-100 flex items-center justify-center">
-                                  <FileText size={24} className="text-gray-400" />
+                                <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 group-hover:text-[#6E9625] transition-colors">
+                                  <FileText size={18} />
                                 </div>
                               )}
-
-                              <div className="px-2 py-1.5">
-                                <p className="text-[10px] text-[#1C2C1C] font-medium truncate">
-                                  {att.filename ||
-                                    cleanPath.split("/").pop() ||
-                                    "Attachment"}
+                              <div className="min-w-0 pr-1">
+                                <p className="text-[12px] font-bold text-[#1C2C1C] truncate max-w-[140px]">
+                                  {att.filename || cleanPath.split("/").pop() || "Attachment"}
                                 </p>
+                                <span className="text-[11px] text-[#6E9625] font-semibold group-hover:underline">
+                                  Open file ↗
+                                </span>
                               </div>
                             </a>
                           );
@@ -828,211 +794,240 @@ export default function JobsLeads() {
                       </div>
                     </div>
                   )}
-                  {/* Customer Details */}
-                  <div className="mb-3">
-                    <span className="text-[12px] font-bold text-[#1C2C1C] uppercase tracking-wider mb-2 block">
-                      CUSTOMER
-                    </span>
-                    <div className="p-3.5 rounded-xl border border-gray-100 flex items-center justify-between bg-white shadow-sm gap-3">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 flex-shrink-0 flex items-center justify-center font-bold text-gray-600 text-base">
-                          {fullJobData?.customer?.profileImage || selectedJob.customer?.avatar ? (
-                            <img
-                              src={getImageUrl(fullJobData?.customer?.profileImage || selectedJob.customer?.avatar)}
-                              alt={fullJobData?.customer?.fullName || selectedJob.customer?.name || ''}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : (
-                            <span>
-                              {(fullJobData?.customer?.fullName || selectedJob.customer?.name) ? (fullJobData?.customer?.fullName || selectedJob.customer?.name).charAt(0).toUpperCase() : ''}
-                            </span>
-                          )}
-                        </div>
-                        <div>
-                          <h4 className="text-[15px] font-bold text-[#1C2C1C] mb-0.5">
-                            {fullJobData?.customer?.fullName || selectedJob.customer?.name || ''}
-                          </h4>
-                        </div>
+
+                  {/* Customer Information Bar */}
+                  <div className="p-3.5 rounded-2xl border border-gray-100 bg-[#F8F9FA] flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3.5 min-w-0">
+                      <div className="w-11 h-11 rounded-full overflow-hidden bg-gray-200 shrink-0 flex items-center justify-center font-bold text-gray-600 text-sm shadow-xs">
+                        {fullJobData?.customer?.profileImage || selectedJob.customer?.avatar ? (
+                          <img
+                            src={getImageUrl(fullJobData?.customer?.profileImage || selectedJob.customer?.avatar)}
+                            alt={fullJobData?.customer?.fullName || selectedJob.customer?.name || ''}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span>
+                            {(fullJobData?.customer?.fullName || selectedJob.customer?.name) ? (fullJobData?.customer?.fullName || selectedJob.customer?.name).charAt(0).toUpperCase() : 'C'}
+                          </span>
+                        )}
                       </div>
-                      <button
-                        onClick={async () => {
-                          const customerId = selectedJob.customer?.id;
-                          if (!customerId) {
-                            toast.error("Customer ID not available");
-                            return;
-                          }
-                          try {
-                            setIsLoadingCustomerProfile(true);
-                            setIsCustomerProfileModalOpen(true);
-                            setCustomerProfileData(null);
-                            const res = await authApi.getCustomerProfileForTrader(customerId);
-                            setCustomerProfileData(res?.data || res);
-                          } catch (err: any) {
-                            console.error("Failed to load customer profile", err);
-                            toast.error(err?.response?.data?.message || "Failed to load customer profile");
-                            setIsCustomerProfileModalOpen(false);
-                          } finally {
-                            setIsLoadingCustomerProfile(false);
-                          }
-                        }}
-                        className="px-4 py-2 border border-gray-200 text-[#6E9625] rounded-xl text-[12px] font-bold hover:bg-gray-50 transition-colors shrink-0 cursor-pointer"
-                      >
-                        View Profile
-                      </button>
+                      <div className="min-w-0">
+                        <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-0.5">
+                          POSTED BY
+                        </span>
+                        <h4 className="text-[14px] font-bold text-[#1C2C1C] truncate">
+                          {fullJobData?.customer?.fullName || selectedJob.customer?.name || 'Customer'}
+                        </h4>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Actions */}
-                  <div className="flex flex-col gap-2.5">
-                    {(() => {
-                      const isRejected = selectedJob.matchStatus === "REJECTED";
-                      const isClosed =
-                        (!isRejected && selectedJob.status === "Closed") ||
-                        selectedJob.rawStatus === "CLOSED" ||
-                        selectedJob.rawStatus === "CANCELLED" ||
-                        selectedJob.rawStatus === "EXPIRED";
-                      const isCompleted =
-                        selectedJob.status === "Completed" ||
-                        selectedJob.rawStatus === "COMPLETED";
-                      const isAccepted =
-                        selectedJob.isQuoteAccepted ||
-                        selectedJob.matchStatus === "ACCEPTED" ||
-                        selectedJob.rawStatus === "ASSIGNED";
-                      const hasQuoted = selectedJob.hasQuoted;
-
-                      const isSendDisabled = isClosed || isCompleted || isAccepted || (hasQuoted && !isRejected);
-
-                      let buttonText = "Send Job Quote";
-                      if (isAccepted) buttonText = "Quote Accepted";
-                      else if (isRejected) buttonText = "Revoke Quote";
-                      else if (hasQuoted) buttonText = "Quote Sent";
-                      else if (isCompleted) buttonText = "Job Completed";
-                      else if (isClosed) buttonText = "Job Closed";
-
-                      return (
-                        <>
-                          <button
-                            onClick={openQuoteModal}
-                            disabled={isSendDisabled}
-                            className={`w-full h-[42px] rounded-xl text-[13px] font-bold flex items-center justify-center gap-2 transition-colors ${isSendDisabled
-                              ? "bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300"
-                              : "bg-[#1C2C1C] hover:bg-[#2A412A] text-white cursor-pointer"
-                              }`}
-                          >
-                            <Send size={16} />
-                            {buttonText}
-                          </button>
-
-                          {selectedJob.isQuoteAccepted && !isCompleted && !isClosed && (
-                            <button
-                              disabled={isStartingJob || selectedJob.rawStatus === "IN_PROGRESS"}
-                              onClick={async () => {
-                                try {
-                                  setIsStartingJob(true);
-                                  toast.loading("Starting job...", { id: "startJob" });
-                                  await authApi.startJob(selectedJob.id);
-                                  toast.success("Job started successfully!", { id: "startJob" });
-
-                                  // Optimistically update the UI
-                                  setJobs((prevJobs) =>
-                                    prevJobs.map((j) =>
-                                      j.id === selectedJob.id ? { ...j, status: "In Progress", rawStatus: "IN_PROGRESS" } : j
-                                    )
-                                  );
-                                  setSelectedJob((prev) => (prev ? { ...prev, status: "In Progress", rawStatus: "IN_PROGRESS" } : null));
-                                } catch (error: any) {
-                                  console.error("Failed to start job", error);
-                                  toast.error(error?.response?.data?.message || "Failed to start job", { id: "startJob" });
-                                } finally {
-                                  setIsStartingJob(false);
-                                }
-                              }}
-                              className={`w-full h-[42px] rounded-xl text-[13px] font-extrabold flex items-center justify-center gap-2 transition-all ${isStartingJob || selectedJob.rawStatus === "IN_PROGRESS"
-                                ? "bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300"
-                                : "bg-gradient-to-r from-[#6E9625] to-[#8BC34A] hover:from-[#58791C] hover:to-[#6E9625] text-white shadow-[0_4px_12px_rgba(110,150,37,0.3)] hover:shadow-[0_6px_16px_rgba(110,150,37,0.4)] cursor-pointer scale-100 hover:scale-[1.02]"
-                                }`}
-                            >
-                              {selectedJob.rawStatus === "IN_PROGRESS" ? (
-                                "Job Started"
-                              ) : isStartingJob ? (
-                                "Starting..."
-                              ) : (
-                                <>
-                                  <Play size={18} className="fill-current" />
-                                  Start Job
-                                </>
-                              )}
-                            </button>
-                          )}
-                        </>
-                      );
-                    })()}
                     <button
                       onClick={async () => {
-                        const targetCustomerId = fullJobData?.customer?.id || fullJobData?.customer?._id || fullJobData?.customerId || selectedJob?.customer?.id;
-
-                        if (!targetCustomerId) {
-                          toast.error("Could not find customer contact details.");
+                        const customerId = selectedJob.customer?.id;
+                        if (!customerId) {
+                          toast.error("Customer ID not available");
                           return;
                         }
-
                         try {
-                          toast.loading("Opening conversation...", {
-                            id: "openConversation",
-                          });
-
-                          const res = await authApi.getOrCreateTraderConversation(
-                            targetCustomerId,
-                            selectedJob.id
-                          );
-
-                          const conversation = res?.data || res;
-
-                          const conversationId =
-                            conversation?.id || conversation?._id;
-
-                          if (!conversationId) {
-                            toast.error("Failed to create conversation.", {
-                              id: "openConversation",
-                            });
-                            return;
-                          }
-
-                          toast.success("Conversation opened", {
-                            id: "openConversation",
-                          });
-
-                          router.push(
-                            `/trader/inbox?conversationId=${conversationId}&customerId=${targetCustomerId}&jobId=${selectedJob.id}`
-                          );
-                        } catch (error: any) {
-                          console.error("Failed to open customer conversation:", error);
-
-                          toast.error(
-                            error?.response?.data?.message ||
-                            error?.message ||
-                            "Failed to open conversation.",
-                            {
-                              id: "openConversation",
-                            }
-                          );
+                          setIsLoadingCustomerProfile(true);
+                          setIsCustomerProfileModalOpen(true);
+                          setCustomerProfileData(null);
+                          const res = await authApi.getCustomerProfileForTrader(customerId);
+                          setCustomerProfileData(res?.data || res);
+                        } catch (err: any) {
+                          console.error("Failed to load customer profile", err);
+                          toast.error(err?.response?.data?.message || "Failed to load customer profile");
+                          setIsCustomerProfileModalOpen(false);
+                        } finally {
+                          setIsLoadingCustomerProfile(false);
                         }
                       }}
-                      className="w-full h-[42px] rounded-xl bg-white border border-[#E5E5E5] hover:bg-gray-50 text-[#1C2C1C] text-[13px] font-bold flex items-center justify-center gap-2 transition-colors shadow-sm cursor-pointer"
+                      className="px-4 py-2 border border-gray-200 bg-white text-[#6E9625] rounded-xl text-[12px] font-bold hover:bg-gray-50 transition-colors shrink-0 cursor-pointer shadow-xs"
                     >
-                      <MessageCircle size={16} />
-                      Contact Customer
+                      View Profile
                     </button>
                   </div>
 
-                </div>
-              ) : (
-                <div className="bg-white rounded-[24px] p-8 text-center text-gray-500 border border-gray-100 flex items-center justify-center h-[300px]">
-                  Select a job to view details
-                </div>
-              ))}
+                  {/* Quote Sent Info Card (if already quoted) */}
+                  {selectedJob.hasQuoted && quoteDetails && (
+                    <div className="p-3.5 rounded-2xl border border-[#D5E8B5] bg-[#F7FAF2]">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#E4F2CC] text-[#4E7519] text-[11px] font-bold uppercase tracking-wide">
+                          <CheckCircle size={12} /> Your Quote Sent
+                        </span>
 
-          </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 text-[13px] pt-1">
+                        <div>
+                          <span className="text-[10.5px] font-bold text-gray-400 uppercase block">Price</span>
+                          <span className="text-[16px] font-extrabold text-[#1C2C1C]">€{quoteDetails.price}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10.5px] font-bold text-gray-400 uppercase block">Estimated Duration</span>
+                          <span className="text-[16px] font-extrabold text-[#1C2C1C]">{quoteDetails.estimatedDays} {quoteDetails.estimatedDays === 1 ? 'day' : 'days'}</span>
+                        </div>
+                      </div>
+                      {quoteDetails.message && (
+                        <div className="mt-2 pt-2 border-t border-[#E2EED2] text-[12.5px] text-gray-600">
+                          <span className="font-semibold text-gray-500">Message: </span>{quoteDetails.message}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Sticky Pinned Action Bar at the Bottom: 100% visible always */}
+                <div className="p-4 sm:px-6 bg-white/95 backdrop-blur-xs border-t border-gray-100 shrink-0">
+                  {(() => {
+                    const isRejected = selectedJob.matchStatus === "REJECTED";
+                    const isClosed =
+                      (!isRejected && selectedJob.status === "Closed") ||
+                      selectedJob.rawStatus === "CLOSED" ||
+                      selectedJob.rawStatus === "CANCELLED" ||
+                      selectedJob.rawStatus === "EXPIRED";
+                    const isCompleted =
+                      selectedJob.status === "Completed" ||
+                      selectedJob.rawStatus === "COMPLETED";
+                    const isAccepted =
+                      selectedJob.isQuoteAccepted ||
+                      selectedJob.matchStatus === "ACCEPTED" ||
+                      selectedJob.rawStatus === "ASSIGNED";
+                    const hasQuoted = selectedJob.hasQuoted;
+
+                    const isSendDisabled = isClosed || isCompleted || isAccepted || (hasQuoted && !isRejected);
+
+                    let buttonText = "Send Job Quote";
+                    if (isAccepted) buttonText = "Quote Accepted";
+                    else if (isRejected) buttonText = "Revoke Quote";
+                    else if (hasQuoted) buttonText = "Quote Sent";
+                    else if (isCompleted) buttonText = "Job Completed";
+                    else if (isClosed) buttonText = "Job Closed";
+
+                    const showStartJob = selectedJob.isQuoteAccepted && !isCompleted && !isClosed;
+
+                    return (
+                      <div className={`grid gap-3 ${showStartJob ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2"}`}>
+                        {/* Send Quote Button */}
+                        <button
+                          onClick={openQuoteModal}
+                          disabled={isSendDisabled}
+                          className={`w-full h-[46px] rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 transition-all ${isSendDisabled
+                              ? "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
+                              : "bg-[#1C2C1C] hover:bg-[#2A412A] text-white shadow-sm cursor-pointer active:scale-[0.99]"
+                            }`}
+                        >
+                          <Send size={16} />
+                          {buttonText}
+                        </button>
+
+                        {/* Start Job Button (if accepted) */}
+                        {showStartJob && (
+                          <button
+                            disabled={isStartingJob || selectedJob.rawStatus === "IN_PROGRESS"}
+                            onClick={async () => {
+                              try {
+                                setIsStartingJob(true);
+                                toast.loading("Starting job...", { id: "startJob" });
+                                await authApi.startJob(selectedJob.id);
+                                toast.success("Job started successfully!", { id: "startJob" });
+
+                                setJobs((prevJobs) =>
+                                  prevJobs.map((j) =>
+                                    j.id === selectedJob.id ? { ...j, status: "In Progress", rawStatus: "IN_PROGRESS" } : j
+                                  )
+                                );
+                                setSelectedJob((prev) => (prev ? { ...prev, status: "In Progress", rawStatus: "IN_PROGRESS" } : null));
+                              } catch (error: any) {
+                                console.error("Failed to start job", error);
+                                toast.error(error?.response?.data?.message || "Failed to start job", { id: "startJob" });
+                              } finally {
+                                setIsStartingJob(false);
+                              }
+                            }}
+                            className={`w-full h-[46px] rounded-xl text-[14px] font-extrabold flex items-center justify-center gap-2 transition-all ${isStartingJob || selectedJob.rawStatus === "IN_PROGRESS"
+                                ? "bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300"
+                                : "bg-gradient-to-r from-[#6E9625] to-[#8BC34A] hover:from-[#58791C] hover:to-[#6E9625] text-white shadow-[0_4px_12px_rgba(110,150,37,0.3)] hover:shadow-[0_6px_16px_rgba(110,150,37,0.4)] cursor-pointer active:scale-[0.99]"
+                              }`}
+                          >
+                            {selectedJob.rawStatus === "IN_PROGRESS" ? (
+                              "Job Started"
+                            ) : isStartingJob ? (
+                              "Starting..."
+                            ) : (
+                              <>
+                                <Play size={17} className="fill-current" />
+                                Start Job
+                              </>
+                            )}
+                          </button>
+                        )}
+
+                        {/* Contact Customer Button */}
+                        <button
+                          onClick={async () => {
+                            const targetCustomerId = fullJobData?.customer?.id || fullJobData?.customer?._id || fullJobData?.customerId || selectedJob?.customer?.id;
+
+                            if (!targetCustomerId) {
+                              toast.error("Could not find customer contact details.");
+                              return;
+                            }
+
+                            try {
+                              toast.loading("Opening conversation...", {
+                                id: "openConversation",
+                              });
+
+                              const res = await authApi.getOrCreateTraderConversation(
+                                targetCustomerId,
+                                selectedJob.id
+                              );
+
+                              const conversation = res?.data || res;
+                              const conversationId = conversation?.id || conversation?._id;
+
+                              if (!conversationId) {
+                                toast.error("Failed to create conversation.", {
+                                  id: "openConversation",
+                                });
+                                return;
+                              }
+
+                              toast.success("Conversation opened", {
+                                id: "openConversation",
+                              });
+
+                              router.push(
+                                `/trader/inbox?conversationId=${conversationId}&customerId=${targetCustomerId}&jobId=${selectedJob.id}`
+                              );
+                            } catch (error: any) {
+                              console.error("Failed to open customer conversation:", error);
+                              toast.error(
+                                error?.response?.data?.message ||
+                                error?.message ||
+                                "Failed to open conversation.",
+                                {
+                                  id: "openConversation",
+                                }
+                              );
+                            }
+                          }}
+                          className="w-full h-[46px] rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-[#1C2C1C] text-[14px] font-bold flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer active:scale-[0.99]"
+                        >
+                          <MessageCircle size={16} className="text-[#6E9625]" />
+                          Contact Customer
+                        </button>
+                      </div>
+                    );
+                  })()}
+                </div>
+
+              </div>
+            ) : (
+              <div className="bg-white rounded-[24px] p-8 text-center text-gray-500 border border-gray-100 flex items-center justify-center h-[300px]">
+                Select a job to view details
+              </div>
+            ))}
+
         </div>
       </div>
 
@@ -1247,168 +1242,7 @@ export default function JobsLeads() {
         </div>
       )}
 
-      {/* 📄 Full Details Modal 📄 */}
-      {isDetailsModalOpen && fullJobData && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setIsDetailsModalOpen(false)} />
-          <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] flex flex-col relative z-10 shadow-xl">
-            {/* Header */}
-            <div className="flex items-center justify-between p-6 border-b border-gray-100 shrink-0">
-              <h2 className="text-[18px] font-bold text-[#1C2C1C]">Job Details</h2>
-              <button
-                onClick={() => setIsDetailsModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition-colors"
-              >
-                <X size={16} />
-              </button>
-            </div>
 
-            {/* Content */}
-            <div className="p-6 overflow-y-auto space-y-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-
-              {/* Customer Info Section */}
-              {fullJobData.customer && (
-                <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-2xl border border-gray-100">
-                  <div className="w-12 h-12 rounded-full bg-[#E6F5E9] flex items-center justify-center text-[#32C850] font-bold text-[18px]">
-                    {fullJobData.customer.fullName?.charAt(0) || "C"}
-                  </div>
-                  <div>
-                    <h4 className="text-[15px] font-bold text-[#1C2C1C]">Posted by {fullJobData.customer.fullName}</h4>
-                    <span className="text-[12px] text-gray-500">
-                      Member since {new Date(fullJobData.customer.createdAt).getFullYear()}
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              <div>
-                <h3 className="text-[20px] font-bold text-[#1C2C1C] mb-2">{fullJobData.title}</h3>
-                <div className="flex flex-wrap items-center gap-4 text-[13px] text-gray-500">
-                  <div className="flex items-center gap-1.5">
-                    <MapPin size={15} className="text-gray-400" />
-                    {fullJobData.postcode || selectedJob?.location}
-                  </div>
-                  {fullJobData.category?.name && (
-                    <>
-                      <span className="w-1 h-1 rounded-full bg-gray-300" />
-                      <div className="flex items-center gap-1.5 text-[#6E9625] font-medium bg-[#F3F8EC] px-2 py-0.5 rounded-md">
-                        {fullJobData.category.name}
-                      </div>
-                    </>
-                  )}
-                  {fullJobData.subCategory?.name && (
-                    <>
-                      <span className="w-1 h-1 rounded-full bg-gray-300" />
-                      <div className="flex items-center gap-1.5 text-[#6E9625] font-medium bg-[#F3F8EC] px-2 py-0.5 rounded-md">
-                        {fullJobData.subCategory.name}
-                      </div>
-                    </>
-                  )}
-                  {fullJobData.skillService?.name && (
-                    <>
-                      <span className="w-1 h-1 rounded-full bg-gray-300" />
-                      <div className="flex items-center gap-1.5 text-[#6E9625] font-medium bg-[#F3F8EC] px-2 py-0.5 rounded-md">
-                        {fullJobData.skillService.name}
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                  <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Status</span>
-                  <span className="text-[13px] font-bold text-[#1C2C1C]">{fullJobData.status}</span>
-                </div>
-                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                  <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Budget</span>
-                  <span className="text-[13px] font-bold text-[#1C2C1C]">
-                    {formatBudget(fullJobData.budgetRange)}
-                  </span>
-                </div>
-                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                  <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Timescale</span>
-                  <span className="text-[13px] font-bold text-[#1C2C1C]">
-                    {fullJobData.timescale?.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase()) || "—"}
-                  </span>
-                </div>
-                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                  <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Emergency</span>
-                  <span className="text-[13px] font-bold text-[#1C2C1C]">{fullJobData.emergency ? "Yes" : "No"}</span>
-                </div>
-
-                {/* Additional Metadata */}
-                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                  <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Quotes Received</span>
-                  <span className="text-[13px] font-bold text-[#1C2C1C]">{fullJobData.quotesReceived || fullJobData._count?.quotes || 0}</span>
-                </div>
-                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                  <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Posted</span>
-                  <span className="text-[13px] font-bold text-[#1C2C1C]">
-                    {fullJobData.createdAt ? new Date(fullJobData.createdAt).toLocaleDateString() : "—"}
-                  </span>
-                </div>
-                <div className="bg-gray-50 rounded-xl p-3 border border-gray-100 md:col-span-2">
-                  <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Expires</span>
-                  <span className="text-[13px] font-bold text-[#1C2C1C]">
-                    {fullJobData.expiresAt ? new Date(fullJobData.expiresAt).toLocaleDateString() : "—"}
-                  </span>
-                </div>
-              </div>
-
-              <div>
-                <span className="block text-[12px] font-bold text-[#1C2C1C] uppercase tracking-wider mb-3">
-                  Description
-                </span>
-                <p className="text-[14px] leading-relaxed text-gray-600 whitespace-pre-wrap">
-                  {fullJobData.description}
-                </p>
-              </div>
-
-              {fullJobData.attachments && fullJobData.attachments.length > 0 && (
-                <div>
-                  <span className="block text-[12px] font-bold text-[#1C2C1C] uppercase tracking-wider mb-3">
-                    Attachments ({fullJobData.attachments.length})
-                  </span>
-                  <div className="flex flex-wrap gap-3">
-                    {fullJobData.attachments.map((att: any, idx: number) => {
-                      let cleanPath = att.url || att.file || "";
-                      if (cleanPath.startsWith("undefined")) {
-                        cleanPath = cleanPath.replace("undefined", "");
-                      }
-                      const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "");
-                      const fullUrl = cleanPath.startsWith("http") ? cleanPath : `${baseUrl}${cleanPath.startsWith("/") ? cleanPath : `/${cleanPath}`}`;
-
-                      const isImage = cleanPath.match(/\.(jpeg|jpg|gif|png)$/i);
-
-                      return (
-                        <a
-                          key={idx}
-                          href={fullUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 p-2 rounded-lg border border-gray-200 hover:border-[#6E9625] transition-colors max-w-full"
-                        >
-                          {isImage ? (
-                            <img src={fullUrl} alt="attachment" className="w-10 h-10 object-cover rounded-md" />
-                          ) : (
-                            <div className="w-10 h-10 bg-gray-100 rounded-md flex items-center justify-center">
-                              <FileText size={16} className="text-gray-400" />
-                            </div>
-                          )}
-                          <span className="text-[12px] text-[#1C2C1C] truncate max-w-[150px] font-medium">
-                            {att.filename || cleanPath.split('/').pop() || 'Attachment'}
-                          </span>
-                        </a>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* ── Customer Profile Modal ─────────────────────────── */}
       {isCustomerProfileModalOpen && (

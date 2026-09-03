@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
-import { Star, MapPin, Calendar, DollarSign, Shield, ShieldCheck, Mail, Info, AlertTriangle, CheckCircle, Phone, X } from "lucide-react";
+import { Star, MapPin, Calendar, DollarSign, Shield, ShieldCheck, Mail, Info, AlertTriangle, CheckCircle, Phone, X, Briefcase, Plus } from "lucide-react";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
 import { authApi } from "@/app/api/authApi";
@@ -98,6 +98,8 @@ export default function ChatWindow({
   const partnerId = partner?.id || partner?._id || "";
   const job = conversation.job;
   const activeJobId = job?.id || job?._id || conversation.jobId || fallbackJobId;
+  const [linkedJobId, setLinkedJobId] = useState<string | null>(null);
+  const effectiveJobId = activeJobId || linkedJobId;
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -107,6 +109,19 @@ export default function ChatWindow({
   // Modals state
   const [showReportModal, setShowReportModal] = useState(false);
   const [isCloseJobModalOpen, setIsCloseJobModalOpen] = useState(false);
+  const [isStartJobModalOpen, setIsStartJobModalOpen] = useState(false);
+  const [modalTab, setModalTab] = useState<"select" | "create">("select");
+  const [myJobs, setMyJobs] = useState<any[]>([]);
+  const [loadingMyJobs, setLoadingMyJobs] = useState(false);
+  const [selectedJobIdToStart, setSelectedJobIdToStart] = useState<string>("");
+  const [startingJob, setStartingJob] = useState(false);
+
+  // Quick create fields
+  const [quickTitle, setQuickTitle] = useState("");
+  const [quickDescription, setQuickDescription] = useState("");
+  const [quickLocation, setQuickLocation] = useState("");
+  const [quickBudget, setQuickBudget] = useState("");
+
   const [reportType, setReportType] = useState("TRADER_PROFILE");
   const [reportReason, setReportReason] = useState("SPAM");
   const [customReason, setCustomReason] = useState("");
@@ -152,16 +167,16 @@ export default function ChatWindow({
     }
   }, [job?.status, job, conversation.jobId, fallbackJobId]);
 
-  // When activeJobId exists but jobStatus is not populated in the conversation object,
+  // When effectiveJobId exists but jobStatus is not populated in the conversation object,
   // fetch the real job status directly from the API
   useEffect(() => {
-    if (!activeJobId) return;
+    if (!effectiveJobId) return;
     // Only fetch if status is still unknown (null)
     if (jobStatus !== null) return;
 
     const fetchJobStatus = async () => {
       try {
-        const res = await authApi.getCustomerJobById(activeJobId);
+        const res = await authApi.getCustomerJobById(effectiveJobId);
         const jobData = res?.data || res;
         if (jobData?.status) {
           setJobStatus(jobData.status);
@@ -173,7 +188,37 @@ export default function ChatWindow({
     };
 
     fetchJobStatus();
-  }, [activeJobId]);
+  }, [effectiveJobId]);
+
+  // Load customer jobs when Start Job modal opens
+  const loadCustomerJobs = async () => {
+    try {
+      setLoadingMyJobs(true);
+      const res = await authApi.getMyJobs(1, 20);
+      const jobsList = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : Array.isArray(res?.jobs) ? res.jobs : [];
+      const available = jobsList.filter((j: any) => {
+        const st = j.status?.toUpperCase();
+        return st !== "COMPLETED" && st !== "CANCELLED" && st !== "CLOSED";
+      });
+      setMyJobs(available);
+      if (available.length > 0) {
+        setSelectedJobIdToStart(available[0].id || available[0]._id);
+        setModalTab("select");
+      } else {
+        setModalTab("create");
+      }
+    } catch (err) {
+      console.error("Failed to load customer jobs", err);
+    } finally {
+      setLoadingMyJobs(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isStartJobModalOpen) {
+      loadCustomerJobs();
+    }
+  }, [isStartJobModalOpen]);
 
   // Connect to socket and hook up listeners
   const {
@@ -274,14 +319,15 @@ export default function ChatWindow({
 
   // Job Start Action
   const handleStartJob = async () => {
-    if (!activeJobId) {
-      toast.error("No job is linked to this conversation", { id: "job-action-error" });
+    const targetJobId = effectiveJobId;
+    if (!targetJobId) {
+      setIsStartJobModalOpen(true);
       return;
     }
 
     try {
       setLoadingStartJob(true);
-      await authApi.startJob(activeJobId);
+      await authApi.startJob(targetJobId);
       setJobStatus("IN_PROGRESS");
       toast.success("Job started successfully!", { id: "job-action-success" });
       if (onRefreshConversations) onRefreshConversations();
@@ -294,16 +340,99 @@ export default function ChatWindow({
     }
   };
 
+  // Start an existing job from the modal
+  const handleStartExistingJob = async () => {
+    if (!selectedJobIdToStart) {
+      toast.error("Please select a job to start");
+      return;
+    }
+
+    try {
+      setStartingJob(true);
+      toast.loading("Starting job...", { id: "directStartJob" });
+      if (partnerId) {
+        try {
+          await authApi.getOrCreateConversation(partnerId, selectedJobIdToStart);
+        } catch (e) {
+          console.warn("Could not link job to conversation via API", e);
+        }
+      }
+      await authApi.startJob(selectedJobIdToStart);
+      setLinkedJobId(selectedJobIdToStart);
+      setJobStatus("IN_PROGRESS");
+      toast.success("Job started successfully!", { id: "directStartJob" });
+      setIsStartJobModalOpen(false);
+      if (onRefreshConversations) onRefreshConversations();
+    } catch (err: any) {
+      console.error("Failed to start job:", err);
+      const msg = getErrorMessage(err, "Failed to start job");
+      toast.error(msg, { id: "directStartJob" });
+    } finally {
+      setStartingJob(false);
+    }
+  };
+
+  // Quick create and start a job from the modal
+  const handleQuickCreateAndStartJob = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!quickTitle.trim() || !quickDescription.trim()) {
+      toast.error("Please enter a job title and description");
+      return;
+    }
+
+    try {
+      setStartingJob(true);
+      toast.loading("Creating and starting job...", { id: "directStartJob" });
+      const formData = new FormData();
+      formData.append("title", quickTitle);
+      formData.append("description", quickDescription);
+      if (quickLocation) formData.append("location", quickLocation);
+      if (quickBudget) formData.append("budget", quickBudget);
+      formData.append("timescale", "Immediately");
+      formData.append("latitude", "22.5630");
+      formData.append("longitude", "75.7669");
+
+      const res = await authApi.postJob(formData);
+      const created = res?.data || res;
+      const newJobId = created?.id || created?._id;
+
+      if (newJobId) {
+        if (partnerId) {
+          try {
+            await authApi.getOrCreateConversation(partnerId, newJobId);
+          } catch (e) {
+            console.warn("Could not link new job to conversation", e);
+          }
+        }
+        await authApi.startJob(newJobId);
+        setLinkedJobId(newJobId);
+        setJobStatus("IN_PROGRESS");
+        toast.success("Job created and started successfully!", { id: "directStartJob" });
+        setIsStartJobModalOpen(false);
+        if (onRefreshConversations) onRefreshConversations();
+      } else {
+        toast.error("Failed to retrieve created job ID", { id: "directStartJob" });
+      }
+    } catch (err: any) {
+      console.error("Failed to create and start job:", err);
+      const msg = getErrorMessage(err, "Failed to create and start job");
+      toast.error(msg, { id: "directStartJob" });
+    } finally {
+      setStartingJob(false);
+    }
+  };
+
   // Job Completion Action
   const handleJobComplete = async () => {
-    if (!activeJobId) {
+    const targetJobId = effectiveJobId;
+    if (!targetJobId) {
       toast.error("No job is linked to this conversation", { id: "job-action-error" });
       return;
     }
 
     try {
       setLoadingComplete(true);
-      await authApi.completeJob(activeJobId);
+      await authApi.completeJob(targetJobId);
       setJobStatus("COMPLETED");
       toast.success("Job marked as complete successfully!", { id: "job-action-success" });
       if (onRefreshConversations) onRefreshConversations();
@@ -318,14 +447,15 @@ export default function ChatWindow({
 
   // Job Close / Cancel Action
   const handleCloseJobSubmit = async (data: { isWorkCarriedOut: boolean; cancelReason?: string } = { isWorkCarriedOut: true }) => {
-    if (!activeJobId) {
+    const targetJobId = effectiveJobId;
+    if (!targetJobId) {
       toast.error("No job is linked to this conversation", { id: "job-action-error" });
       return;
     }
 
     try {
       setLoadingClose(true);
-      await authApi.closeJob(activeJobId, data);
+      await authApi.closeJob(targetJobId, data);
       setJobStatus("CANCELLED");
       toast.success("Job closed successfully!", { id: "job-action-success" });
       if (onRefreshConversations) onRefreshConversations();
@@ -432,10 +562,20 @@ export default function ChatWindow({
                 {isReported ? "Reported" : "Report"}
               </button>
 
-              {/* Job Actions — only shown when a job is linked to this conversation */}
+              {/* Job Actions — shown when a job is linked, OR directory contacted 'Start Job' option */}
               {(() => {
-                // 🔒 No job linked → no buttons at all
-                if (!activeJobId) return null;
+                // When contacting a trader via directory (no job linked yet)
+                if (!effectiveJobId) {
+                  return (
+                    <button
+                      onClick={() => setIsStartJobModalOpen(true)}
+                      className="px-4 py-1.5 bg-[#6E9625] hover:bg-[#5C7F1F] text-white rounded-xl text-[12px] font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Briefcase size={14} />
+                      Start Job
+                    </button>
+                  );
+                }
 
                 const status = jobStatus?.toUpperCase();
                 const isInProgress = status === "IN_PROGRESS" || status === "ASSIGNED";
@@ -626,7 +766,7 @@ export default function ChatWindow({
                   setIsCloseJobModalOpen(false);
                   await handleCloseJobSubmit({ isWorkCarriedOut: true });
                   if (!isTraderView) {
-                    router.push(`/customer-dashboard/leave-review?jobId=${activeJobId}&traderId=${partnerId}&workCarriedOut=true&hideWorkCarriedOut=true`);
+                    router.push(`/customer-dashboard/leave-review?jobId=${effectiveJobId || ''}&traderId=${partnerId}&workCarriedOut=true&hideWorkCarriedOut=true`);
                   }
                 }}
                 className="w-full py-3 bg-[#4CAF50] text-white rounded-xl font-bold hover:bg-[#43A047] transition-colors cursor-pointer"
@@ -638,7 +778,7 @@ export default function ChatWindow({
                   setIsCloseJobModalOpen(false);
                   await handleCloseJobSubmit({ isWorkCarriedOut: false });
                   if (!isTraderView) {
-                    router.push(`/customer-dashboard/leave-review?jobId=${activeJobId}&traderId=${partnerId}&workCarriedOut=false&hideWorkCarriedOut=true`);
+                    router.push(`/customer-dashboard/leave-review?jobId=${effectiveJobId || ''}&traderId=${partnerId}&workCarriedOut=false&hideWorkCarriedOut=true`);
                   }
                 }}
                 className="w-full py-3 border border-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-colors cursor-pointer"
@@ -646,6 +786,218 @@ export default function ChatWindow({
                 No
               </button>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Start Job Modal (when contacting trader via directory) */}
+      {isStartJobModalOpen && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50 backdrop-blur-[2px] p-4 animate-fadeIn">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 w-full max-w-lg shadow-2xl relative">
+            <button
+              onClick={() => setIsStartJobModalOpen(false)}
+              className="absolute top-5 right-5 text-gray-400 hover:bg-gray-100 rounded-full w-8 h-8 flex items-center justify-center transition-colors cursor-pointer"
+            >
+              <X size={20} />
+            </button>
+
+            {/* Header */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-2xl bg-[#F4F7F1] text-[#6E9625] flex items-center justify-center">
+                <Briefcase size={20} />
+              </div>
+              <div>
+                <h2 className="text-[18px] font-bold text-[#1C2C1C]">
+                  Start Job with {partner?.fullName || "Trader"}
+                </h2>
+                <p className="text-[12px] text-gray-500 font-medium">
+                  Link an existing job or quickly create a new project
+                </p>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex border-b border-gray-150 mb-5">
+              <button
+                type="button"
+                onClick={() => setModalTab("select")}
+                className={`py-2.5 px-4 text-[13px] font-bold border-b-2 transition-all cursor-pointer ${
+                  modalTab === "select"
+                    ? "border-[#6E9625] text-[#6E9625]"
+                    : "border-transparent text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                Select Existing Job {myJobs.length > 0 && `(${myJobs.length})`}
+              </button>
+              <button
+                type="button"
+                onClick={() => setModalTab("create")}
+                className={`py-2.5 px-4 text-[13px] font-bold border-b-2 transition-all cursor-pointer ${
+                  modalTab === "create"
+                    ? "border-[#6E9625] text-[#6E9625]"
+                    : "border-transparent text-gray-400 hover:text-gray-600"
+                }`}
+              >
+                Quick Create Job
+              </button>
+            </div>
+
+            {/* Tab 1: Select Existing Job */}
+            {modalTab === "select" && (
+              <div>
+                {loadingMyJobs ? (
+                  <div className="py-10 text-center text-[13px] text-gray-400 animate-pulse">
+                    Loading your posted jobs...
+                  </div>
+                ) : myJobs.length === 0 ? (
+                  <div className="py-8 text-center bg-[#F9FAFB] rounded-2xl p-5 border border-dashed border-gray-200">
+                    <p className="text-[14px] font-bold text-[#1C2C1C] mb-1">No open jobs found</p>
+                    <p className="text-[12px] text-gray-500 mb-4">
+                      You don&apos;t have any active jobs posted yet. You can create one quickly below.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setModalTab("create")}
+                      className="px-4 py-2 bg-[#6E9625] text-white rounded-xl text-[12px] font-bold hover:bg-[#5C7F1F] transition-colors cursor-pointer"
+                    >
+                      Create a Job Now
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-2">
+                        Choose from your open jobs
+                      </label>
+                      <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
+                        {myJobs.map((j: any) => {
+                          const jId = j.id || j._id;
+                          const isSel = selectedJobIdToStart === jId;
+                          return (
+                            <div
+                              key={jId}
+                              onClick={() => setSelectedJobIdToStart(jId)}
+                              className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
+                                isSel
+                                  ? "border-[#6E9625] bg-[#F4F7F1]/60 shadow-xs"
+                                  : "border-gray-200 hover:border-gray-300 bg-white"
+                              }`}
+                            >
+                              <div className="flex items-center justify-between">
+                                <p className="text-[14px] font-bold text-[#1C2C1C] truncate">{j.title}</p>
+                                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">
+                                  {j.status || "POSTED"}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-3 mt-1.5 text-[11px] text-gray-500">
+                                {j.location && <span>📍 {j.location}</span>}
+                                {j.budget && <span>💰 {j.budget}</span>}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2">
+                      <button
+                        type="button"
+                        onClick={() => router.push("/customer-dashboard/post-job")}
+                        className="text-[12px] font-bold text-[#6E9625] hover:underline"
+                      >
+                        + Post a full job with photos
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={handleStartExistingJob}
+                        disabled={startingJob || !selectedJobIdToStart}
+                        className="px-5 py-2.5 bg-[#6E9625] text-white rounded-xl text-[13px] font-bold hover:bg-[#5C7F1F] transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
+                      >
+                        {startingJob ? "Starting..." : "Start This Job"}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Tab 2: Quick Create Job */}
+            {modalTab === "create" && (
+              <form onSubmit={handleQuickCreateAndStartJob} className="space-y-3.5">
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    Job Title *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. Bathroom Tiling Repair"
+                    value={quickTitle}
+                    onChange={(e) => setQuickTitle(e.target.value)}
+                    className="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl px-4 py-2.5 text-[13px] text-[#1C2C1C] outline-none focus:border-[#6E9625] transition-colors"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                    Description *
+                  </label>
+                  <textarea
+                    required
+                    rows={3}
+                    placeholder="Brief description of the work needed..."
+                    value={quickDescription}
+                    onChange={(e) => setQuickDescription(e.target.value)}
+                    className="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl px-4 py-2.5 text-[13px] text-[#1C2C1C] outline-none focus:border-[#6E9625] transition-colors"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                      Location / Postcode
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Lisbon / London"
+                      value={quickLocation}
+                      onChange={(e) => setQuickLocation(e.target.value)}
+                      className="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl px-4 py-2.5 text-[13px] text-[#1C2C1C] outline-none focus:border-[#6E9625] transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+                      Estimated Budget
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="e.g. £250 or €300"
+                      value={quickBudget}
+                      onChange={(e) => setQuickBudget(e.target.value)}
+                      className="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl px-4 py-2.5 text-[13px] text-[#1C2C1C] outline-none focus:border-[#6E9625] transition-colors"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between pt-2">
+                  <button
+                    type="button"
+                    onClick={() => router.push("/customer-dashboard/post-job")}
+                    className="text-[12px] font-bold text-[#6E9625] hover:underline"
+                  >
+                    Post full job with photos →
+                  </button>
+
+                  <button
+                    type="submit"
+                    disabled={startingJob}
+                    className="px-5 py-2.5 bg-[#6E9625] text-white rounded-xl text-[13px] font-bold hover:bg-[#5C7F1F] transition-colors disabled:opacity-50 cursor-pointer shadow-sm"
+                  >
+                    {startingJob ? "Creating..." : "Create & Start Job"}
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

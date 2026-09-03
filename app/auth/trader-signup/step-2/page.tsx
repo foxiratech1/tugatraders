@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 import { IdCard, Image as ImageIcon, ChevronRight, Lock, ShieldCheck, X, Search, Plus } from "lucide-react";
 import toast from "react-hot-toast";
 import { traderRegisterStep2, authApi, getRegistrationStatus } from "@/app/api/authApi";
@@ -772,12 +773,44 @@ export default function Step2Page() {
                         <Checkbox
                             checked={formData.traderAgreement}
                             onChange={() => field("traderAgreement", !formData.traderAgreement)}
-                            label="Terms & Conditions and Trader Agreement"
+                            label={
+                                <span>
+                                    <Link
+                                        href="/terms?tab=terms"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="text-[#1C2C1C] font-bold underline hover:text-[#6E9625] transition-colors"
+                                    >
+                                        Terms & Conditions
+                                    </Link>{" "}
+                                    and{" "}
+                                    <Link
+                                        href="/terms?tab=traderAgreement"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="text-[#1C2C1C] font-bold underline hover:text-[#6E9625] transition-colors"
+                                    >
+                                        Trader Agreement
+                                    </Link>
+                                </span>
+                            }
                         />
                         <Checkbox
                             checked={formData.privacyCookies}
                             onChange={() => field("privacyCookies", !formData.privacyCookies)}
-                            label="Privacy & Cookies"
+                            label={
+                                <Link
+                                    href="/terms?tab=cookies"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="text-[#1C2C1C] font-bold underline hover:text-[#6E9625] transition-colors"
+                                >
+                                    Privacy & Cookies Policy
+                                </Link>
+                            }
                         />
                     </div>
                 </div>

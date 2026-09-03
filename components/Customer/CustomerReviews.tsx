@@ -169,8 +169,8 @@ export default function CustomerReviews() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#F8F9F5] p-6 md:p-10">
-      <div className="max-w-3xl mx-auto">
+    <div className="min-h-screen bg-[#F8F9F5]">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-[28px] font-bold text-[#1C2C1C]">My Reviews</h1>

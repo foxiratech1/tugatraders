@@ -3,7 +3,7 @@ import DirectorySearchResults from '@/components/DirectoryListing/DirectorySearc
 
 const SearchResultsPage = () => {
   return (
-    <main className="bg-[#F9FAFB] min-h-screen pt-28">
+    <main className="bg-[#F9FAFB] min-h-screen pt-[76px] sm:pt-[84px]">
       <Suspense fallback={<div className="p-8 text-center text-gray-500">Loading search results...</div>}>
         <DirectorySearchResults />
       </Suspense>

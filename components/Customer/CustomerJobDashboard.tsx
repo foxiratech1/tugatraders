@@ -124,6 +124,7 @@ interface Job {
   subCategory?: SubCategory;
   selectedTrader?: SelectedTrader;
   hasReviewed?: boolean;
+  location?: string;
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -172,28 +173,74 @@ const statusConfig: Record<string, { label: string; bg: string; text: string; do
     dot: "bg-[#1565C0]",
   },
 
-  ASSIGNED: { label: "Contacted", bg: "bg-[#B6D5F4]", text: "text-[#1565C0]", dot: "bg-[#1565C0]" },
-  COMPLETED: { label: "Completed", bg: "bg-[#D8F3D7]", text: "text-[#2E7D32]", dot: "bg-[#2E7D32]" },
-  CANCELLED: { label: "Closed", bg: "bg-[#BDBDBD]", text: "text-[#424242]", dot: "bg-[#424242]" },
-  CLOSED: { label: "Closed", bg: "bg-[#BDBDBD]", text: "text-[#424242]", dot: "bg-[#424242]" },
-  EXPIRED: { label: "EXPIRED", bg: "bg-[#BDBDBD]", text: "text-[#424242]", dot: "bg-[#424242]" },
-  ACTIVE: { label: "LIVE", bg: "bg-[#FDE2D6]", text: "text-[#D32F2F]", dot: "bg-[#D32F2F]" },
+  ASSIGNED: { label: "Contacted", bg: "bg-[#8EAADB]", text: "text-[#1F3F73]", dot: "bg-[#1F3F73]" },
+  COMPLETED: { label: "Completed", bg: "bg-[#1E5624]", text: "text-white", dot: "bg-white" },
+  CANCELLED: { label: "Closed", bg: "bg-[#A5A5A5]", text: "text-[#515151]", dot: "bg-[#515151]" },
+  CLOSED: { label: "Closed", bg: "bg-[#A5A5A5]", text: "text-[#515151]", dot: "bg-[#515151]" },
+  EXPIRED: { label: "Expired", bg: "bg-[#A5A5A5]", text: "text-[#515151]", dot: "bg-[#515151]" },
+  ACTIVE: { label: "Live", bg: "bg-[#FDE2D6]", text: "text-[#D32F2F]", dot: "bg-[#D32F2F]" },
 };
 
-function StatusBadge({ status }: { status: string }) {
-  const cfg = statusConfig[status] ?? {
-    label: status,
-    bg: "bg-gray-100",
-    text: "text-gray-600",
-    dot: "bg-gray-400",
-  };
-
+function SidebarStatusBadge({ status }: { status: string }) {
+  const upper = status?.toUpperCase();
+  if (upper === "COMPLETED") {
+    return (
+      <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[#4E7B24]">
+        <span className="w-2 h-2 rounded-full bg-[#4E7B24]" />
+        Completed
+      </div>
+    );
+  }
+  if (upper === "CLOSED" || upper === "CANCELLED" || upper === "EXPIRED") {
+    return (
+      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#E2E8F0] text-[#475569] text-[11px] font-semibold">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#64748B]" />
+        Closed
+      </div>
+    );
+  }
+  if (upper === "ASSIGNED") {
+    return (
+      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#B6D5F4] text-[#1565C0] text-[11px] font-semibold">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#1565C0]" />
+        Contacted
+      </div>
+    );
+  }
   return (
-    <span
-      className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-semibold ${cfg.bg} ${cfg.text}`}
-    >
-      <span className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-      {cfg.label}
+    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FDE2D6] text-[#D32F2F] text-[11px] font-semibold">
+      <span className="w-1.5 h-1.5 rounded-full bg-[#D32F2F]" />
+      Live
+    </div>
+  );
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const upper = status?.toUpperCase();
+  if (upper === "COMPLETED") {
+    return (
+      <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#D8F3D7] text-[#2E7D32] text-[11px] font-bold tracking-wide">
+        COMPLETED
+      </span>
+    );
+  }
+  if (upper === "CLOSED" || upper === "CANCELLED" || upper === "EXPIRED") {
+    return (
+      <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#E2E8F0] text-[#475569] text-[11px] font-bold tracking-wide">
+        CLOSED
+      </span>
+    );
+  }
+  if (upper === "ASSIGNED") {
+    return (
+      <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#B6D5F4] text-[#1565C0] text-[11px] font-bold tracking-wide">
+        CONTACTED
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#FDE2D6] text-[#D32F2F] text-[11px] font-bold tracking-wide">
+      LIVE
     </span>
   );
 }
@@ -202,14 +249,14 @@ function StatusBadge({ status }: { status: string }) {
 function ActiveBadge({ status }: { status: string }) {
   if (status === "ASSIGNED" || status === "OPEN") {
     return (
-      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full border border-[#4CAF50] text-[11px] font-bold text-[#4CAF50] tracking-wide">
+      <span className="inline-flex items-center px-2.5 py-1 rounded-[6px] border border-[#4CAF50] text-[11px] font-bold text-[#4CAF50] tracking-wide">
         {status === "ASSIGNED" ? "CONTACTED" : "ACTIVE"}
       </span>
     );
   }
   const cfg = statusConfig[status] ?? { label: status, bg: "bg-gray-100", text: "text-gray-600" };
   return (
-    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold ${cfg.bg} ${cfg.text}`}>
+    <span className={`inline-flex items-center px-2.5 py-1 rounded-[6px] text-[11px] font-bold ${cfg.bg} ${cfg.text}`}>
       {cfg.label.toUpperCase()}
     </span>
   );
@@ -1089,7 +1136,7 @@ export default function CustomerJobDashboard() {
 
   return (
     <div className="min-h-screen bg-[#F8F9F5]">
-      <div className="max-w-[1320px] mx-auto px-6 py-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
 
         {/* ── Page Header ───────────────────────────────────────────────── */}
         <div className="flex items-start justify-between mb-8">
@@ -1136,7 +1183,7 @@ export default function CustomerJobDashboard() {
         {/* ── Main Grid: left (300px) + right (1fr) ────────────────────── */}
         <div className="grid grid-cols-1 md:grid-cols-[300px_1fr] gap-6 items-start relative">
 
-          {/* ── Left: Job History (Light Green Background Container) ──────── */}
+          {/* ── Left: Job History (White Background Container) ──────── */}
           <div className="bg-white rounded-2xl p-4 border border-[#E2EED2] flex flex-col gap-3 sticky top-8 max-h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar">
             <div className="mb-1">
               <h2 className="text-[18px] font-extrabold text-[#1C2C1C]">Job History</h2>
@@ -1145,7 +1192,7 @@ export default function CustomerJobDashboard() {
             {loading ? (
               <div className="space-y-2">
                 {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-[75px] rounded-xl bg-white animate-pulse border border-gray-100" />
+                  <div key={i} className="h-[75px] rounded-xl bg-gray-50 animate-pulse border border-gray-100" />
                 ))}
               </div>
             ) : jobs.length === 0 ? (
@@ -1154,39 +1201,45 @@ export default function CustomerJobDashboard() {
               <div className="space-y-3">
                 {jobs.map((job) => {
                   const isSelected = selectedJob?.id === job.id;
-                  // const isClosed = job.status === "CLOSED" || job.status === "CANCELLED" || job.status === "EXPIRED";
-                  const isClosedOrCompleted =
-                    job.status === "CLOSED" || job.status === "COMPLETED";
+                  const isClosed =
+                    job.status === "CLOSED" || job.status === "CANCELLED" || job.status === "EXPIRED";
+                  const isCompleted = job.status === "COMPLETED";
+
                   return (
                     <button
                       key={job.id}
                       onClick={() => setSelectedJob(job)}
-                      className={`w-full p-4 rounded-xl border transition-all text-left flex flex-col gap-2 ${isSelected
-                        ? isClosedOrCompleted
-                          ? "border-2 border-gray-300 bg-[#E5E5E5] shadow-sm"
-                          : "border-2 border-[#8BC34A] bg-white  shadow-sm ring-2 ring-[#8BC34A]/20"
-                        : isClosedOrCompleted
-                          ? "border-gray-300 bg-[#E5E5E5] hover:bg-[#DEDEDE]"
-                          : "border-transparent bg-white hover:border-gray-200"
+                      className={`w-full p-4 rounded-2xl transition-all text-left flex flex-col gap-2 ${isClosed
+                        ? isSelected
+                          ? "border-2 border-gray-300 bg-[#EFF2F5] shadow-xs"
+                          : "border border-transparent bg-[#EFF2F5] hover:border-gray-200"
+                        : isCompleted
+                          ? isSelected
+                            ? "border-2 border-[#8BC34A] bg-[#F2F7EB] shadow-xs ring-2 ring-[#8BC34A]/20"
+                            : "border border-transparent bg-[#F2F7EB] hover:border-[#D4E8C2]"
+                          : isSelected
+                            ? "border-2 border-[#8BC34A] bg-white shadow-xs ring-2 ring-[#8BC34A]/20"
+                            : "border border-transparent bg-white hover:border-gray-200"
                         }`}
                     >
                       <div className="flex items-center justify-between">
-                        <StatusBadge status={job.status} />
+                        <SidebarStatusBadge status={job.status} />
                       </div>
                       <p className="text-[13px] font-bold text-[#1C2C1C] leading-snug line-clamp-2">
                         {job.title}
                       </p>
-                      {job.category?.name && (
-                        <div className="flex items-center gap-1.5 text-[11px] text-gray-500 font-medium">
-                          <Tag size={12} className="text-gray-400" />
-                          <span>{job.category.name}</span>
+                      {(job.category?.name || job.location || job.postcode) && (
+                        <div className="flex items-center gap-1 text-[11px] text-gray-500 font-medium">
+                          <MapPin size={12} className="text-gray-400 shrink-0" />
+                          <span>{job.category?.name || job.location || job.postcode}</span>
                         </div>
                       )}
-                      <div className="flex items-center justify-between mt-1 text-[11px] text-gray-400 pt-1 border-t border-gray-100">
-                        <div className={`flex items-center gap-1 font-bold ${["CLOSED", "COMPLETED", "CANCELLED", "EXPIRED"].includes(job.status) ? "text-gray-400" : "text-[#557A18]"}`}>
-                          <Euro size={11} /> {formatBudget(job.budgetRange)}
+                      <div className="flex items-center justify-between text-[11px] text-gray-400 font-medium pt-1">
+                        <div className="flex items-center gap-1 font-bold text-gray-400 uppercase">
+                          <span>€</span>
+                          {job.budgetRange && <span>{formatBudget(job.budgetRange)}</span>}
                         </div>
-                        <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1 text-gray-400">
                           <Calendar size={11} />
                           {formatDate(job.createdAt)}
                         </div>

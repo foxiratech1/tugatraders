@@ -12,8 +12,8 @@ export default function CustomerLayout({
     <AuthGuard>
       <div className="min-h-screen flex flex-col bg-[#F8F9F5]">
         <CustomerNavbar />
-        {/* Push content below the fixed navbar (height ~96px) */}
-        <div className=" flex-1 flex flex-col">
+        {/* Push content below the fixed navbar (height 60px) */}
+        <div className="pt-[60px] flex-1 flex flex-col bg-[#F8F9F5]">
           {children}
         </div>
       </div>

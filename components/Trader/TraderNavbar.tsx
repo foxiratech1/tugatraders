@@ -219,7 +219,7 @@ export default function TraderNavbar() {
 
       {/* ── Main navbar ─────────────────────────────────── */}
       <div className="bg-white border-b border-[#E5E7EB] shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
-        <div className="max-w-[1280px] mx-auto px-4 h-[60px] flex items-center gap-6">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-[60px] flex items-center gap-6">
 
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 mr-4">

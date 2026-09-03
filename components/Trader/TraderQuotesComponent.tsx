@@ -106,7 +106,7 @@ function formatPrice(price?: number) {
   return new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(price);
 }
 
-function QuoteCard({ quote, onEdit, onView }: { quote: Quote; onEdit: (quote: Quote) => void; onView: (quote: Quote) => void }) {
+function QuoteCard({ quote, onEdit, onView, onWithdraw, isWithdrawing }: { quote: Quote; onEdit: (quote: Quote) => void; onView: (quote: Quote) => void; onWithdraw: (quote: Quote) => void; isWithdrawing: boolean }) {
   const jobTitle = quote.job?.title || quote.jobTitle || "Job";
   const jobPostcode = quote.job?.postcode || quote.jobPostcode || "";
   const jobId = quote.job?.id || quote.jobId || "";
@@ -137,17 +137,31 @@ function QuoteCard({ quote, onEdit, onView }: { quote: Quote; onEdit: (quote: Qu
         <div className="flex items-center gap-3">
           {/* Edit Quote - only show for pending quotes */}
           {quote.status?.toUpperCase() === "PENDING" && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onEdit(quote);
-              }}
-              title="Edit Quote"
-              aria-label="Edit Quote"
-              className="inline-flex items-center justify-center text-[#6E9625] hover:text-[#4A6B0A] transition-colors"
-            >
-              <SquarePen size={15} strokeWidth={2} />
-            </button>
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onWithdraw(quote);
+                }}
+                disabled={isWithdrawing}
+                title="Withdraw Quote"
+                aria-label="Withdraw Quote"
+                className="inline-flex items-center justify-center text-red-400 hover:text-red-600 transition-colors disabled:opacity-50"
+              >
+                <Trash2 size={15} strokeWidth={2} />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onEdit(quote);
+                }}
+                title="Edit Quote"
+                aria-label="Edit Quote"
+                className="inline-flex items-center justify-center text-[#6E9625] hover:text-[#4A6B0A] transition-colors"
+              >
+                <SquarePen size={15} strokeWidth={2} />
+              </button>
+            </>
           )}
 
           {/* View Quote */}
@@ -177,6 +191,9 @@ export default function TraderQuotesComponent() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [modalLoading, setModalLoading] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
+  const [quoteToWithdraw, setQuoteToWithdraw] = useState<Quote | null>(null);
+  const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
 
   // View quote states
   const [viewingQuote, setViewingQuote] = useState<Quote | null>(null);
@@ -371,6 +388,38 @@ export default function TraderQuotesComponent() {
     }
   };
 
+  const handleWithdrawClick = (quote: Quote) => {
+    setQuoteToWithdraw(quote);
+    setIsWithdrawModalOpen(true);
+  };
+
+  const executeWithdrawQuote = async () => {
+    if (!quoteToWithdraw) return;
+
+    setIsWithdrawing(true);
+    try {
+      await authApi.withdrawQuote(quoteToWithdraw.id);
+      toast.success("Quote withdrawn successfully");
+      setQuotes((prev) => prev.filter((q) => q.id !== quoteToWithdraw.id));
+      setTotalQuotes((prev) => Math.max(0, prev - 1));
+
+      // Close view modal if withdrawing from it
+      if (isViewModalOpen && viewingQuote?.id === quoteToWithdraw.id) {
+        setIsViewModalOpen(false);
+        setViewingQuote(null);
+      }
+
+      // Close withdraw modal
+      setIsWithdrawModalOpen(false);
+      setQuoteToWithdraw(null);
+    } catch (err: any) {
+      console.error("Failed to withdraw quote", err);
+      toast.error(err?.response?.data?.message || err?.message || "Failed to withdraw quote. Please try again.");
+    } finally {
+      setIsWithdrawing(false);
+    }
+  };
+
   useEffect(() => {
     fetchQuotes(1);
   }, []);
@@ -384,7 +433,7 @@ export default function TraderQuotesComponent() {
 
   return (
     <div className="min-h-screen bg-[#F8F9F5]">
-      <div className="max-w-[1100px] mx-auto px-6 py-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="flex items-center justify-between mb-8">
           <h1 className="text-[2rem] font-bold text-[#1C2C1C]">My Quotes</h1>
           <button
@@ -417,7 +466,7 @@ export default function TraderQuotesComponent() {
         ) : (
           <div className="space-y-4">
             {quotes.map(q => (
-              <QuoteCard key={q.id} quote={q} onEdit={handleEditClick} onView={handleViewClick} />
+              <QuoteCard key={q.id} quote={q} onEdit={handleEditClick} onView={handleViewClick} onWithdraw={handleWithdrawClick} isWithdrawing={false} />
             ))}
           </div>
         )}
@@ -755,12 +804,65 @@ export default function TraderQuotesComponent() {
                 )}
               </div>
             )}
-            <div className="mt-6">
+            <div className="mt-6 flex gap-3">
+              {(viewingQuote.status?.toUpperCase() === "PENDING") && (
+                <button
+                  onClick={() => handleWithdrawClick(viewingQuote)}
+                  className="flex-1 h-[46px] rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 text-[14px] font-bold transition-colors cursor-pointer flex items-center justify-center gap-2"
+                >
+                  <Trash2 size={15} />
+                  Withdraw
+                </button>
+              )}
               <button
                 onClick={() => setIsViewModalOpen(false)}
-                className="w-full h-[46px] rounded-xl bg-gray-100 hover:bg-gray-200 text-[#1C2C1C] text-[14px] font-bold transition-colors cursor-pointer"
+                className="flex-1 h-[46px] rounded-xl bg-gray-100 hover:bg-gray-200 text-[#1C2C1C] text-[14px] font-bold transition-colors cursor-pointer"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Withdraw Confirmation Modal ─────────────────────────────────── */}
+      {isWithdrawModalOpen && quoteToWithdraw && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300"
+            onClick={() => !isWithdrawing && setIsWithdrawModalOpen(false)}
+          />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 z-10 animate-in fade-in zoom-in-95 duration-200 text-center">
+            <div className="w-12 h-12 rounded-full bg-red-50 mx-auto flex items-center justify-center mb-4">
+              <Trash2 size={24} className="text-red-500" />
+            </div>
+            <h2 className="text-[18px] font-bold text-[#1C2C1C] mb-2">Withdraw Quote?</h2>
+            <p className="text-[14px] text-gray-500 mb-6 leading-relaxed">
+              Are you sure you want to withdraw your quote for{" "}
+              <span className="font-semibold text-gray-700">"{quoteToWithdraw.job?.title || quoteToWithdraw.jobTitle || "this job"}"</span>?
+              This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setIsWithdrawModalOpen(false)}
+                disabled={isWithdrawing}
+                className="flex-1 h-[42px] rounded-xl bg-gray-100 hover:bg-gray-200 text-[#1C2C1C] text-[14px] font-bold transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={executeWithdrawQuote}
+                disabled={isWithdrawing}
+                className="flex-1 h-[42px] rounded-xl bg-red-600 hover:bg-red-700 text-white text-[14px] font-bold transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {isWithdrawing ? (
+                  <>
+                    <Loader2 size={15} className="animate-spin" />
+                    Withdrawing...
+                  </>
+                ) : (
+                  "Withdraw"
+                )}
               </button>
             </div>
           </div>

@@ -180,8 +180,8 @@ function TraderInboxContent() {
   };
 
   return (
-    <div className="flex-1 flex bg-[#F7F7F5] p-6 h-[calc(100vh-96px)] overflow-hidden">
-      <div className="flex-1 flex gap-6 max-w-7xl mx-auto w-full h-full overflow-hidden">
+    <div className="flex-1 flex bg-[#F8F9F5] p-4 sm:p-6 h-[calc(100vh-60px)] overflow-hidden">
+      <div className="flex-1 flex gap-6 max-w-[1400px] mx-auto w-full h-full overflow-hidden">
 
         {/* Left Sidebar Layout */}
         <div className="w-[340px] flex flex-col gap-5 h-full flex-shrink-0">

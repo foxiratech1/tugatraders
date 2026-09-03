@@ -530,6 +530,10 @@ export default function PublicTraderProfilePage() {
                     <span className="font-bold text-[#1C2C1C] text-[14px]">{metrics?.completedJobs || 0}</span>
                   </div>
                   <div className="flex flex-col gap-1">
+                    <span className="text-gray-500 font-medium text-[12px]">Closed Jobs</span>
+                    <span className="font-bold text-[#1C2C1C] text-[14px]">{metrics?.closedJobs ?? tp?.closedJobs ?? 0}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
                     <span className="text-gray-500 font-medium text-[12px]">Response Rate</span>
                     <span className="font-bold text-[#1C2C1C] text-[14px]">{metrics?.responseRate ? `${Math.round(metrics.responseRate * 100)}%` : 'N/A'}</span>
                   </div>

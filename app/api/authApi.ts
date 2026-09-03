@@ -142,6 +142,18 @@ export const authApi = {
     return data;
   },
 
+  // Update category selection for an existing subscription
+  updateSubscriptionCategories: async (payload: {
+    traderId: string;
+    planId: string;
+    tradeCategories: string[];
+    skillsServices: string[];
+    subCategories: string[];
+  }) => {
+    const { data } = await api.put("/api/subscriptions/category-selection", payload);
+    return data;
+  },
+
   // Authentication – forgot password
   forgotPassword: async (payload: { email: string }) => {
     const { data } = await api.post('/api/auth/forgot-password', payload);
@@ -426,6 +438,12 @@ export const authApi = {
       return data;
     }
     const { data } = await api.patch(`/api/quotes/${quoteId}`, payload);
+    return data;
+  },
+
+  // Withdraw (delete) a quote
+  withdrawQuote: async (quoteId: string) => {
+    const { data } = await api.delete(`/api/quotes/${quoteId}`);
     return data;
   },
 

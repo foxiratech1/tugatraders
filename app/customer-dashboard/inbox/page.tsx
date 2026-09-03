@@ -78,12 +78,18 @@ function ChatDashboardContent() {
 
       // 0. If traderId is passed, ensure a conversation exists
       const traderIdParam = searchParams.get("traderId");
+      let initialNewConv: any = null;
+      let effectiveActiveId = targetConvId || activeConversationId;
+
       if (traderIdParam && !activeConversationId) {
         try {
           const newOrExisting = await authApi.getOrCreateConversation(traderIdParam, fallbackJobId || undefined);
-          const convId = newOrExisting?.data?.id || newOrExisting?.data?._id || newOrExisting?.id || newOrExisting?._id;
+          const conv = newOrExisting?.data || newOrExisting;
+          const convId = conv?.id || conv?._id;
           if (convId) {
-            router.replace(`/customer-dashboard/inbox?conversationId=${convId}${fallbackJobId ? `&jobId=${fallbackJobId}` : ''}`);
+            effectiveActiveId = convId;
+            initialNewConv = { ...conv, id: convId };
+            router.replace(`/customer-dashboard/inbox?conversationId=${convId}&traderId=${traderIdParam}${fallbackJobId ? `&jobId=${fallbackJobId}` : ''}`);
           }
         } catch (e) {
           console.error("Failed to get/create conversation for trader", e);
@@ -108,8 +114,14 @@ function ChatDashboardContent() {
         }));
       }
 
+      // Ensure initialNewConv is present in mappedList
+      if (initialNewConv && !mappedList.some((c) => c.id === initialNewConv.id)) {
+        mappedList.unshift(initialNewConv);
+      }
+
       // If the active conversation is not in the mapped list, but we have traderIdParam, fetch it explicitly
-      if (activeConversationId && !mappedList.some((c) => c.id === activeConversationId) && traderIdParam) {
+      const currentActiveId = effectiveActiveId || activeConversationId;
+      if (currentActiveId && !mappedList.some((c) => c.id === currentActiveId) && traderIdParam) {
         try {
           const newOrExisting = await authApi.getOrCreateConversation(traderIdParam, fallbackJobId || undefined);
           const conv = newOrExisting?.data || newOrExisting;
@@ -123,7 +135,7 @@ function ChatDashboardContent() {
 
       if (mappedList.length > 0) {
         // Deduplicate by traderId — but always keep the active conversation
-        const activeId = targetConvId || activeConversationId;
+        const activeId = effectiveActiveId || targetConvId || activeConversationId;
         const seenTraders = new Map<string, typeof mappedList[0]>();
         for (const conv of mappedList) {
           const tid = conv.trader?.id || conv.trader?._id || conv.traderId || conv.id;
@@ -215,9 +227,19 @@ function ChatDashboardContent() {
     c.trader?.fullName?.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const selectedConversation = conversations.find(
-    (c) => c.id === activeConversationId
-  );
+  const targetId = activeConversationId || searchParams.get("conversationId");
+  const traderIdParam = searchParams.get("traderId");
+  const selectedConversation =
+    conversations.find((c) => c.id === targetId) ||
+    (traderIdParam
+      ? conversations.find(
+        (c) =>
+          c.traderId === traderIdParam ||
+          c.trader?.id === traderIdParam ||
+          (c.trader as any)?._id === traderIdParam
+      )
+      : undefined) ||
+    (conversations.length > 0 && targetId ? conversations[0] : undefined);
 
   const formatMessageTime = (dateStr?: string) => {
     if (!dateStr) return "";
@@ -234,8 +256,8 @@ function ChatDashboardContent() {
   };
 
   return (
-    <div className="flex-1 flex bg-[#F8F9F5] p-6 mt-[60px] h-[calc(100vh-60px)] overflow-hidden">
-      <div className="flex-1 flex gap-6 max-w-7xl mx-auto w-full h-full overflow-hidden">
+    <div className="flex-1 flex bg-[#F8F9F5] p-4 sm:p-6 h-[calc(100vh-60px)] overflow-hidden">
+      <div className="flex-1 flex gap-6 max-w-[1400px] mx-auto w-full h-full overflow-hidden">
 
         {/* Sidebar - Recent Chats */}
         <div className="w-[340px] flex flex-col bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden h-full flex-shrink-0">
@@ -278,7 +300,7 @@ function ChatDashboardContent() {
             ) : (
               <div className="space-y-1.5">
                 {filteredConversations.map((c) => {
-                  const isSelected = c.id === activeConversationId;
+                  const isSelected = c.id === selectedConversation?.id || c.id === targetId;
                   const isOnline = onlineUsers.has(c.trader?.id || "") || onlineUsers.has(c.trader?._id || "");
 
                   return (

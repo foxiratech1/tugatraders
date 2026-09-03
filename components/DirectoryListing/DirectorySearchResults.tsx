@@ -4,11 +4,12 @@ import Image from 'next/image';
 import { authApi } from '@/app/api/authApi';
 import {
   Star, MapPin, Phone, ShieldCheck, BadgeCheck, Building,
-  Wrench, List, ChevronDown, Check, ChevronRight, Filter, Search,
+  Wrench, List, ChevronDown, Check, ChevronRight, ChevronLeft, Filter, Search,
   CheckCircle, Heart, Award, Briefcase, MessageSquare, Camera, LogIn, X, Target, Layers
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
+import toast from 'react-hot-toast';
 import { getAccessToken, getUserRole, parseJwt, clearTokens } from '@/utils/auth';
 import { Role } from '@/utils/role';
 
@@ -30,19 +31,19 @@ const FilterDropdown = ({ value, onChange, options, disabled, placeholder, icon:
 
   return (
     <div className="relative" ref={dropdownRef}>
-      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none z-10"><Icon size={16} /></div>
+      <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none z-10"><Icon size={14} /></div>
       <div
-        className={`w-full bg-[#F3F4F6] text-[14px] font-medium rounded-xl py-3 pl-10 pr-10 outline-none flex items-center justify-between transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-[#E5E7EB]'} ${selectedOption ? 'text-[#243A24]' : 'text-[#4B5563]'}`}
+        className={`w-full bg-[#F3F4F6] text-[13px] font-medium rounded-xl h-[38px] pl-9 pr-8 outline-none flex items-center justify-between transition-colors ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-[#E5E7EB]'} ${selectedOption ? 'text-[#1C2C1C] font-semibold' : 'text-[#4B5563]'}`}
         onClick={() => !disabled && setIsOpen(!isOpen)}
       >
         <span className="truncate">{selectedOption ? selectedOption.name : placeholder}</span>
-        <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none"><ChevronDown size={16} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} /></div>
+        <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none"><ChevronDown size={14} className={`transition-transform ${isOpen ? 'rotate-180' : ''}`} /></div>
       </div>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-full bg-white rounded-xl shadow-[0_15px_60px_rgba(0,0,0,0.12)] border border-gray-100 z-50 max-h-[250px] overflow-y-auto py-2 text-left [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
+        <div className="absolute top-full left-0 mt-1 w-full bg-white rounded-xl shadow-[0_15px_60px_rgba(0,0,0,0.12)] border border-gray-100 z-50 max-h-[220px] overflow-y-auto py-1.5 text-left [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
           <div
-            className="px-4 py-2.5 hover:bg-[#F4F7F1] text-[13px] font-semibold text-[#6B7280] cursor-pointer transition-colors"
+            className="px-3.5 py-2 hover:bg-[#F4F7F1] text-[12px] font-semibold text-[#6B7280] cursor-pointer transition-colors"
             onClick={(e) => { e.stopPropagation(); onChange(''); setIsOpen(false); }}
           >
             {placeholder}
@@ -50,7 +51,7 @@ const FilterDropdown = ({ value, onChange, options, disabled, placeholder, icon:
           {options.map((opt: any) => (
             <div
               key={opt.id}
-              className={`px-4 py-2.5 hover:bg-[#F4F7F1] text-[13px] cursor-pointer transition-colors flex items-center justify-between ${value === opt.id ? 'bg-[#F4F7F1] text-[#6E9625] font-bold' : 'text-[#243A24] font-medium'}`}
+              className={`px-3.5 py-2 hover:bg-[#F4F7F1] text-[12.5px] cursor-pointer transition-colors flex items-center justify-between ${value === opt.id ? 'bg-[#F4F7F1] text-[#6E9625] font-bold' : 'text-[#1C2C1C] font-medium'}`}
               onClick={(e) => { e.stopPropagation(); onChange(opt.id); setIsOpen(false); }}
             >
               <span className="truncate">{opt.name}</span>
@@ -322,10 +323,100 @@ const DirectorySearchResults = () => {
   const [activeImageIndex, setActiveImageIndex] = useState<Record<string, number>>({});
   const [expandedGallery, setExpandedGallery] = useState<Record<string, boolean>>({});
 
+  // Full-screen image lightbox modal
+  const [lightbox, setLightbox] = useState<{
+    isOpen: boolean;
+    images: string[];
+    currentIndex: number;
+    traderName: string;
+  }>({
+    isOpen: false,
+    images: [],
+    currentIndex: 0,
+    traderName: '',
+  });
+
+  const openLightbox = (images: string[], index: number, traderName: string) => {
+    if (!images || images.length === 0) return;
+    setLightbox({
+      isOpen: true,
+      images,
+      currentIndex: Math.max(0, Math.min(index, images.length - 1)),
+      traderName,
+    });
+  };
+
+  const closeLightbox = () => {
+    setLightbox(prev => ({ ...prev, isOpen: false }));
+  };
+
+  const nextLightboxImage = () => {
+    setLightbox(prev => ({
+      ...prev,
+      currentIndex: (prev.currentIndex + 1) % prev.images.length,
+    }));
+  };
+
+  const prevLightboxImage = () => {
+    setLightbox(prev => ({
+      ...prev,
+      currentIndex: (prev.currentIndex - 1 + prev.images.length) % prev.images.length,
+    }));
+  };
+
+  useEffect(() => {
+    if (!lightbox.isOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        closeLightbox();
+      } else if (e.key === 'ArrowLeft') {
+        prevLightboxImage();
+      } else if (e.key === 'ArrowRight') {
+        nextLightboxImage();
+      }
+    };
+
+    document.body.style.overflow = 'hidden';
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = 'unset';
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [lightbox.isOpen, lightbox.images.length]);
+
   // Track revealed phone numbers per trader card
   const [revealedPhones, setRevealedPhones] = useState<Record<string, boolean>>({});
   const togglePhone = (traderId: string) => {
     setRevealedPhones(prev => ({ ...prev, [traderId]: true }));
+  };
+
+  const handleSendMessage = async (traderId: string) => {
+    const token = getAccessToken();
+    if (!token) {
+      setPendingTraderId(traderId);
+      setPendingAction("contact-trader");
+      setShowLoginModal(true);
+      return;
+    }
+
+    try {
+      toast.loading("Opening conversation...", { id: "openChat" });
+      const res = await authApi.getOrCreateConversation(traderId);
+      const conversation = res?.data || res;
+      const conversationId = conversation?.id || conversation?._id;
+      if (conversationId) {
+        toast.success("Conversation opened", { id: "openChat" });
+        router.push(`/customer-dashboard/inbox?conversationId=${conversationId}&traderId=${traderId}`);
+      } else {
+        toast.dismiss("openChat");
+        router.push(`/customer-dashboard/inbox?traderId=${traderId}`);
+      }
+    } catch (error: any) {
+      console.error("Failed to open conversation:", error);
+      toast.dismiss("openChat");
+      router.push(`/customer-dashboard/inbox?traderId=${traderId}`);
+    }
   };
 
   const handleLoginSuccess = async () => {
@@ -348,12 +439,8 @@ const DirectorySearchResults = () => {
     if (pendingAction === "contact-trader") {
       const id = pendingTraderId;
       setPendingTraderId(null);
-      try {
-        await authApi.getTraderProfileById(id);
-      } catch (err) {
-        console.error("Failed to fetch trader profile by ID after login", err);
-      }
-      router.push(`/customer-dashboard/inbox?traderId=${id}`);
+      handleSendMessage(id);
+      return;
     } else if (pendingAction === "view-profile") {
       const id = pendingTraderId;
       setPendingTraderId(null);
@@ -399,12 +486,7 @@ const DirectorySearchResults = () => {
     }
 
     if (actionType === "contact-trader") {
-      try {
-        await authApi.getTraderProfileById(traderId);
-      } catch (err) {
-        console.error("Failed to fetch trader profile by ID", err);
-      }
-      router.push(`/customer-dashboard/inbox?traderId=${traderId}`);
+      handleSendMessage(traderId);
       return;
     }
 
@@ -571,25 +653,25 @@ const DirectorySearchResults = () => {
 
   return (
     <>
-      <section className="bg-[#F8F9F7] py-10 sm:py-16 px-4 sm:px-6 lg:px-8 xl:px-20">
+      <section className="bg-[#F8F9F7] pt-3 sm:pt-5 pb-14 px-4 sm:px-6 lg:px-8 xl:px-12">
         <div className="max-w-[1400px] mx-auto">
           {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
-            <h2 className="text-[20px] sm:text-[24px] font-extrabold text-[#1C2C1C]">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+            <h2 className="text-[18px] sm:text-[22px] font-extrabold text-[#1C2C1C]">
               {filteredResults.length} Professional{filteredResults.length !== 1 && 's'} found
             </h2>
-            <div className="flex items-center gap-3 mt-4 sm:mt-0 text-[14px] w-full sm:w-auto">
+            <div className="flex items-center gap-3 mt-2 sm:mt-0 text-[14px] w-full sm:w-auto">
               <span className="text-[#4B5563] font-medium hidden sm:inline">Sort by:</span>
               <div className="relative w-full sm:w-auto" ref={sortDropdownRef}>
                 <button
                   onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
-                  className="bg-white border border-gray-200 hover:border-[#6E9625] px-4 py-2.5 rounded-xl font-bold text-[#243A24] flex items-center justify-between gap-3 min-w-[200px] w-full sm:w-auto shadow-sm transition-all cursor-pointer outline-none focus:ring-2 focus:ring-[#6E9625]/20"
+                  className="bg-white border border-gray-200 hover:border-[#6E9625] px-3.5 py-2 rounded-xl font-bold text-[#243A24] flex items-center justify-between gap-3 min-w-[180px] w-full sm:w-auto shadow-xs transition-all cursor-pointer outline-none focus:ring-2 focus:ring-[#6E9625]/20 text-[13px]"
                 >
                   <span className="truncate">{sortOption}</span>
-                  <ChevronDown size={16} className={`text-[#9CA3AF] transition-transform ${isSortDropdownOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown size={14} className={`text-[#9CA3AF] transition-transform ${isSortDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {isSortDropdownOpen && (
-                  <div className="absolute right-0 sm:right-0 left-0 sm:left-auto top-full mt-2 w-full sm:w-48 bg-white rounded-xl shadow-[0_15px_60px_rgba(0,0,0,0.12)] border border-gray-100 z-50 py-2">
+                  <div className="absolute right-0 sm:right-0 left-0 sm:left-auto top-full mt-1.5 w-full sm:w-48 bg-white rounded-xl shadow-[0_15px_60px_rgba(0,0,0,0.12)] border border-gray-100 z-50 py-1.5">
                     {["Highest rated", "Most Relevant"].map(option => (
                       <div
                         key={option}
@@ -597,7 +679,7 @@ const DirectorySearchResults = () => {
                           setSortOption(option);
                           setIsSortDropdownOpen(false);
                         }}
-                        className={`px-4 py-2.5 text-[13px] cursor-pointer transition-colors ${sortOption === option ? "bg-[#F4F7F1] text-[#6E9625] font-bold" : "text-[#4B5563] font-medium hover:bg-[#F4F7F1]"
+                        className={`px-3.5 py-2 text-[12.5px] cursor-pointer transition-colors ${sortOption === option ? "bg-[#F4F7F1] text-[#6E9625] font-bold" : "text-[#4B5563] font-medium hover:bg-[#F4F7F1]"
                           }`}
                       >
                         {option}
@@ -610,39 +692,61 @@ const DirectorySearchResults = () => {
           </div>
 
 
-          <div className="flex flex-col lg:flex-row gap-6 xl:gap-8">
+          <div className="flex flex-col lg:flex-row gap-6 xl:gap-8 items-start">
             {/* Left Sidebar (Filters) */}
-            <div className="w-full lg:w-[260px] xl:w-[320px] shrink-0 lg:sticky lg:top-28 lg:max-h-[calc(100vh-140px)] lg:overflow-y-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-              <div className="lg:hidden mb-4">
+            <div className="w-full lg:w-[270px] xl:w-[300px] shrink-0 lg:sticky lg:top-[85px]">
+              <div className="lg:hidden mb-3">
                 <button
                   onClick={() => setShowFiltersMobile(!showFiltersMobile)}
-                  className="w-full bg-white border border-[#E5E7EB] rounded-2xl py-3.5 px-5 flex items-center justify-between text-[#1C2C1C] font-bold shadow-sm cursor-pointer"
+                  className="w-full bg-white border border-[#E5E7EB] rounded-2xl py-3 px-4 flex items-center justify-between text-[#1C2C1C] font-bold shadow-xs cursor-pointer text-[14px]"
                 >
-                  <span className="flex items-center gap-2"><Filter size={18} /> Filters & Search</span>
-                  <ChevronDown size={18} className={`transition-transform ${showFiltersMobile ? 'rotate-180' : ''}`} />
+                  <span className="flex items-center gap-2"><Filter size={16} /> Filters & Search</span>
+                  <ChevronDown size={16} className={`transition-transform ${showFiltersMobile ? 'rotate-180' : ''}`} />
                 </button>
               </div>
 
-              <div className={`bg-white rounded-[24px] p-6 shadow-sm border border-[#F3F4F6] mb-6 ${showFiltersMobile ? 'block' : 'hidden lg:block'}`}>
-                <h3 className="text-[20px] font-bold text-[#243A24] mb-6">Filters</h3>
-                <div className="flex flex-col gap-5">
+              <div className={`bg-white rounded-[22px] p-4 sm:p-5 shadow-xs border border-gray-100 mb-3 ${showFiltersMobile ? 'block' : 'hidden lg:block'}`}>
+                {/* Header with Reset */}
+                <div className="flex items-center justify-between mb-3 pb-2 border-b border-gray-100">
+                  <h3 className="text-[16px] font-extrabold text-[#1C2C1C] flex items-center gap-2">
+                    <Filter size={15} className="text-[#6E9625]" /> Filters
+                  </h3>
+                  <button
+                    onClick={() => {
+                      setSearchName('');
+                      setSelectedCategory('');
+                      setSelectedSkill('');
+                      setSelectedSubCategory('');
+                      setWorkRadius(20);
+                      setMinRating(null);
+                      setAppliedMinRating(null);
+                      fetchTraders(true);
+                    }}
+                    className="text-[11.5px] font-bold text-gray-400 hover:text-[#6E9625] transition-colors cursor-pointer"
+                  >
+                    Reset all
+                  </button>
+                </div>
+
+                <div className="flex flex-col gap-3">
                   {/* Search by Name */}
                   <div>
-                    <label className="block text-[14px] font-medium text-[#4B5563] mb-2">Search by Name</label>
+                    <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Search by Name</label>
                     <div className="relative">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]"><Search size={16} /></div>
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none"><Search size={14} /></div>
                       <input
                         type="text"
                         placeholder="e.g. John Doe"
                         value={searchName}
                         onChange={(e) => setSearchName(e.target.value)}
-                        className="w-full bg-[#F3F4F6] text-[#4B5563] text-[14px] font-medium rounded-xl py-3 pl-10 pr-4 outline-none placeholder-[#9CA3AF]"
+                        className="w-full bg-[#F3F4F6] text-[#1C2C1C] text-[13px] font-medium rounded-xl h-[38px] pl-9 pr-3 outline-none placeholder-[#9CA3AF] focus:ring-1 focus:ring-[#6E9625] focus:bg-white transition-all"
                       />
                     </div>
                   </div>
+
                   {/* Category */}
                   <div>
-                    <label className="block text-[14px] font-medium text-[#4B5563] mb-2">Category</label>
+                    <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Category</label>
                     <FilterDropdown
                       icon={Wrench}
                       value={selectedCategory}
@@ -652,9 +756,10 @@ const DirectorySearchResults = () => {
                       options={categories.map((cat) => ({ id: cat.id, name: cat.name }))}
                     />
                   </div>
+
                   {/* Skills / Services */}
                   <div>
-                    <label className="block text-[13px] font-medium text-[#4B5563] mb-2">Skills / Services</label>
+                    <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Skills / Services</label>
                     <FilterDropdown
                       icon={List}
                       value={selectedSkill}
@@ -664,9 +769,10 @@ const DirectorySearchResults = () => {
                       options={skillServices.map((svc) => ({ id: svc.id, name: svc.name }))}
                     />
                   </div>
+
                   {/* Sub‑category */}
                   <div>
-                    <label className="block text-[13px] font-medium text-[#4B5563] mb-2">Sub‑category</label>
+                    <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Sub‑category</label>
                     <FilterDropdown
                       icon={Layers}
                       value={selectedSubCategory}
@@ -676,20 +782,26 @@ const DirectorySearchResults = () => {
                       options={subCategories.map((sub) => ({ id: sub.id, name: sub.name }))}
                     />
                   </div>
+
                   {/* Location */}
                   <div>
-                    <label className="block text-[13px] font-medium text-[#4B5563] mb-2">Location</label>
+                    <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Location</label>
                     <div className="relative">
-                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-[#9CA3AF]"><MapPin size={16} /></div>
-                      <input type="text" placeholder="Enter Location" className="w-full bg-[#F3F4F6] text-[#4B5563] text-[14px] font-medium rounded-xl py-3 pl-10 pr-10 outline-none placeholder-[#9CA3AF]" />
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#9CA3AF] cursor-pointer"><Target size={16} /></div>
+                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none"><MapPin size={14} /></div>
+                      <input
+                        type="text"
+                        placeholder="Enter Location"
+                        className="w-full bg-[#F3F4F6] text-[#1C2C1C] text-[13px] font-medium rounded-xl h-[38px] pl-9 pr-8 outline-none placeholder-[#9CA3AF] focus:ring-1 focus:ring-[#6E9625] focus:bg-white transition-all"
+                      />
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] cursor-pointer hover:text-[#6E9625] transition-colors"><Target size={14} /></div>
                     </div>
                   </div>
+
                   {/* Work Radius */}
-                  <div className="mt-2">
-                    <div className="flex justify-between items-center mb-4">
-                      <label className="text-[13px] font-medium text-[#4B5563]">Work Radius</label>
-                      <span className="text-[12px] text-[#4B5563]">{workRadius} KM</span>
+                  <div>
+                    <div className="flex justify-between items-center mb-1.5">
+                      <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Work Radius</label>
+                      <span className="text-[11.5px] font-extrabold text-[#1C2C1C] bg-gray-100 px-2 py-0.5 rounded-md">{workRadius} KM</span>
                     </div>
                     <style>
                       {`
@@ -697,30 +809,30 @@ const DirectorySearchResults = () => {
                         -webkit-appearance: none;
                         appearance: none;
                         width: 100%;
-                        height: 6px;
+                        height: 5px;
                         border-radius: 8px;
-                        background: linear-gradient(to right, #A1B072 0%, #A1B072 ${workRadius}%, #F4F7F1 ${workRadius}%, #F4F7F1 100%);
+                        background: linear-gradient(to right, #6E9625 0%, #6E9625 ${workRadius}%, #E5E7EB ${workRadius}%, #E5E7EB 100%);
                         outline: none;
                       }
                       .radius-slider::-webkit-slider-thumb {
                         -webkit-appearance: none;
                         appearance: none;
-                        width: 16px;
-                        height: 16px;
+                        width: 14px;
+                        height: 14px;
                         border-radius: 50%;
                         background: #ffffff;
-                        border: 2px solid #A1B072;
+                        border: 2px solid #6E9625;
                         cursor: pointer;
-                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.15);
                       }
                       .radius-slider::-moz-range-thumb {
-                        width: 16px;
-                        height: 16px;
+                        width: 14px;
+                        height: 14px;
                         border-radius: 50%;
                         background: #ffffff;
-                        border: 2px solid #A1B072;
+                        border: 2px solid #6E9625;
                         cursor: pointer;
-                        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+                        box-shadow: 0 1px 3px rgba(0,0,0,0.15);
                       }
                     `}
                     </style>
@@ -733,92 +845,22 @@ const DirectorySearchResults = () => {
                       className="radius-slider"
                     />
                   </div>
-                  {/* Rating */}
-                  {/* 
-                  <div className="mt-2">
-                    <label className="block text-[13px] font-medium text-[#4B5563] mb-4">Rating</label>
-                    <div className="flex flex-col gap-3.5">
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={minRating === 5}
-                          onChange={() => setMinRating(minRating === 5 ? null : 5)}
-                          className="w-4 h-4 rounded border-gray-300 text-[#243A24] focus:ring-[#243A24]"
-                        />
-                        <div className="flex items-center gap-1">
-                          {[...Array(5)].map((_, i) => <Star key={i} size={14} fill="#9CA3AF" className="text-[#9CA3AF]" />)}
-                        </div>
-                        <span className="text-[13px] font-medium text-[#4B5563] ml-1">5.0</span>
-                      </label>
 
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={minRating === 4}
-                          onChange={() => setMinRating(minRating === 4 ? null : 4)}
-                          className="w-4 h-4 rounded border-gray-300 text-[#243A24] focus:ring-[#243A24]"
-                        />
-                        <div className="flex items-center gap-1">
-                          {[...Array(4)].map((_, i) => <Star key={i} size={14} fill="#9CA3AF" className="text-[#9CA3AF]" />)}
-                          <Star size={14} className="text-[#D1D5DB]" />
-                        </div>
-                        <span className="text-[13px] font-medium text-[#4B5563] ml-1">& up 4.0</span>
-                      </label>
-
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={minRating === 3}
-                          onChange={() => setMinRating(minRating === 3 ? null : 3)}
-                          className="w-4 h-4 rounded border-gray-300 text-[#243A24] focus:ring-[#243A24]"
-                        />
-                        <div className="flex items-center gap-1">
-                          {[...Array(3)].map((_, i) => <Star key={i} size={14} fill="#9CA3AF" className="text-[#9CA3AF]" />)}
-                          {[...Array(2)].map((_, i) => <Star key={i} size={14} className="text-[#D1D5DB]" />)}
-                        </div>
-                        <span className="text-[13px] font-medium text-[#4B5563] ml-1">& up 3.0</span>
-                      </label>
-
-                      <label className="flex items-center gap-3 cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={minRating === 2}
-                          onChange={() => setMinRating(minRating === 2 ? null : 2)}
-                          className="w-4 h-4 rounded border-gray-300 text-[#243A24] focus:ring-[#243A24]"
-                        />
-                        <div className="flex items-center gap-1">
-                          {[...Array(2)].map((_, i) => <Star key={i} size={14} fill="#9CA3AF" className="text-[#9CA3AF]" />)}
-                          {[...Array(3)].map((_, i) => <Star key={i} size={14} className="text-[#D1D5DB]" />)}
-                        </div>
-                        <span className="text-[13px] font-medium text-[#4B5563] ml-1">& up 2.0</span>
-                      </label>
-                    </div>
-                  </div>
-                  */}
-                  {/* Action Buttons */}
-                  <div className="flex flex-col gap-3 mt-4">
+                  {/* Action Button */}
+                  <div className="pt-1.5">
                     <button
                       onClick={() => {
                         setAppliedMinRating(minRating);
                         fetchTraders();
                       }}
-                      className="w-full bg-[#243A24] text-white font-bold text-[14px] py-3.5 rounded-xl hover:bg-[#1A301A] transition-colors cursor-pointer"
+                      className="w-full h-[40px] bg-[#1C2C1C] hover:bg-[#2A412A] text-white font-bold text-[13px] rounded-xl transition-all shadow-xs cursor-pointer flex items-center justify-center gap-2 active:scale-[0.99]"
                     >
                       Apply Filters
                     </button>
-                    <button onClick={() => {
-                      setSelectedCategory('');
-                      setSelectedSkill('');
-                      setSelectedSubCategory('');
-                      setWorkRadius(20);
-                      setMinRating(null);
-                      setAppliedMinRating(null);
-                      fetchTraders(true);
-                    }} className="w-full bg-white text-[#4B5563] font-bold text-[14px] py-3.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer">Clear Filters</button>
                   </div>
                 </div>
               </div>
-              <p className={`text-[12px] text-[#6B7280] leading-relaxed px-2 ${showFiltersMobile ? 'block' : 'hidden lg:block'}`}>
+              <p className={`text-[11px] text-[#6B7280] leading-relaxed px-1 ${showFiltersMobile ? 'block' : 'hidden lg:block'}`}>
                 TugaTrades connects customers with independent tradespeople. Services are provided directly by the tradesperson, not TugaTrades.
               </p>
             </div>
@@ -863,7 +905,17 @@ const DirectorySearchResults = () => {
                     >
                       {/* ── Left: Image Gallery ── */}
                       <div className="w-full md:w-[180px] lg:w-[220px] xl:w-[280px] shrink-0 flex flex-col gap-2">
-                        <div className="w-full aspect-[4/3] rounded-xl overflow-hidden relative bg-gray-100">
+                        <div
+                          className="w-full aspect-[4/3] rounded-xl overflow-hidden relative bg-gray-100 cursor-pointer group"
+                          onClick={() => {
+                            const portfolioUrls = (trader.portfolio && trader.portfolio.length > 0)
+                              ? trader.portfolio.map((img: any) => getImageUrl(img))
+                              : [getImageUrl(trader.profileImage || trader.logo)];
+                            const currentIdx = activeImageIndex[trader.id] || 0;
+                            openLightbox(portfolioUrls, currentIdx, trader.fullName || 'Trader');
+                          }}
+                          title="Click to view full image"
+                        >
                           <Image
                             src={
                               activeImageIndex[trader.id] !== undefined && trader.portfolio && trader.portfolio.length > 0
@@ -873,9 +925,14 @@ const DirectorySearchResults = () => {
                             alt={trader.fullName || 'Trader'}
                             fill
                             sizes="(max-width: 768px) 100vw, 320px"
-                            className="object-cover"
+                            className="object-cover transition-transform duration-300 group-hover:scale-105"
                             unoptimized
                           />
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors flex items-center justify-center">
+                            <div className="w-9 h-9 rounded-full bg-white/90 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[#1C2C1C] shadow-md">
+                              <Camera size={18} />
+                            </div>
+                          </div>
                         </div>
 
                         {trader.portfolio && trader.portfolio.length > 0 && (
@@ -893,9 +950,12 @@ const DirectorySearchResults = () => {
                                       setExpandedGallery(prev => ({ ...prev, [trader.id]: true }));
                                     }
                                     setActiveImageIndex(prev => ({ ...prev, [trader.id]: actualIndex }));
+                                    const portfolioUrls = trader.portfolio!.map((item: any) => getImageUrl(item));
+                                    openLightbox(portfolioUrls, actualIndex, trader.fullName || 'Trader');
                                   }}
+                                  title="Click to view full image"
                                 >
-                                  <Image src={getImageUrl(img)} alt="" fill sizes="(max-width: 768px) 25vw, 80px" className="object-cover" unoptimized />
+                                  <Image src={getImageUrl(img)} alt="" fill sizes="(max-width: 768px) 25vw, 80px" className="object-cover hover:scale-105 transition-transform" unoptimized />
                                   {isLastThumb && (
                                     <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-bold text-[15px]">
                                       +{trader.portfolio!.length - 3}
@@ -915,9 +975,18 @@ const DirectorySearchResults = () => {
                             Show less photos
                           </button>
                         )}
-                        <div className="text-center text-gray-500 text-[13px] font-medium mt-1 flex justify-center items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (trader.portfolio && trader.portfolio.length > 0) {
+                              const portfolioUrls = trader.portfolio.map((img: any) => getImageUrl(img));
+                              openLightbox(portfolioUrls, activeImageIndex[trader.id] || 0, trader.fullName || 'Trader');
+                            }
+                          }}
+                          className="text-center text-gray-500 text-[13px] font-medium mt-1 flex justify-center items-center gap-1.5 hover:text-[#6E9625] transition-colors cursor-pointer w-full"
+                        >
                           <Camera size={14} /> {trader.portfolio?.length || 0} Photos
-                        </div>
+                        </button>
                       </div>
 
                       {/* ── Middle: Info ── */}
@@ -1078,23 +1147,8 @@ const DirectorySearchResults = () => {
                         </a>
 
                         <button
-                          onClick={(e) => {
-                            const btn = e.currentTarget;
-                            if (btn.disabled) return;
-                            btn.disabled = true;
-
-                            const isLoggedIn = !!getAccessToken();
-                            if (!isLoggedIn) {
-                              setPendingTraderId(trader.id);
-                              setPendingAction("contact-trader");
-                              setShowLoginModal(true);
-                              btn.disabled = false;
-                            } else {
-                              router.push(`/customer-dashboard/inbox?traderId=${trader.id}`);
-                              setTimeout(() => { btn.disabled = false; }, 2000);
-                            }
-                          }}
-                          className="w-full bg-[#B91C1C] text-white py-3.5 rounded-xl font-bold text-[14px] hover:bg-[#991B1B] transition-colors cursor-pointer block disabled:opacity-70"
+                          onClick={() => handleSendMessage(trader.id)}
+                          className="w-full bg-[#B91C1C] text-white py-3.5 rounded-xl font-bold text-[14px] hover:bg-[#991B1B] transition-colors cursor-pointer block"
                         >
                           Send Message
                         </button>
@@ -1143,6 +1197,104 @@ const DirectorySearchResults = () => {
         onSuccess={handleLoginSuccess}
         action={pendingAction}
       />
+
+      {/* ── Fullscreen Lightbox Modal with Transparent Background ── */}
+      {lightbox.isOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex flex-col items-center justify-center bg-black/85 backdrop-blur-md p-4 select-none animate-in fade-in duration-200"
+          onClick={closeLightbox}
+        >
+          {/* Top Bar: Trader Name, Counter, Close Button */}
+          <div
+            className="w-full max-w-5xl flex items-center justify-between py-3 px-4 text-white z-20"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3">
+              <span className="font-bold text-[16px] sm:text-[18px] text-white tracking-wide">
+                {lightbox.traderName}
+              </span>
+              {lightbox.images.length > 1 && (
+                <span className="text-[12px] sm:text-[13px] text-white/70 bg-white/10 px-2.5 py-1 rounded-full font-medium">
+                  {lightbox.currentIndex + 1} / {lightbox.images.length}
+                </span>
+              )}
+            </div>
+
+            <button
+              onClick={closeLightbox}
+              className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer"
+              aria-label="Close image viewer"
+            >
+              <X size={22} />
+            </button>
+          </div>
+
+          {/* Main Content Area with Navigation Arrows & Image */}
+          <div
+            className="relative w-full max-w-5xl flex-1 flex items-center justify-center my-2"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Left Arrow */}
+            {lightbox.images.length > 1 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  prevLightboxImage();
+                }}
+                className="absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition-all hover:scale-110 z-30 border border-white/20 cursor-pointer shadow-xl"
+                aria-label="Previous image"
+              >
+                <ChevronLeft size={28} />
+              </button>
+            )}
+
+            {/* Displayed Image */}
+            <div className="relative max-h-[70vh] sm:max-h-[75vh] w-full h-full flex items-center justify-center">
+              <img
+                key={lightbox.currentIndex}
+                src={lightbox.images[lightbox.currentIndex]}
+                alt={`${lightbox.traderName} photo ${lightbox.currentIndex + 1}`}
+                className="max-h-[70vh] sm:max-h-[75vh] max-w-full object-contain rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] transition-all duration-200"
+              />
+            </div>
+
+            {/* Right Arrow */}
+            {lightbox.images.length > 1 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  nextLightboxImage();
+                }}
+                className="absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 w-11 h-11 sm:w-13 sm:h-13 rounded-full bg-black/50 hover:bg-black/80 text-white flex items-center justify-center transition-all hover:scale-110 z-30 border border-white/20 cursor-pointer shadow-xl"
+                aria-label="Next image"
+              >
+                <ChevronRight size={28} />
+              </button>
+            )}
+          </div>
+
+          {/* Bottom Thumbnails Strip */}
+          {lightbox.images.length > 1 && (
+            <div
+              className="flex items-center gap-2.5 max-w-full overflow-x-auto py-2 px-3 rounded-2xl bg-white/10 backdrop-blur-md z-20 scrollbar-thin scrollbar-thumb-white/20"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {lightbox.images.map((img, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setLightbox(prev => ({ ...prev, currentIndex: idx }))}
+                  className={`relative w-12 h-12 sm:w-14 sm:h-14 rounded-xl overflow-hidden shrink-0 border-2 transition-all cursor-pointer ${lightbox.currentIndex === idx
+                    ? 'border-[#6E9625] scale-105 shadow-md opacity-100'
+                    : 'border-transparent opacity-50 hover:opacity-100'
+                    }`}
+                >
+                  <img src={img} alt="" className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
     </>
   );
 };

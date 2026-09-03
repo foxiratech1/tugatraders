@@ -547,16 +547,32 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
                     <Star
                       size={32}
                       className={`${star <= (hoverRating || rating)
-                        ? 'text-[#6E9625] fill-[#6E9625]'
+                        ? 'text-[#FFB300] fill-[#FFB300]'
                         : 'text-[#E5E7EB] fill-[#E5E7EB]'
-                        } transition-colors`}
+                        } transition-colors cursor-pointer`}
                     />
                   </button>
                 ))}
               </div>
-              {rating > 0 && (
-                <p className="text-[13px] font-bold text-[#6E9625]">
-                  {rating.toFixed(1)} {rating >= 4 ? 'Excellent Quality' : rating >= 3 ? 'Good Quality' : 'Poor Quality'}
+              {(hoverRating || rating) > 0 && (
+                <p className="text-[14px] font-bold text-[#D97706] transition-all">
+                  {(() => {
+                    const currentVal = hoverRating || rating;
+                    switch (currentVal) {
+                      case 1:
+                        return "1 — Very Poor";
+                      case 2:
+                        return "2 — Poor";
+                      case 3:
+                        return "3 — Good";
+                      case 4:
+                        return "4 — Very Good";
+                      case 5:
+                        return "5 — Excellent";
+                      default:
+                        return "";
+                    }
+                  })()}
                 </p>
               )}
             </div>

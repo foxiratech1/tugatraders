@@ -304,8 +304,8 @@ export default function TraderReviews() {
   // }
 
   return (
-    <div className="min-h-screen bg-[#F7F7F5] p-6 md:p-10 font-sans">
-      <div className="max-w-[1100px] mx-auto">
+    <div className="min-h-screen bg-[#F8F9F5] font-sans">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
 
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-8">

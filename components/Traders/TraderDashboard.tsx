@@ -56,7 +56,7 @@ export default function TraderDashboard() {
   const openJobs = dashboardDetails?.openJobs || [];
 
   return (
-    <div className="max-w-[1400px] mx-auto px-6 py-8 bg-[#F8F9F5] min-h-screen">
+    <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 bg-[#F8F9F5] min-h-screen">
       
       <div className="grid grid-cols-1 xl:grid-cols-[280px_1fr] gap-8">
         

@@ -151,179 +151,183 @@ export default function CustomerNavbar() {
     : fallbackAvatar;
 
   return (
-    <header className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-sm border-b border-[#E5E7EB] shadow-[0_2px_12px_rgba(0,0,0,0.06)] h-[60px] px-6 md:px-10 flex items-stretch">
+    <header className="fixed top-0 left-0 right-0 z-50 font-sans">
+      <div className="bg-white border-b border-[#E5E7EB] shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
+        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-[60px] flex items-stretch gap-4">
 
-      {/* Left: Logo */}
-      <Link href="/" className="flex items-center flex-shrink-0 self-center mr-4">
-        <Image
-          src="/TugaLogo.png"
-          alt="TugaTrades Customer Logo"
-          width={220}
-          height={50}
-          className="h-12 w-auto object-contain"
-        />
-      </Link>
+          {/* Left: Logo */}
+          <Link href="/" className="flex items-center flex-shrink-0 self-center mr-4">
+            <div className="relative h-12 w-[200px] sm:h-[50px] sm:w-[220px] overflow-hidden">
+              <Image
+                src="/TugaLogo.png"
+                alt="TugaTrades Customer Logo"
+                fill
+                className="object-contain object-left"
+                priority
+              />
+            </div>
+          </Link>
 
-      {/* Middle: Navigation */}
-      <nav className="hidden lg:flex items-stretch h-full flex-1 justify-center gap-1">
-        {navLinks.map((link) => {
-          const isActive = pathname === link.href;
-          const Icon = link.icon;
+          {/* Middle: Navigation */}
+          <nav className="hidden lg:flex items-stretch h-full flex-1 justify-center gap-1">
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href;
+              const Icon = link.icon;
 
-          return (
-            <Link
-              key={link.name}
-              href={link.href}
-              className={`
+              return (
+                <Link
+                  key={link.name}
+                  href={link.href}
+                  className={`
                   relative flex items-center gap-1.5 px-4 text-[13px] font-semibold
                   transition-all duration-200 whitespace-nowrap h-full group
                   ${isActive ? "text-[#1C2C1C]" : "text-[#1C2C1C]/60 hover:text-[#1C2C1C] hover:scale-[1.02]"}
                 `}
-            >
-              <Icon size={14} className={`transition-all duration-200 ${isActive ? "text-[#6E9625] scale-110" : "text-current group-hover:text-[#6E9625]"}`} />
-              <div className="flex items-center gap-1.5 relative">
-                {link.name}
-                {link.name === "Inbox" && inboxUnread > 0 && (
-                  <span className="flex items-center justify-center min-w-[15px] h-[15px] px-1 bg-[#E53935] rounded-full text-[9px] font-bold text-white shadow-sm">
-                    {inboxUnread > 99 ? "99+" : inboxUnread}
-                  </span>
-                )}
-                {link.name === "Jobs" && jobsUnread > 0 && (
-                  <span className="flex items-center justify-center min-w-[15px] h-[15px] px-1 bg-[#E53935] rounded-full text-[9px] font-bold text-white shadow-sm">
-                    {jobsUnread > 99 ? "99+" : jobsUnread}
-                  </span>
-                )}
-              </div>
-              {/* Active underline */}
-              {isActive && (
-                <span className="absolute bottom-0 left-2 right-2 h-[3px] rounded-t-full bg-[#6E9625] shadow-[0_-2px_8px_rgba(110,150,37,0.4)]" />
-              )}
-            </Link>
-          );
-        })}
-      </nav>
-
-      {/* Right: Actions & User Profile */}
-      <div className="ml-auto flex items-center gap-4 self-center">
-
-        {/* Notification Bell with Dropdown */}
-        <div className="relative" ref={notifDropdownRef}>
-          <button
-            onClick={() => setShowNotifDropdown(!showNotifDropdown)}
-            className="relative p-2 flex items-center justify-center text-[#555555] hover:text-[#1C2C1C] transition-colors"
-          >
-            <Bell size={22} strokeWidth={2.5} />
-            {/* Notification Dot */}
-            {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[#F43F5E] flex items-center justify-center text-[10px] text-white font-bold">
-                {unreadCount}
-              </span>
-            )}
-          </button>
-
-          {showNotifDropdown && (
-            <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white border border-gray-200 rounded-2xl shadow-xl py-3 z-50 overflow-hidden">
-              <div className="flex items-center justify-between px-4 pb-2 border-b border-gray-100">
-                <span className="font-bold text-[14px] text-[#1C2C1C]">Notifications</span>
-                {unreadCount > 0 && (
-                  <button
-                    onClick={handleMarkAllRead}
-                    className="text-[12px] font-semibold text-[#6E9625] hover:underline"
-                  >
-                    Mark all as read
-                  </button>
-                )}
-              </div>
-
-              <div className="max-h-[300px] overflow-y-auto">
-                {notifications.length === 0 ? (
-                  <div className="py-8 text-center text-gray-400 text-[13px]">
-                    No notifications yet.
+                >
+                  <Icon size={14} className={`transition-all duration-200 ${isActive ? "text-[#6E9625] scale-110" : "text-current group-hover:text-[#6E9625]"}`} />
+                  <div className="flex items-center gap-1.5 relative">
+                    {link.name}
+                    {link.name === "Inbox" && inboxUnread > 0 && (
+                      <span className="flex items-center justify-center min-w-[15px] h-[15px] px-1 bg-[#E53935] rounded-full text-[9px] font-bold text-white shadow-sm">
+                        {inboxUnread > 99 ? "99+" : inboxUnread}
+                      </span>
+                    )}
+                    {link.name === "Jobs" && jobsUnread > 0 && (
+                      <span className="flex items-center justify-center min-w-[15px] h-[15px] px-1 bg-[#E53935] rounded-full text-[9px] font-bold text-white shadow-sm">
+                        {jobsUnread > 99 ? "99+" : jobsUnread}
+                      </span>
+                    )}
                   </div>
-                ) : (
-                  notifications.map((n) => (
-                    <div
-                      key={n.id}
-                      onClick={() => {
-                        setShowNotifDropdown(false);
-                        router.push(`/customer-dashboard/notifications?id=${n.id}`);
-                      }}
-                      className={`cursor-pointer px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors ${!n.isRead && !n.read ? "bg-[#6E9625]/5" : ""
-                        }`}
-                    >
-                      <div className="flex items-start justify-between gap-2">
-                        <span className="font-bold text-[13px] text-[#1C2C1C] break-words">
-                          {n.title || "Notification"}
-                        </span>
-                        <span className="text-[10px] text-gray-400 whitespace-nowrap">
-                          {new Date(n.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                        </span>
-                      </div>
-                      <p className="text-[12px] text-gray-600 mt-1 leading-relaxed break-words">
-                        {n.message || n.content || n.body}
-                      </p>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          )}
-        </div>
+                  {/* Active underline */}
+                  {isActive && (
+                    <span className="absolute bottom-0 left-2 right-2 h-[3px] rounded-t-full bg-[#6E9625] shadow-[0_-2px_8px_rgba(110,150,37,0.4)]" />
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
 
-        {/* Separator */}
-        <div className="w-[1px] h-8 bg-[#E5E5E5] hidden sm:block" />
+          {/* Right: Actions & User Profile */}
+          <div className="ml-auto flex items-center gap-4 self-center">
 
-        {/* User Profile Info */}
-        <div className="relative" ref={profileDropdownRef}>
-          <button
-            onClick={() => setShowDropdown(!showDropdown)}
-            className="flex items-center gap-3 group"
-          >
-            <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
-              <img
-                key={imageUrl}
-                src={imageUrl}
-                alt={profile?.fullName || "User"}
-                className="w-full h-full object-cover rounded-full"
-              />
-            </div>
-
-            <div className="hidden sm:flex flex-col">
-              <span className="text-[13px] font-black text-[#1C2C1C] leading-tight">
-                {profile?.fullName?.toUpperCase() || "CUSTOMER"}
-              </span>
-
-              <span className="text-[12px] font-medium text-[#1C2C1C]/50 mt-0.5">
-                {profile?.role || "Customer"}
-              </span>
-            </div>
-
-            <ChevronDown size={16} />
-          </button>
-
-          {showDropdown && (
-            <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg py-2 z-50">
-              <Link
-                href="/customer-dashboard/profile"
-                className="block px-4 py-2 text-sm hover:bg-gray-100"
-                onClick={() => setShowDropdown(false)}
-              >
-                Profile
-              </Link>
-
+            {/* Notification Bell with Dropdown */}
+            <div className="relative" ref={notifDropdownRef}>
               <button
-                onClick={handleLogout}
-                className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                onClick={() => setShowNotifDropdown(!showNotifDropdown)}
+                className="relative p-2 flex items-center justify-center text-[#555555] hover:text-[#1C2C1C] transition-colors"
               >
-                <LogOut size={16} />
-                Logout
+                <Bell size={22} strokeWidth={2.5} />
+                {/* Notification Dot */}
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[#F43F5E] flex items-center justify-center text-[10px] text-white font-bold">
+                    {unreadCount}
+                  </span>
+                )}
               </button>
+
+              {showNotifDropdown && (
+                <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white border border-gray-200 rounded-2xl shadow-xl py-3 z-50 overflow-hidden">
+                  <div className="flex items-center justify-between px-4 pb-2 border-b border-gray-100">
+                    <span className="font-bold text-[14px] text-[#1C2C1C]">Notifications</span>
+                    {unreadCount > 0 && (
+                      <button
+                        onClick={handleMarkAllRead}
+                        className="text-[12px] font-semibold text-[#6E9625] hover:underline"
+                      >
+                        Mark all as read
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="max-h-[300px] overflow-y-auto">
+                    {notifications.length === 0 ? (
+                      <div className="py-8 text-center text-gray-400 text-[13px]">
+                        No notifications yet.
+                      </div>
+                    ) : (
+                      notifications.map((n) => (
+                        <div
+                          key={n.id}
+                          onClick={() => {
+                            setShowNotifDropdown(false);
+                            router.push(`/customer-dashboard/notifications?id=${n.id}`);
+                          }}
+                          className={`cursor-pointer px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors ${!n.isRead && !n.read ? "bg-[#6E9625]/5" : ""
+                            }`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="font-bold text-[13px] text-[#1C2C1C] break-words">
+                              {n.title || "Notification"}
+                            </span>
+                            <span className="text-[10px] text-gray-400 whitespace-nowrap">
+                              {new Date(n.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                            </span>
+                          </div>
+                          <p className="text-[12px] text-gray-600 mt-1 leading-relaxed break-words">
+                            {n.message || n.content || n.body}
+                          </p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+
+            {/* Separator */}
+            <div className="w-[1px] h-8 bg-[#E5E5E5] hidden sm:block" />
+
+            {/* User Profile Info */}
+            <div className="relative" ref={profileDropdownRef}>
+              <button
+                onClick={() => setShowDropdown(!showDropdown)}
+                className="flex items-center gap-3 group"
+              >
+                <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
+                  <img
+                    key={imageUrl}
+                    src={imageUrl}
+                    alt={profile?.fullName || "User"}
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                </div>
+
+                <div className="hidden sm:flex flex-col">
+                  <span className="text-[13px] font-black text-[#1C2C1C] leading-tight">
+                    {profile?.fullName?.toUpperCase() || "CUSTOMER"}
+                  </span>
+
+                  <span className="text-[12px] font-medium text-[#1C2C1C]/50 mt-0.5">
+                    {profile?.role || "Customer"}
+                  </span>
+                </div>
+
+                <ChevronDown size={16} />
+              </button>
+
+              {showDropdown && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg py-2 z-50">
+                  <Link
+                    href="/customer-dashboard/profile"
+                    className="block px-4 py-2 text-sm hover:bg-gray-100"
+                    onClick={() => setShowDropdown(false)}
+                  >
+                    Profile
+                  </Link>
+
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  >
+                    <LogOut size={16} />
+                    Logout
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-
       </div>
-
     </header>
   );
 }

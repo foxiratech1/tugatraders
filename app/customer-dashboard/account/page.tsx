@@ -127,7 +127,7 @@ export default function AccountSettingsPage() {
 
   return (
     <div className="min-h-screen bg-[#F8F9F5]">
-      <div className="max-w-[1320px] mx-auto px-6 py-10">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="mb-8">
           <h1 className="text-[2rem] font-bold text-[#1C2C1C] leading-tight">Account Settings</h1>
           <p className="text-gray-500 mt-2 text-[15px]">Manage your security and account preferences.</p>

@@ -296,19 +296,40 @@ export default function Step3Page() {
                 const addedSkills = newSkills.filter(s => !g.selectedSkillServices.includes(s));
                 const removedSkills = g.selectedSkillServices.filter(s => !newSkills.includes(s));
 
+                let newSubCats = [...g.selectedSubCategories];
+
+                // Remove sub-categories of removed skills
+                removedSkills.forEach(skillId => {
+                    const subsToRemove = (subCategoriesMap[skillId] || []).map(sub => sub.id);
+                    newSubCats = newSubCats.filter(id => !subsToRemove.includes(id));
+                });
+
+                // Add sub-categories from already cached skill services
+                addedSkills.forEach(skillId => {
+                    if (subCategoriesMap[skillId]) {
+                        const subsToAdd = subCategoriesMap[skillId].map(sub => sub.id);
+                        newSubCats = Array.from(new Set([...newSubCats, ...subsToAdd]));
+                    }
+                });
+
+                // Automatically fetch and add all associated sub-categories in the background
                 addedSkills.forEach(skillId => {
                     if (!subCategoriesMap[skillId]) {
                         authApi.getSubCategories(skillId).then(res => {
                             const subArray = Array.isArray(res) ? res : res?.data || res?.subCategories || [];
                             setSubCategoriesMap(prevMap => ({ ...prevMap, [skillId]: subArray }));
+                            const subIds = subArray.map((s: any) => s.id);
+                            if (subIds.length > 0) {
+                                setCategoryGroups(prevGroups => prevGroups.map(grp => {
+                                    if (grp.id !== id) return grp;
+                                    return {
+                                        ...grp,
+                                        selectedSubCategories: Array.from(new Set([...grp.selectedSubCategories, ...subIds]))
+                                    };
+                                }));
+                            }
                         }).catch(err => console.error(err));
                     }
-                });
-
-                let newSubCats = [...g.selectedSubCategories];
-                removedSkills.forEach(skillId => {
-                    const subsToRemove = (subCategoriesMap[skillId] || []).map(sub => sub.id);
-                    newSubCats = newSubCats.filter(id => !subsToRemove.includes(id));
                 });
 
                 return { ...g, selectedSkillServices: newSkills, selectedSubCategories: newSubCats };
@@ -331,9 +352,9 @@ export default function Step3Page() {
             return;
         }
 
-        const validGroups = categoryGroups.filter(g => g.categoryId && g.selectedSkillServices.length > 0 && g.selectedSubCategories.length > 0);
+        const validGroups = categoryGroups.filter(g => g.categoryId && g.selectedSkillServices.length > 0);
         if (validGroups.length !== categoryGroups.length || categoryGroups.length === 0) {
-            toast.error("Please completely fill out all added Trade Categories (Category, Skill Services, and Sub Categories).");
+            toast.error("Please completely fill out all added Trade Categories (Category and Skill Services).");
             return;
         }
 
@@ -356,7 +377,25 @@ export default function Step3Page() {
             // 2. Then save categories (requires the subscription to exist)
             const tradeCategories = validGroups.map(g => g.categoryId);
             const skillServiceIds = validGroups.flatMap(g => g.selectedSkillServices);
-            const subCategoryIds = validGroups.flatMap(g => g.selectedSubCategories);
+
+            // Automatically resolve all associated sub-categories in the background
+            const subCatPromises = skillServiceIds.map(async (skillId) => {
+                if (subCategoriesMap[skillId]) {
+                    return subCategoriesMap[skillId].map(s => s.id);
+                }
+                try {
+                    const res = await authApi.getSubCategories(skillId);
+                    const subArray = Array.isArray(res) ? res : res?.data || res?.subCategories || [];
+                    return subArray.map((s: any) => s.id);
+                } catch (e) {
+                    return [];
+                }
+            });
+            const resolvedSubCatArrays = await Promise.all(subCatPromises);
+            const subCategoryIds = Array.from(new Set([
+                ...validGroups.flatMap(g => g.selectedSubCategories),
+                ...resolvedSubCatArrays.flat(),
+            ]));
 
             await authApi.saveTraderCategories({
                 tradeCategories,
@@ -740,7 +779,8 @@ export default function Step3Page() {
                                                     />
                                                 </div>
 
-                                                {group.selectedSkillServices.length === 0 ? (
+                                                {/* Sub Categories UI commented out - automatically counted and selected in background */}
+                                                {/* {group.selectedSkillServices.length === 0 ? (
                                                     <div>
                                                         <label className="block text-[12px] font-bold text-[#1C2C1C]/60 mb-2 uppercase tracking-wide">
                                                             Select Sub Categories *
@@ -774,7 +814,7 @@ export default function Step3Page() {
                                                             </div>
                                                         );
                                                     })
-                                                )}
+                                                )} */}
                                             </div>
                                         </div>
                                     );

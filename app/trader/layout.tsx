@@ -14,10 +14,10 @@ export default function TraderLayout({
 }) {
   return (
     <TraderAuthGuard>
-      <div className="min-h-screen flex flex-col bg-[#F0EDE8]">
+      <div className="min-h-screen flex flex-col bg-[#F8F9F5]">
         <TraderNavbar />
-        {/* Push content below the fixed two-tier navbar (36px top bar + 60px main bar) */}
-        <div className="pt-[96px] flex-1 flex flex-col bg-[#F8F9F5]">{children}</div>
+        {/* Push content below the fixed 60px navbar */}
+        <div className="pt-[60px] flex-1 flex flex-col bg-[#F8F9F5]">{children}</div>
       </div>
     </TraderAuthGuard>
   );

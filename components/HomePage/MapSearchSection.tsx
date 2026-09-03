@@ -143,15 +143,16 @@ const MapSearchSection = () => {
           </div>
 
           {/* Center Map */}
-          <div className="relative w-full max-w-[280px] shrink-0 sm:max-w-[320px] md:max-w-[340px] lg:max-w-[360px] xl:max-w-[380px]">
+          {/* Center Map */}
+          <div className="relative h-[460px] w-full max-w-[380px] shrink-0 overflow-hidden sm:h-[500px] sm:max-w-[420px] lg:h-[520px] lg:max-w-[450px] xl:max-w-[480px]">
             <Image
               src="/maplogo.jfif"
               alt="Portugal Map with Trades"
-              width={380}
-              height={500}
+              width={480}
+              height={520}
               unoptimized
               priority
-              className="h-auto w-full object-contain"
+              className="absolute left-1/2 top-1/2 h-auto w-[480px] max-w-none -translate-x-1/2 -translate-y-1/2 object-contain"
             />
           </div>
 
@@ -220,7 +221,7 @@ const MapSearchSection = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.6 }}
-          className="mt-12 flex flex-col items-center sm:mt-14 lg:mt-16"
+          className="mt-6 flex flex-col items-center sm:mt-8 lg:mt-10"
         >
           <Link
             href="/post-job"
