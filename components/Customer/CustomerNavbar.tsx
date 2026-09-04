@@ -8,7 +8,7 @@ import { useEffect, useState, useRef } from "react";
 import { authApi } from "@/app/api/authApi";
 import { ChevronDown, LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { clearTokens } from "@/utils/auth";
+import { clearTokens, getUser, getAccessToken, parseJwt } from "@/utils/auth";
 import { useSocket } from "@/hooks/useSocket";
 
 export default function CustomerNavbar() {
@@ -23,9 +23,61 @@ export default function CustomerNavbar() {
   const [inboxUnread, setInboxUnread] = useState(0);
   const [jobsUnread, setJobsUnread] = useState(0);
 
+  const getMyUserId = () => {
+    if (profile?.id) return String(profile.id);
+    if (profile?._id) return String(profile._id);
+    const u = getUser();
+    if (u?.id) return String(u.id);
+    if (u?._id) return String(u._id);
+    const token = getAccessToken();
+    if (token) {
+      const decoded = parseJwt(token);
+      if (decoded?.id) return String(decoded.id);
+      if (decoded?.userId) return String(decoded.userId);
+      if (decoded?.user?.id) return String(decoded.user.id);
+      if (decoded?._id) return String(decoded._id);
+    }
+    return null;
+  };
+
+  const fetchBadges = async () => {
+    try {
+      const [dashRes, convRes] = await Promise.all([
+        authApi.getCustomerDashboard().catch(() => null),
+        authApi.getConversations().catch(() => null),
+      ]);
+      const dashData = dashRes?.data || dashRes;
+      if (dashData?.actionRequired) {
+        const { activeJobsCount = 0, quotesAwaitingResponseCount = 0, unreviewedJobsCount = 0 } = dashData.actionRequired;
+        setJobsUnread(activeJobsCount + quotesAwaitingResponseCount + unreviewedJobsCount);
+      }
+      const convos = convRes?.data || convRes || [];
+      if (Array.isArray(convos)) {
+        let activeConvId: string | null = null;
+        if (typeof window !== "undefined" && window.location.pathname.includes("/inbox")) {
+          const urlParams = new URLSearchParams(window.location.search);
+          activeConvId = urlParams.get("conversationId");
+        }
+        const unreadMsgs = convos.reduce((acc: number, c: any) => {
+          const cid = String(c.id || c._id);
+          if (activeConvId && cid === String(activeConvId)) return acc;
+          return acc + (c.unreadCount || 0);
+        }, 0);
+        setInboxUnread(unreadMsgs);
+      }
+    } catch (err) {
+      console.error("Failed to fetch badges", err);
+    }
+  };
+
   // Hook up socket for new notifications
   useSocket({
     onNewNotification: (notif) => {
+      const myId = getMyUserId();
+      const senderId = notif?.senderId || notif?.sender?.id || notif?.sender?._id || notif?.actorId;
+      if (myId && senderId && String(myId) === String(senderId)) {
+        return;
+      }
       setNotifications((prev) => {
         if (prev.some((n) => n.id === notif.id)) return prev;
         return [notif, ...prev];
@@ -38,9 +90,34 @@ export default function CustomerNavbar() {
         setJobsUnread(activeJobsCount + quotesAwaitingResponseCount + unreviewedJobsCount);
       }
     },
-    onNewMessage: () => {
-      setInboxUnread((prev) => prev + 1);
-    }
+    onNewMessage: (message: any) => {
+      const myId = getMyUserId();
+      const senderId =
+        message?.senderId ||
+        message?.sender?.id ||
+        message?.sender?._id ||
+        message?.userId;
+
+      // When the customer sends a message, DO NOT count it in inbox unread!
+      if (myId && senderId && String(myId) === String(senderId)) {
+        return;
+      }
+      if (message?.senderRole === "CUSTOMER" || message?.role === "CUSTOMER") {
+        return;
+      }
+
+      // If user is currently looking at this conversation in /inbox, don't increment unread count
+      if (typeof window !== "undefined" && window.location.pathname.includes("/inbox")) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const activeConvId = urlParams.get("conversationId");
+        const msgConvId = message?.conversationId || message?.conversation;
+        if (activeConvId && msgConvId && String(activeConvId) === String(msgConvId)) {
+          return;
+        }
+      }
+
+      fetchBadges();
+    },
   });
 
   const notifDropdownRef = useRef<HTMLDivElement>(null);
@@ -69,27 +146,101 @@ export default function CustomerNavbar() {
     { name: "Reviews", href: "/customer-dashboard/reviews", icon: Star },
     { name: "Setting", href: "/customer-dashboard/account", icon: Settings },
   ];
+  const NOTIF_STORAGE_KEY = "customer_read_notifications";
+
+  const isNotificationRead = (n: any, readIdSet: Set<string>) => {
+    if (readIdSet.has(String(n.id))) return true;
+    if (n.isRead === true || n.read === true || n.is_read === true || n.seen === true || n.isSeen === true) return true;
+    if (typeof n.status === "string" && n.status.toUpperCase() === "READ") return true;
+    if (n.readAt || n.read_at) return true;
+    return false;
+  };
+
   const fetchNotifications = async () => {
     try {
       const res = await authApi.getMyNotifications();
-      const notifList = res?.data || res || [];
-      if (Array.isArray(notifList)) {
-        setNotifications(notifList);
-        const unread = notifList.filter((n: any) => !n.isRead && !n.read).length;
-        setUnreadCount(unread);
-      }
+      const notifList = Array.isArray(res?.data)
+        ? res.data
+        : Array.isArray(res?.data?.notifications)
+          ? res.data.notifications
+          : Array.isArray(res?.data?.content)
+            ? res.data.content
+            : Array.isArray(res?.notifications)
+              ? res.notifications
+              : Array.isArray(res)
+                ? res
+                : [];
+
+      let readIdSet = new Set<string>();
+      try {
+        const stored = JSON.parse(localStorage.getItem(NOTIF_STORAGE_KEY) || "[]");
+        if (Array.isArray(stored)) {
+          readIdSet = new Set(stored.map(String));
+        }
+      } catch (e) {}
+
+      setNotifications(
+        notifList.map((n: any) => {
+          const isRead = isNotificationRead(n, readIdSet);
+          return { ...n, isRead, read: isRead };
+        })
+      );
+
+      const unread = notifList.filter((n: any) => !isNotificationRead(n, readIdSet)).length;
+      setUnreadCount(unread);
     } catch (error) {
       console.error("Failed to load notifications", error);
     }
   };
 
   const handleMarkAllRead = async () => {
+    setNotifications((prev) =>
+      prev.map((n) => ({ ...n, isRead: true, read: true, is_read: true }))
+    );
+    setUnreadCount(0);
+
+    try {
+      const stored = JSON.parse(localStorage.getItem(NOTIF_STORAGE_KEY) || "[]");
+      const currentIds = notifications.map((n: any) => String(n.id));
+      const merged = Array.from(new Set([...(Array.isArray(stored) ? stored : []), ...currentIds]));
+      localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(merged));
+    } catch (e) {
+      console.error("Failed to save read notifications to localStorage", e);
+    }
+
     try {
       await authApi.markNotificationsReadAll();
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true, read: true })));
-      setUnreadCount(0);
     } catch (error) {
       console.error("Failed to mark all as read", error);
+    }
+  };
+
+  const handleNotificationClick = async (n: any) => {
+    setShowNotifDropdown(false);
+
+    setNotifications((prev) =>
+      prev.map((item) =>
+        item.id === n.id ? { ...item, isRead: true, read: true, is_read: true } : item
+      )
+    );
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+
+    try {
+      const stored = JSON.parse(localStorage.getItem(NOTIF_STORAGE_KEY) || "[]");
+      const list = Array.isArray(stored) ? stored : [];
+      if (!list.includes(String(n.id))) {
+        list.push(String(n.id));
+        localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(list));
+      }
+    } catch (e) {}
+
+    authApi.markNotificationRead(n.id).catch(() => {});
+
+    const targetUrl = n.actionUrl || n.link || n.url;
+    if (targetUrl) {
+      router.push(targetUrl);
+    } else {
+      router.push(`/customer-dashboard/notifications?id=${n.id}`);
     }
   };
 
@@ -100,25 +251,6 @@ export default function CustomerNavbar() {
         setProfile(res?.data || res);
       } catch (error) {
         console.error("Failed to load profile", error);
-      }
-    };
-
-    const fetchBadges = async () => {
-      try {
-        const [dashRes, convRes] = await Promise.all([
-          authApi.getCustomerDashboard(),
-          authApi.getConversations()
-        ]);
-        const dashData = dashRes?.data || dashRes;
-        if (dashData?.actionRequired) {
-          const { activeJobsCount = 0, quotesAwaitingResponseCount = 0, unreviewedJobsCount = 0 } = dashData.actionRequired;
-          setJobsUnread(activeJobsCount + quotesAwaitingResponseCount + unreviewedJobsCount);
-        }
-        const convos = convRes?.data || convRes || [];
-        const unreadMsgs = convos.reduce((acc: number, c: any) => acc + (c.unreadCount || 0), 0);
-        setInboxUnread(unreadMsgs);
-      } catch (err) {
-        console.error("Failed to fetch badges", err);
       }
     };
 
@@ -135,12 +267,26 @@ export default function CustomerNavbar() {
       }
     };
 
+    const handleUnreadUpdate = (e: any) => {
+      if (typeof e?.detail === "number") {
+        setInboxUnread(e.detail);
+      }
+    };
+
     document.addEventListener("mousedown", handleOutsideClick);
+    window.addEventListener("inbox_unread_updated", handleUnreadUpdate);
 
     return () => {
       document.removeEventListener("mousedown", handleOutsideClick);
+      window.removeEventListener("inbox_unread_updated", handleUnreadUpdate);
     };
   }, []);
+
+  useEffect(() => {
+    if (!pathname?.includes("/inbox")) {
+      fetchBadges();
+    }
+  }, [pathname]);
 
   const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.fullName || "Customer")}&background=1d3321&color=fff&bold=true`;
   const imageUrl = profile?.profileImage
@@ -178,6 +324,10 @@ export default function CustomerNavbar() {
                 <Link
                   key={link.name}
                   href={link.href}
+                  onClick={() => {
+                    if (link.name === "Inbox") setInboxUnread(0);
+                    if (link.name === "Jobs") setJobsUnread(0);
+                  }}
                   className={`
                   relative flex items-center gap-1.5 px-4 text-[13px] font-semibold
                   transition-all duration-200 whitespace-nowrap h-full group
@@ -187,12 +337,12 @@ export default function CustomerNavbar() {
                   <Icon size={14} className={`transition-all duration-200 ${isActive ? "text-[#6E9625] scale-110" : "text-current group-hover:text-[#6E9625]"}`} />
                   <div className="flex items-center gap-1.5 relative">
                     {link.name}
-                    {link.name === "Inbox" && inboxUnread > 0 && (
+                    {link.name === "Inbox" && inboxUnread > 0 && !isActive && (
                       <span className="flex items-center justify-center min-w-[15px] h-[15px] px-1 bg-[#E53935] rounded-full text-[9px] font-bold text-white shadow-sm">
                         {inboxUnread > 99 ? "99+" : inboxUnread}
                       </span>
                     )}
-                    {link.name === "Jobs" && jobsUnread > 0 && (
+                    {link.name === "Jobs" && jobsUnread > 0 && !isActive && (
                       <span className="flex items-center justify-center min-w-[15px] h-[15px] px-1 bg-[#E53935] rounded-full text-[9px] font-bold text-white shadow-sm">
                         {jobsUnread > 99 ? "99+" : jobsUnread}
                       </span>
@@ -213,7 +363,13 @@ export default function CustomerNavbar() {
             {/* Notification Bell with Dropdown */}
             <div className="relative" ref={notifDropdownRef}>
               <button
-                onClick={() => setShowNotifDropdown(!showNotifDropdown)}
+                onClick={() => {
+                  const nextState = !showNotifDropdown;
+                  setShowNotifDropdown(nextState);
+                  if (nextState && unreadCount > 0) {
+                    handleMarkAllRead();
+                  }
+                }}
                 className="relative p-2 flex items-center justify-center text-[#555555] hover:text-[#1C2C1C] transition-colors"
               >
                 <Bell size={22} strokeWidth={2.5} />
@@ -248,10 +404,7 @@ export default function CustomerNavbar() {
                       notifications.map((n) => (
                         <div
                           key={n.id}
-                          onClick={() => {
-                            setShowNotifDropdown(false);
-                            router.push(`/customer-dashboard/notifications?id=${n.id}`);
-                          }}
+                          onClick={() => handleNotificationClick(n)}
                           className={`cursor-pointer px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors ${!n.isRead && !n.read ? "bg-[#6E9625]/5" : ""
                             }`}
                         >

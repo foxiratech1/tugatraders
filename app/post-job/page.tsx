@@ -5,7 +5,7 @@ import { authApi } from '@/app/api/authApi';
 import api from '@/utils/api';
 import { getAccessToken } from '@/utils/auth';
 import toast from 'react-hot-toast';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 
 const CustomDropdown = ({
   options,
@@ -327,8 +327,10 @@ const GroupedMultiSelectDropdown = ({
   );
 };
 
-export default function PostJobPage() {
+export default function PostJobPage({ isDashboard = false }: { isDashboard?: boolean } = {}) {
   const router = useRouter();
+  const pathname = usePathname();
+  const isDashboardView = isDashboard || pathname?.includes('/customer-dashboard');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Categories data state
@@ -661,7 +663,7 @@ export default function PostJobPage() {
           </div>
         </div>
       )}
-      <main className="min-h-screen bg-[#F8F9F5] pt-40 pb-20 px-4 sm:px-6">
+      <main className={`min-h-screen bg-[#F8F9F5] ${isDashboardView ? "pt-6 sm:pt-8" : "pt-24 sm:pt-28"} pb-20 px-4 sm:px-6`}>
         <style>{`
           .custom-scrollbar::-webkit-scrollbar {
             width: 8px;

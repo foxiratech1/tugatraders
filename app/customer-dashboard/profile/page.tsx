@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { authApi } from "@/app/api/authApi";
+import { getUser, setUser } from "@/utils/auth";
 import { User, Camera, Upload, CheckCircle } from "lucide-react";
 import toast from "react-hot-toast";
 
@@ -35,17 +36,18 @@ export default function CustomerProfilePage() {
       try {
         const res = await authApi.getMyProfile();
         const p = res?.data?.user || res?.data || res?.user || res;
+        const cleanVal = (val: any) => (!val || val === "null" || val === "undefined" ? "" : String(val));
         setForm({
-          fullName: p?.fullName || "",
-          email: p?.email || "",
-          phone: p?.phone || "",
+          fullName: cleanVal(p?.fullName),
+          email: cleanVal(p?.email),
+          phone: cleanVal(p?.phone),
           // publicProfileName: p?.publicProfileName || p?.username || "",
           // address: p?.address || p?.addressLine || "",
-          profileImage: p?.profileImage || p?.avatar || null,
+          profileImage: p?.profileImage && p.profileImage !== "null" ? p.profileImage : (p?.avatar && p.avatar !== "null" ? p.avatar : null),
         });
 
         const imgUrl = p?.profileImage || p?.avatar;
-        if (imgUrl) {
+        if (imgUrl && imgUrl !== "null") {
           const isAbsolute = imgUrl.startsWith('http') || imgUrl.startsWith('data:');
           const baseUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/+$/, '');
           const cleanPath = imgUrl.replace(/^\/+/, '');
@@ -64,7 +66,7 @@ export default function CustomerProfilePage() {
     let { name, value } = e.target;
     if (name === "phone") {
       value = value.replace(/\D/g, "");
-      if (value.length > 10) value = value.slice(0, 10);
+      if (value.length > 15) value = value.slice(0, 15);
     }
     setForm((prev) => ({ ...prev, [name]: value }));
   };
@@ -86,34 +88,76 @@ export default function CustomerProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!form.fullName.trim()) return toast.error("Full Name is required.", { id: "profile-update-error" });
-    if (!form.email.trim()) return toast.error("Email is required.", { id: "profile-update-error" });
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) return toast.error("Please enter a valid email address.", { id: "profile-update-error" });
-
-    if (!form.phone || form.phone.trim() === "") {
-      return toast.error("Phone number is required.", { id: "profile-update-error" });
-    }
-    const phoneRegex = /^\d{10}$/;
-    if (!phoneRegex.test(form.phone.trim())) {
-      return toast.error("Phone number must be exactly 10 digits.", { id: "profile-update-error" });
-    }
-
-    if (!selectedFile && !previewUrl) {
-      return toast.error("Profile image is required.", { id: "profile-update-error" });
+    if (form.email && form.email.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
+      return toast.error("Please enter a valid email address.", { id: "profile-update-error" });
     }
 
     setSaving(true);
     try {
-      const fd = new FormData();
-      if (form.fullName) fd.append("fullName", form.fullName);
-      if (form.email) fd.append("email", form.email);
-      if (form.phone && form.phone.trim() !== "") {
-        fd.append("phone", form.phone.trim());
+      let res;
+      if (selectedFile) {
+        const fd = new FormData();
+        fd.append("profileImage", selectedFile);
+        if (form.fullName?.trim()) fd.append("fullName", form.fullName.trim());
+        if (form.email?.trim()) fd.append("email", form.email.trim());
+        if (form.phone?.trim()) fd.append("phone", form.phone.trim());
+        try {
+          res = await authApi.updateProfile(fd);
+        } catch (imgErr) {
+          console.error("Image upload error", imgErr);
+        }
       }
-      // fd.append("publicProfileName", form.publicProfileName);
-      // fd.append("address", form.address);
-      if (selectedFile) fd.append("profileImage", selectedFile);
-      await authApi.updateProfile(fd);
+
+      const updatePayload: Record<string, any> = {
+        fullName: form.fullName?.trim() || null,
+        email: form.email?.trim() || null,
+        phone: form.phone?.trim() || null,
+      };
+
+      const jsonRes = await authApi.updateProfile(updatePayload);
+      if (jsonRes) {
+        res = jsonRes;
+      }
+
+      const p = jsonRes?.data?.user || jsonRes?.data || jsonRes?.user || res?.data?.user || res?.data || res?.user;
+      const cleanVal = (val: any) => (!val || val === "null" || val === "undefined" ? "" : String(val));
+
+      if (p) {
+        setForm((prev) => ({
+          ...prev,
+          fullName: p?.fullName !== undefined ? cleanVal(p.fullName) : prev.fullName,
+          email: p?.email !== undefined ? cleanVal(p.email) : prev.email,
+          phone: p?.phone !== undefined ? cleanVal(p.phone) : (form.phone?.trim() || ""),
+          profileImage: p?.profileImage || p?.avatar || prev.profileImage,
+        }));
+        const imgUrl = p?.profileImage || p?.avatar || res?.data?.user?.profileImage || res?.data?.profileImage;
+        if (imgUrl && imgUrl !== "null") {
+          const isAbsolute = imgUrl.startsWith('http') || imgUrl.startsWith('data:');
+          const baseUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/+$/, '');
+          const cleanPath = imgUrl.replace(/^\/+/, '');
+          setPreviewUrl(isAbsolute ? imgUrl : `${baseUrl}/${cleanPath}`);
+        }
+      } else {
+        setForm((prev) => ({
+          ...prev,
+          fullName: form.fullName?.trim() || "",
+          email: form.email?.trim() || "",
+          phone: form.phone?.trim() || "",
+        }));
+      }
+      setSelectedFile(null);
+
+      const storedUser = getUser();
+      if (storedUser) {
+        setUser({
+          ...storedUser,
+          ...(p || {}),
+          fullName: form.fullName?.trim() || null,
+          email: form.email?.trim() || null,
+          phone: form.phone?.trim() || null,
+        });
+      }
+
       toast.success("Profile updated successfully!", { id: "profile-update-success" });
     } catch (err: any) {
       console.error("Update profile error", err);
@@ -254,7 +298,7 @@ export default function CustomerProfilePage() {
                     value={form.phone}
                     onChange={handleChange}
                     placeholder="Enter Your Phone No."
-                    maxLength={10}
+                    maxLength={15}
                     className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
                   />
                 </div>

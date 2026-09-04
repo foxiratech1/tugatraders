@@ -47,7 +47,8 @@ interface Conversation {
     identityVerified?: boolean;
     insuranceUploaded?: boolean;
   };
-  jobId?: string;
+  jobId?: string | null;
+  type?: string;
   job?: {
     id: string;
     _id?: string;
@@ -103,9 +104,14 @@ export default function ChatWindow({
     (partner as any)?.traderProfile?.displayName ||
     (isTraderView ? "Customer" : "Tradesperson");
   const job = conversation.job;
-  const activeJobId = job?.id || job?._id || conversation.jobId || fallbackJobId;
+  const isDirectOrNoJob =
+    conversation.type === "DIRECT" ||
+    conversation.jobId === null ||
+    conversation.jobId === "null" ||
+    (!conversation.jobId && !job?.id && !job?._id);
+  const activeJobId = isDirectOrNoJob ? null : (job?.id || job?._id || conversation.jobId || fallbackJobId);
   const [linkedJobId, setLinkedJobId] = useState<string | null>(null);
-  const effectiveJobId = activeJobId || linkedJobId;
+  const effectiveJobId = isDirectOrNoJob ? null : (activeJobId || linkedJobId);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
@@ -142,10 +148,10 @@ export default function ChatWindow({
 
   // Load message history from REST API
   const loadMessageHistory = async () => {
-    if (!conversationId) return;
+    if (!conversationId || typeof conversationId !== "string" || conversationId === "undefined" || conversationId === "null") return;
     try {
       setLoadingMessages(true);
-      const res = await authApi.getChatMessages(conversationId);
+      const res = await authApi.getChatMessages(conversationId).catch(() => null);
       const msgList = res?.data || res || [];
       if (Array.isArray(msgList)) {
         setMessages(msgList);
@@ -173,16 +179,13 @@ export default function ChatWindow({
     }
   }, [job?.status, job, conversation.jobId, fallbackJobId]);
 
-  // When effectiveJobId exists but jobStatus is not populated in the conversation object,
-  // fetch the real job status directly from the API
+  // Fetch the real, latest job status directly from the API whenever effectiveJobId is available
   useEffect(() => {
-    if (!effectiveJobId) return;
-    // Only fetch if status is still unknown (null)
-    if (jobStatus !== null) return;
+    if (!effectiveJobId || typeof effectiveJobId !== "string" || effectiveJobId === "undefined" || effectiveJobId === "null") return;
 
     const fetchJobStatus = async () => {
       try {
-        const res = await authApi.getCustomerJobById(effectiveJobId);
+        const res = await authApi.getCustomerJobById(effectiveJobId).catch(() => null);
         const jobData = res?.data || res;
         if (jobData?.status) {
           setJobStatus(jobData.status);
@@ -192,7 +195,6 @@ export default function ChatWindow({
         console.warn("Could not fetch job status for conversation:", err);
       }
     };
-
     fetchJobStatus();
   }, [effectiveJobId]);
 
@@ -270,6 +272,15 @@ export default function ChatWindow({
         console.log("Messages marked as read by partner");
       }
     },
+    onJobUpdated: (payload: any) => {
+      const updatedJob = payload?.job || payload?.data || payload;
+      const targetId = effectiveJobId || conversation?.job?.id || conversation?.job?._id || conversation?.jobId;
+      if (updatedJob && (updatedJob.id === targetId || updatedJob._id === targetId)) {
+        if (updatedJob.status) {
+          setJobStatus(updatedJob.status);
+        }
+      }
+    },
   });
 
   // Mark active messages as read on load
@@ -326,8 +337,7 @@ export default function ChatWindow({
   // Job Start Action
   const handleStartJob = async () => {
     const targetJobId = effectiveJobId;
-    if (!targetJobId) {
-      setIsStartJobModalOpen(true);
+    if (!targetJobId || targetJobId === "null" || targetJobId === "undefined" || isDirectOrNoJob) {
       return;
     }
 
@@ -570,32 +580,19 @@ export default function ChatWindow({
 
               {/* Job Actions — only shown in customer view, hidden in trader view */}
               {!isTraderView && (() => {
-                // When contacting a trader via directory (no job linked yet)
-                if (!effectiveJobId) {
-                  return (
-                    <button
-                      onClick={() => setIsStartJobModalOpen(true)}
-                      className="px-4 py-1.5 bg-[#6E9625] hover:bg-[#5C7F1F] text-white rounded-xl text-[12px] font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Briefcase size={14} />
-                      Start Job
-                    </button>
-                  );
+                // When jobId is null or no job is linked (e.g. DIRECT chat), do not show Start Job button
+                if (!effectiveJobId || effectiveJobId === "null" || effectiveJobId === "undefined" || isDirectOrNoJob) {
+                  return null;
                 }
 
                 const status = jobStatus?.toUpperCase();
-                const isInProgress = status === "IN_PROGRESS" || status === "ASSIGNED";
                 const isCompleted = status === "COMPLETED";
                 const isClosed = status === "CANCELLED" || status === "CLOSED";
+                const isInProgress = (status === "IN_PROGRESS" || status === "ASSIGNED") && !isCompleted && !isClosed;
 
-                // Terminal states — show static badge
+                // When the job is completed, do not show the Job Complete button
                 if (isCompleted) {
-                  return (
-                    <span className="px-4 py-1.5 bg-[#6E9625] text-white rounded-xl text-[12px] font-bold flex items-center gap-1.5 shadow-xs">
-                      <CheckCircle size={14} />
-                      JOB COMPLETE
-                    </span>
-                  );
+                  return null;
                 }
 
                 if (isClosed) {

@@ -40,9 +40,10 @@ export default function AccountSettingsPage() {
       try {
         const res = await authApi.getMyProfile();
         const profile = res?.data || res;
-        if (profile?.email) {
-          setEmail(profile.email);
-          setNewEmail(profile.email);
+        const userEmail = profile?.email || profile?.user?.email || profile?.traderProfile?.email || "";
+        if (userEmail) {
+          setEmail(userEmail);
+          setNewEmail(userEmail);
         }
       } catch (error) {
         console.error("Failed to fetch profile", error);
@@ -52,14 +53,19 @@ export default function AccountSettingsPage() {
   }, []);
 
   const handleUpdateEmail = async () => {
-    if (!newEmail || newEmail === email) {
+    if (!newEmail || newEmail.trim() === email) {
       setIsEditingEmail(false);
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail.trim())) {
+      toast.error("Please enter a valid email address.");
       return;
     }
     try {
       setIsUpdating(true);
-      await authApi.updateProfile({ email: newEmail });
-      setEmail(newEmail);
+      await authApi.updateProfile({ email: newEmail.trim() });
+      setEmail(newEmail.trim());
       setIsEditingEmail(false);
       toast.success("Email updated successfully.");
     } catch (error: any) {

@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { getAccessToken, getRefreshToken, setTokens, clearTokens } from './auth';
+import { getAccessToken, getRefreshToken, setTokens, clearTokens, parseJwt } from './auth';
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -26,7 +26,7 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle token refresh
+// Response interceptor to handle token refresh and unauthorized errors
 api.interceptors.response.use(
   (response) => {
     return response;
@@ -51,10 +51,32 @@ api.interceptors.response.use(
     // If error is 401 Unauthorized and we haven't retried yet
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
+
+      // Check if the user's access token is actually expired
+      const token = getAccessToken();
+      let isTokenExpired = false;
+      if (token) {
+        const decoded = parseJwt(token);
+        if (decoded?.exp && decoded.exp * 1000 <= Date.now()) {
+          isTokenExpired = true;
+        }
+      } else {
+        isTokenExpired = true;
+      }
+
+      // If token is still valid (not expired) and this is not a core auth profile check,
+      // it is a resource-level or permission error (e.g. conversation or trader lookup)
+      // DO NOT clear tokens and DO NOT log the user out!
+      const isCoreAuthEndpoint = url.includes('/api/auth/getMyProfile') || url.includes('/api/auth/me');
+      if (!isTokenExpired && !isCoreAuthEndpoint) {
+        return Promise.reject(error);
+      }
+
       const refreshToken = getRefreshToken();
       if (refreshToken) {
         try {
-          const { data } = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/api/auth/refresh`, { refreshToken });
+          const cleanBaseUrl = (process.env.NEXT_PUBLIC_API_URL || '').replace(/\/+$/, '');
+          const { data } = await axios.post(`${cleanBaseUrl}/api/auth/refresh`, { refreshToken });
           const newAccessToken = data?.accessToken || data?.access_token || data?.token;
           const newRefreshToken = data?.refreshToken || data?.refresh_token || refreshToken;
           if (newAccessToken) {

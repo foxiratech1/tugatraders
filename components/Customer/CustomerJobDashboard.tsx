@@ -157,6 +157,15 @@ const formatBudget = (b: string) =>
   b?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) ?? "—";
 
 // Status badge config
+const normalizeStatus = (status: string) =>
+  (status || "").toUpperCase().trim().replace(/[-_ ]+/g, "_");
+
+const isInProgressStatus = (norm: string) =>
+  norm === "IN_PROGRESS" ||
+  norm === "STARTED" ||
+  norm === "INPROGRESS" ||
+  norm.includes("PROGRESS");
+
 const statusConfig: Record<string, { label: string; bg: string; text: string; dot: string }> = {
   OPEN: { label: "Live", bg: "bg-[#FDE2D6]", text: "text-[#D32F2F]", dot: "bg-[#D32F2F]" },
   POSTED: { label: "Live", bg: "bg-[#FDE2D6]", text: "text-[#D32F2F]", dot: "bg-[#D32F2F]" },
@@ -167,10 +176,34 @@ const statusConfig: Record<string, { label: string; bg: string; text: string; do
     dot: "bg-[#F57C00]",
   },
   IN_PROGRESS: {
-    label: "IN PROGRESS",
-    bg: "bg-[#E3F2FD]",
-    text: "text-[#1565C0]",
-    dot: "bg-[#1565C0]",
+    label: "In Progress",
+    bg: "bg-[#FFE699]",
+    text: "text-[#C59B11]",
+    dot: "bg-[#C59B11]",
+  },
+  "IN PROGRESS": {
+    label: "In Progress",
+    bg: "bg-[#FFE699]",
+    text: "text-[#C59B11]",
+    dot: "bg-[#C59B11]",
+  },
+  "IN-PROGRESS": {
+    label: "In Progress",
+    bg: "bg-[#FFE699]",
+    text: "text-[#C59B11]",
+    dot: "bg-[#C59B11]",
+  },
+  INPROGRESS: {
+    label: "In Progress",
+    bg: "bg-[#FFE699]",
+    text: "text-[#C59B11]",
+    dot: "bg-[#C59B11]",
+  },
+  STARTED: {
+    label: "In Progress",
+    bg: "bg-[#FFE699]",
+    text: "text-[#C59B11]",
+    dot: "bg-[#C59B11]",
   },
 
   ASSIGNED: { label: "Contacted", bg: "bg-[#8EAADB]", text: "text-[#1F3F73]", dot: "bg-[#1F3F73]" },
@@ -182,8 +215,8 @@ const statusConfig: Record<string, { label: string; bg: string; text: string; do
 };
 
 function SidebarStatusBadge({ status }: { status: string }) {
-  const upper = status?.toUpperCase();
-  if (upper === "COMPLETED") {
+  const norm = normalizeStatus(status);
+  if (norm === "COMPLETED") {
     return (
       <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[#4E7B24]">
         <span className="w-2 h-2 rounded-full bg-[#4E7B24]" />
@@ -191,7 +224,7 @@ function SidebarStatusBadge({ status }: { status: string }) {
       </div>
     );
   }
-  if (upper === "CLOSED" || upper === "CANCELLED" || upper === "EXPIRED") {
+  if (norm === "CLOSED" || norm === "CANCELLED" || norm === "EXPIRED") {
     return (
       <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#E2E8F0] text-[#475569] text-[11px] font-semibold">
         <span className="w-1.5 h-1.5 rounded-full bg-[#64748B]" />
@@ -199,7 +232,15 @@ function SidebarStatusBadge({ status }: { status: string }) {
       </div>
     );
   }
-  if (upper === "ASSIGNED") {
+  if (isInProgressStatus(norm)) {
+    return (
+      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFE699] text-[#C59B11] text-[11px] font-bold">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#C59B11]" />
+        In Progress
+      </div>
+    );
+  }
+  if (norm === "ASSIGNED" || norm === "CONTACTED") {
     return (
       <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#B6D5F4] text-[#1565C0] text-[11px] font-semibold">
         <span className="w-1.5 h-1.5 rounded-full bg-[#1565C0]" />
@@ -216,22 +257,29 @@ function SidebarStatusBadge({ status }: { status: string }) {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const upper = status?.toUpperCase();
-  if (upper === "COMPLETED") {
+  const norm = normalizeStatus(status);
+  if (norm === "COMPLETED") {
     return (
       <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#D8F3D7] text-[#2E7D32] text-[11px] font-bold tracking-wide">
         COMPLETED
       </span>
     );
   }
-  if (upper === "CLOSED" || upper === "CANCELLED" || upper === "EXPIRED") {
+  if (norm === "CLOSED" || norm === "CANCELLED" || norm === "EXPIRED") {
     return (
       <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#E2E8F0] text-[#475569] text-[11px] font-bold tracking-wide">
         CLOSED
       </span>
     );
   }
-  if (upper === "ASSIGNED") {
+  if (isInProgressStatus(norm)) {
+    return (
+      <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#FFE699] text-[#C59B11] text-[11px] font-bold tracking-wide">
+        IN PROGRESS
+      </span>
+    );
+  }
+  if (norm === "ASSIGNED" || norm === "CONTACTED") {
     return (
       <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#B6D5F4] text-[#1565C0] text-[11px] font-bold tracking-wide">
         CONTACTED
@@ -247,14 +295,22 @@ function StatusBadge({ status }: { status: string }) {
 
 // Active badge – outline style used in the job detail header
 function ActiveBadge({ status }: { status: string }) {
-  if (status === "ASSIGNED" || status === "OPEN") {
+  const norm = normalizeStatus(status);
+  if (isInProgressStatus(norm)) {
     return (
-      <span className="inline-flex items-center px-2.5 py-1 rounded-[6px] border border-[#4CAF50] text-[11px] font-bold text-[#4CAF50] tracking-wide">
-        {status === "ASSIGNED" ? "CONTACTED" : "ACTIVE"}
+      <span className="inline-flex items-center px-2.5 py-1 rounded-[6px] bg-[#FFE699] text-[#C59B11] text-[11px] font-bold tracking-wide">
+        IN PROGRESS
       </span>
     );
   }
-  const cfg = statusConfig[status] ?? { label: status, bg: "bg-gray-100", text: "text-gray-600" };
+  if (norm === "ASSIGNED" || norm === "OPEN") {
+    return (
+      <span className="inline-flex items-center px-2.5 py-1 rounded-[6px] border border-[#4CAF50] text-[11px] font-bold text-[#4CAF50] tracking-wide">
+        {norm === "ASSIGNED" ? "CONTACTED" : "ACTIVE"}
+      </span>
+    );
+  }
+  const cfg = statusConfig[norm] ?? statusConfig[status] ?? { label: status, bg: "bg-gray-100", text: "text-gray-600" };
   return (
     <span className={`inline-flex items-center px-2.5 py-1 rounded-[6px] text-[11px] font-bold ${cfg.bg} ${cfg.text}`}>
       {cfg.label.toUpperCase()}
@@ -372,48 +428,54 @@ function QuotesModal({
           {quotes.length === 0 ? (
             <p className="text-center text-[13px] text-gray-400 py-8">No quotes available.</p>
           ) : (
-            quotes.map((quote) => (
-              <div
-                key={quote.id}
-                className={`border border-gray-200 rounded-xl p-4 transition-all ${quote.status?.toUpperCase() === "REJECTED" || quote.status?.toUpperCase() === "DECLINED"
-                  ? "bg-gray-50"
-                  : "bg-white hover:border-[#8BC34A]/60 hover:shadow-sm"
-                  }`}
-              >
-                {/* Trader row */}
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-3">
-                    <div className="relative w-10 h-10 rounded-full bg-[#4CAF50] flex items-center justify-center text-white text-[13px] font-bold flex-shrink-0 overflow-hidden">
-                      {quote.trader?.profileImage ? (
-                        <img src={getAttachmentUrl(quote.trader.profileImage)} alt={quote.trader.fullName} className="w-full h-full object-cover" />
+            (() => {
+              const hasAnyAccepted = quotes.some((q) => q.status?.toUpperCase() === "ACCEPTED");
+              return quotes.map((quote) => {
+                const isThisAccepted = quote.status?.toUpperCase() === "ACCEPTED";
+                const effectiveStatus = hasAnyAccepted && !isThisAccepted ? "REJECTED" : quote.status;
+
+                return (
+                  <div
+                    key={quote.id}
+                    className={`border border-gray-200 rounded-xl p-4 transition-all ${effectiveStatus?.toUpperCase() === "REJECTED" || effectiveStatus?.toUpperCase() === "DECLINED"
+                      ? "bg-gray-50"
+                      : "bg-white hover:border-[#8BC34A]/60 hover:shadow-sm"
+                      }`}
+                  >
+                    {/* Trader row */}
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="relative w-10 h-10 rounded-full bg-[#4CAF50] flex items-center justify-center text-white text-[13px] font-bold flex-shrink-0 overflow-hidden">
+                          {quote.trader?.profileImage ? (
+                            <img src={getAttachmentUrl(quote.trader.profileImage)} alt={quote.trader.fullName} className="w-full h-full object-cover" />
+                          ) : (
+                            quote.trader?.fullName?.[0]?.toUpperCase() ?? "T"
+                          )}
+                        </div>
+                        <div>
+                          <Link href={`/customer-dashboard/trader-profile/${quote.trader?.id}`}>
+                            <p className="text-[13px] font-bold text-[#1C2C1C] hover:underline cursor-pointer">{quote.trader?.traderProfile?.displayName || quote.trader?.traderProfile?.companyName || quote.trader?.fullName || "Unknown"}</p>
+                          </Link>
+                        </div>
+                      </div>
+
+                      {/* Status badge */}
+                      {isThisAccepted ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold border border-emerald-100">
+                          <CheckCircle size={11} />
+                          Accepted
+                        </span>
+                      ) : effectiveStatus?.toUpperCase() === "REJECTED" || effectiveStatus?.toUpperCase() === "DECLINED" ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-50 text-red-700 text-[11px] font-semibold border border-red-100">
+                          <XCircle size={11} />
+                          {hasAnyAccepted && !isThisAccepted ? "Rejected" : "Declined"}
+                        </span>
                       ) : (
-                        quote.trader?.fullName?.[0]?.toUpperCase() ?? "T"
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-[11px] font-semibold border border-amber-100">
+                          {effectiveStatus?.toUpperCase() === "PENDING" ? "Pending" : effectiveStatus ?? "Pending"}
+                        </span>
                       )}
                     </div>
-                    <div>
-                      <Link href={`/customer-dashboard/trader-profile/${quote.trader?.id}`}>
-                        <p className="text-[13px] font-bold text-[#1C2C1C] hover:underline cursor-pointer">{quote.trader?.traderProfile?.displayName || quote.trader?.traderProfile?.companyName || quote.trader?.fullName || "Unknown"}</p>
-                      </Link>
-                    </div>
-                  </div>
-
-                  {/* Status badge */}
-                  {quote.status?.toUpperCase() === "ACCEPTED" ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold border border-emerald-100">
-                      <CheckCircle size={11} />
-                      Accepted
-                    </span>
-                  ) : quote.status?.toUpperCase() === "REJECTED" || quote.status?.toUpperCase() === "DECLINED" ? (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-50 text-red-700 text-[11px] font-semibold border border-red-100">
-                      <XCircle size={11} />
-                      Declined
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-[11px] font-semibold border border-amber-100">
-                      {quote.status?.toUpperCase() === "PENDING" ? "Pending" : quote.status ?? "Pending"}
-                    </span>
-                  )}
-                </div>
 
                 {/* Meta grid */}
                 <div className="grid grid-cols-2 gap-3 mb-3">
@@ -474,16 +536,16 @@ function QuotesModal({
                 <p className="text-[10px] text-gray-400 mb-3">Received: {formatDate(quote.createdAt)}</p>
 
                 {/* Actions */}
-                {quote.status?.toUpperCase() === "ACCEPTED" ? (
+                {isThisAccepted ? (
                   <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
                     <CheckCircle size={12} />
                     Quote Accepted
                   </div>
-                ) : quote.status?.toUpperCase() === "REJECTED" || quote.status?.toUpperCase() === "DECLINED" ? (
+                ) : effectiveStatus?.toUpperCase() === "REJECTED" || effectiveStatus?.toUpperCase() === "DECLINED" ? (
                   <div className="flex flex-col gap-2.5">
-                    <div className="flex items-center gap-1.5 text-[12px] font-bold text-[#FF3B30] bg-[#FF3B30]/5 px-3 py-1.5 rounded-full border border-[#FF3B30]/30 w-fit">
-                      <Ban size={14} className="text-[#FF3B30]" />
-                      Quote Declined
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#FF3B30] bg-[#FF3B30]/5 px-3 py-1 rounded-full border border-[#FF3B30]/30 w-fit">
+                      <Ban size={12} className="text-[#FF3B30]" />
+                      {hasAnyAccepted && !isThisAccepted ? "Quote Rejected" : "Quote Declined"}
                     </div>
                     <div>
                       <button
@@ -523,9 +585,11 @@ function QuotesModal({
                   </div>
                 )}
               </div>
-            ))
-          )}
-        </div>
+            );
+          });
+        })()
+      )}
+    </div>
       </div>
     </div>
   );
@@ -548,6 +612,7 @@ function TraderQuoteCard({
   onLeaveReview,
   quote,
   onDecline,
+  hasAnyAcceptedQuote,
 }: {
   trader: SelectedTrader;
   isAssigned: boolean;
@@ -563,10 +628,14 @@ function TraderQuoteCard({
   onLeaveReview?: () => void;
   quote?: Quote;
   onDecline?: (quoteId: string) => void;
+  hasAnyAcceptedQuote?: boolean;
 }) {
   const [accepting, setAccepting] = useState<boolean>(false);
   const [declining, setDeclining] = useState<boolean>(false);
   const [openingChat, setOpeningChat] = useState<boolean>(false);
+
+  const isAcceptedQuote = quoteStatus?.toUpperCase() === "ACCEPTED";
+  const effectiveQuoteStatus = hasAnyAcceptedQuote && !isAcceptedQuote ? "REJECTED" : quoteStatus;
 
   const targetTraderId =
     (trader && trader !== (quote as any) && trader.id ? trader.id : "") ||
@@ -582,7 +651,7 @@ function TraderQuoteCard({
     p ? (isNaN(Number(p)) ? p : `£${Number(p).toLocaleString()}`) : "—";
 
   return (
-    <div className={`border border-gray-200 rounded-xl p-4 mb-3 last:mb-0 transition-all ${quoteStatus?.toUpperCase() === "REJECTED" || quoteStatus?.toUpperCase() === "DECLINED"
+    <div className={`border border-gray-200 rounded-xl p-4 mb-3 last:mb-0 transition-all ${effectiveQuoteStatus?.toUpperCase() === "REJECTED" || effectiveQuoteStatus?.toUpperCase() === "DECLINED"
       ? "bg-gray-50"
       : "bg-white hover:border-[#8BC34A]/60 hover:shadow-sm"
       }`}>
@@ -704,25 +773,25 @@ function TraderQuoteCard({
           )}
 
           {/* Moved badges to bottom */}
-          {quoteStatus?.toUpperCase() === "ACCEPTED" ? (
+          {effectiveQuoteStatus?.toUpperCase() === "ACCEPTED" ? (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#E8F5E9] text-[#2E7D32] text-[11px] font-bold border border-[#C8E6C9]">
               <CheckCircle size={12} />
               Quote Accepted
             </span>
-          ) : quoteStatus?.toUpperCase() === "REJECTED" || quoteStatus?.toUpperCase() === "DECLINED" ? (
-            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#FF3B30]/5 text-[#FF3B30] text-[12px] font-bold border border-[#FF3B30]/30">
-              <Ban size={14} className="text-[#FF3B30]" />
-              Quote Declined
+          ) : effectiveQuoteStatus?.toUpperCase() === "REJECTED" || effectiveQuoteStatus?.toUpperCase() === "DECLINED" ? (
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FF3B30]/5 text-[#FF3B30] text-[11px] font-bold border border-[#FF3B30]/30">
+              <Ban size={12} className="text-[#FF3B30]" />
+              {hasAnyAcceptedQuote && !isAcceptedQuote ? "Quote Rejected" : "Quote Declined"}
             </span>
-          ) : quoteStatus ? (
+          ) : effectiveQuoteStatus ? (
             <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FFF8E1] text-[#F57C00] text-[11px] font-bold border border-[#FFECB3]">
-              {quoteStatus?.toUpperCase() === "PENDING" ? "Quote Received" : quoteStatus ?? "Quote Received"}
+              {effectiveQuoteStatus?.toUpperCase() === "PENDING" ? "Quote Received" : effectiveQuoteStatus ?? "Quote Received"}
             </span>
           ) : null}
         </div>
 
         <div className="flex items-center gap-3 flex-wrap">
-          {quote && quoteStatus?.toUpperCase() === "PENDING" && quoteId && onAccept && onDecline && !["CLOSED", "COMPLETED", "CANCELLED", "EXPIRED"].includes(jobStatus?.toUpperCase() || "") ? (
+          {quote && effectiveQuoteStatus?.toUpperCase() === "PENDING" && !hasAnyAcceptedQuote && quoteId && onAccept && onDecline && !["CLOSED", "COMPLETED", "CANCELLED", "EXPIRED", "IN_PROGRESS", "ASSIGNED"].includes(jobStatus?.toUpperCase() || "") ? (
             <>
               <button
                 onClick={async () => {
@@ -789,16 +858,6 @@ function TraderQuoteCard({
                 <MessageSquare size={13} />
                 {openingChat ? "Opening..." : "Send Message"}
               </button>
-
-              {isAssigned && (jobStatus === "COMPLETED") && !hasReviewed && onLeaveReview && (
-                <button
-                  onClick={onLeaveReview}
-                  className="flex items-center gap-1.5 px-4 py-1.5 text-white bg-[#6E9625] hover:bg-[#58791C] rounded-lg text-[12px] font-bold transition-colors shadow-sm cursor-pointer"
-                >
-                  <Star size={12} className="fill-white" />
-                  Leave a Review
-                </button>
-              )}
             </>
           )}
         </div>
@@ -837,7 +896,8 @@ export default function CustomerJobDashboard() {
   const JOBS_PER_PAGE = 5;
 
   useSocket({
-    onJobUpdated: (updatedJob) => {
+    onJobUpdated: (payload) => {
+      const updatedJob = payload?.job || payload?.data || payload;
       if (!updatedJob || !updatedJob.id) return;
       setJobs((prev) =>
         prev.map((j) => (j.id === updatedJob.id ? { ...j, ...updatedJob } : j))
@@ -909,6 +969,17 @@ export default function CustomerJobDashboard() {
     );
   };
 
+  const handleActionRequiredLeaveReview = async (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    try {
+      await authApi.getUnreviewedCompletedJobs();
+    } catch (err) {
+      console.error("Failed to fetch unreviewed completed jobs:", err);
+    } finally {
+      router.push('/customer-dashboard/reviews?tab=pending');
+    }
+  };
+
   const handleOpenChat = async (traderId: string, jobId?: string) => {
     try {
       if (!traderId) {
@@ -939,6 +1010,19 @@ export default function CustomerJobDashboard() {
   const handleAcceptQuote = async (quoteId: string) => {
     try {
       await authApi.acceptQuote(quoteId);
+
+      // If customer accepts only one quote, reject all other remaining pending quotes
+      if (selectedJob && quotes.length > 0) {
+        const otherPendingQuotes = quotes.filter(
+          (q: any) => q.id !== quoteId && q.status?.toUpperCase() === "PENDING"
+        );
+        if (otherPendingQuotes.length > 0) {
+          await Promise.allSettled(
+            otherPendingQuotes.map((q: any) => authApi.rejectQuote(q.id))
+          );
+        }
+      }
+
       // Removed automatic startJob: The job should now be manually started by the trader.
       if (selectedJob) {
         toast.success("Quote accepted!");
@@ -1303,18 +1387,18 @@ export default function CustomerJobDashboard() {
 
                 {/* Card 1 */}
                 <div
-                  onClick={() => router.push('/customer-dashboard/job-history')}
+                  onClick={() => router.push('/customer-dashboard/job-history?tab=JOB_POSTED')}
                   className="px-5 py-4 flex items-center gap-4 hover:bg-gray-50/50 rounded-xl transition-colors cursor-pointer"
                 >
-                  <div className="w-[52px] h-[52px] rounded-full bg-[#F2F7EB] flex items-center justify-center flex-shrink-0">
-                    <Briefcase size={22} className="text-[#6E9625]" strokeWidth={2.2} />
+                  <div className="w-[52px] h-[52px] rounded-full bg-[#FFF3E0] flex items-center justify-center flex-shrink-0">
+                    <Briefcase size={22} className="text-[#E65100]" strokeWidth={2.2} />
                   </div>
                   <div>
                     <h4 className="text-[20px] font-extrabold text-[#1C2C1C] leading-none mb-1">
-                      {dashboardDetails?.actionRequired?.activeJobsCount ?? 0}
+                      {dashboardDetails?.actionRequired?.activeJobsCount ?? jobs.filter(j => ["OPEN", "POSTED", "ACTIVE", "ASSIGNED", "IN_PROGRESS", "STARTED"].includes(j.status?.toUpperCase())).length}
                     </h4>
-                    <p className="text-[12px] text-gray-500 font-medium mb-1.5">New jobs available</p>
-                    <button className="text-[12px] font-bold text-[#6E9625] flex items-center gap-1 hover:underline">
+                    <p className="text-[12px] text-gray-500 font-medium mb-1.5">Jobs Posted</p>
+                    <button className="text-[12px] font-bold text-[#E65100] flex items-center gap-1 hover:underline">
                       View jobs <ArrowRight size={14} />
                     </button>
                   </div>
@@ -1325,15 +1409,15 @@ export default function CustomerJobDashboard() {
                   onClick={() => router.push('/customer-dashboard/job-history')}
                   className="px-5 py-4 flex items-center gap-4 hover:bg-gray-50/50 rounded-xl transition-colors cursor-pointer"
                 >
-                  <div className="w-[52px] h-[52px] rounded-full bg-[#FFF3E0] flex items-center justify-center flex-shrink-0">
-                    <MessageSquare size={22} className="text-[#E65100]" strokeWidth={2.2} />
+                  <div className="w-[52px] h-[52px] rounded-full bg-[#E3F2FD] flex items-center justify-center flex-shrink-0">
+                    <MessageSquare size={22} className="text-[#1565C0]" strokeWidth={2.2} />
                   </div>
                   <div>
                     <h4 className="text-[20px] font-extrabold text-[#1C2C1C] leading-none mb-1">
                       {dashboardDetails?.actionRequired?.quotesAwaitingResponseCount ?? 0}
                     </h4>
-                    <p className="text-[12px] text-gray-500 font-medium mb-1.5">Quotes awaiting response</p>
-                    <button className="text-[12px] font-bold text-[#6E9625] flex items-center gap-1 hover:underline">
+                    <p className="text-[12px] text-gray-500 font-medium mb-1.5">Quotes Received</p>
+                    <button className="text-[12px] font-bold text-[#1565C0] flex items-center gap-1 hover:underline">
                       View quotes <ArrowRight size={14} />
                     </button>
                   </div>
@@ -1341,18 +1425,21 @@ export default function CustomerJobDashboard() {
 
                 {/* Card 3 */}
                 <div
-                  onClick={() => router.push('/customer-dashboard/reviews')}
+                  onClick={handleActionRequiredLeaveReview}
                   className="px-5 py-4 flex items-center gap-4 hover:bg-gray-50/50 rounded-xl transition-colors cursor-pointer"
                 >
-                  <div className="w-[52px] h-[52px] rounded-full bg-[#E3F2FD] flex items-center justify-center flex-shrink-0">
-                    <Star size={22} className="text-[#1565C0]" strokeWidth={2.2} />
+                  <div className="w-[52px] h-[52px] rounded-full bg-[#F2F7EB] flex items-center justify-center flex-shrink-0">
+                    <Star size={22} className="text-[#6E9625]" strokeWidth={2.2} />
                   </div>
                   <div>
                     <h4 className="text-[20px] font-extrabold text-[#1C2C1C] leading-none mb-1">
                       {dashboardDetails?.actionRequired?.unreviewedJobsCount ?? 0}
                     </h4>
                     <p className="text-[12px] text-gray-500 font-medium mb-1.5">Reviews Outstanding</p>
-                    <button className="text-[12px] font-bold text-[#6E9625] flex items-center gap-1 hover:underline">
+                    <button
+                      onClick={handleActionRequiredLeaveReview}
+                      className="text-[12px] font-bold text-[#6E9625] flex items-center gap-1 hover:underline cursor-pointer"
+                    >
                       Leave review <ArrowRight size={14} />
                     </button>
                   </div>
@@ -1555,25 +1642,29 @@ export default function CustomerJobDashboard() {
                       </p>
                     ) : quotes.length > 0 ? (
                       <div className="space-y-4">
-                        {quotes.map((quote) => (
-                          <TraderQuoteCard
-                            key={quote.id}
-                            trader={quote.trader || quote}
-                            quote={quote}
-                            isAssigned={selectedJob?.selectedTrader?.id === (quote.trader?.id || quote.id)}
-                            quoteId={quote.id}
-                            onAccept={handleAcceptQuote}
-                            onDecline={handleDeclineQuote}
-                            quoteStatus={quote.status}
-                            jobStatus={selectedJob?.status}
-                            // onStartJob={handleStartJob}
-                            onCompleteJob={handleCompleteJob}
-                            onCancelJob={handleCancelJob}
-                            onOpenChat={(traderId) => handleOpenChat(traderId || quote.traderId || quote.trader?.id, selectedJob?.id)}
-                            hasReviewed={selectedJob ? (reviewedJobIds.has(selectedJob.id) || selectedJob.hasReviewed) : false}
-                            onLeaveReview={() => handleNavigateToReview(selectedJob, quote.trader || quote)}
-                          />
-                        ))}
+                        {(() => {
+                          const hasAnyAcceptedQuote = quotes.some((q) => q.status?.toUpperCase() === "ACCEPTED") || Boolean(selectedJob?.selectedTrader);
+                          return quotes.map((quote) => (
+                            <TraderQuoteCard
+                              key={quote.id}
+                              trader={quote.trader || quote}
+                              quote={quote}
+                              isAssigned={selectedJob?.selectedTrader?.id === (quote.trader?.id || quote.id)}
+                              quoteId={quote.id}
+                              onAccept={handleAcceptQuote}
+                              onDecline={handleDeclineQuote}
+                              quoteStatus={quote.status}
+                              jobStatus={selectedJob?.status}
+                              hasAnyAcceptedQuote={hasAnyAcceptedQuote}
+                              // onStartJob={handleStartJob}
+                              onCompleteJob={handleCompleteJob}
+                              onCancelJob={handleCancelJob}
+                              onOpenChat={(traderId) => handleOpenChat(traderId || quote.traderId || quote.trader?.id, selectedJob?.id)}
+                              hasReviewed={selectedJob ? (reviewedJobIds.has(selectedJob.id) || selectedJob.hasReviewed) : false}
+                              onLeaveReview={() => handleNavigateToReview(selectedJob, quote.trader || quote)}
+                            />
+                          ));
+                        })()}
                       </div>
                     ) : selectedJob.selectedTrader ? (
                       <TraderQuoteCard

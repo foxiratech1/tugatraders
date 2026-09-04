@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Shield, Bell } from "lucide-react";
 import { authApi } from "@/app/api/authApi";
 import toast from "react-hot-toast";
@@ -19,6 +19,53 @@ export default function TraderSettingsPage() {
   const router = useRouter();
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+
+  // Email state
+  const [email, setEmail] = useState("");
+  const [isEditingEmail, setIsEditingEmail] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [isUpdatingEmail, setIsUpdatingEmail] = useState(false);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const res = await authApi.getMyProfile();
+        const profile = res?.data || res;
+        const userEmail = profile?.email || profile?.user?.email || profile?.traderProfile?.email || "";
+        if (userEmail) {
+          setEmail(userEmail);
+          setNewEmail(userEmail);
+        }
+      } catch (error) {
+        console.error("Failed to fetch trader profile", error);
+      }
+    };
+    fetchProfile();
+  }, []);
+
+  const handleUpdateEmail = async () => {
+    if (!newEmail || newEmail.trim() === email) {
+      setIsEditingEmail(false);
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(newEmail.trim())) {
+      toast.error("Please enter a valid email address.");
+      return;
+    }
+    try {
+      setIsUpdatingEmail(true);
+      await authApi.updateProfile({ email: newEmail.trim() });
+      setEmail(newEmail.trim());
+      setIsEditingEmail(false);
+      toast.success("Email updated successfully.");
+    } catch (error: any) {
+      console.error("Update email failed", error);
+      toast.error(error?.response?.data?.message || "Failed to update email.");
+    } finally {
+      setIsUpdatingEmail(false);
+    }
+  };
 
   const handleDeactivate = async () => {
     try {
@@ -69,12 +116,59 @@ export default function TraderSettingsPage() {
             </div>
 
             <div className="space-y-8">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-[#1C2C1C] font-bold text-[15px]">Email Address</h3>
-                  <p className="text-gray-400 text-[14px] mt-1">ricardo.santos@tuga.pt</p>
+              <div className="flex flex-col border-b border-gray-100 pb-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-[#1C2C1C] font-bold text-[15px]">Email Address</h3>
+                    {!isEditingEmail && (
+                      <p className="text-gray-400 text-[14px] mt-1">
+                        {email || "Loading..."}
+                      </p>
+                    )}
+                  </div>
+                  {!isEditingEmail && (
+                    <button
+                      onClick={() => setIsEditingEmail(true)}
+                      className="text-[#1C2C1C] font-bold text-[14px] underline hover:text-opacity-70 transition-colors cursor-pointer"
+                    >
+                      Change
+                    </button>
+                  )}
                 </div>
-                <button className="text-[#1C2C1C] font-bold text-[14px] underline hover:text-opacity-70 transition-colors">Change</button>
+                {isEditingEmail && (
+                  <div className="mt-5 bg-gray-50 p-5 rounded-2xl border border-gray-100">
+                    <div className="max-w-md">
+                      <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-1.5">
+                        New Email Address
+                      </label>
+                      <input
+                        type="email"
+                        value={newEmail}
+                        onChange={(e) => setNewEmail(e.target.value)}
+                        className="border border-gray-200 bg-white rounded-xl px-4 py-2.5 text-[14px] w-full focus:outline-none focus:ring-2 focus:ring-[#6E9625]/20 focus:border-[#6E9625] transition-all"
+                        placeholder="Enter new email"
+                      />
+                    </div>
+                    <div className="flex gap-3 mt-6">
+                      <button
+                        onClick={handleUpdateEmail}
+                        disabled={isUpdatingEmail}
+                        className="bg-[#6E9625] text-white px-6 py-2.5 rounded-xl font-bold text-[14px] hover:bg-[#5a7a1e] transition-colors cursor-pointer disabled:opacity-70"
+                      >
+                        {isUpdatingEmail ? "Saving..." : "Save Email"}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsEditingEmail(false);
+                          setNewEmail(email);
+                        }}
+                        className="bg-white border border-gray-200 text-[#1C2C1C] px-6 py-2.5 rounded-xl font-bold text-[14px] hover:bg-gray-100 transition-colors cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center justify-between">

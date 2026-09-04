@@ -35,13 +35,13 @@ export default function CustomerChatSidebar({ jobId, traderId }: SidebarProps) {
     const loadDetails = async () => {
       setLoading(true);
       try {
-        if (jobId) {
-          const jRes = await authApi.getCustomerJobById(jobId);
-          if (isMounted) setJob(jRes?.data || jRes);
+        if (jobId && typeof jobId === "string" && jobId !== "undefined" && jobId !== "null") {
+          const jRes = await authApi.getCustomerJobById(jobId).catch(() => null);
+          if (isMounted && jRes) setJob(jRes?.data || jRes);
         }
-        if (traderId) {
-          const tRes = await authApi.getTraderProfileById(traderId);
-          if (isMounted) setTrader(tRes?.data || tRes);
+        if (traderId && typeof traderId === "string" && traderId !== "undefined" && traderId !== "null") {
+          const tRes = await authApi.getTraderProfileById(traderId).catch(() => null);
+          if (isMounted && tRes) setTrader(tRes?.data || tRes);
         }
       } catch (err) {
         console.error("Failed to fetch sidebar details", err);

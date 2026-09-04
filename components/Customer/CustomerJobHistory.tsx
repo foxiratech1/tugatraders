@@ -141,40 +141,65 @@ const timeAgo = (iso: string) => {
 
 const statusConfig: Record<
   string,
-  { label: string; bg: string; text: string }
+  { label: string; bg: string; text: string; border: string }
 > = {
-  OPEN: { label: "Job Posted", bg: "bg-[#F4B185]", text: "text-[#C45E20]" },
-  POSTED: { label: "Job Posted", bg: "bg-[#F4B185]", text: "text-[#C45E20]" },
-  ACTIVE: { label: "Job Posted", bg: "bg-[#F4B185]", text: "text-[#C45E20]" },
-  ASSIGNED: { label: "Job Posted", bg: "bg-[#F4B185]", text: "text-[#C45E20]" },
-  QUOTE_RECEIVED: { label: "Quotes Recieved", bg: "bg-[#DDEBF7]", text: "text-[#2B608F]" },
-  CONTACTED: { label: "Contacted", bg: "bg-[#8EAADB]", text: "text-[#1F3F73]" },
-  QUOTE_ACCEPTED: { label: "Quote Accepted", bg: "bg-[#E2EFDA]", text: "text-[#4F903A]" },
-  QUOTE_DECLINED: { label: "Quote Declined", bg: "bg-[#FF9999]", text: "text-[#E70000]" },
-  IN_PROGRESS: { label: "In Progress", bg: "bg-[#FFE699]", text: "text-[#C59B11]" },
-  COMPLETED: { label: "Completed", bg: "bg-[#1E5624]", text: "text-white" },
-  CLOSED: { label: "Closed", bg: "bg-[#A5A5A5]", text: "text-[#515151]" },
-  EXPIRED: { label: "Expired", bg: "bg-[#A5A5A5]", text: "text-[#515151]" },
+  OPEN: { label: "Job Posted", bg: "bg-[#F4B185]", text: "text-[#C45E20]", border: "border-[#E29D70]" },
+  POSTED: { label: "Job Posted", bg: "bg-[#F4B185]", text: "text-[#C45E20]", border: "border-[#E29D70]" },
+  ACTIVE: { label: "Job Posted", bg: "bg-[#F4B185]", text: "text-[#C45E20]", border: "border-[#E29D70]" },
+  JOB_POSTED: { label: "Job Posted", bg: "bg-[#F4B185]", text: "text-[#C45E20]", border: "border-[#E29D70]" },
+  QUOTE_RECEIVED: { label: "Quotes Recieved", bg: "bg-[#DDEBF7]", text: "text-[#2B608F]", border: "border-[#C5D9EB]" },
+  QUOTES_RECIEVED: { label: "Quotes Recieved", bg: "bg-[#DDEBF7]", text: "text-[#2B608F]", border: "border-[#C5D9EB]" },
+  QUOTES_RECEIVED: { label: "Quotes Recieved", bg: "bg-[#DDEBF7]", text: "text-[#2B608F]", border: "border-[#C5D9EB]" },
+  CONTACTED: { label: "Contacted", bg: "bg-[#8EAADB]", text: "text-[#1F3F73]", border: "border-[#7B9ACA]" },
+  ASSIGNED: { label: "Contacted", bg: "bg-[#8EAADB]", text: "text-[#1F3F73]", border: "border-[#7B9ACA]" },
+  QUOTE_ACCEPTED: { label: "Quote Accepted", bg: "bg-[#E2EFDA]", text: "text-[#4F903A]", border: "border-[#CBE0C2]" },
+  ACCEPTED: { label: "Quote Accepted", bg: "bg-[#E2EFDA]", text: "text-[#4F903A]", border: "border-[#CBE0C2]" },
+  QUOTE_DECLINED: { label: "Quote Declined", bg: "bg-[#FF9999]", text: "text-[#E70000]", border: "border-[#FF8080]" },
+  DECLINED: { label: "Quote Declined", bg: "bg-[#FF9999]", text: "text-[#E70000]", border: "border-[#FF8080]" },
+  REJECTED: { label: "Quote Declined", bg: "bg-[#FF9999]", text: "text-[#E70000]", border: "border-[#FF8080]" },
+  IN_PROGRESS: { label: "In Progress", bg: "bg-[#FFE699]", text: "text-[#C59B11]", border: "border-[#F0D580]" },
+  COMPLETED: { label: "Completed", bg: "bg-[#1E5624]", text: "text-white", border: "border-[#16441B]" },
+  CLOSED: { label: "Closed", bg: "bg-[#A5A5A5]", text: "text-[#515151]", border: "border-[#939393]" },
+  CANCELLED: { label: "Closed", bg: "bg-[#A5A5A5]", text: "text-[#515151]", border: "border-[#939393]" },
+  EXPIRED: { label: "Closed", bg: "bg-[#A5A5A5]", text: "text-[#515151]", border: "border-[#939393]" },
+};
+
+const isJobPostedStatus = (status: string) => {
+  const s = status?.toUpperCase();
+  return s === "OPEN" || s === "POSTED" || s === "ACTIVE" || s === "ASSIGNED" || s === "JOB_POSTED";
+};
+
+const isClosedStatus = (status: string) => {
+  const s = status?.toUpperCase();
+  return s === "CLOSED" || s === "CANCELLED" || s === "EXPIRED";
 };
 
 const FILTER_TABS = [
-  { key: "ALL", label: "All Jobs" },
-  { key: "ASSIGNED", label: "Job Posted" },
+  { key: "JOB_POSTED", label: "Jobs Posted" },
   { key: "COMPLETED", label: "Completed" },
   { key: "CLOSED", label: "Closed" },
 ];
 
 // ─── StatusBadge ──────────────────────────────────────────────────────────────
 
-function StatusBadge({ status }: { status: string }) {
-  const cfg = statusConfig[status] ?? {
+function StatusBadge({ status, job }: { status: string; job?: Job }) {
+  let s = status?.toUpperCase() || "";
+  if (job && (s === "OPEN" || s === "POSTED" || s === "ACTIVE")) {
+    const quotes = job.quotesReceived ?? job.quotesCount ?? 0;
+    if (quotes > 0) {
+      s = "QUOTE_RECEIVED";
+    }
+  }
+
+  const cfg = statusConfig[s] ?? {
     label: status,
     bg: "bg-gray-100",
     text: "text-gray-600",
+    border: "border-gray-300",
   };
   return (
     <span
-      className={`inline-flex items-center justify-center px-2 py-1 text-[12px] font-bold border border-gray-300 min-w-[90px] rounded-md ${cfg.bg} ${cfg.text}`}
+      className={`inline-flex items-center justify-center px-2.5 py-1 text-[11px] font-bold border min-w-[95px] rounded ${cfg.bg} ${cfg.text} ${cfg.border || "border-gray-300"}`}
     >
       {cfg.label}
     </span>
@@ -292,9 +317,19 @@ function ExpandedDetail({
               {/* Assigned Trader */}
               {job.selectedTrader && (
                 <div className="flex items-center gap-3 bg-white border border-emerald-200 rounded-xl p-3 max-w-[400px]">
-                  <div className="w-9 h-9 rounded-full bg-[#4CAF50] flex items-center justify-center text-white text-[12px] font-bold flex-shrink-0">
-                    {job.selectedTrader.fullName?.[0]?.toUpperCase() ?? "T"}
-                  </div>
+                  {job.selectedTrader.profileImage ? (
+                    <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-emerald-100">
+                      <img 
+                        src={getAttachmentUrl(job.selectedTrader.profileImage)} 
+                        alt={job.selectedTrader.fullName || "Trader"} 
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-9 h-9 rounded-full bg-[#4CAF50] flex items-center justify-center text-white text-[12px] font-bold flex-shrink-0">
+                      {job.selectedTrader.fullName?.[0]?.toUpperCase() ?? "T"}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <Link href={`/customer-dashboard/trader-profile/${job.selectedTrader.id}`}>
                       <p className="text-[13px] font-bold text-[#1C2C1C] hover:underline cursor-pointer truncate">
@@ -361,7 +396,7 @@ export default function CustomerJobHistory() {
   const [jobs, setJobs] = useState<Job[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
-  const [activeFilter, setActiveFilter] = useState("ALL");
+  const [activeFilter, setActiveFilter] = useState("JOB_POSTED");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<"date" | "title" | "status">("date");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -395,9 +430,35 @@ export default function CustomerJobHistory() {
     fetchJobs();
   }, []);
 
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get("tab");
+      if (tab) {
+        const upper = tab.toUpperCase();
+        if (upper === "JOB_POSTED" || upper === "JOB POSTED" || upper === "POSTED" || upper === "ASSIGNED" || upper === "ALL") {
+          setActiveFilter("JOB_POSTED");
+        } else if (upper === "COMPLETED") {
+          setActiveFilter("COMPLETED");
+        } else if (upper === "CLOSED") {
+          setActiveFilter("CLOSED");
+        }
+      }
+    }
+  }, []);
+
   // Filter + search
   const filteredJobs = jobs
-    .filter((j) => activeFilter === "ALL" || j.status === activeFilter)
+    .filter((j) => {
+      if (activeFilter === "JOB_POSTED" || activeFilter === "ALL") return true;
+      if (activeFilter === "COMPLETED") {
+        return j.status?.toUpperCase() === "COMPLETED";
+      }
+      if (activeFilter === "CLOSED") {
+        return isClosedStatus(j.status);
+      }
+      return j.status === activeFilter;
+    })
     .filter(
       (j) =>
         !searchQuery ||
@@ -470,23 +531,13 @@ export default function CustomerJobHistory() {
         </div>
 
         {/* ── Stats Cards ─────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <div className="bg-white rounded-2xl border border-gray-200 px-5 py-4 shadow-sm">
             <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-              Total Jobs
-            </p>
-            <p className="text-[28px] font-extrabold text-[#1C2C1C] mt-1 leading-none">
-              {jobs.length}
-            </p>
-          </div>
-          <div className="bg-white rounded-2xl border border-gray-200 px-5 py-4 shadow-sm">
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">
-              Job Posted
+              Jobs Posted
             </p>
             <p className="text-[28px] font-extrabold text-[#C45E20] mt-1 leading-none">
-              {(statusCounts["OPEN"] || 0) +
-                (statusCounts["ASSIGNED"] || 0) +
-                (statusCounts["ACTIVE"] || 0)}
+              {jobs.length}
             </p>
           </div>
           <div className="bg-white rounded-2xl border border-gray-200 px-5 py-4 shadow-sm">
@@ -494,7 +545,7 @@ export default function CustomerJobHistory() {
               Completed
             </p>
             <p className="text-[28px] font-extrabold text-[#1E5624] mt-1 leading-none">
-              {statusCounts["COMPLETED"] || 0}
+              {jobs.filter((j) => j.status?.toUpperCase() === "COMPLETED").length}
             </p>
           </div>
           <div className="bg-white rounded-2xl border border-gray-200 px-5 py-4 shadow-sm">
@@ -509,14 +560,19 @@ export default function CustomerJobHistory() {
             </p>
           </div>
         </div>
-
         {/* ── Filter Tabs + Search ────────────────────────────────────── */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-5">
           {/* Tabs */}
           <div className="flex items-center bg-white rounded-full p-1 border border-gray-200 shadow-sm overflow-x-auto">
             {FILTER_TABS.map((tab) => {
               const count =
-                tab.key === "ALL" ? jobs.length : statusCounts[tab.key] || 0;
+                tab.key === "JOB_POSTED" || tab.key === "ALL"
+                  ? jobs.length
+                  : tab.key === "COMPLETED"
+                    ? jobs.filter((j) => j.status?.toUpperCase() === "COMPLETED").length
+                    : tab.key === "CLOSED"
+                      ? jobs.filter((j) => isClosedStatus(j.status)).length
+                      : statusCounts[tab.key] || 0;
               return (
                 <button
                   key={tab.key}
@@ -581,16 +637,16 @@ export default function CustomerJobHistory() {
                 <Briefcase size={28} className="text-gray-300" />
               </div>
               <p className="text-[15px] font-semibold text-gray-500 mb-1">
-                {searchQuery || activeFilter !== "ALL"
+                {searchQuery || (activeFilter !== "JOB_POSTED" && activeFilter !== "ALL")
                   ? "No jobs match your filters"
                   : "No jobs posted yet"}
               </p>
               <p className="text-[13px] text-gray-400 mb-5">
-                {searchQuery || activeFilter !== "ALL"
+                {searchQuery || (activeFilter !== "JOB_POSTED" && activeFilter !== "ALL")
                   ? "Try adjusting your search or filter criteria"
                   : "Post your first job to get started"}
               </p>
-              {!searchQuery && activeFilter === "ALL" && (
+              {!searchQuery && (activeFilter === "JOB_POSTED" || activeFilter === "ALL") && (
                 <Link href="/customer-dashboard/post-job">
                   <button className="px-5 py-2.5 bg-[#6E9625] text-white rounded-xl text-[13px] font-bold hover:bg-[#58791C] transition-colors">
                     + Post a Job
@@ -689,7 +745,7 @@ export default function CustomerJobHistory() {
 
                         {/* Status */}
                         <td className="px-4 py-4">
-                          <StatusBadge status={job.status} />
+                          <StatusBadge status={job.status} job={job} />
                         </td>
 
                         {/* Date */}

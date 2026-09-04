@@ -653,27 +653,23 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
                   </button>
                 ))}
               </div>
-              {(hoverRating || rating) > 0 && (
-                <p className="text-[14px] font-bold text-[#D97706] transition-all">
-                  {(() => {
-                    const currentVal = hoverRating || rating;
-                    switch (currentVal) {
-                      case 1:
-                        return "1 — Very Poor";
-                      case 2:
-                        return "2 — Poor";
-                      case 3:
-                        return "3 — Good";
-                      case 4:
-                        return "4 — Very Good";
-                      case 5:
-                        return "5 — Excellent";
-                      default:
-                        return "";
-                    }
-                  })()}
-                </p>
-              )}
+              {(() => {
+                const currentVal = hoverRating || rating;
+                const starConfigs: Record<number, { label: string; color: string }> = {
+                  1: { label: "1 - Very Poor", color: "text-[#991B1B]" },
+                  2: { label: "2 - Poor", color: "text-[#DC2626]" },
+                  3: { label: "3 - Good", color: "text-[#EA580C]" },
+                  4: { label: "4 - Very Good", color: "text-[#16A34A]" },
+                  5: { label: "5 - Excellent", color: "text-[#14532D]" },
+                };
+                const config = starConfigs[currentVal];
+                if (!config) return null;
+                return (
+                  <p className={`text-[14px] font-bold transition-all ${config.color}`}>
+                    {config.label}
+                  </p>
+                );
+              })()}
             </div>
 
             <div>

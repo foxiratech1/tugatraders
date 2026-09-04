@@ -37,7 +37,8 @@ interface Conversation {
     identityVerified?: boolean;
     insuranceUploaded?: boolean;
   };
-  jobId?: string;
+  jobId?: string | null;
+  type?: string;
   job?: {
     id: string;
     _id?: string;
@@ -87,7 +88,8 @@ function ChatDashboardContent() {
           if (cached) {
             const parsed = JSON.parse(cached);
             const cachedId = parsed.id || parsed._id;
-            if (cachedId && (!effectiveActiveId || cachedId === effectiveActiveId)) {
+            // Only adopt cached conversation if activeConversationId or traderId matches
+            if (cachedId && ((activeConversationId && cachedId === activeConversationId) || traderIdParam)) {
               initialNewConv = { ...parsed, id: cachedId };
               if (!effectiveActiveId) effectiveActiveId = cachedId;
             }
@@ -112,14 +114,14 @@ function ChatDashboardContent() {
       }
 
       // 1. Get profile to identify current customer ID
-      const profileRes = await authApi.getMyProfile();
+      const profileRes = await authApi.getMyProfile().catch(() => null);
       const profile = profileRes?.data || profileRes;
       if (profile?.id || profile?._id) {
         setCurrentUserId(profile.id || profile._id);
       }
 
       // 2. Get active chats
-      const convsRes = await authApi.getConversations();
+      const convsRes = await authApi.getConversations().catch(() => null);
       const list = convsRes?.data || convsRes || [];
       let mappedList: any[] = [];
       if (Array.isArray(list)) {
@@ -175,9 +177,19 @@ function ChatDashboardContent() {
             }
           }
         }
-        setConversations(Array.from(seenTraders.values()));
+        const finalConvs = Array.from(seenTraders.values()).map((c) =>
+          c.id === activeId ? { ...c, unreadCount: 0 } : c
+        );
+        setConversations(finalConvs);
+        const totalUnread = finalConvs.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("inbox_unread_updated", { detail: totalUnread }));
+        }
       } else {
         setConversations([]);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("inbox_unread_updated", { detail: 0 }));
+        }
       }
     } catch (error) {
       console.error("Failed to load dashboard chat data:", error);
@@ -210,30 +222,49 @@ function ChatDashboardContent() {
     onNewMessage: (message) => {
       // Update the last message preview in the sidebar conversations list dynamically
       setConversations((prev) => {
-        return prev.map((c) => {
+        const nextConvs = prev.map((c) => {
           const match = c.id === message.conversationId || c.id === message.conversation;
           if (match) {
+            const senderId = message.senderId || message.sender?.id || message.sender?._id || message.userId;
+            const isOwnMessage =
+              (currentUserId && String(senderId) === String(currentUserId)) ||
+              (message.sender && (String(message.sender.id) === String(currentUserId) || String(message.sender._id) === String(currentUserId))) ||
+              message.senderRole === "CUSTOMER" || message.role === "CUSTOMER";
+
+            const isCurrentChat = activeConversationId === c.id;
+
             return {
               ...c,
               lastMessage: {
                 message: message.message,
                 createdAt: message.createdAt,
-                senderId: message.senderId,
+                senderId: senderId,
               },
-              unreadCount: activeConversationId === c.id ? 0 : (c.unreadCount || 0) + 1,
+              unreadCount: (isCurrentChat || isOwnMessage) ? 0 : (c.unreadCount || 0) + 1,
             };
           }
           return c;
         });
+
+        const totalUnread = nextConvs.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("inbox_unread_updated", { detail: totalUnread }));
+        }
+        return nextConvs;
       });
     },
   });
 
   const handleSelectConversation = (id: string) => {
     // Clear unread count locally when selecting
-    setConversations((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, unreadCount: 0 } : c))
-    );
+    setConversations((prev) => {
+      const nextConvs = prev.map((c) => (c.id === id ? { ...c, unreadCount: 0 } : c));
+      const totalUnread = nextConvs.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("inbox_unread_updated", { detail: totalUnread }));
+      }
+      return nextConvs;
+    });
     let url = `/customer-dashboard/inbox?conversationId=${id}`;
     if (fallbackJobId && id === activeConversationId) {
       url += `&jobId=${fallbackJobId}`;
@@ -395,11 +426,11 @@ function ChatDashboardContent() {
                   conversation={selectedConversation}
                   currentUserId={currentUserId}
                   onRefreshConversations={loadData}
-                  fallbackJobId={fallbackJobId || undefined}
+                  fallbackJobId={selectedConversation.jobId ? (fallbackJobId || undefined) : undefined}
                 />
               </div>
               <CustomerChatSidebar
-                jobId={selectedConversation.jobId || fallbackJobId || undefined}
+                jobId={selectedConversation.jobId || undefined}
                 traderId={selectedConversation.traderId || selectedConversation.trader?.id || (selectedConversation.trader as any)?._id || (selectedConversation.trader as any)?.traderProfileId || traderIdParam || undefined}
               />
             </div>

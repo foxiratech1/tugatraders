@@ -72,15 +72,48 @@ export default function TraderNavbar() {
     },
   });
 
+  const NOTIF_STORAGE_KEY = "trader_read_notifications";
+
+  const isNotificationRead = (n: any, readIdSet: Set<string>) => {
+    if (readIdSet.has(String(n.id))) return true;
+    if (n.isRead === true || n.read === true || n.is_read === true || n.seen === true || n.isSeen === true) return true;
+    if (typeof n.status === "string" && n.status.toUpperCase() === "READ") return true;
+    if (n.readAt || n.read_at) return true;
+    return false;
+  };
+
   const fetchNotifications = async () => {
     try {
       const res = await authApi.getMyNotifications();
-      const notifList = res?.data || res || [];
-      if (Array.isArray(notifList)) {
-        setNotifications(notifList);
-        const unread = notifList.filter((n: any) => !n.isRead && !n.read).length;
-        setUnreadCount(unread);
-      }
+      const notifList = Array.isArray(res?.data)
+        ? res.data
+        : Array.isArray(res?.data?.notifications)
+          ? res.data.notifications
+          : Array.isArray(res?.data?.content)
+            ? res.data.content
+            : Array.isArray(res?.notifications)
+              ? res.notifications
+              : Array.isArray(res)
+                ? res
+                : [];
+
+      let readIdSet = new Set<string>();
+      try {
+        const stored = JSON.parse(localStorage.getItem(NOTIF_STORAGE_KEY) || "[]");
+        if (Array.isArray(stored)) {
+          readIdSet = new Set(stored.map(String));
+        }
+      } catch (e) {}
+
+      setNotifications(
+        notifList.map((n: any) => {
+          const isRead = isNotificationRead(n, readIdSet);
+          return { ...n, isRead, read: isRead };
+        })
+      );
+
+      const unread = notifList.filter((n: any) => !isNotificationRead(n, readIdSet)).length;
+      setUnreadCount(unread);
     } catch (error) {
       console.error("Failed to load notifications", error);
     }
@@ -96,12 +129,53 @@ export default function TraderNavbar() {
   };
 
   const handleMarkAllRead = async () => {
+    setNotifications((prev) =>
+      prev.map((n) => ({ ...n, isRead: true, read: true, is_read: true }))
+    );
+    setUnreadCount(0);
+
+    try {
+      const stored = JSON.parse(localStorage.getItem(NOTIF_STORAGE_KEY) || "[]");
+      const currentIds = notifications.map((n: any) => String(n.id));
+      const merged = Array.from(new Set([...(Array.isArray(stored) ? stored : []), ...currentIds]));
+      localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(merged));
+    } catch (e) {
+      console.error("Failed to save read notifications to localStorage", e);
+    }
+
     try {
       await authApi.markNotificationsReadAll();
-      setNotifications(prev => prev.map(n => ({ ...n, isRead: true, read: true })));
-      setUnreadCount(0);
     } catch (error) {
       console.error("Failed to mark all as read", error);
+    }
+  };
+
+  const handleNotificationClick = async (n: any) => {
+    setNotifOpen(false);
+
+    setNotifications((prev) =>
+      prev.map((item) =>
+        item.id === n.id ? { ...item, isRead: true, read: true, is_read: true } : item
+      )
+    );
+    setUnreadCount((prev) => Math.max(0, prev - 1));
+
+    try {
+      const stored = JSON.parse(localStorage.getItem(NOTIF_STORAGE_KEY) || "[]");
+      const list = Array.isArray(stored) ? stored : [];
+      if (!list.includes(String(n.id))) {
+        list.push(String(n.id));
+        localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(list));
+      }
+    } catch (e) {}
+
+    authApi.markNotificationRead(n.id).catch(() => {});
+
+    const targetUrl = n.actionUrl || n.link || n.url;
+    if (targetUrl) {
+      router.push(targetUrl);
+    } else {
+      router.push(`/trader/notifications?id=${n.id}`);
     }
   };
 
@@ -268,7 +342,13 @@ export default function TraderNavbar() {
             {isApproved && (
               <div className="relative" ref={notifDropdownRef}>
                 <button
-                  onClick={() => setNotifOpen(!notifOpen)}
+                  onClick={() => {
+                    const nextState = !notifOpen;
+                    setNotifOpen(nextState);
+                    if (nextState && unreadCount > 0) {
+                      handleMarkAllRead();
+                    }
+                  }}
                   className="relative w-10 h-10 rounded-full flex items-center justify-center text-[#1C2C1C]/60 hover:bg-[#F5F5F5] hover:text-[#1C2C1C] transition-all hover:scale-105 active:scale-95"
                   aria-label="Notifications"
                 >
@@ -304,10 +384,7 @@ export default function TraderNavbar() {
                         notifications.map((n) => (
                           <div
                             key={n.id}
-                            onClick={() => {
-                              setNotifOpen(false);
-                              router.push(`/trader/notifications?id=${n.id}`);
-                            }}
+                            onClick={() => handleNotificationClick(n)}
                             className={`cursor-pointer px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-[#F5F5F5] transition-colors text-left ${!n.isRead && !n.read ? "bg-red-50" : ""
                               }`}
                           >

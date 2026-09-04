@@ -300,6 +300,12 @@ export const authApi = {
     return data;
   },
 
+  // Fetch unreviewed completed jobs for customer
+  getUnreviewedCompletedJobs: async () => {
+    const { data } = await api.get('/api/customer/unreviewed-completed-jobs');
+    return data;
+  },
+
   // Post a new job
   postJob: async (formData: FormData) => {
     const { data } = await api.post("/api/jobs", formData, {
@@ -554,8 +560,42 @@ export const authApi = {
   },
 
   markNotificationsReadAll: async () => {
-    const { data } = await api.patch('/api/notification/read-all');
-    return data;
+    try {
+      const { data } = await api.patch('/api/notification/read-all');
+      return data;
+    } catch (e) {
+      try {
+        const { data } = await api.put('/api/notification/read-all');
+        return data;
+      } catch (e2) {
+        try {
+          const { data } = await api.post('/api/notification/read-all');
+          return data;
+        } catch (e3) {
+          const { data } = await api.patch('/api/notifications/read-all');
+          return data;
+        }
+      }
+    }
+  },
+
+  markNotificationRead: async (id: string | number) => {
+    try {
+      const { data } = await api.patch(`/api/notification/${id}/read`);
+      return data;
+    } catch (e) {
+      try {
+        const { data } = await api.put(`/api/notification/${id}/read`);
+        return data;
+      } catch (e2) {
+        try {
+          const { data } = await api.patch(`/api/notification/${id}`, { isRead: true });
+          return data;
+        } catch (e3) {
+          return null;
+        }
+      }
+    }
   },
 
   // Update customer profile – supports multipart (profile image upload)
