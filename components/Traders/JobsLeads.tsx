@@ -107,8 +107,7 @@ function getUIStatus(item: any): "New" | "Posted" | "Contacted" | "In Progress" 
     item.status === "REJECTED" ||
     item.rawStatus === "REJECTED" ||
     item.status === "DECLINED" ||
-    item.rawStatus === "DECLINED" ||
-    (Array.isArray(item.matches) && item.matches.some((m: any) => m.status?.toUpperCase() === "REJECTED" || m.status?.toUpperCase() === "DECLINED" || (m.isSelected === false && (item.status === "IN_PROGRESS" || item.status === "ASSIGNED"))));
+    item.rawStatus === "DECLINED";
 
   // Check if this trader's quote is the one accepted
   const isAccepted = Boolean(
@@ -118,25 +117,9 @@ function getUIStatus(item: any): "New" | "Posted" | "Contacted" | "In Progress" 
     !isRejected
   );
 
-  // If quote or match is rejected:
-  // Return the specific status backend provided: Declined or Rejected
-  if (isRejected) {
-    if (matchStatus === "DECLINED" || item.status === "DECLINED" || item.rawStatus === "DECLINED") {
-      return "Declined";
-    }
-    return "Rejected";
-  }
-
   if (item.status === "COMPLETED" || item.rawStatus === "COMPLETED") return "Completed";
 
-  if (item.status === "IN_PROGRESS" || item.rawStatus === "IN_PROGRESS") {
-    // Only "In Progress" for the trader who was accepted
-    if (isAccepted) {
-      return "In Progress";
-    }
-    // If the job is in progress with someone else, it is Rejected to this trader
-    return "Rejected";
-  }
+  if (item.status === "IN_PROGRESS" || item.rawStatus === "IN_PROGRESS") return "In Progress";
 
   if (
     item.status === "CANCELLED" ||
@@ -149,14 +132,16 @@ function getUIStatus(item: any): "New" | "Posted" | "Contacted" | "In Progress" 
     return "Closed";
   }
 
-  if (
-    item.status === "ASSIGNED" ||
-    item.status === "QUOTE_RECEIVED" ||
-    matchStatus === "ACCEPTED" ||
-    matchStatus === "QUOTED" ||
-    item.hasQuoted ||
-    item.isQuoteAccepted
-  ) {
+  // If quote or match is rejected:
+  // Return the specific status backend provided: Declined or Rejected
+  if (isRejected) {
+    if (matchStatus === "DECLINED" || item.status === "DECLINED" || item.rawStatus === "DECLINED") {
+      return "Declined";
+    }
+    return "Rejected";
+  }
+
+  if (isAccepted || item.isQuoteAccepted || matchStatus === "ACCEPTED") {
     return "Contacted";
   }
 
@@ -649,16 +634,29 @@ export default function JobsLeads() {
         }
       };
 
-      const mappedDays = mapAvailabilityToDays(quoteForm.availability);
+      const mappedDays = Number(quoteForm.estimatedDays) > 0 ? Number(quoteForm.estimatedDays) : mapAvailabilityToDays(quoteForm.availability);
 
       if (editingQuoteId) {
         // Send JSON payload for updates (without attachments to avoid validation error)
-        const payload = {
+        const payload: any = {
           price: Number(quoteForm.price),
           estimatedDays: mappedDays,
           message: quoteForm.message,
         };
-        await authApi.updateQuote(editingQuoteId, payload);
+        if (quoteForm.availability?.trim()) {
+          payload.availability = quoteForm.availability.trim();
+        }
+
+        try {
+          await authApi.updateQuote(editingQuoteId, payload);
+        } catch (patchErr: any) {
+          if (patchErr?.response?.data?.message?.toString()?.toLowerCase()?.includes("availability") || patchErr?.response?.status === 400) {
+            delete payload.availability;
+            await authApi.updateQuote(editingQuoteId, payload);
+          } else {
+            throw patchErr;
+          }
+        }
 
         setQuoteDetails((prev: any) => prev ? { ...prev, ...payload } : prev);
       } else {
@@ -667,6 +665,9 @@ export default function JobsLeads() {
         formData.append("price", quoteForm.price);
         formData.append("estimatedDays", String(mappedDays));
         formData.append("message", quoteForm.message);
+        if (quoteForm.availability?.trim()) {
+          formData.append("availability", quoteForm.availability.trim());
+        }
 
         quoteAttachments.forEach((file) => {
           formData.append("attachments", file);
@@ -678,10 +679,10 @@ export default function JobsLeads() {
       setShowSuccessModal(true);
       setJobs((prevJobs) =>
         prevJobs.map((j) =>
-          j.id === selectedJob.id ? { ...j, hasQuoted: true, status: "Contacted", matchStatus: "QUOTED" } : j
+          j.id === selectedJob.id ? { ...j, hasQuoted: true, status: "New", matchStatus: "QUOTED" } : j
         )
       );
-      setSelectedJob((prev) => (prev ? { ...prev, hasQuoted: true, status: "Contacted", matchStatus: "QUOTED" } : null));
+      setSelectedJob((prev) => (prev ? { ...prev, hasQuoted: true, status: "New", matchStatus: "QUOTED" } : null));
     } catch (error: any) {
       console.error("Failed to send quote", error);
       toast.error(error?.response?.data?.message || "Failed to send job quote");
@@ -791,14 +792,14 @@ export default function JobsLeads() {
         </div>
       );
     }
-    if (status === "New" || status === "Posted" || s === "NEW" || s === "POSTED" || s === "LIVE" || s === "OPEN") {
+    if (status === "New" || status === "Posted" || s === "NEW" || s === "POSTED" || s === "LIVE" || s === "OPEN" || s === "QUOTED" || s === "QUOTE_RECEIVED") {
       return (
         <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#D4EDDA] border border-[#A9D18E] text-[#1E6B24] text-[11px] font-bold">
           New
         </div>
       );
     }
-    if (status === "Contacted" || s === "CONTACTED" || s === "QUOTED" || s === "QUOTE_RECEIVED") {
+    if (status === "Contacted" || s === "CONTACTED") {
       return (
         <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#72A8E5] border border-[#5B9BD5] text-[#103B75] text-[11px] font-bold">
           Contacted
@@ -912,7 +913,7 @@ export default function JobsLeads() {
                       }`}
                   >
                     <div className="flex items-center justify-between">
-                      {renderStatusBadge(job.rawStatus || job.status)}
+                      {renderStatusBadge(job.status)}
                       <span className="text-[12px] text-gray-400 font-medium">{job.timeAgo}</span>
                     </div>
 
@@ -1016,31 +1017,35 @@ export default function JobsLeads() {
                           (Array.isArray(selectedJob.quotes) && selectedJob.quotes.some((q: any) => q.status?.toUpperCase() === "ACCEPTED" && q.id !== quoteDetails?.id))
                         );
 
-                        if (isQuoteOrMatchRejected) {
-                          if (quoteStatusUpper === "DECLINED" || matchStatusUpper === "DECLINED" || selectedJob.status === "Declined") {
-                            return renderStatusBadge("Declined");
-                          }
-                          return renderStatusBadge("Rejected");
-                        }
                         if (selectedJob.status === "Completed" || selectedJob.rawStatus === "COMPLETED" || jobRawUpper === "COMPLETED") {
                           return renderStatusBadge("Completed");
                         }
-                        if ((selectedJob.status === "In Progress" || selectedJob.rawStatus === "IN_PROGRESS" || jobRawUpper === "IN_PROGRESS") && selectedJob.isQuoteAccepted) {
+                        if (selectedJob.status === "In Progress" || selectedJob.rawStatus === "IN_PROGRESS" || jobRawUpper === "IN_PROGRESS") {
                           return renderStatusBadge("In Progress");
                         }
                         if (
                           selectedJob.status === "Closed" ||
                           selectedJob.rawStatus === "CLOSED" ||
                           selectedJob.rawStatus === "CANCELLED" ||
-                          selectedJob.rawStatus === "EXPIRED" ||
-                          ((jobRawUpper === "IN_PROGRESS" || jobRawUpper === "ASSIGNED") && !selectedJob.isQuoteAccepted)
+                          selectedJob.rawStatus === "EXPIRED"
                         ) {
-                          return renderStatusBadge(hasOtherTraderAccepted ? "Rejected" : "Closed");
+                          return renderStatusBadge("Closed");
                         }
-                        if (selectedJob.isQuoteAccepted || selectedJob.hasQuoted) {
+                        if (isQuoteOrMatchRejected) {
+                          if (quoteStatusUpper === "DECLINED" || matchStatusUpper === "DECLINED" || selectedJob.status === "Declined") {
+                            return renderStatusBadge("Declined");
+                          }
+                          return renderStatusBadge("Rejected");
+                        }
+                        const isAccepted = Boolean(
+                          selectedJob.isQuoteAccepted ||
+                          quoteStatusUpper === "ACCEPTED" ||
+                          matchStatusUpper === "ACCEPTED"
+                        );
+                        if (isAccepted) {
                           return renderStatusBadge("Contacted");
                         }
-                        return renderStatusBadge(selectedJob.status);
+                        return renderStatusBadge(selectedJob.status || "New");
                       })()}
                       {fullJobData?.emergency && (
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full bg-red-50 text-red-600 text-[11px] font-bold">
@@ -1612,22 +1617,17 @@ export default function JobsLeads() {
                   Estimated Days
                 </label>
                 <div className="relative">
-                  <select
+                  <Clock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  <input
+                    type="number"
+                    min={1}
+                    step={1}
                     required
+                    placeholder="e.g. 3"
                     value={quoteForm.estimatedDays}
                     onChange={(e) => setQuoteForm((f) => ({ ...f, estimatedDays: e.target.value }))}
-                    className="w-full px-4 py-2.5 pl-9 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] bg-white focus:outline-none focus:border-[#8BC34A] focus:ring-2 focus:ring-[#8BC34A]/20 transition-all appearance-none cursor-pointer"
-                  >
-                    <option value="" disabled>Select estimated time</option>
-                    <option value="Under 1 day">Under 1 day</option>
-                    <option value="1 - 3 days">1 - 3 days</option>
-                    <option value="Under 7 days">Under 7 days</option>
-                    <option value="1 - 2 weeks">1 - 2 weeks</option>
-                    <option value="2 - 4 weeks">2 - 4 weeks</option>
-                    <option value="Over 1 month">Over 1 month</option>
-                  </select>
-                  <Clock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                  <ChevronDown size={15} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    className="w-full px-4 py-2.5 pl-9 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] bg-white focus:outline-none focus:border-[#8BC34A] focus:ring-2 focus:ring-[#8BC34A]/20 transition-all placeholder:text-gray-400"
+                  />
                 </div>
               </div>
 
@@ -1637,20 +1637,15 @@ export default function JobsLeads() {
                   Availability
                 </label>
                 <div className="relative">
-                  <select
+                  <Calendar size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                  <input
+                    type="text"
                     required
+                    placeholder="e.g. Can start immediately / Within 24 hours"
                     value={quoteForm.availability}
                     onChange={(e) => setQuoteForm((f) => ({ ...f, availability: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] bg-white focus:outline-none focus:border-[#8BC34A] focus:ring-2 focus:ring-[#8BC34A]/20 transition-all appearance-none cursor-pointer"
-                  >
-                    <option value="" disabled>Select your availability</option>
-                    <option value="Can start immediately">Can start immediately</option>
-                    <option value="Within 24 hours">Within 24 hours</option>
-                    <option value="Within 3 days">Within 3 days</option>
-                    <option value="Within 7 days">Within 7 days</option>
-                    <option value="7days +">7days +</option>
-                  </select>
-                  <ChevronDown size={15} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    className="w-full px-4 py-2.5 pl-9 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] bg-white focus:outline-none focus:border-[#8BC34A] focus:ring-2 focus:ring-[#8BC34A]/20 transition-all placeholder:text-gray-400"
+                  />
                 </div>
               </div>
 

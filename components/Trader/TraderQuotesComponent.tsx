@@ -14,7 +14,8 @@ import {
   X,
   Trash2,
   Paperclip,
-  Loader2
+  Loader2,
+  Calendar
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useSocket } from "@/hooks/useSocket";
@@ -39,9 +40,17 @@ interface Quote {
   jobPostcode?: string;
   // added properties
   estimatedDays?: number;
+  availability?: string;
   message?: string;
   attachments?: string[];
 }
+
+const getAvailabilityFromDays = (days: number) => {
+  if (days <= 1) return "Within 24 hours";
+  if (days <= 3) return "Within 3 days";
+  if (days <= 7) return "Within 7 days";
+  return "7+ days";
+};
 
 const statusConfig: Record<
   string,
@@ -204,6 +213,7 @@ export default function TraderQuotesComponent() {
   // Form states
   const [price, setPrice] = useState("");
   const [estimatedDays, setEstimatedDays] = useState("");
+  const [availability, setAvailability] = useState("");
   const [message, setMessage] = useState("");
   const [existingAttachments, setExistingAttachments] = useState<string[]>([]);
   const [newAttachments, setNewAttachments] = useState<File[]>([]);
@@ -266,6 +276,7 @@ export default function TraderQuotesComponent() {
     setModalLoading(true);
     setPrice(quote.price ? String(quote.price) : "");
     setEstimatedDays(quote.estimatedDays ? String(quote.estimatedDays) : "");
+    setAvailability(quote.availability || (quote.estimatedDays ? getAvailabilityFromDays(quote.estimatedDays) : ""));
     setMessage(quote.message || "");
     setExistingAttachments(Array.isArray(quote.attachments) ? quote.attachments : []);
     setNewAttachments([]);
@@ -278,6 +289,7 @@ export default function TraderQuotesComponent() {
         if (data) {
           setPrice(data.price ? String(data.price) : (quote.price ? String(quote.price) : ""));
           setEstimatedDays(data.estimatedDays ? String(data.estimatedDays) : "");
+          setAvailability(data.availability || quote.availability || (data.estimatedDays ? getAvailabilityFromDays(data.estimatedDays) : ""));
           setMessage(data.message || "");
           setExistingAttachments(Array.isArray(data.attachments) ? data.attachments : []);
         }
@@ -347,6 +359,11 @@ export default function TraderQuotesComponent() {
       return;
     }
 
+    if (!availability.trim()) {
+      toast.error("Please enter your availability");
+      return;
+    }
+
     if (!message.trim()) {
       toast.error("Please enter a message");
       return;
@@ -354,13 +371,26 @@ export default function TraderQuotesComponent() {
 
     setIsSubmitting(true);
     try {
-      const payload = {
+      const payload: any = {
         price: parsedPrice,
         estimatedDays: parsedDays,
         message: message.trim(),
       };
+      if (availability.trim()) {
+        payload.availability = availability.trim();
+      }
 
-      await authApi.updateQuote(editingQuote.id, payload);
+      try {
+        await authApi.updateQuote(editingQuote.id, payload);
+      } catch (patchErr: any) {
+        if (patchErr?.response?.data?.message?.toString()?.toLowerCase()?.includes("availability") || patchErr?.response?.status === 400) {
+          delete payload.availability;
+          await authApi.updateQuote(editingQuote.id, payload);
+        } else {
+          throw patchErr;
+        }
+      }
+
       toast.success("Quote updated successfully!");
 
       setQuotes((prevQuotes) =>
@@ -370,6 +400,7 @@ export default function TraderQuotesComponent() {
               ...q,
               price: parsedPrice,
               estimatedDays: parsedDays,
+              availability: availability.trim(),
               message: message.trim(),
               attachments: existingAttachments,
               updatedAt: new Date().toISOString(),
@@ -580,12 +611,30 @@ export default function TraderQuotesComponent() {
                     <Clock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
                     <input
                       type="number"
-                      step="0.5"
-                      min={0.5}
+                      step="1"
+                      min={1}
                       required
                       placeholder="e.g. 3"
                       value={estimatedDays}
                       onChange={(e) => setEstimatedDays(e.target.value)}
+                      className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] placeholder:text-gray-400 focus:outline-none focus:border-[#C8D9A8] focus:ring-2 focus:ring-[#C8D9A8]/20 transition-all"
+                    />
+                  </div>
+                </div>
+
+                {/* Availability */}
+                <div>
+                  <label className="block text-[12px] font-semibold text-[#1C2C1C] mb-1.5">
+                    Availability
+                  </label>
+                  <div className="relative">
+                    <Calendar size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Can start immediately / Within 24 hours"
+                      value={availability}
+                      onChange={(e) => setAvailability(e.target.value)}
                       className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] placeholder:text-gray-400 focus:outline-none focus:border-[#C8D9A8] focus:ring-2 focus:ring-[#C8D9A8]/20 transition-all"
                     />
                   </div>
@@ -750,7 +799,7 @@ export default function TraderQuotesComponent() {
               </div>
             ) : (
               <div className="flex flex-col gap-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-3">
                   <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
                     <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Price</span>
                     <span className="text-[15px] font-bold text-[#1C2C1C]">{formatPrice(viewQuoteDetails?.price || viewingQuote.price)}</span>
@@ -761,9 +810,13 @@ export default function TraderQuotesComponent() {
                   </div>
                   <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
                     <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Estimated Days</span>
-                    <span className="text-[14px] font-bold text-[#1C2C1C]">{viewQuoteDetails?.estimatedDays || viewingQuote.estimatedDays || "—"}</span>
+                    <span className="text-[14px] font-bold text-[#1C2C1C]">{viewQuoteDetails?.estimatedDays || viewingQuote.estimatedDays || "—"} {(viewQuoteDetails?.estimatedDays || viewingQuote.estimatedDays) ? 'days' : ''}</span>
                   </div>
                   <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
+                    <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Availability</span>
+                    <span className="text-[14px] font-bold text-[#1C2C1C]">{viewQuoteDetails?.availability || viewingQuote.availability || (viewQuoteDetails?.estimatedDays ? getAvailabilityFromDays(viewQuoteDetails.estimatedDays) : "—")}</span>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 col-span-2">
                     <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Submitted</span>
                     <span className="text-[14px] font-bold text-[#1C2C1C]">{formatDate(viewingQuote.createdAt)}</span>
                   </div>
