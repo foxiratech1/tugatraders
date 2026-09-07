@@ -17,7 +17,7 @@ function NotificationsCenterContent() {
     if (isUnread) {
       toggleReadStatus(n.id, true);
     }
-    
+
     // Explicit URLs from the backend
     if (n.link || n.actionUrl || n.url) {
       router.push(n.link || n.actionUrl || n.url);

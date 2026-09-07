@@ -167,8 +167,8 @@ const isInProgressStatus = (norm: string) =>
   norm.includes("PROGRESS");
 
 const statusConfig: Record<string, { label: string; bg: string; text: string; dot: string }> = {
-  OPEN: { label: "Live", bg: "bg-[#FDE2D6]", text: "text-[#D32F2F]", dot: "bg-[#D32F2F]" },
-  POSTED: { label: "Live", bg: "bg-[#FDE2D6]", text: "text-[#D32F2F]", dot: "bg-[#D32F2F]" },
+  OPEN: { label: "Job Posted", bg: "bg-[#FDE2D6]", text: "text-[#D32F2F]", dot: "bg-[#D32F2F]" },
+  POSTED: { label: "Job Posted", bg: "bg-[#FDE2D6]", text: "text-[#D32F2F]", dot: "bg-[#D32F2F]" },
   QUOTE_RECEIVED: {
     label: "Quote Received",
     bg: "bg-[#FFF8E1]",
@@ -211,7 +211,7 @@ const statusConfig: Record<string, { label: string; bg: string; text: string; do
   CANCELLED: { label: "Closed", bg: "bg-[#A5A5A5]", text: "text-[#515151]", dot: "bg-[#515151]" },
   CLOSED: { label: "Closed", bg: "bg-[#A5A5A5]", text: "text-[#515151]", dot: "bg-[#515151]" },
   EXPIRED: { label: "Expired", bg: "bg-[#A5A5A5]", text: "text-[#515151]", dot: "bg-[#515151]" },
-  ACTIVE: { label: "Live", bg: "bg-[#FDE2D6]", text: "text-[#D32F2F]", dot: "bg-[#D32F2F]" },
+  ACTIVE: { label: "Job Posted", bg: "bg-[#FDE2D6]", text: "text-[#D32F2F]", dot: "bg-[#D32F2F]" },
 };
 
 function SidebarStatusBadge({ status }: { status: string }) {
@@ -251,7 +251,7 @@ function SidebarStatusBadge({ status }: { status: string }) {
   return (
     <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FDE2D6] text-[#D32F2F] text-[11px] font-semibold">
       <span className="w-1.5 h-1.5 rounded-full bg-[#D32F2F]" />
-      Live
+      Job Posted
     </div>
   );
 }
@@ -288,7 +288,7 @@ function StatusBadge({ status }: { status: string }) {
   }
   return (
     <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#FDE2D6] text-[#D32F2F] text-[11px] font-bold tracking-wide">
-      LIVE
+      JOB POSTED
     </span>
   );
 }
@@ -477,119 +477,119 @@ function QuotesModal({
                       )}
                     </div>
 
-                {/* Meta grid */}
-                <div className="grid grid-cols-2 gap-3 mb-3">
-                  <div className="flex items-center gap-2 bg-[#F8F9F5] rounded-lg p-2.5">
-                    <DollarSign size={14} className="text-[#6E9625] flex-shrink-0" />
-                    <div>
-                      <p className="text-[10px] text-gray-400 font-medium">Price</p>
-                      <p className="text-[13px] font-bold text-[#1C2C1C]">{formatPrice(quote.price)}</p>
+                    {/* Meta grid */}
+                    <div className="grid grid-cols-2 gap-3 mb-3">
+                      <div className="flex items-center gap-2 bg-[#F8F9F5] rounded-lg p-2.5">
+                        <DollarSign size={14} className="text-[#6E9625] flex-shrink-0" />
+                        <div>
+                          <p className="text-[10px] text-gray-400 font-medium">Price</p>
+                          <p className="text-[13px] font-bold text-[#1C2C1C]">{formatPrice(quote.price)}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 bg-[#F8F9F5] rounded-lg p-2.5">
+                        <Clock size={14} className="text-[#6E9625] flex-shrink-0" />
+                        <div>
+                          <p className="text-[10px] text-gray-400 font-medium">Est. Days</p>
+                          <p className="text-[13px] font-bold text-[#1C2C1C]">{quote.estimatedDays} day{quote.estimatedDays !== 1 ? 's' : ''}</p>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2 bg-[#F8F9F5] rounded-lg p-2.5">
-                    <Clock size={14} className="text-[#6E9625] flex-shrink-0" />
-                    <div>
-                      <p className="text-[10px] text-gray-400 font-medium">Est. Days</p>
-                      <p className="text-[13px] font-bold text-[#1C2C1C]">{quote.estimatedDays} day{quote.estimatedDays !== 1 ? 's' : ''}</p>
+
+                    {/* Message */}
+                    <div className="flex items-start gap-2 bg-gray-50 rounded-lg p-3 mb-3">
+                      <MessageSquare size={13} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                      <p className="text-[12px] text-gray-600 leading-relaxed">{quote.message}</p>
                     </div>
-                  </div>
-                </div>
 
-                {/* Message */}
-                <div className="flex items-start gap-2 bg-gray-50 rounded-lg p-3 mb-3">
-                  <MessageSquare size={13} className="text-gray-400 mt-0.5 flex-shrink-0" />
-                  <p className="text-[12px] text-gray-600 leading-relaxed">{quote.message}</p>
-                </div>
+                    {/* Attachments */}
+                    {quote.attachments && quote.attachments.length > 0 && (
+                      <div className="mb-3">
+                        <p className="text-[11px] font-semibold text-gray-500 mb-2 flex items-center gap-1">
+                          <Paperclip size={12} />
+                          Attachments
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {quote.attachments.map((att) => (
+                            <a
+                              key={att.id}
+                              href={getQuoteAttachmentUrl(att.url, att.file)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-[#8BC34A] transition-colors max-w-full"
+                              title={att.filename}
+                            >
+                              {att.mimeType?.startsWith("image/") ? (
+                                <ImageIcon size={13} className="text-[#6E9625] flex-shrink-0" />
+                              ) : (
+                                <FileText size={13} className="text-gray-400 flex-shrink-0" />
+                              )}
+                              <span className="text-[11px] text-[#1C2C1C] truncate max-w-[120px]">
+                                {att.filename}
+                              </span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
-                {/* Attachments */}
-                {quote.attachments && quote.attachments.length > 0 && (
-                  <div className="mb-3">
-                    <p className="text-[11px] font-semibold text-gray-500 mb-2 flex items-center gap-1">
-                      <Paperclip size={12} />
-                      Attachments
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      {quote.attachments.map((att) => (
-                        <a
-                          key={att.id}
-                          href={getQuoteAttachmentUrl(att.url, att.file)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-2.5 py-1.5 hover:border-[#8BC34A] transition-colors max-w-full"
-                          title={att.filename}
+                    {/* Date */}
+                    <p className="text-[10px] text-gray-400 mb-3">Received: {formatDate(quote.createdAt)}</p>
+
+                    {/* Actions */}
+                    {isThisAccepted ? (
+                      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
+                        <CheckCircle size={12} />
+                        Quote Accepted
+                      </div>
+                    ) : effectiveStatus?.toUpperCase() === "REJECTED" || effectiveStatus?.toUpperCase() === "DECLINED" ? (
+                      <div className="flex flex-col gap-2.5">
+                        <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#FF3B30] bg-[#FF3B30]/5 px-3 py-1 rounded-full border border-[#FF3B30]/30 w-fit">
+                          <Ban size={12} className="text-[#FF3B30]" />
+                          {hasAnyAccepted && !isThisAccepted ? "Quote Rejected" : "Quote Declined"}
+                        </div>
+                        <div>
+                          <button
+                            onClick={() => onSendMessage(quote.trader?.id)}
+                            className="flex items-center justify-center gap-1.5 px-4 py-2 border border-[#1565C0] cursor-pointer text-[#1565C0] hover:bg-blue-50 rounded-lg text-[12px] font-semibold transition-colors"
+                          >
+                            <MessageSquare size={13} />
+                            Send Message
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                          onClick={() => handleAccept(quote.id)}
+                          disabled={accepting === quote.id || declining === quote.id}
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#4CAF50] hover:bg-[#43A047] text-white rounded-lg text-[12px] font-bold transition-colors disabled:opacity-50 min-w-[110px]"
                         >
-                          {att.mimeType?.startsWith("image/") ? (
-                            <ImageIcon size={13} className="text-[#6E9625] flex-shrink-0" />
-                          ) : (
-                            <FileText size={13} className="text-gray-400 flex-shrink-0" />
-                          )}
-                          <span className="text-[11px] text-[#1C2C1C] truncate max-w-[120px]">
-                            {att.filename}
-                          </span>
-                        </a>
-                      ))}
-                    </div>
+                          <CheckCircle size={13} />
+                          {accepting === quote.id ? "Accepting..." : "Accept Quote"}
+                        </button>
+                        <button
+                          onClick={() => onSendMessage(quote.trader?.id)}
+                          className="flex items-center justify-center gap-1.5 px-4 py-2 border border-[#1565C0] cursor-pointer text-[#1565C0] hover:bg-blue-50 rounded-lg text-[12px] font-semibold transition-colors"
+                        >
+                          <MessageSquare size={13} />
+                          Send Message
+                        </button>
+                        <button
+                          onClick={() => handleDecline(quote.id)}
+                          disabled={accepting === quote.id || declining === quote.id}
+                          className="flex items-center justify-center gap-1.5 px-4 py-2 border border-red-300 cursor-pointer text-red-600 hover:bg-red-50 rounded-lg text-[12px] font-semibold transition-colors disabled:opacity-50"
+                        >
+                          <X size={13} />
+                          {declining === quote.id ? "Declining..." : "Decline"}
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )}
-
-                {/* Date */}
-                <p className="text-[10px] text-gray-400 mb-3">Received: {formatDate(quote.createdAt)}</p>
-
-                {/* Actions */}
-                {isThisAccepted ? (
-                  <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
-                    <CheckCircle size={12} />
-                    Quote Accepted
-                  </div>
-                ) : effectiveStatus?.toUpperCase() === "REJECTED" || effectiveStatus?.toUpperCase() === "DECLINED" ? (
-                  <div className="flex flex-col gap-2.5">
-                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-[#FF3B30] bg-[#FF3B30]/5 px-3 py-1 rounded-full border border-[#FF3B30]/30 w-fit">
-                      <Ban size={12} className="text-[#FF3B30]" />
-                      {hasAnyAccepted && !isThisAccepted ? "Quote Rejected" : "Quote Declined"}
-                    </div>
-                    <div>
-                      <button
-                        onClick={() => onSendMessage(quote.trader?.id)}
-                        className="flex items-center justify-center gap-1.5 px-4 py-2 border border-[#1565C0] cursor-pointer text-[#1565C0] hover:bg-blue-50 rounded-lg text-[12px] font-semibold transition-colors"
-                      >
-                        <MessageSquare size={13} />
-                        Send Message
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <button
-                      onClick={() => handleAccept(quote.id)}
-                      disabled={accepting === quote.id || declining === quote.id}
-                      className="flex-1 flex items-center justify-center gap-1.5 py-2 bg-[#4CAF50] hover:bg-[#43A047] text-white rounded-lg text-[12px] font-bold transition-colors disabled:opacity-50 min-w-[110px]"
-                    >
-                      <CheckCircle size={13} />
-                      {accepting === quote.id ? "Accepting..." : "Accept Quote"}
-                    </button>
-                    <button
-                      onClick={() => onSendMessage(quote.trader?.id)}
-                      className="flex items-center justify-center gap-1.5 px-4 py-2 border border-[#1565C0] cursor-pointer text-[#1565C0] hover:bg-blue-50 rounded-lg text-[12px] font-semibold transition-colors"
-                    >
-                      <MessageSquare size={13} />
-                      Send Message
-                    </button>
-                    <button
-                      onClick={() => handleDecline(quote.id)}
-                      disabled={accepting === quote.id || declining === quote.id}
-                      className="flex items-center justify-center gap-1.5 px-4 py-2 border border-red-300 cursor-pointer text-red-600 hover:bg-red-50 rounded-lg text-[12px] font-semibold transition-colors disabled:opacity-50"
-                    >
-                      <X size={13} />
-                      {declining === quote.id ? "Declining..." : "Decline"}
-                    </button>
-                  </div>
-                )}
-              </div>
-            );
-          });
-        })()
-      )}
-    </div>
+                );
+              });
+            })()
+          )}
+        </div>
       </div>
     </div>
   );

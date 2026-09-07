@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useRef } from "react";
 import { authApi } from "@/app/api/authApi";
-import { Search, MapPin, Tag, MoreHorizontal, Calendar, Star, Send, MessageCircle, ArrowRight, X, Euro, Clock, FileText, Paperclip, Trash2, Play, User, Phone, Mail, Briefcase, Shield, CheckCircle, ChevronDown, Ban, RefreshCw } from "lucide-react";
+import { Search, MapPin, Tag, MoreHorizontal, Calendar, Star, Send, MessageCircle, ArrowRight, X, Euro, Clock, FileText, Paperclip, Trash2, Play, User, Phone, Mail, Briefcase, Shield, CheckCircle, ChevronDown, Ban, RefreshCw, Pencil, Loader2 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -15,7 +15,7 @@ interface JobLead {
   title: string;
   location: string;
   tag: string;
-  status: "Posted" | "Contacted" | "In Progress" | "Completed" | "Closed" | "Rejected" | "Declined";
+  status: "New" | "Posted" | "Contacted" | "In Progress" | "Completed" | "Closed" | "Rejected" | "Declined";
   rawStatus?: string;
   matchStatus?: string;
   timeAgo: string;
@@ -90,7 +90,7 @@ const formatPostedDate = (iso: string) => {
   });
 };
 
-function getUIStatus(item: any): "Posted" | "Contacted" | "In Progress" | "Completed" | "Closed" | "Rejected" | "Declined" {
+function getUIStatus(item: any): "New" | "Posted" | "Contacted" | "In Progress" | "Completed" | "Closed" | "Rejected" | "Declined" {
   const matchStatus = (
     item.matchStatus ||
     item.match?.status ||
@@ -160,7 +160,7 @@ function getUIStatus(item: any): "Posted" | "Contacted" | "In Progress" | "Compl
     return "Contacted";
   }
 
-  return "Posted";
+  return "New";
 }
 
 export default function JobsLeads() {
@@ -176,6 +176,8 @@ export default function JobsLeads() {
   const [fullJobData, setFullJobData] = useState<any>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isStartingJob, setIsStartingJob] = useState(false);
+  const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
+  const [isWithdrawing, setIsWithdrawing] = useState(false);
   const [quoteDetails, setQuoteDetails] = useState<any>(null);
   const [editingQuoteId, setEditingQuoteId] = useState<string | null>(null);
   const [quoteForm, setQuoteForm] = useState({
@@ -562,6 +564,60 @@ export default function JobsLeads() {
     setIsQuoteModalOpen(true);
   };
 
+  const handleEditQuote = async () => {
+    if (!selectedJob || !quoteDetails) return;
+
+    setQuoteForm({ price: "", estimatedDays: "", message: "", availability: "" });
+    setQuoteAttachments([]);
+    setEditingQuoteId(quoteDetails.id);
+
+    const getAvailabilityFromDays = (days: number) => {
+      if (days <= 1) return "Within 24 hours";
+      if (days <= 3) return "Within 3 days";
+      if (days <= 7) return "Within 7 days";
+      return "7days +";
+    };
+
+    setQuoteForm({
+      price: quoteDetails.price?.toString() || "",
+      estimatedDays: quoteDetails.estimatedDays?.toString() || "",
+      message: quoteDetails.message || "",
+      availability: quoteDetails.estimatedDays ? getAvailabilityFromDays(quoteDetails.estimatedDays) : "",
+    });
+
+    setIsQuoteModalOpen(true);
+  };
+
+  const handleWithdrawQuote = async () => {
+    if (!quoteDetails?.id) return;
+    setIsWithdrawModalOpen(true);
+  };
+
+  const executeWithdrawQuote = async () => {
+    if (!quoteDetails?.id) return;
+
+    setIsWithdrawing(true);
+    try {
+      toast.loading("Withdrawing quote...", { id: "withdraw" });
+      await authApi.withdrawQuote(quoteDetails.id);
+      toast.success("Quote withdrawn successfully", { id: "withdraw" });
+
+      setJobs((prevJobs) =>
+        prevJobs.map((j) =>
+          j.id === selectedJob?.id ? { ...j, hasQuoted: false, status: "New", matchStatus: "POSTED" } : j
+        )
+      );
+      setSelectedJob((prev) => (prev ? { ...prev, hasQuoted: false, status: "New", matchStatus: "POSTED" } : null));
+      setQuoteDetails(null);
+      setIsWithdrawModalOpen(false);
+    } catch (error: any) {
+      console.error("Failed to withdraw quote", error);
+      toast.error(error?.response?.data?.message || "Failed to withdraw quote", { id: "withdraw" });
+    } finally {
+      setIsWithdrawing(false);
+    }
+  };
+
   const handleAttachmentSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
@@ -603,6 +659,8 @@ export default function JobsLeads() {
           message: quoteForm.message,
         };
         await authApi.updateQuote(editingQuoteId, payload);
+
+        setQuoteDetails((prev: any) => prev ? { ...prev, ...payload } : prev);
       } else {
         // Send FormData for new quotes
         const formData = new FormData();
@@ -677,6 +735,8 @@ export default function JobsLeads() {
     if (activeTab !== "All") {
       if (activeTab === "Closed") {
         result = result.filter((j) => j.status === "Closed" || j.status === "Rejected" || j.status === "Declined");
+      } else if (activeTab === "New" || activeTab === "Posted") {
+        result = result.filter((j) => j.status === "New" || j.status === "Posted");
       } else {
         result = result.filter((j) => j.status === activeTab);
       }
@@ -704,12 +764,13 @@ export default function JobsLeads() {
     setCurrentPage(1);
   }, [activeTab, searchQuery]);
 
-  const tabs = ["All", "Posted", "Contacted", "In Progress", "Completed", "Closed"];
+  const tabs = ["All", "New", "Contacted", "In Progress", "Completed", "Closed"];
 
   // Helper to count jobs for tabs
   const getTabCount = (tab: string) => {
     if (tab === "All") return jobs.length;
     if (tab === "Closed") return jobs.filter((j) => j.status === "Closed" || j.status === "Rejected" || j.status === "Declined").length;
+    if (tab === "New" || tab === "Posted") return jobs.filter((j) => j.status === "New" || j.status === "Posted").length;
     return jobs.filter((j) => j.status === tab).length;
   };
 
@@ -730,10 +791,10 @@ export default function JobsLeads() {
         </div>
       );
     }
-    if (status === "Posted" || s === "POSTED" || s === "LIVE" || s === "OPEN") {
+    if (status === "New" || status === "Posted" || s === "NEW" || s === "POSTED" || s === "LIVE" || s === "OPEN") {
       return (
         <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#D4EDDA] border border-[#A9D18E] text-[#1E6B24] text-[11px] font-bold">
-          Posted
+          New
         </div>
       );
     }
@@ -768,7 +829,7 @@ export default function JobsLeads() {
     // Default fallback
     return (
       <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#D4EDDA] border border-[#A9D18E] text-[#1E6B24] text-[11px] font-bold">
-        {status || "Posted"}
+        {status === "Posted" ? "New" : (status || "New")}
       </div>
     );
   };
@@ -806,7 +867,7 @@ export default function JobsLeads() {
                 onClick={() => {
                   setActiveTab(tab);
                   setCurrentPage(1);
-                  const firstOfTab = jobs.find(j => tab === "All" || (tab === "Closed" ? (j.status === "Closed" || j.status === "Rejected" || j.status === "Declined") : j.status === tab));
+                  const firstOfTab = jobs.find(j => tab === "All" || (tab === "Closed" ? (j.status === "Closed" || j.status === "Rejected" || j.status === "Declined") : (tab === "New" || tab === "Posted" ? (j.status === "New" || j.status === "Posted") : j.status === tab)));
                   if (firstOfTab) setSelectedJob(firstOfTab);
                 }}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all ${isActive
@@ -1205,6 +1266,25 @@ export default function JobsLeads() {
                               <CheckCircle size={12} /> Your Quote Sent
                             </span>
                           )}
+
+                          {(!isAutoRejected && !isManualDecline && quoteDetails?.status?.toUpperCase() !== "ACCEPTED" && !selectedJob.isQuoteAccepted) && (
+                            <div className="flex items-center gap-2">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleEditQuote(); }}
+                                className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold text-[#6E9625] bg-[#6E9625]/10 hover:bg-[#6E9625]/20 transition-colors"
+                              >
+                                <Pencil size={11} />
+                                Edit
+                              </button>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleWithdrawQuote(); }}
+                                className="flex items-center gap-1 px-2.5 py-1 rounded-md text-[11px] font-bold text-red-500 bg-red-50 hover:bg-red-100 transition-colors ml-1"
+                              >
+                                <Trash2 size={11} />
+                                Withdraw
+                              </button>
+                            </div>
+                          )}
                         </div>
                         <div className="grid grid-cols-2 gap-4 text-[13px] pt-1">
                           <div>
@@ -1284,6 +1364,60 @@ export default function JobsLeads() {
                     else if (isClosed) buttonText = "Job Closed";
 
                     const showStartJob = isAccepted && !isCompleted && !isClosed;
+
+                    const isQuoteRejected = Boolean(
+                      isAutoRejected ||
+                      quoteStatusUpper === "REJECTED" ||
+                      matchStatusUpper === "REJECTED" ||
+                      selectedJob.status === "Rejected" ||
+                      (isRejected && !isManualDecline)
+                    );
+
+                    if (isQuoteRejected) {
+                      const formatJobStatusText = (status?: string) => {
+                        if (!status) return "In Progress";
+                        const s = status.toUpperCase();
+                        if (s === "IN_PROGRESS") return "In Progress";
+                        if (s === "COMPLETED") return "Completed";
+                        if (s === "ASSIGNED") return "Assigned";
+                        if (s === "CLOSED") return "Closed";
+                        if (s === "CANCELLED") return "Cancelled";
+                        if (s === "POSTED" || s === "NEW" || s === "LIVE" || s === "OPEN") return "Open";
+                        if (s === "QUOTE_RECEIVED") return "Quote Received";
+                        return status.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase());
+                      };
+
+                      const currentJobStatus = formatJobStatusText(fullJobData?.status || selectedJob.rawStatus || selectedJob.status);
+
+                      return (
+                        <div className="w-full bg-[#FEF2F2] border border-[#FCA5A5] rounded-2xl p-4 sm:px-6 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                          <div className="flex items-center gap-3.5">
+                            <div className="w-10 h-10 rounded-xl bg-red-100 border border-red-200 text-[#D32F2F] flex items-center justify-center shrink-0">
+                              <Ban size={20} className="text-[#D32F2F]" />
+                            </div>
+                            <div>
+                              <h4 className="text-[14px] sm:text-[15px] font-bold text-[#D32F2F] leading-snug">
+                                Your Quote has been Rejected
+                              </h4>
+                              <div className="flex flex-wrap items-center gap-x-2 text-[12px] sm:text-[13px] text-red-800/80 mt-1 font-medium">
+                                <span>Job: <strong className="font-semibold text-red-950">{selectedJob.title}</strong></span>
+                                {selectedJob.jobId && (
+                                  <span className="text-[11px] font-mono text-red-700 bg-red-100/80 px-1.5 py-0.5 rounded border border-red-200">
+                                    {selectedJob.jobId}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 self-start sm:self-center pl-12 sm:pl-0 shrink-0">
+                            <span className="text-[12px] font-bold text-red-800">Job Status:</span>
+                            <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] sm:text-[12px] font-bold uppercase tracking-wide bg-white border border-red-300 text-[#D32F2F] shadow-2xs">
+                              {currentJobStatus}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    }
 
                     return (
                       <div className={`grid gap-3 ${showStartJob ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2"}`}>
@@ -1748,6 +1882,50 @@ export default function JobsLeads() {
                 className="w-full h-[44px] bg-[#1C2C1C] text-white rounded-xl text-[14px] font-bold hover:bg-[#2A412A] transition-colors"
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Withdraw Confirmation Modal ─────────────────────────────────── */}
+      {isWithdrawModalOpen && quoteDetails && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300"
+            onClick={() => !isWithdrawing && setIsWithdrawModalOpen(false)}
+          />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 z-10 animate-in fade-in zoom-in-95 duration-200 text-center">
+            <div className="w-12 h-12 rounded-full bg-red-50 mx-auto flex items-center justify-center mb-4">
+              <Trash2 size={24} className="text-red-500" />
+            </div>
+            <h2 className="text-[18px] font-bold text-[#1C2C1C] mb-2">Withdraw Quote?</h2>
+            <p className="text-[14px] text-gray-500 mb-6 leading-relaxed">
+              Are you sure you want to withdraw your quote for{" "}
+              <span className="font-semibold text-gray-700">"{selectedJob?.title || "this job"}"</span>?
+              This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setIsWithdrawModalOpen(false)}
+                disabled={isWithdrawing}
+                className="flex-1 h-[42px] rounded-xl bg-gray-100 hover:bg-gray-200 text-[#1C2C1C] text-[14px] font-bold transition-colors disabled:opacity-50 cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={executeWithdrawQuote}
+                disabled={isWithdrawing}
+                className="flex-1 h-[42px] rounded-xl bg-red-600 hover:bg-red-700 text-white text-[14px] font-bold transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+              >
+                {isWithdrawing ? (
+                  <>
+                    <Loader2 size={15} className="animate-spin" />
+                    Withdrawing...
+                  </>
+                ) : (
+                  "Withdraw"
+                )}
               </button>
             </div>
           </div>

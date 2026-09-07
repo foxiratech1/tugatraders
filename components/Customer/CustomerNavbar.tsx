@@ -22,6 +22,80 @@ export default function CustomerNavbar() {
 
   const [inboxUnread, setInboxUnread] = useState(0);
   const [jobsUnread, setJobsUnread] = useState(0);
+  const [actionRequiredData, setActionRequiredData] = useState<any>(null);
+  const [inboxTotalUnread, setInboxTotalUnread] = useState(0);
+
+  const processInboxData = (convos: any[]) => {
+    let activeConvId: string | null = null;
+    if (typeof window !== "undefined" && window.location.pathname.includes("/inbox")) {
+      const urlParams = new URLSearchParams(window.location.search);
+      activeConvId = urlParams.get("conversationId");
+    }
+    const unreadMsgs = convos.reduce((acc: number, c: any) => {
+      const cid = String(c.id || c._id);
+      if (activeConvId && cid === String(activeConvId)) return acc;
+      return acc + (c.unreadCount || 0);
+    }, 0);
+    
+    setInboxTotalUnread(unreadMsgs);
+    
+    let seenInboxCount = 0;
+    if (typeof window !== "undefined") {
+      try {
+          seenInboxCount = parseInt(localStorage.getItem("customer_seen_inbox_count") || "0", 10);
+          if (isNaN(seenInboxCount)) seenInboxCount = 0;
+      } catch(e) {}
+    }
+
+    if (unreadMsgs > seenInboxCount) {
+        setInboxUnread(unreadMsgs);
+    } else {
+        setInboxUnread(0);
+        if (unreadMsgs < seenInboxCount && typeof window !== "undefined") {
+            try {
+                localStorage.setItem("customer_seen_inbox_count", String(unreadMsgs));
+            } catch(e) {}
+        }
+    }
+  };
+
+  const processJobsData = (actionRequired: any) => {
+    if (!actionRequired) return;
+    setActionRequiredData(actionRequired);
+    const { activeJobsCount = 0, quotesAwaitingResponseCount = 0, unreviewedJobsCount = 0 } = actionRequired;
+    const total = activeJobsCount + quotesAwaitingResponseCount + unreviewedJobsCount;
+
+    let seenState: any = {};
+    if (typeof window !== "undefined") {
+      try {
+        seenState = JSON.parse(localStorage.getItem("customer_seen_jobs_state") || "{}");
+      } catch (e) { }
+    }
+
+    let hasNew = false;
+    const newSeenState = { ...seenState };
+
+    if (activeJobsCount > (seenState.activeJobsCount || 0)) hasNew = true;
+    else newSeenState.activeJobsCount = activeJobsCount;
+
+    if (quotesAwaitingResponseCount > (seenState.quotesAwaitingResponseCount || 0)) hasNew = true;
+    else newSeenState.quotesAwaitingResponseCount = quotesAwaitingResponseCount;
+
+    if (unreviewedJobsCount > (seenState.unreviewedJobsCount || 0)) hasNew = true;
+    else newSeenState.unreviewedJobsCount = unreviewedJobsCount;
+
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("customer_seen_jobs_state", JSON.stringify(newSeenState));
+      } catch (e) { }
+    }
+
+    if (hasNew) {
+      setJobsUnread(total);
+    } else {
+      setJobsUnread(0);
+    }
+  };
 
   const getMyUserId = () => {
     if (profile?.id) return String(profile.id);
@@ -48,22 +122,11 @@ export default function CustomerNavbar() {
       ]);
       const dashData = dashRes?.data || dashRes;
       if (dashData?.actionRequired) {
-        const { activeJobsCount = 0, quotesAwaitingResponseCount = 0, unreviewedJobsCount = 0 } = dashData.actionRequired;
-        setJobsUnread(activeJobsCount + quotesAwaitingResponseCount + unreviewedJobsCount);
+        processJobsData(dashData.actionRequired);
       }
       const convos = convRes?.data || convRes || [];
       if (Array.isArray(convos)) {
-        let activeConvId: string | null = null;
-        if (typeof window !== "undefined" && window.location.pathname.includes("/inbox")) {
-          const urlParams = new URLSearchParams(window.location.search);
-          activeConvId = urlParams.get("conversationId");
-        }
-        const unreadMsgs = convos.reduce((acc: number, c: any) => {
-          const cid = String(c.id || c._id);
-          if (activeConvId && cid === String(activeConvId)) return acc;
-          return acc + (c.unreadCount || 0);
-        }, 0);
-        setInboxUnread(unreadMsgs);
+        processInboxData(convos);
       }
     } catch (err) {
       console.error("Failed to fetch badges", err);
@@ -86,8 +149,7 @@ export default function CustomerNavbar() {
     },
     onCustomerDashboardUpdate: (data) => {
       if (data?.actionRequired) {
-        const { activeJobsCount = 0, quotesAwaitingResponseCount = 0, unreviewedJobsCount = 0 } = data.actionRequired;
-        setJobsUnread(activeJobsCount + quotesAwaitingResponseCount + unreviewedJobsCount);
+        processJobsData(data.actionRequired);
       }
     },
     onNewMessage: (message: any) => {
@@ -177,7 +239,7 @@ export default function CustomerNavbar() {
         if (Array.isArray(stored)) {
           readIdSet = new Set(stored.map(String));
         }
-      } catch (e) {}
+      } catch (e) { }
 
       setNotifications(
         notifList.map((n: any) => {
@@ -232,9 +294,9 @@ export default function CustomerNavbar() {
         list.push(String(n.id));
         localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(list));
       }
-    } catch (e) {}
+    } catch (e) { }
 
-    authApi.markNotificationRead(n.id).catch(() => {});
+    authApi.markNotificationRead(n.id).catch(() => { });
 
     const targetUrl = n.actionUrl || n.link || n.url;
     if (targetUrl) {
@@ -325,8 +387,24 @@ export default function CustomerNavbar() {
                   key={link.name}
                   href={link.href}
                   onClick={() => {
-                    if (link.name === "Inbox") setInboxUnread(0);
-                    if (link.name === "Jobs") setJobsUnread(0);
+                    if (link.name === "Inbox") {
+                      setInboxUnread(0);
+                      if (typeof window !== "undefined") {
+                        try {
+                          localStorage.setItem("customer_seen_inbox_count", String(inboxTotalUnread));
+                        } catch(e) {}
+                      }
+                    }
+                    if (link.name === "Jobs") {
+                      setJobsUnread(0);
+                      if (actionRequiredData && typeof window !== "undefined") {
+                        try {
+                          const { activeJobsCount = 0, quotesAwaitingResponseCount = 0, unreviewedJobsCount = 0 } = actionRequiredData;
+                          const seenState = { activeJobsCount, quotesAwaitingResponseCount, unreviewedJobsCount };
+                          localStorage.setItem("customer_seen_jobs_state", JSON.stringify(seenState));
+                        } catch (e) { }
+                      }
+                    }
                   }}
                   className={`
                   relative flex items-center gap-1.5 px-4 text-[13px] font-semibold
