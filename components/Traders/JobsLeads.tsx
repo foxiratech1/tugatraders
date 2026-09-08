@@ -80,17 +80,29 @@ const getImageUrl = (path: string | null | undefined) => {
   return `${baseUrl}${imagePath}`;
 };
 
-const formatPostedDate = (iso: string) => {
-  if (!iso) return "—";
-  const d = new Date(iso);
-  return d.toLocaleDateString("en-GB", {
+const formatPostedDate = (dateStr: string) => {
+  if (!dateStr) return "";
+  const date = new Date(dateStr);
+  return date.toLocaleDateString("en-GB", {
     day: "2-digit",
     month: "short",
     year: "numeric",
   });
 };
 
-function getUIStatus(item: any): "New" | "Posted" | "Contacted" | "In Progress" | "Completed" | "Closed" | "Rejected" | "Declined" {
+function getUIStatus(item: any): "New" | "Posted" | "Contacted" | "In Progress" | "Completed" | "Closed" {
+  const rawStatus = (item.rawStatus || item.status || "").toUpperCase();
+
+  if (rawStatus === "COMPLETED") return "Completed";
+
+  if (
+    rawStatus === "CANCELLED" ||
+    rawStatus === "CLOSED" ||
+    rawStatus === "EXPIRED"
+  ) {
+    return "Closed";
+  }
+
   const matchStatus = (
     item.matchStatus ||
     item.match?.status ||
@@ -101,7 +113,7 @@ function getUIStatus(item: any): "New" | "Posted" | "Contacted" | "In Progress" 
     item.myQuote?.status
   )?.toUpperCase();
 
-  const isRejected =
+  const isThisTraderRejected =
     matchStatus === "REJECTED" ||
     matchStatus === "DECLINED" ||
     item.status === "REJECTED" ||
@@ -109,42 +121,33 @@ function getUIStatus(item: any): "New" | "Posted" | "Contacted" | "In Progress" 
     item.status === "DECLINED" ||
     item.rawStatus === "DECLINED";
 
-  // Check if this trader's quote is the one accepted
+  // Check if this trader's quote is accepted
   const isAccepted = Boolean(
     (item.isQuoteAccepted ||
       matchStatus === "ACCEPTED" ||
       (Array.isArray(item.quotes) && item.quotes.some((q: any) => q.status?.toUpperCase() === "ACCEPTED" && (q.traderId === item.traderId || q.isMyQuote)))) &&
-    !isRejected
+    !isThisTraderRejected
   );
 
-  if (item.status === "COMPLETED" || item.rawStatus === "COMPLETED") return "Completed";
-
-  if (item.status === "IN_PROGRESS" || item.rawStatus === "IN_PROGRESS") return "In Progress";
-
-  if (
-    item.status === "CANCELLED" ||
-    item.status === "CLOSED" ||
-    item.status === "EXPIRED" ||
-    item.rawStatus === "CANCELLED" ||
-    item.rawStatus === "CLOSED" ||
-    item.rawStatus === "EXPIRED"
-  ) {
-    return "Closed";
-  }
-
-  // If quote or match is rejected:
-  // Return the specific status backend provided: Declined or Rejected
-  if (isRejected) {
-    if (matchStatus === "DECLINED" || item.status === "DECLINED" || item.rawStatus === "DECLINED") {
-      return "Declined";
+  if (isAccepted) {
+    if (rawStatus === "IN_PROGRESS" || item.status === "In Progress") {
+      return "In Progress";
     }
-    return "Rejected";
-  }
-
-  if (isAccepted || item.isQuoteAccepted || matchStatus === "ACCEPTED") {
     return "Contacted";
   }
 
+  // Check if another trader's quote is accepted
+  const hasOtherTraderAccepted = Boolean(
+    ((rawStatus === "IN_PROGRESS" || rawStatus === "ASSIGNED") && !isAccepted) ||
+    (item.selectedTraderId && item.selectedTraderId !== item.traderId && !isAccepted) ||
+    (Array.isArray(item.quotes) && item.quotes.some((q: any) => q.status?.toUpperCase() === "ACCEPTED" && (q.traderId !== item.traderId && !q.isMyQuote)))
+  );
+
+  if (hasOtherTraderAccepted || rawStatus === "IN_PROGRESS" || rawStatus === "ASSIGNED") {
+    return "In Progress";
+  }
+
+  // Until another trader's quote is accepted, the job status is ALWAYS "New"!
   return "New";
 }
 
@@ -294,17 +297,19 @@ export default function JobsLeads() {
           return { ...quote, status: "ACCEPTED" };
         });
       } else if (isRejected && quoteJobId) {
-        const rejStatus = statusUpper === "DECLINED" ? "Declined" : "Rejected";
+        const rawUpper = (selectedJob?.rawStatus || "").toUpperCase();
+        const hasOtherTrader = (rawUpper === "IN_PROGRESS" || rawUpper === "ASSIGNED" || rawUpper === "COMPLETED") || Boolean(selectedJob?.selectedTraderId && !selectedJob?.isQuoteAccepted);
+        const newStatus = hasOtherTrader ? (statusUpper === "DECLINED" ? "Declined" : "Rejected") : "New";
         setJobs((prev) =>
           prev.map((j) =>
             j.id === quoteJobId
-              ? { ...j, isQuoteAccepted: false, matchStatus: statusUpper, status: rejStatus }
+              ? { ...j, isQuoteAccepted: false, matchStatus: statusUpper, status: newStatus }
               : j
           )
         );
         setSelectedJob((prev) => {
           if (prev && prev.id === quoteJobId) {
-            return { ...prev, isQuoteAccepted: false, matchStatus: statusUpper, status: rejStatus };
+            return { ...prev, isQuoteAccepted: false, matchStatus: statusUpper, status: newStatus };
           }
           return prev;
         });
@@ -327,9 +332,11 @@ export default function JobsLeads() {
               setSelectedJob((prev) => prev ? { ...prev, isQuoteAccepted: true, matchStatus: "ACCEPTED" } : null);
               setJobs((prev) => prev.map((j) => j.id === selectedJob.id ? { ...j, isQuoteAccepted: true, matchStatus: "ACCEPTED" } : j));
             } else if (statusUpper === "REJECTED" || statusUpper === "DECLINED") {
-              const rejStatus = statusUpper === "DECLINED" ? "Declined" : "Rejected";
-              setSelectedJob((prev) => prev ? { ...prev, isQuoteAccepted: false, matchStatus: statusUpper, status: rejStatus } : null);
-              setJobs((prev) => prev.map((j) => j.id === selectedJob.id ? { ...j, isQuoteAccepted: false, matchStatus: statusUpper, status: rejStatus } : j));
+              const rawUpper = (selectedJob.rawStatus || "").toUpperCase();
+              const hasOtherTrader = (rawUpper === "IN_PROGRESS" || rawUpper === "ASSIGNED" || rawUpper === "COMPLETED") || Boolean(selectedJob.selectedTraderId && !selectedJob.isQuoteAccepted);
+              const newStatus = hasOtherTrader ? (statusUpper === "DECLINED" ? "Declined" : "Rejected") : "New";
+              setSelectedJob((prev) => prev ? { ...prev, isQuoteAccepted: false, matchStatus: statusUpper, status: newStatus } : null);
+              setJobs((prev) => prev.map((j) => j.id === selectedJob.id ? { ...j, isQuoteAccepted: false, matchStatus: statusUpper, status: newStatus } : j));
             }
           }
         }).catch(() => { });
@@ -348,9 +355,11 @@ export default function JobsLeads() {
                 setSelectedJob((prev) => prev ? { ...prev, isQuoteAccepted: true, matchStatus: "ACCEPTED" } : null);
                 setJobs((prev) => prev.map((j) => j.id === selectedJob.id ? { ...j, isQuoteAccepted: true, matchStatus: "ACCEPTED" } : j));
               } else if (statusUpper === "REJECTED" || statusUpper === "DECLINED") {
-                const rejStatus = statusUpper === "DECLINED" ? "Declined" : "Rejected";
-                setSelectedJob((prev) => prev ? { ...prev, isQuoteAccepted: false, matchStatus: statusUpper, status: rejStatus } : null);
-                setJobs((prev) => prev.map((j) => j.id === selectedJob.id ? { ...j, isQuoteAccepted: false, matchStatus: statusUpper, status: rejStatus } : j));
+                const rawUpper = (selectedJob.rawStatus || "").toUpperCase();
+                const hasOtherTrader = (rawUpper === "IN_PROGRESS" || rawUpper === "ASSIGNED" || rawUpper === "COMPLETED") || Boolean(selectedJob.selectedTraderId && !selectedJob.isQuoteAccepted);
+                const newStatus = hasOtherTrader ? (statusUpper === "DECLINED" ? "Declined" : "Rejected") : "New";
+                setSelectedJob((prev) => prev ? { ...prev, isQuoteAccepted: false, matchStatus: statusUpper, status: newStatus } : null);
+                setJobs((prev) => prev.map((j) => j.id === selectedJob.id ? { ...j, isQuoteAccepted: false, matchStatus: statusUpper, status: newStatus } : j));
               }
             }
           }).catch(() => { });
@@ -516,23 +525,36 @@ export default function JobsLeads() {
   const openRevokeQuoteModal = async () => {
     if (!selectedJob) return;
 
-    setQuoteForm({ price: "", estimatedDays: "", message: "", availability: "" });
+    const getAvailabilityFromDays = (days: number) => {
+      if (days <= 1) return "Within 24 hours";
+      if (days <= 3) return "Within 3 days";
+      if (days <= 7) return "Within 7 days";
+      return "7days +";
+    };
+
     setQuoteAttachments([]);
+
+    if (quoteDetails?.id) {
+      setEditingQuoteId(quoteDetails.id);
+      setQuoteForm({
+        price: quoteDetails.price?.toString() || "",
+        estimatedDays: quoteDetails.estimatedDays?.toString() || "",
+        message: quoteDetails.message || "",
+        availability: quoteDetails.estimatedDays ? getAvailabilityFromDays(quoteDetails.estimatedDays) : "",
+      });
+      setIsQuoteModalOpen(true);
+      return;
+    }
+
+    setQuoteForm({ price: "", estimatedDays: "", message: "", availability: "" });
     setEditingQuoteId(null);
 
     try {
       toast.loading("Loading your previous quote...", { id: "loadQuote" });
       const res = await authApi.getMyQuoteByJobId(selectedJob.id);
-      if (res && res.data) {
-        const quote = res.data;
+      const quote = res?.data || res;
+      if (quote && quote.id) {
         setEditingQuoteId(quote.id);
-        const getAvailabilityFromDays = (days: number) => {
-          if (days <= 1) return "Within 24 hours";
-          if (days <= 3) return "Within 3 days";
-          if (days <= 7) return "Within 7 days";
-          return "7days +";
-        };
-
         setQuoteForm({
           price: quote.price?.toString() || "",
           estimatedDays: quote.estimatedDays?.toString() || "",
@@ -735,9 +757,9 @@ export default function JobsLeads() {
     let result = jobs;
     if (activeTab !== "All") {
       if (activeTab === "Closed") {
-        result = result.filter((j) => j.status === "Closed" || j.status === "Rejected" || j.status === "Declined");
+        result = result.filter((j) => j.status === "Closed");
       } else if (activeTab === "New" || activeTab === "Posted") {
-        result = result.filter((j) => j.status === "New" || j.status === "Posted");
+        result = result.filter((j) => j.status === "New" || j.status === "Posted" || (j.status as any) === "Rejected" || (j.status as any) === "Declined");
       } else {
         result = result.filter((j) => j.status === activeTab);
       }
@@ -770,35 +792,13 @@ export default function JobsLeads() {
   // Helper to count jobs for tabs
   const getTabCount = (tab: string) => {
     if (tab === "All") return jobs.length;
-    if (tab === "Closed") return jobs.filter((j) => j.status === "Closed" || j.status === "Rejected" || j.status === "Declined").length;
-    if (tab === "New" || tab === "Posted") return jobs.filter((j) => j.status === "New" || j.status === "Posted").length;
+    if (tab === "Closed") return jobs.filter((j) => j.status === "Closed").length;
+    if (tab === "New" || tab === "Posted") return jobs.filter((j) => j.status === "New" || j.status === "Posted" || (j.status as any) === "Rejected" || (j.status as any) === "Declined").length;
     return jobs.filter((j) => j.status === tab).length;
   };
 
   const renderStatusBadge = (status: string) => {
-    console.log("ststus", status)
     const s = status?.toUpperCase();
-    if (s === "REJECTED" || status === "Rejected") {
-      return (
-        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#FDE2D6] border border-[#F5C2C7] text-[#D32F2F] text-[11px] font-bold">
-          Rejected
-        </div>
-      );
-    }
-    if (s === "DECLINED" || status === "Declined") {
-      return (
-        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#FDE2D6] border border-[#F5C2C7] text-[#D32F2F] text-[11px] font-bold">
-          Declined
-        </div>
-      );
-    }
-    if (status === "New" || status === "Posted" || s === "NEW" || s === "POSTED" || s === "LIVE" || s === "OPEN" || s === "QUOTED" || s === "QUOTE_RECEIVED") {
-      return (
-        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#D4EDDA] border border-[#A9D18E] text-[#1E6B24] text-[11px] font-bold">
-          New
-        </div>
-      );
-    }
     if (status === "Contacted" || s === "CONTACTED") {
       return (
         <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#72A8E5] border border-[#5B9BD5] text-[#103B75] text-[11px] font-bold">
@@ -827,10 +827,10 @@ export default function JobsLeads() {
         </div>
       );
     }
-    // Default fallback
+    // All other statuses (New, Posted, Open, Quoted, or rejected quotes where job is still open) render as New
     return (
       <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#D4EDDA] border border-[#A9D18E] text-[#1E6B24] text-[11px] font-bold">
-        {status === "Posted" ? "New" : (status || "New")}
+        New
       </div>
     );
   };
@@ -868,7 +868,7 @@ export default function JobsLeads() {
                 onClick={() => {
                   setActiveTab(tab);
                   setCurrentPage(1);
-                  const firstOfTab = jobs.find(j => tab === "All" || (tab === "Closed" ? (j.status === "Closed" || j.status === "Rejected" || j.status === "Declined") : (tab === "New" || tab === "Posted" ? (j.status === "New" || j.status === "Posted") : j.status === tab)));
+                  const firstOfTab = jobs.find(j => tab === "All" || (tab === "Closed" ? (j.status === "Closed") : (tab === "New" || tab === "Posted" ? (j.status === "New" || j.status === "Posted" || (j.status as any) === "Rejected" || (j.status as any) === "Declined") : j.status === tab)));
                   if (firstOfTab) setSelectedJob(firstOfTab);
                 }}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all ${isActive
@@ -1032,10 +1032,10 @@ export default function JobsLeads() {
                           return renderStatusBadge("Closed");
                         }
                         if (isQuoteOrMatchRejected) {
-                          if (quoteStatusUpper === "DECLINED" || matchStatusUpper === "DECLINED" || selectedJob.status === "Declined") {
-                            return renderStatusBadge("Declined");
+                          if (hasOtherTraderAccepted) {
+                            return renderStatusBadge("In Progress");
                           }
-                          return renderStatusBadge("Rejected");
+                          return renderStatusBadge("New");
                         }
                         const isAccepted = Boolean(
                           selectedJob.isQuoteAccepted ||
@@ -1370,13 +1370,7 @@ export default function JobsLeads() {
 
                     const showStartJob = isAccepted && !isCompleted && !isClosed;
 
-                    const isQuoteRejected = Boolean(
-                      isAutoRejected ||
-                      quoteStatusUpper === "REJECTED" ||
-                      matchStatusUpper === "REJECTED" ||
-                      selectedJob.status === "Rejected" ||
-                      (isRejected && !isManualDecline)
-                    );
+                    const isQuoteRejected = Boolean(isAutoRejected);
 
                     if (isQuoteRejected) {
                       const formatJobStatusText = (status?: string) => {
@@ -1433,7 +1427,7 @@ export default function JobsLeads() {
                           className={`w-full h-[46px] rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 transition-all ${isAutoRejected
                             ? "bg-red-50 text-[#FF3B30] border border-[#FF3B30]/30 cursor-not-allowed"
                             : isManualDecline
-                              ? "bg-amber-50 text-amber-700 border border-amber-300 hover:bg-amber-100 cursor-pointer active:scale-[0.99]"
+                              ? "bg-amber-500 hover:bg-amber-600 text-white shadow-xs cursor-pointer active:scale-[0.99]"
                               : isSendDisabled
                                 ? "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
                                 : "bg-[#1C2C1C] hover:bg-[#2A412A] text-white shadow-sm cursor-pointer active:scale-[0.99]"
@@ -1442,7 +1436,7 @@ export default function JobsLeads() {
                           {isAutoRejected ? (
                             <Ban size={16} className="text-[#FF3B30]" />
                           ) : isManualDecline ? (
-                            <RefreshCw size={16} className="text-amber-700" />
+                            <RefreshCw size={16} className="text-white" />
                           ) : isAccepted ? (
                             <CheckCircle size={16} className="text-emerald-600" />
                           ) : (
@@ -1576,7 +1570,7 @@ export default function JobsLeads() {
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h2 className="text-[18px] font-bold text-[#1C2C1C]">Send Quote</h2>
+                <h2 className="text-[18px] font-bold text-[#1C2C1C]">{editingQuoteId ? "Revoke & Update Quote" : "Send Quote"}</h2>
                 <p className="text-[12px] text-gray-400 mt-0.5 truncate max-w-[280px]">
                   {selectedJob?.title}
                 </p>
@@ -1729,7 +1723,7 @@ export default function JobsLeads() {
                   className="flex-1 h-[46px] rounded-xl bg-[#1C2C1C] hover:bg-[#2A412A] text-white text-[14px] font-bold flex items-center justify-center gap-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <Send size={15} />
-                  {isSendingQuote ? "Sending..." : "Submit Quote"}
+                  {isSendingQuote ? "Sending..." : editingQuoteId ? "Revoke & Submit Quote" : "Submit Quote"}
                 </button>
               </div>
             </form>

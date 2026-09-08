@@ -473,7 +473,10 @@ export default function TraderDashboard() {
                     <Briefcase size={16} className="text-[#6E9625]" />
                     <h3 className="text-[15px] font-bold text-[#1C2C1C]">New Jobs For You</h3>
                   </div>
-                  <button className="text-[12px] font-bold text-[#6E9625] hover:underline flex items-center gap-1">
+                  <button
+                    onClick={() => router.push('/trader/jobs')}
+                    className="text-[12px] font-bold text-[#6E9625] hover:underline flex items-center gap-1"
+                  >
                     View all jobs <ArrowRight size={14} />
                   </button>
                 </div>
@@ -512,7 +515,10 @@ export default function TraderDashboard() {
                   )}
                 </div>
                 {newJobs.length > 0 && (
-                  <button className="w-full mt-4 text-[12px] font-bold text-[#6E9625] hover:underline flex items-center justify-center gap-1">
+                  <button
+                    onClick={() => router.push('/trader/jobs')}
+                    className="w-full mt-4 text-[12px] font-bold text-[#6E9625] hover:underline flex items-center justify-center gap-1"
+                  >
                     Show more jobs <ArrowRight size={14} />
                   </button>
                 )}
@@ -525,7 +531,10 @@ export default function TraderDashboard() {
                     <Briefcase size={16} className="text-[#6E9625]" />
                     <h3 className="text-[15px] font-bold text-[#1C2C1C]">Open Jobs</h3>
                   </div>
-                  <button className="text-[12px] font-bold text-[#6E9625] hover:underline flex items-center gap-1">
+                  <button
+                    onClick={() => router.push('/trader/jobs')}
+                    className="text-[12px] font-bold text-[#6E9625] hover:underline flex items-center gap-1"
+                  >
                     View all jobs <ArrowRight size={14} />
                   </button>
                 </div>
