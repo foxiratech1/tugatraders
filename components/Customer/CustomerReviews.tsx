@@ -169,22 +169,22 @@ function StarRating({ rating }: { rating: number }) {
   };
 
   return (
-    <div className="flex flex-col items-end gap-0.5">
+    <div className="flex sm:flex-col items-center sm:items-end gap-1.5 sm:gap-0.5">
       <div className="flex items-center gap-0.5">
         {[1, 2, 3, 4, 5].map((star) => (
           <Star
             key={star}
-            size={16}
-            className={
+            size={14}
+            className={`sm:w-4 sm:h-4 ${
               star <= rating ? "text-[#FACC15] fill-[#FACC15]" : "text-gray-300 fill-gray-100"
-            }
+            }`}
             strokeWidth={1.5}
           />
         ))}
       </div>
 
       {rating >= 1 && rating <= 5 && (
-        <span className="text-[11px] font-semibold text-[#1C2C1C]">
+        <span className="text-[10px] sm:text-[11px] font-semibold text-[#1C2C1C]">
           {rating} — {ratingLabels[rating]}
         </span>
       )}
@@ -343,32 +343,32 @@ export default function CustomerReviews() {
 
   return (
     <div className="min-h-screen bg-[#F8F9F5]">
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-[28px] font-bold text-[#1C2C1C]">Job Reviews</h1>
-          <p className="text-gray-500 text-[14px] mt-1">
+        <div className="mb-5 sm:mb-6">
+          <h1 className="text-2xl sm:text-[28px] font-bold text-[#1C2C1C]">Job Reviews</h1>
+          <p className="text-gray-500 text-[13px] sm:text-[14px] mt-1">
             Manage your submitted reviews and complete pending reviews for your completed jobs.
           </p>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-6 border-b border-gray-200 mb-8">
+        <div className="flex items-center gap-4 sm:gap-6 border-b border-gray-200 mb-6 sm:mb-8 overflow-x-auto scrollbar-none">
           <button
             onClick={() => {
               setActiveTab("pending");
               router.replace("/customer-dashboard/reviews?tab=pending");
             }}
-            className={`pb-3.5 px-1 text-[15px] font-bold transition-all relative flex items-center gap-2 cursor-pointer ${
+            className={`pb-3 sm:pb-3.5 px-1 text-[14px] sm:text-[15px] font-bold transition-all relative flex items-center gap-2 whitespace-nowrap cursor-pointer ${
               activeTab === "pending"
                 ? "text-[#6E9625] border-b-2 border-[#6E9625]"
                 : "text-gray-500 hover:text-gray-800"
             }`}
           >
             <Clock size={17} />
-            Pending Reviews
+            <span>Pending Reviews</span>
             {unreviewedJobs.length > 0 && (
-              <span className="ml-1.5 px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-[#6E9625] text-white">
+              <span className="ml-1 px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-[#6E9625] text-white">
                 {unreviewedJobs.length}
               </span>
             )}
@@ -379,16 +379,16 @@ export default function CustomerReviews() {
               setActiveTab("submitted");
               router.replace("/customer-dashboard/reviews?tab=submitted");
             }}
-            className={`pb-3.5 px-1 text-[15px] font-bold transition-all relative flex items-center gap-2 cursor-pointer ${
+            className={`pb-3 sm:pb-3.5 px-1 text-[14px] sm:text-[15px] font-bold transition-all relative flex items-center gap-2 whitespace-nowrap cursor-pointer ${
               activeTab === "submitted"
                 ? "text-[#6E9625] border-b-2 border-[#6E9625]"
                 : "text-gray-500 hover:text-gray-800"
             }`}
           >
             <CheckCircle size={17} />
-            Submitted Reviews
+            <span>Submitted Reviews</span>
             {reviews.length > 0 && (
-              <span className="ml-1.5 px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-gray-200 text-gray-700">
+              <span className="ml-1 px-2 py-0.5 rounded-full text-[11px] font-extrabold bg-gray-200 text-gray-700">
                 {reviews.length}
               </span>
             )}
@@ -397,9 +397,9 @@ export default function CustomerReviews() {
 
         {/* Error */}
         {!loading && error && (
-          <div className="bg-red-50 text-red-600 border border-red-200 rounded-2xl p-6 text-[14px] mb-6 flex items-center gap-2">
-            <AlertCircle size={18} />
-            {error}
+          <div className="bg-red-50 text-red-600 border border-red-200 rounded-xl sm:rounded-2xl p-4 sm:p-6 text-[13px] sm:text-[14px] mb-5 sm:mb-6 flex items-center gap-2">
+            <AlertCircle size={18} className="flex-shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
@@ -409,10 +409,10 @@ export default function CustomerReviews() {
             {[1, 2, 3].map((i) => (
               <div
                 key={i}
-                className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 animate-pulse"
+                className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 animate-pulse"
               >
-                <div className="flex items-center gap-4 mb-4">
-                  <div className="w-12 h-12 rounded-full bg-gray-200" />
+                <div className="flex items-center gap-3 sm:gap-4 mb-4">
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-gray-200" />
                   <div className="flex-1">
                     <div className="h-4 bg-gray-200 rounded w-1/3 mb-2" />
                     <div className="h-3 bg-gray-100 rounded w-1/4" />
@@ -429,12 +429,12 @@ export default function CustomerReviews() {
         {!loading && activeTab === "pending" && (
           <div>
             {unreviewedJobs.length === 0 ? (
-              <div className="bg-white rounded-2xl p-12 shadow-sm border border-gray-100 text-center">
-                <div className="w-16 h-16 bg-[#F0F9F1] rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CheckCircle size={28} className="text-[#6E9625]" />
+              <div className="bg-white rounded-xl sm:rounded-2xl p-8 sm:p-12 shadow-sm border border-gray-100 text-center">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-[#F0F9F1] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle size={26} className="text-[#6E9625]" />
                 </div>
-                <h3 className="text-[18px] font-bold text-[#1C2C1C] mb-2">No Pending Reviews</h3>
-                <p className="text-gray-500 text-[14px] max-w-md mx-auto mb-6">
+                <h3 className="text-[17px] sm:text-[18px] font-bold text-[#1C2C1C] mb-2">No Pending Reviews</h3>
+                <p className="text-gray-500 text-[13px] sm:text-[14px] max-w-md mx-auto mb-6">
                   You have no completed jobs awaiting review at this time. Once a job is completed, you
                   can share your rating and review here!
                 </p>
@@ -451,7 +451,7 @@ export default function CustomerReviews() {
                 )}
               </div>
             ) : (
-              <div className="flex flex-col gap-5">
+              <div className="flex flex-col gap-4 sm:gap-5">
                 {unreviewedJobs.map((job) => {
                   const trader = job.selectedTrader || job.trader;
                   const traderName =
@@ -469,14 +469,14 @@ export default function CustomerReviews() {
                   return (
                     <div
                       key={job.id}
-                      className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col md:flex-row md:items-center justify-between gap-6"
+                      className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6"
                     >
-                      <div className="flex items-start gap-4 min-w-0 flex-1">
+                      <div className="flex items-start gap-3 sm:gap-4 min-w-0 flex-1">
                         <TraderAvatar trader={trader} />
 
                         <div className="min-w-0 flex-1">
                           {/* Badges */}
-                          <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1.5">
                             <span className="inline-block bg-[#EAF3DE] text-[#557A18] font-bold text-[10px] px-2.5 py-0.5 rounded-full tracking-wide">
                               JOB-{job.id?.substring(0, 8).toUpperCase()}
                             </span>
@@ -491,20 +491,20 @@ export default function CustomerReviews() {
                           </div>
 
                           {/* Job Title */}
-                          <h3 className="text-[17px] font-extrabold text-[#1C2C1C] leading-snug mb-1">
+                          <h3 className="text-[15px] sm:text-[17px] font-extrabold text-[#1C2C1C] leading-snug mb-1 break-words">
                             {job.title}
                           </h3>
 
                           {/* Trader Info */}
-                          <div className="flex flex-wrap items-center gap-2 text-[13px] text-gray-600 font-medium mb-2.5">
+                          <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[12px] sm:text-[13px] text-gray-600 font-medium mb-2 sm:mb-2.5">
                             <span>
                               Trader: <span className="font-bold text-[#1C2C1C]">{traderName}</span>
                             </span>
                             {companyName && traderName !== companyName && (
-                              <span className="text-gray-400 text-[12px]">({companyName})</span>
+                              <span className="text-gray-400 text-[11px] sm:text-[12px]">({companyName})</span>
                             )}
                             {rating !== undefined && rating > 0 && (
-                              <span className="inline-flex items-center gap-1 text-[11px] text-[#6E9625] font-bold bg-[#F2F7EB] px-2 py-0.5 rounded-full ml-1">
+                              <span className="inline-flex items-center gap-1 text-[10px] sm:text-[11px] text-[#6E9625] font-bold bg-[#F2F7EB] px-2 py-0.5 rounded-full">
                                 <Star size={11} className="fill-current text-[#FACC15]" />
                                 {rating.toFixed(1)}
                                 {totalReviews ? ` (${totalReviews})` : ""}
@@ -514,21 +514,21 @@ export default function CustomerReviews() {
 
                           {/* Description snippet */}
                           {job.description && (
-                            <p className="text-[13px] text-gray-500 line-clamp-2 mb-3">
+                            <p className="text-[12px] sm:text-[13px] text-gray-500 line-clamp-2 mb-2.5 sm:mb-3">
                               {job.description}
                             </p>
                           )}
 
                           {/* Meta items */}
-                          <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[12px] text-gray-400">
+                          <div className="flex flex-wrap items-center gap-x-4 sm:gap-x-5 gap-y-1 text-[11px] sm:text-[12px] text-gray-400">
                             {jobDate && (
                               <span className="flex items-center gap-1">
-                                <Calendar size={13} /> Completed {formatDate(jobDate)}
+                                <Calendar size={13} className="flex-shrink-0" /> Completed {formatDate(jobDate)}
                               </span>
                             )}
                             {job.postcode && (
                               <span className="flex items-center gap-1">
-                                <MapPin size={13} /> {job.postcode}
+                                <MapPin size={13} className="flex-shrink-0" /> {job.postcode}
                               </span>
                             )}
                           </div>
@@ -536,10 +536,10 @@ export default function CustomerReviews() {
                       </div>
 
                       {/* Right Action: Give a Review */}
-                      <div className="flex flex-col sm:flex-row md:flex-col items-stretch sm:items-center md:items-end justify-center gap-3 shrink-0 pt-4 md:pt-0 border-t md:border-t-0 border-gray-100">
+                      <div className="flex flex-col sm:flex-row md:flex-col items-stretch sm:items-center md:items-end justify-center gap-3 shrink-0 pt-3 sm:pt-4 md:pt-0 border-t md:border-t-0 border-gray-100">
                         <button
                           onClick={() => handleGiveReview(job)}
-                          className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#6E9625] text-white text-[13px] font-bold hover:bg-[#58791C] shadow-sm hover:shadow transition-all cursor-pointer"
+                          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 rounded-xl bg-[#6E9625] text-white text-[13px] font-bold hover:bg-[#58791C] shadow-sm hover:shadow transition-all cursor-pointer"
                         >
                           <Star size={15} className="fill-current" />
                           Give a Review
@@ -557,44 +557,44 @@ export default function CustomerReviews() {
         {!loading && activeTab === "submitted" && (
           <div>
             {reviews.length === 0 ? (
-              <div className="bg-white rounded-2xl p-12 shadow-sm border border-gray-100 text-center">
-                <div className="w-16 h-16 bg-[#F0F9F1] rounded-full flex items-center justify-center mx-auto mb-4">
-                  <MessageSquare size={28} className="text-[#6E9625]" />
+              <div className="bg-white rounded-xl sm:rounded-2xl p-8 sm:p-12 shadow-sm border border-gray-100 text-center">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-[#F0F9F1] rounded-full flex items-center justify-center mx-auto mb-4">
+                  <MessageSquare size={26} className="text-[#6E9625]" />
                 </div>
-                <h3 className="text-[18px] font-bold text-[#1C2C1C] mb-2">No Reviews Submitted Yet</h3>
-                <p className="text-gray-500 text-[14px]">
+                <h3 className="text-[17px] sm:text-[18px] font-bold text-[#1C2C1C] mb-2">No Reviews Submitted Yet</h3>
+                <p className="text-gray-500 text-[13px] sm:text-[14px]">
                   You haven&apos;t submitted any reviews yet. Complete a job and share your experience!
                 </p>
               </div>
             ) : (
-              <div className="flex flex-col gap-5">
+              <div className="flex flex-col gap-4 sm:gap-5">
                 {reviews.map((r) => (
                   <div
                     key={r.id}
-                    className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
+                    className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow"
                   >
                     {/* Top row */}
-                    <div className="flex items-start justify-between gap-4 mb-4">
-                      <div className="flex items-center gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 mb-3 sm:mb-4">
+                      <div className="flex items-center gap-3 sm:gap-4 min-w-0">
                         {/* Trader avatar */}
                         <TraderAvatar trader={r.trader} />
 
-                        <div className="min-w-0">
-                          <p className="text-[15px] font-bold text-[#1C2C1C] break-words">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-[14px] sm:text-[15px] font-bold text-[#1C2C1C] truncate">
                             {r.trader?.fullName || "Trader"}
                           </p>
                           {r.job?.title && (
-                            <p className="text-[12px] text-gray-500 flex items-center gap-1 mt-0.5 break-words">
-                              <Briefcase size={11} /> {r.job.title}
+                            <p className="text-[12px] text-gray-500 flex items-center gap-1 mt-0.5 truncate">
+                              <Briefcase size={12} className="flex-shrink-0" /> {r.job.title}
                             </p>
                           )}
                         </div>
                       </div>
 
                       {/* Badge + Rating */}
-                      <div className="flex flex-col items-end gap-1">
+                      <div className="flex items-center sm:items-end justify-between sm:flex-col gap-1.5 sm:gap-1 flex-shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-gray-50">
                         <span
-                          className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
+                          className={`text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 rounded-full ${
                             r.reviewType === "JOB"
                               ? "bg-[#E9F3DC] text-[#4A7C10]"
                               : "bg-blue-50 text-blue-600"
@@ -608,27 +608,27 @@ export default function CustomerReviews() {
 
                     {/* Review title */}
                     {r.title && (
-                      <p className="text-[14px] font-semibold text-[#1C2C1C] mb-1 break-words">
+                      <p className="text-[13px] sm:text-[14px] font-bold text-[#1C2C1C] mb-1 break-words">
                         {r.title}
                       </p>
                     )}
 
                     {/* Review body */}
                     {r.review && (
-                      <p className="text-[14px] text-gray-600 leading-relaxed mb-4 break-words">
+                      <p className="text-[13px] sm:text-[14px] text-gray-600 leading-relaxed mb-3 sm:mb-4 break-words">
                         &ldquo;{r.review}&rdquo;
                       </p>
                     )}
 
                     {/* Trader Reply */}
                     {(r.traderReply || r.reply) && (
-                      <div className="mt-4 mb-4 bg-[#F2F7EB] border-l-4 border-[#6E9625] rounded-r-xl p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <MessageSquare size={14} className="text-[#6E9625]" />
+                      <div className="mt-3 sm:mt-4 mb-3 sm:mb-4 bg-[#F2F7EB] border-l-4 border-[#6E9625] rounded-r-xl p-3.5 sm:p-4">
+                        <div className="flex items-center gap-2 mb-1.5 sm:mb-2">
+                          <MessageSquare size={14} className="text-[#6E9625] flex-shrink-0" />
                           <span className="text-[12px] font-bold text-[#1C2C1C]">Trader Reply</span>
                         </div>
 
-                        <p className="text-[13px] text-gray-600 leading-relaxed break-words">
+                        <p className="text-[12px] sm:text-[13px] text-gray-600 leading-relaxed break-words">
                           &ldquo;{r.traderReply || r.reply}&rdquo;
                         </p>
                       </div>
@@ -636,49 +636,54 @@ export default function CustomerReviews() {
 
                     {/* Reason (if no work carried out) */}
                     {!r.workCarriedOut && r.noWorkReason && (
-                      <p className="text-[14px] text-gray-600 leading-relaxed mb-4 break-words">
+                      <p className="text-[13px] sm:text-[14px] text-gray-600 leading-relaxed mb-3 sm:mb-4 break-words">
                         <span className="font-semibold text-[#1C2C1C]">Reason: </span>
                         {REASON_MAP[r.noWorkReason] || r.noWorkReason}
                       </p>
                     )}
 
                     {/* Meta row */}
-                    <div className="flex flex-wrap items-center gap-x-5 gap-y-1 pt-3 border-t border-gray-100">
-                      {r.workCompletedDate && (
-                        <span className="text-[12px] text-gray-500 flex items-center gap-1">
-                          <Calendar size={12} />{" "}
-                          {new Date(r.workCompletedDate).toLocaleDateString("en-GB", {
+                    <div className="flex flex-wrap items-center justify-between gap-x-4 sm:gap-x-5 gap-y-2 pt-3 border-t border-gray-100 text-[11px] sm:text-[12px]">
+                      <div className="flex flex-wrap items-center gap-x-3 sm:gap-x-4 gap-y-1 text-gray-500">
+                        {r.workCompletedDate && (
+                          <span className="flex items-center gap-1">
+                            <Calendar size={12} className="flex-shrink-0" />{" "}
+                            Completed {new Date(r.workCompletedDate).toLocaleDateString("en-GB", {
+                              day: "numeric",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </span>
+                        )}
+                        {r.wouldRecommendTrader !== undefined && (
+                          <span
+                            className={`font-semibold flex items-center gap-1 ${
+                              r.wouldRecommendTrader ? "text-[#6E9625]" : "text-red-500"
+                            }`}
+                          >
+                            {r.wouldRecommendTrader ? "✓ Would recommend" : "✗ Would not recommend"}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 sm:gap-3 text-gray-400">
+                        <span className="flex items-center gap-1">
+                          <Clock size={11} className="flex-shrink-0" />{" "}
+                          {new Date(r.createdAt).toLocaleDateString("en-GB", {
                             day: "numeric",
                             month: "short",
                             year: "numeric",
                           })}
                         </span>
-                      )}
-                      {r.wouldRecommendTrader !== undefined && (
-                        <span
-                          className={`text-[12px] font-medium flex items-center gap-1 ${
-                            r.wouldRecommendTrader ? "text-[#6E9625]" : "text-red-500"
-                          }`}
-                        >
-                          {r.wouldRecommendTrader ? "✓ Would recommend" : "✗ Would not recommend"}
-                        </span>
-                      )}
-                      <span className="text-[12px] text-gray-400 flex items-center gap-1 ml-auto">
-                        <Clock size={11} />{" "}
-                        {new Date(r.createdAt).toLocaleDateString("en-GB", {
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
-                      </span>
-                      {isEditable(r.createdAt) && (
-                        <button
-                          onClick={() => handleEditClick(r)}
-                          className="flex items-center gap-1 text-[12px] font-medium text-[#6E9625] hover:text-[#5a7a1e] ml-4 bg-[#F0F9F1] px-2 py-1 rounded transition-colors cursor-pointer"
-                        >
-                          <Edit2 size={11} /> Edit
-                        </button>
-                      )}
+                        {isEditable(r.createdAt) && (
+                          <button
+                            onClick={() => handleEditClick(r)}
+                            className="flex items-center gap-1 font-medium text-[#6E9625] hover:text-[#5a7a1e] bg-[#F0F9F1] px-2 py-1 rounded transition-colors cursor-pointer"
+                          >
+                            <Edit2 size={11} /> Edit
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

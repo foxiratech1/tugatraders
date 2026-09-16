@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import { authApi } from "@/app/api/authApi";
-import { FileText, CheckCircle2, Check, X, ChevronDown, Search } from "lucide-react";
+import { FileText, CheckCircle2, Check, X, ChevronDown, Search, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
 
 // ─── MultiSelect Component ────────────────────────────────────────────────────
@@ -124,6 +124,7 @@ interface CategoryGroup {
 // ─── BillingPage ──────────────────────────────────────────────────────────────
 export default function BillingPage() {
   const [subscriptionData, setSubscriptionData] = useState<any>(null);
+  const [traderProfile, setTraderProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
   // Switch Plan states
@@ -175,16 +176,16 @@ export default function BillingPage() {
     }
   };
 
-  const fetchTraderId = async () => {
+  const fetchTraderProfile = async () => {
     try {
-      // The backend expects the trader PROFILE id, not the user id
       const resData = await authApi.getMyProfile();
       const unwrapped = resData?.data || resData;
-      console.log("unwrapped", unwrapped);
-      const tpId = unwrapped?.traderProfile?.id || " ";
+      const tp = unwrapped?.traderProfile || unwrapped;
+      setTraderProfile(tp);
+      const tpId = tp?.id;
       if (tpId) {
         setTraderId(tpId);
-        return;
+        return tp;
       }
       // Fallback: try from localStorage user's traderProfile
       const { getUser } = await import("@/utils/auth");
@@ -192,12 +193,68 @@ export default function BillingPage() {
       const fallbackId = localUser?.traderProfile?.id || localUser?.traderProfileId || localUser?.traderId;
       if (fallbackId) {
         setTraderId(fallbackId);
-        return;
       }
-      console.warn("Could not resolve trader profile ID");
+      return tp;
     } catch (err) {
-      console.error("Failed to fetch trader id", err);
+      console.error("Failed to fetch trader profile", err);
+      return null;
     }
+  };
+
+  const fetchSubscription = async () => {
+    try {
+      const res = await authApi.getMySubscription();
+      const data = res?.data || res;
+      setSubscriptionData(data);
+      return data;
+    } catch (error) {
+      console.error("Failed to load subscription data", error);
+      return null;
+    }
+  };
+
+  const handleOpenCategoryModal = async () => {
+    const currentPlanId = subscriptionData?.currentPlan?.id || subscriptionData?.planId;
+    if (currentPlanId) {
+      setSelectedPlanId(currentPlanId);
+    }
+    if (plans.length === 0) {
+      fetchPlans();
+    }
+    const [_, tp] = await Promise.all([fetchCategories(), fetchTraderProfile()]);
+
+    // Pre-populate category groups if trader already has some
+    const cDetails = tp?.categoryDetails || traderProfile?.categoryDetails || [];
+    const sDetails = tp?.skillServiceDetails || traderProfile?.skillServiceDetails || [];
+    const subDetails = tp?.subCategoryDetails || traderProfile?.subCategoryDetails || [];
+
+    if (cDetails.length > 0) {
+      const groups: CategoryGroup[] = cDetails.map((c: any) => {
+        const catSkills = sDetails.filter((s: any) => s.categoryId === c.id).map((s: any) => s.id);
+        const catSubs = subDetails.filter((sub: any) => catSkills.includes(sub.skillServiceId)).map((sub: any) => sub.id);
+        return {
+          id: c.id,
+          categoryId: c.id,
+          selectedSkillServices: catSkills,
+          selectedSubCategories: catSubs,
+        };
+      });
+      setCategoryGroups(groups);
+
+      cDetails.forEach((c: any) => {
+        if (!skillServicesMap[c.id]) {
+          authApi.getSkillServices(c.id).then(res => {
+            const skillsArray = Array.isArray(res) ? res : res?.data || res?.services || [];
+            setSkillServicesMap(prevMap => ({ ...prevMap, [c.id]: skillsArray }));
+          }).catch(console.error);
+        }
+      });
+    } else {
+      setCategoryGroups([]);
+    }
+
+    setModalPhase("CATEGORIES");
+    setIsSwitchPlanModalOpen(true);
   };
 
   const handleCategoryGroupChange = (id: string, field: keyof CategoryGroup, value: any) => {
@@ -277,7 +334,7 @@ export default function BillingPage() {
       setSubscriptionData(res?.data || res);
 
       // Fetch categories and trader ID, then transition to category selection phase
-      await Promise.all([fetchCategories(), fetchTraderId()]);
+      await Promise.all([fetchCategories(), fetchTraderProfile()]);
 
       // Reset category groups
       setCategoryGroups([]);
@@ -320,9 +377,11 @@ export default function BillingPage() {
         ...resolvedSubCatArrays.flat(),
       ]));
 
+      const activePlanId = selectedPlanId || subscriptionData?.currentPlan?.id || subscriptionData?.planId;
+
       await authApi.updateSubscriptionCategories({
-        traderId,
-        planId: selectedPlanId,
+        traderId: traderId || traderProfile?.id,
+        planId: activePlanId,
         tradeCategories: validGroups.map(g => g.categoryId),
         skillsServices,
         subCategories: allSubCategoryIds,
@@ -330,6 +389,8 @@ export default function BillingPage() {
       toast.success("Categories updated successfully!");
       setIsSwitchPlanModalOpen(false);
       setModalPhase("PLAN");
+      // Refresh profile and subscription to immediately reflect changes
+      await Promise.all([fetchTraderProfile(), fetchSubscription()]);
     } catch (error: any) {
       console.error("Failed to save categories", error);
       toast.error(error?.response?.data?.message || "Failed to update categories.");
@@ -339,22 +400,40 @@ export default function BillingPage() {
   };
 
   useEffect(() => {
-    const fetchSubscription = async () => {
+    const initData = async () => {
       try {
-        const res = await authApi.getMySubscription();
-        setSubscriptionData(res?.data || res);
+        await Promise.all([fetchSubscription(), fetchTraderProfile(), fetchCategories()]);
       } catch (error) {
-        console.error("Failed to load subscription data", error);
+        console.error("Failed to load initial data", error);
       } finally {
         setLoading(false);
       }
     };
-    fetchSubscription();
+    initData();
   }, []);
 
-  // Get the selected plan object for max categories
-  const selectedPlan = plans.find(p => p.id === selectedPlanId);
-  const maxCats = selectedPlan?.unlimitedTrades ? 9999 : (selectedPlan?.maxTrades || 1);
+  // Compute selected categories list from profile
+  const selectedCategoriesList: Array<{ id: string; name: string }> = (() => {
+    if (traderProfile?.categoryDetails && Array.isArray(traderProfile.categoryDetails) && traderProfile.categoryDetails.length > 0) {
+      return traderProfile.categoryDetails;
+    }
+    if (traderProfile?.tradeCategories && Array.isArray(traderProfile.tradeCategories) && traderProfile.tradeCategories.length > 0) {
+      return traderProfile.tradeCategories.map((item: any) => {
+        if (typeof item === 'object' && item !== null) {
+          return { id: item.id || item._id, name: item.name || item.title || "Category" };
+        }
+        const matched = allCategories.find(c => c.id === item);
+        return { id: item, name: matched ? matched.name : item };
+      });
+    }
+    return [];
+  })();
+
+  const hasSelectedCategories = selectedCategoriesList.length > 0;
+
+  // Get active plan object for max categories limit
+  const activePlan = plans.find(p => p.id === (selectedPlanId || subscriptionData?.currentPlan?.id || subscriptionData?.planId)) || subscriptionData?.currentPlan;
+  const maxCats = activePlan?.unlimitedTrades ? 9999 : (activePlan?.maxTrades || 1);
 
   return (
     <div className="min-h-screen bg-[#F8F9F5] font-sans">
@@ -365,6 +444,29 @@ export default function BillingPage() {
           <h1 className="text-2xl font-bold text-[#1C2C1C]">Subscription & Billing</h1>
           <p className="text-gray-500 mt-1">Manage your subscription plan and payment history.</p>
         </div>
+
+        {/* Banner if categories not selected */}
+        {!loading && !hasSelectedCategories && (
+          <div className="bg-[#FFFBEB] border border-[#FDE68A] rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#F59E0B]/10 text-[#D97706] flex items-center justify-center flex-shrink-0 mt-0.5">
+                <AlertCircle size={20} />
+              </div>
+              <div>
+                <h4 className="text-[15px] font-bold text-[#92400E]">No Trade Categories Selected</h4>
+                <p className="text-[13px] text-[#B45309] mt-0.5">
+                  Your plan is active, but you haven&apos;t chosen your trade categories yet. Choose your categories to start receiving customer job leads.
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={handleOpenCategoryModal}
+              className="bg-[#1C2C1C] hover:bg-[#2C4A2C] text-white px-5 py-2.5 rounded-xl text-[13px] font-bold transition-colors whitespace-nowrap flex-shrink-0 shadow-sm"
+            >
+              Choose Categories
+            </button>
+          </div>
+        )}
 
         {loading ? (
           <div className="animate-pulse flex space-x-4">
@@ -410,14 +512,77 @@ export default function BillingPage() {
                     <CheckCircle2 size={16} className="text-[#6E9625]" />
                     Priority Support
                   </div>
+                  {hasSelectedCategories ? (
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 size={16} className="text-[#6E9625]" />
+                      {selectedCategoriesList.length} {selectedCategoriesList.length === 1 ? 'Category' : 'Categories'} Selected
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleOpenCategoryModal}
+                      className="flex items-center gap-1.5 text-amber-300 hover:text-amber-200 underline font-semibold text-xs sm:text-sm"
+                    >
+                      <AlertCircle size={15} />
+                      Choose Categories
+                    </button>
+                  )}
                 </div>
+              </div>
+
+              {/* Trade Categories Card */}
+              <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100">
+                <div className="flex justify-between items-center mb-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-[#1C2C1C]">Trade Categories</h3>
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Plan Allowance: <span className="font-semibold text-[#1C2C1C]">{maxCats === 9999 ? 'Unlimited' : `Up to ${maxCats} ${maxCats === 1 ? 'Category' : 'Categories'}`}</span>
+                    </p>
+                  </div>
+                  {!hasSelectedCategories && (
+                    <button
+                      onClick={handleOpenCategoryModal}
+                      className="bg-[#1C2C1C] text-white px-4 py-2 rounded-xl text-[13px] font-bold hover:bg-[#2C4A2C] transition-colors"
+                    >
+                      Choose Categories
+                    </button>
+                  )}
+                </div>
+
+                {hasSelectedCategories ? (
+                  <div className="flex flex-wrap gap-2 pt-2">
+                    {selectedCategoriesList.map(cat => (
+                      <span
+                        key={cat.id}
+                        className="inline-flex items-center gap-1.5 bg-[#6E9625]/10 text-[#2E4A14] border border-[#6E9625]/20 px-3.5 py-1.5 rounded-xl text-[13px] font-bold"
+                      >
+                        <CheckCircle2 size={14} className="text-[#6E9625]" />
+                        {cat.name}
+                      </span>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="bg-[#F9FAFB] rounded-xl p-5 border border-dashed border-gray-200 text-center sm:text-left flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div>
+                      <p className="text-[13px] font-semibold text-gray-700">No categories selected</p>
+                      <p className="text-[12px] text-gray-400 mt-0.5">
+                        Select up to {maxCats === 9999 ? 'unlimited' : maxCats} trade {maxCats === 1 ? 'category' : 'categories'} for your active subscription to start receiving customer job leads.
+                      </p>
+                    </div>
+                    <button
+                      onClick={handleOpenCategoryModal}
+                      className="bg-[#6E9625] text-white px-5 py-2 rounded-xl text-[13px] font-bold hover:bg-[#5C7E1F] transition-colors shadow-sm whitespace-nowrap"
+                    >
+                      Choose Categories
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Billing History Card */}
               <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-lg font-bold text-[#1C2C1C]">Billing History</h3>
-                  <button className="text-sm font-semibold text-[#1C2C1C] underline">View All</button>
+                  {/* <button className="text-sm font-semibold text-[#1C2C1C] underline">View All</button> */}
                 </div>
 
                 <div className="overflow-x-auto">
@@ -746,7 +911,14 @@ export default function BillingPage() {
 
                 <div className="flex justify-end gap-4 border-t border-gray-100 pt-6">
                   <button
-                    onClick={() => { setIsSwitchPlanModalOpen(false); setModalPhase("PLAN"); }}
+                    onClick={() => {
+                      setIsSwitchPlanModalOpen(false);
+                      setModalPhase("PLAN");
+                      toast("You can choose your trade categories anytime from the billing page.", {
+                        icon: "ℹ️",
+                        duration: 5000,
+                      });
+                    }}
                     className="px-6 py-3 rounded-xl text-[14px] font-bold text-gray-500 hover:bg-gray-50 transition-colors"
                   >
                     Skip for Now

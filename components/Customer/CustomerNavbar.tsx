@@ -2,19 +2,33 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
-import { Inbox, Briefcase, Heart, User, Star, Settings, Bell, FileText, Mail, LayoutDashboard } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  Inbox,
+  Briefcase,
+  Heart,
+  User,
+  Star,
+  Settings,
+  Bell,
+  LayoutDashboard,
+  ChevronDown,
+  LogOut,
+  Menu,
+  X,
+} from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { authApi } from "@/app/api/authApi";
-import { ChevronDown, LogOut } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { clearTokens, getUser, getAccessToken, parseJwt } from "@/utils/auth";
 import { useSocket } from "@/hooks/useSocket";
 
 export default function CustomerNavbar() {
   const pathname = usePathname();
+  const router = useRouter();
+
   const [profile, setProfile] = useState<any>(null);
   const [showDropdown, setShowDropdown] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -24,6 +38,10 @@ export default function CustomerNavbar() {
   const [jobsUnread, setJobsUnread] = useState(0);
   const [actionRequiredData, setActionRequiredData] = useState<any>(null);
   const [inboxTotalUnread, setInboxTotalUnread] = useState(0);
+
+  const notifDropdownRef = useRef<HTMLDivElement>(null);
+  const profileDropdownRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   const processInboxData = (convos: any[]) => {
     let activeConvId: string | null = null;
@@ -36,26 +54,26 @@ export default function CustomerNavbar() {
       if (activeConvId && cid === String(activeConvId)) return acc;
       return acc + (c.unreadCount || 0);
     }, 0);
-    
+
     setInboxTotalUnread(unreadMsgs);
-    
+
     let seenInboxCount = 0;
     if (typeof window !== "undefined") {
       try {
-          seenInboxCount = parseInt(localStorage.getItem("customer_seen_inbox_count") || "0", 10);
-          if (isNaN(seenInboxCount)) seenInboxCount = 0;
-      } catch(e) {}
+        seenInboxCount = parseInt(localStorage.getItem("customer_seen_inbox_count") || "0", 10);
+        if (isNaN(seenInboxCount)) seenInboxCount = 0;
+      } catch (e) { }
     }
 
     if (unreadMsgs > seenInboxCount) {
-        setInboxUnread(unreadMsgs);
+      setInboxUnread(unreadMsgs);
     } else {
-        setInboxUnread(0);
-        if (unreadMsgs < seenInboxCount && typeof window !== "undefined") {
-            try {
-                localStorage.setItem("customer_seen_inbox_count", String(unreadMsgs));
-            } catch(e) {}
-        }
+      setInboxUnread(0);
+      if (unreadMsgs < seenInboxCount && typeof window !== "undefined") {
+        try {
+          localStorage.setItem("customer_seen_inbox_count", String(unreadMsgs));
+        } catch (e) { }
+      }
     }
   };
 
@@ -160,7 +178,6 @@ export default function CustomerNavbar() {
         message?.sender?._id ||
         message?.userId;
 
-      // When the customer sends a message, DO NOT count it in inbox unread!
       if (myId && senderId && String(myId) === String(senderId)) {
         return;
       }
@@ -168,7 +185,6 @@ export default function CustomerNavbar() {
         return;
       }
 
-      // If user is currently looking at this conversation in /inbox, don't increment unread count
       if (typeof window !== "undefined" && window.location.pathname.includes("/inbox")) {
         const urlParams = new URLSearchParams(window.location.search);
         const activeConvId = urlParams.get("conversationId");
@@ -182,19 +198,15 @@ export default function CustomerNavbar() {
     },
   });
 
-  const notifDropdownRef = useRef<HTMLDivElement>(null);
-  const profileDropdownRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
-
   const handleLogout = async () => {
     try {
       await authApi.logout();
     } catch (err) {
-      console.error('Logout API error', err);
+      console.error("Logout API error", err);
     }
-    localStorage.removeItem('user');
+    localStorage.removeItem("user");
     clearTokens();
-    window.location.replace('/');
+    window.location.replace("/");
   };
 
   // Navigation items mapping
@@ -202,12 +214,11 @@ export default function CustomerNavbar() {
     { name: "Dashboard", href: "/customer-dashboard/jobs", icon: LayoutDashboard },
     { name: "Inbox", href: "/customer-dashboard/inbox", icon: Inbox },
     { name: "Jobs", href: "/customer-dashboard/job-history", icon: Briefcase },
-    // { name: "Quotes", href: "/customer-dashboard/quotes", icon: FileText },
     { name: "Saved", href: "/customer-dashboard/saved", icon: Heart },
-    // { name: "Profile", href: "/customer-dashboard/profile", icon: User },
     { name: "Reviews", href: "/customer-dashboard/reviews", icon: Star },
     { name: "Setting", href: "/customer-dashboard/account", icon: Settings },
   ];
+
   const NOTIF_STORAGE_KEY = "customer_read_notifications";
 
   const isNotificationRead = (n: any, readIdSet: Set<string>) => {
@@ -279,6 +290,7 @@ export default function CustomerNavbar() {
 
   const handleNotificationClick = async (n: any) => {
     setShowNotifDropdown(false);
+    setMobileOpen(false);
 
     setNotifications((prev) =>
       prev.map((item) =>
@@ -306,6 +318,36 @@ export default function CustomerNavbar() {
     }
   };
 
+  const handleNavClick = (linkName: string) => {
+    setMobileOpen(false);
+    if (linkName === "Inbox") {
+      setInboxUnread(0);
+      if (typeof window !== "undefined") {
+        try {
+          localStorage.setItem("customer_seen_inbox_count", String(inboxTotalUnread));
+        } catch (e) { }
+      }
+    }
+    if (linkName === "Jobs") {
+      setJobsUnread(0);
+      if (actionRequiredData && typeof window !== "undefined") {
+        try {
+          const { activeJobsCount = 0, quotesAwaitingResponseCount = 0, unreviewedJobsCount = 0 } = actionRequiredData;
+          const seenState = { activeJobsCount, quotesAwaitingResponseCount, unreviewedJobsCount };
+          localStorage.setItem("customer_seen_jobs_state", JSON.stringify(seenState));
+        } catch (e) { }
+      }
+    }
+  };
+
+  const isLinkActive = (href: string) => {
+    if (pathname === href) return true;
+    if (href === "/customer-dashboard/jobs") {
+      return pathname === "/customer-dashboard/jobs" || pathname === "/customer-dashboard";
+    }
+    return pathname?.startsWith(href) ?? false;
+  };
+
   useEffect(() => {
     const loadProfile = async () => {
       try {
@@ -327,6 +369,22 @@ export default function CustomerNavbar() {
       if (profileDropdownRef.current && !profileDropdownRef.current.contains(e.target as Node)) {
         setShowDropdown(false);
       }
+      if (
+        mobileOpen &&
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(e.target as Node) &&
+        !(e.target as HTMLElement).closest(".mobile-menu-toggle")
+      ) {
+        setMobileOpen(false);
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setShowNotifDropdown(false);
+        setShowDropdown(false);
+        setMobileOpen(false);
+      }
     };
 
     const handleUnreadUpdate = (e: any) => {
@@ -336,19 +394,37 @@ export default function CustomerNavbar() {
     };
 
     document.addEventListener("mousedown", handleOutsideClick);
+    window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("inbox_unread_updated", handleUnreadUpdate);
 
     return () => {
       document.removeEventListener("mousedown", handleOutsideClick);
+      window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("inbox_unread_updated", handleUnreadUpdate);
     };
-  }, []);
+  }, [mobileOpen]);
 
+  // Close menus on route change
   useEffect(() => {
+    setMobileOpen(false);
+    setShowDropdown(false);
+    setShowNotifDropdown(false);
     if (!pathname?.includes("/inbox")) {
       fetchBadges();
     }
   }, [pathname]);
+
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
 
   const fallbackAvatar = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.fullName || "Customer")}&background=1d3321&color=fff&bold=true`;
   const imageUrl = profile?.profileImage
@@ -358,14 +434,16 @@ export default function CustomerNavbar() {
     ).toString()
     : fallbackAvatar;
 
+  const totalBadges = inboxUnread + jobsUnread;
+
   return (
     <header className="fixed top-0 left-0 right-0 z-50 font-sans">
       <div className="bg-white border-b border-[#E5E7EB] shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-[60px] flex items-stretch gap-4">
+        <div className="max-w-[1400px] mx-auto px-3 sm:px-6 lg:px-8 h-[60px] flex items-center justify-between gap-2 sm:gap-4">
 
           {/* Left: Logo */}
-          <Link href="/" className="flex items-center flex-shrink-0 self-center mr-4">
-            <div className="relative h-12 w-[200px] sm:h-[50px] sm:w-[220px] overflow-hidden">
+          <Link href="/" className="flex items-center flex-shrink-0 self-center mr-1 sm:mr-4">
+            <div className="relative h-9 w-[130px] sm:h-11 sm:w-[180px] md:h-12 md:w-[200px] overflow-hidden">
               <Image
                 src="/TugaLogo.png"
                 alt="TugaTrades Customer Logo"
@@ -376,58 +454,42 @@ export default function CustomerNavbar() {
             </div>
           </Link>
 
-          {/* Middle: Navigation */}
-          <nav className="hidden lg:flex items-stretch h-full flex-1 justify-center gap-1">
+          {/* Middle: Desktop Navigation (hidden on mobile/tablet, visible on lg+) */}
+          <nav className="hidden lg:flex items-stretch h-[60px] flex-1 justify-center gap-1">
             {navLinks.map((link) => {
-              const isActive = pathname === link.href;
+              const active = isLinkActive(link.href);
               const Icon = link.icon;
 
               return (
                 <Link
                   key={link.name}
                   href={link.href}
-                  onClick={() => {
-                    if (link.name === "Inbox") {
-                      setInboxUnread(0);
-                      if (typeof window !== "undefined") {
-                        try {
-                          localStorage.setItem("customer_seen_inbox_count", String(inboxTotalUnread));
-                        } catch(e) {}
-                      }
-                    }
-                    if (link.name === "Jobs") {
-                      setJobsUnread(0);
-                      if (actionRequiredData && typeof window !== "undefined") {
-                        try {
-                          const { activeJobsCount = 0, quotesAwaitingResponseCount = 0, unreviewedJobsCount = 0 } = actionRequiredData;
-                          const seenState = { activeJobsCount, quotesAwaitingResponseCount, unreviewedJobsCount };
-                          localStorage.setItem("customer_seen_jobs_state", JSON.stringify(seenState));
-                        } catch (e) { }
-                      }
-                    }
-                  }}
+                  onClick={() => handleNavClick(link.name)}
                   className={`
-                  relative flex items-center gap-1.5 px-4 text-[13px] font-semibold
+                  relative flex items-center gap-1.5 px-3.5 text-[13px] font-semibold
                   transition-all duration-200 whitespace-nowrap h-full group
-                  ${isActive ? "text-[#1C2C1C]" : "text-[#1C2C1C]/60 hover:text-[#1C2C1C] hover:scale-[1.02]"}
+                  ${active ? "text-[#1C2C1C]" : "text-[#1C2C1C]/60 hover:text-[#1C2C1C] hover:scale-[1.02]"}
                 `}
                 >
-                  <Icon size={14} className={`transition-all duration-200 ${isActive ? "text-[#6E9625] scale-110" : "text-current group-hover:text-[#6E9625]"}`} />
+                  <Icon
+                    size={14}
+                    className={`transition-all duration-200 ${active ? "text-[#6E9625] scale-110" : "text-current group-hover:text-[#6E9625]"}`}
+                  />
                   <div className="flex items-center gap-1.5 relative">
                     {link.name}
-                    {link.name === "Inbox" && inboxUnread > 0 && !isActive && (
+                    {link.name === "Inbox" && inboxUnread > 0 && !active && (
                       <span className="flex items-center justify-center min-w-[15px] h-[15px] px-1 bg-[#E53935] rounded-full text-[9px] font-bold text-white shadow-sm">
                         {inboxUnread > 99 ? "99+" : inboxUnread}
                       </span>
                     )}
-                    {link.name === "Jobs" && jobsUnread > 0 && !isActive && (
+                    {link.name === "Jobs" && jobsUnread > 0 && !active && (
                       <span className="flex items-center justify-center min-w-[15px] h-[15px] px-1 bg-[#E53935] rounded-full text-[9px] font-bold text-white shadow-sm">
                         {jobsUnread > 99 ? "99+" : jobsUnread}
                       </span>
                     )}
                   </div>
                   {/* Active underline */}
-                  {isActive && (
+                  {active && (
                     <span className="absolute bottom-0 left-2 right-2 h-[3px] rounded-t-full bg-[#6E9625] shadow-[0_-2px_8px_rgba(110,150,37,0.4)]" />
                   )}
                 </Link>
@@ -436,9 +498,9 @@ export default function CustomerNavbar() {
           </nav>
 
           {/* Right: Actions & User Profile */}
-          <div className="ml-auto flex items-center gap-4 self-center">
+          <div className="ml-auto flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
 
-            {/* Notification Bell with Dropdown */}
+            {/* Notification Bell with Responsive Dropdown */}
             <div className="relative" ref={notifDropdownRef}>
               <button
                 onClick={() => {
@@ -448,21 +510,28 @@ export default function CustomerNavbar() {
                     handleMarkAllRead();
                   }
                 }}
-                className="relative p-2 flex items-center justify-center text-[#555555] hover:text-[#1C2C1C] transition-colors"
+                className="relative p-2 rounded-full flex items-center justify-center text-[#555555] hover:text-[#1C2C1C] hover:bg-gray-100 transition-colors"
+                aria-label="Notifications"
               >
-                <Bell size={22} strokeWidth={2.5} />
-                {/* Notification Dot */}
+                <Bell size={21} strokeWidth={2.3} />
                 {unreadCount > 0 && (
-                  <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-[#F43F5E] flex items-center justify-center text-[10px] text-white font-bold">
-                    {unreadCount}
+                  <span className="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-[#F43F5E] flex items-center justify-center text-[10px] text-white font-bold leading-none animate-pulse">
+                    {unreadCount > 99 ? "99+" : unreadCount}
                   </span>
                 )}
               </button>
 
               {showNotifDropdown && (
-                <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white border border-gray-200 rounded-2xl shadow-xl py-3 z-50 overflow-hidden">
-                  <div className="flex items-center justify-between px-4 pb-2 border-b border-gray-100">
-                    <span className="font-bold text-[14px] text-[#1C2C1C]">Notifications</span>
+                <div className="fixed sm:absolute right-2 sm:right-0 top-[62px] sm:top-full mt-1 sm:mt-2 w-[calc(100vw-16px)] sm:w-96 max-w-[380px] bg-white border border-gray-200 rounded-2xl shadow-2xl py-3 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+                  <div className="flex items-center justify-between px-4 pb-2.5 border-b border-gray-100">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-[14px] text-[#1C2C1C]">Notifications</span>
+                      {unreadCount > 0 && (
+                        <span className="bg-[#6E9625]/10 text-[#6E9625] text-[11px] font-bold px-2 py-0.5 rounded-full">
+                          {unreadCount} new
+                        </span>
+                      )}
+                    </div>
                     {unreadCount > 0 && (
                       <button
                         onClick={handleMarkAllRead}
@@ -473,9 +542,9 @@ export default function CustomerNavbar() {
                     )}
                   </div>
 
-                  <div className="max-h-[300px] overflow-y-auto">
+                  <div className="max-h-[320px] sm:max-h-[380px] overflow-y-auto divide-y divide-gray-50">
                     {notifications.length === 0 ? (
-                      <div className="py-8 text-center text-gray-400 text-[13px]">
+                      <div className="py-10 text-center text-gray-400 text-[13px]">
                         No notifications yet.
                       </div>
                     ) : (
@@ -483,8 +552,9 @@ export default function CustomerNavbar() {
                         <div
                           key={n.id}
                           onClick={() => handleNotificationClick(n)}
-                          className={`cursor-pointer px-4 py-3 border-b border-gray-50 last:border-0 hover:bg-gray-50 transition-colors ${!n.isRead && !n.read ? "bg-[#6E9625]/5" : ""
-                            }`}
+                          className={`cursor-pointer px-4 py-3 hover:bg-gray-50 transition-colors ${
+                            !n.isRead && !n.read ? "bg-[#6E9625]/5" : ""
+                          }`}
                         >
                           <div className="flex items-start justify-between gap-2">
                             <span className="font-bold text-[13px] text-[#1C2C1C] break-words">
@@ -506,59 +576,207 @@ export default function CustomerNavbar() {
             </div>
 
             {/* Separator */}
-            <div className="w-[1px] h-8 bg-[#E5E5E5] hidden sm:block" />
+            <div className="w-[1px] h-6 sm:h-8 bg-[#E5E5E5] hidden sm:block" />
 
-            {/* User Profile Info */}
+            {/* User Profile Dropdown Button */}
             <div className="relative" ref={profileDropdownRef}>
               <button
                 onClick={() => setShowDropdown(!showDropdown)}
-                className="flex items-center gap-3 group"
+                className="flex items-center gap-2 p-1 sm:px-2 rounded-lg hover:bg-gray-100 transition-colors group"
+                aria-label="User menu"
               >
-                <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden bg-gray-200 border border-gray-200 flex-shrink-0">
                   <img
                     key={imageUrl}
                     src={imageUrl}
                     alt={profile?.fullName || "User"}
-                    className="w-full h-full object-cover rounded-full"
+                    className="w-full h-full object-cover"
                   />
                 </div>
 
-                <div className="hidden sm:flex flex-col">
-                  <span className="text-[13px] font-black text-[#1C2C1C] leading-tight">
-                    {profile?.fullName?.toUpperCase() || "CUSTOMER"}
+                <div className="hidden sm:flex flex-col text-left">
+                  <span className="text-[12px] sm:text-[13px] font-bold text-[#1C2C1C] leading-tight line-clamp-1 max-w-[110px] md:max-w-[140px]">
+                    {profile?.fullName || "Customer"}
                   </span>
-
-                  <span className="text-[12px] font-medium text-[#1C2C1C]/50 mt-0.5">
-                    {profile?.role || "Customer"}
+                  <span className="text-[11px] font-medium text-[#1C2C1C]/50 capitalize leading-tight">
+                    {profile?.role?.toLowerCase() || "customer"}
                   </span>
                 </div>
 
-                <ChevronDown size={16} />
+                <ChevronDown
+                  size={15}
+                  className={`text-[#1C2C1C]/60 transition-transform duration-200 hidden sm:block ${
+                    showDropdown ? "rotate-180 text-[#6E9625]" : ""
+                  }`}
+                />
               </button>
 
               {showDropdown && (
-                <div className="absolute right-0 top-full mt-2 w-48 bg-white border border-gray-200 rounded-xl shadow-lg py-2 z-50">
+                <div className="absolute right-0 top-full mt-2 w-48 sm:w-56 bg-white border border-gray-200 rounded-xl shadow-xl py-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="px-4 py-2 border-b border-gray-100 sm:hidden">
+                    <p className="font-bold text-[13px] text-[#1C2C1C] truncate">
+                      {profile?.fullName || "Customer"}
+                    </p>
+                    <p className="text-[11px] text-gray-500 capitalize">
+                      {profile?.role?.toLowerCase() || "customer"}
+                    </p>
+                  </div>
+
                   <Link
                     href="/customer-dashboard/profile"
-                    className="block px-4 py-2 text-sm hover:bg-gray-100"
+                    className="flex items-center gap-2.5 px-4 py-2 text-[13px] text-[#1C2C1C] hover:bg-[#6E9625]/10 hover:text-[#6E9625] transition-colors"
                     onClick={() => setShowDropdown(false)}
                   >
+                    <User size={15} />
                     Profile
                   </Link>
 
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                  <Link
+                    href="/customer-dashboard/account"
+                    className="flex items-center gap-2.5 px-4 py-2 text-[13px] text-[#1C2C1C] hover:bg-[#6E9625]/10 hover:text-[#6E9625] transition-colors"
+                    onClick={() => setShowDropdown(false)}
                   >
-                    <LogOut size={16} />
+                    <Settings size={15} />
+                    Settings
+                  </Link>
+
+                  <div className="border-t border-gray-100 my-1" />
+
+                  <button
+                    onClick={() => {
+                      setShowDropdown(false);
+                      handleLogout();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-4 py-2 text-[13px] text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    <LogOut size={15} />
                     Logout
                   </button>
                 </div>
               )}
             </div>
+
+            {/* Mobile / Tablet Hamburger Button */}
+            <button
+              onClick={() => setMobileOpen(!mobileOpen)}
+              className="mobile-menu-toggle lg:hidden relative p-2 rounded-lg text-[#1C2C1C] hover:bg-gray-100 transition-colors flex items-center justify-center"
+              aria-label="Toggle Navigation Menu"
+              aria-expanded={mobileOpen}
+            >
+              {mobileOpen ? <X size={22} /> : <Menu size={22} />}
+
+              {/* Red indicator on hamburger if unread inbox or jobs exist */}
+              {!mobileOpen && totalBadges > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-[#E53935] ring-2 ring-white animate-pulse" />
+              )}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Drawer / Menu (Overlay + Menu) */}
+        {mobileOpen && (
+          <div className="lg:hidden">
+            {/* Backdrop */}
+            <div
+              className="fixed inset-0 top-[60px] bg-black/40 backdrop-blur-xs z-40 transition-opacity"
+              onClick={() => setMobileOpen(false)}
+            />
+
+            {/* Drawer Container */}
+            <div
+              ref={mobileMenuRef}
+              className="fixed top-[60px] left-0 right-0 max-h-[calc(100vh-60px)] bg-white border-b border-gray-200 shadow-2xl z-50 overflow-y-auto transition-all animate-in slide-in-from-top duration-200 flex flex-col"
+            >
+              {/* User Profile Header in Mobile Drawer */}
+              <div className="p-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-full overflow-hidden bg-gray-200 border-2 border-[#6E9625] flex-shrink-0">
+                    <img
+                      src={imageUrl}
+                      alt={profile?.fullName || "User"}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-[14px] font-bold text-[#1C2C1C] truncate">
+                      {profile?.fullName || "Customer"}
+                    </span>
+                    <span className="text-[12px] text-gray-500 truncate">
+                      {profile?.email || (profile?.role ? profile.role.toLowerCase() : "Customer")}
+                    </span>
+                  </div>
+                </div>
+
+                <Link
+                  href="/customer-dashboard/profile"
+                  onClick={() => setMobileOpen(false)}
+                  className="text-[12px] font-semibold text-[#6E9625] bg-[#6E9625]/10 hover:bg-[#6E9625]/20 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap"
+                >
+                  View Profile
+                </Link>
+              </div>
+
+              {/* Mobile Navigation Links */}
+              <nav className="p-3 space-y-1">
+                {navLinks.map((link) => {
+                  const active = isLinkActive(link.href);
+                  const Icon = link.icon;
+
+                  return (
+                    <Link
+                      key={link.name}
+                      href={link.href}
+                      onClick={() => handleNavClick(link.name)}
+                      className={`
+                        flex items-center justify-between px-4 py-3 rounded-xl text-[14px] font-medium transition-all
+                        ${active
+                          ? "bg-[#6E9625]/10 text-[#6E9625] font-semibold shadow-xs"
+                          : "text-gray-700 hover:bg-gray-50 hover:text-[#1C2C1C]"
+                        }
+                      `}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon
+                          size={18}
+                          className={active ? "text-[#6E9625]" : "text-gray-500"}
+                        />
+                        <span>{link.name}</span>
+                      </div>
+
+                      {/* Unread Badges in Mobile Menu */}
+                      {link.name === "Inbox" && inboxUnread > 0 && (
+                        <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-[#E53935] rounded-full text-[11px] font-bold text-white shadow-xs">
+                          {inboxUnread > 99 ? "99+" : inboxUnread}
+                        </span>
+                      )}
+                      {link.name === "Jobs" && jobsUnread > 0 && (
+                        <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-[#E53935] rounded-full text-[11px] font-bold text-white shadow-xs">
+                          {jobsUnread > 99 ? "99+" : jobsUnread}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </nav>
+
+              {/* Mobile Footer with Logout */}
+              <div className="p-3 mt-auto border-t border-gray-100 bg-gray-50/60">
+                <button
+                  onClick={() => {
+                    setMobileOpen(false);
+                    handleLogout();
+                  }}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-[14px] font-semibold text-red-600 hover:bg-red-50 rounded-xl transition-colors"
+                >
+                  <LogOut size={16} />
+                  Log Out
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </header>
   );
 }
+

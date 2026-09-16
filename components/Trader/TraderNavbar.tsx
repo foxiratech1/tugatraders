@@ -4,8 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard } from "lucide-react";
 import {
+  LayoutDashboard,
   Mail,
   Briefcase,
   Star,
@@ -13,30 +13,40 @@ import {
   CreditCard,
   Bell,
   ChevronDown,
-  User2,
   Settings,
   FileText,
   LogOut,
   Menu,
   X,
+  BarChart3,
 } from "lucide-react";
 import { authApi, getRegistrationStatus } from "@/app/api/authApi";
-import TraderQuotesComponent from "@/components/Trader/TraderQuotesComponent";
-import TraderReportTable from "@/components/Trader/TraderReportTable";
 import toast from "react-hot-toast";
 import { clearTokens } from "@/utils/auth";
 import { useSocket } from "@/hooks/useSocket";
 
-
-// Base navLinks
-const navLinks = [
+// Nav links shown in desktop navbar
+const desktopNavLinks = [
   { label: "Dashboard", href: "/trader", icon: LayoutDashboard },
   { label: "Inbox", href: "/trader/inbox", icon: Mail },
   { label: "Jobs & Leads", href: "/trader/jobs", icon: Briefcase },
   { label: "Quotes", href: "/trader/quote", icon: FileText },
   { label: "Reviews", href: "/trader/reviews", icon: Star },
+  // { label: "Reports", href: "/trader/reports", icon: BarChart3 },
+  { label: "Subscription & Billing", href: "/trader/billing", icon: CreditCard },
+];
+
+// All nav links shown in responsive mobile drawer
+const mobileNavLinks = [
+  { label: "Dashboard", href: "/trader", icon: LayoutDashboard },
+  { label: "Inbox", href: "/trader/inbox", icon: Mail },
+  { label: "Jobs & Leads", href: "/trader/jobs", icon: Briefcase },
+  { label: "Quotes", href: "/trader/quote", icon: FileText },
+  { label: "Reviews", href: "/trader/reviews", icon: Star },
+  // { label: "Reports", href: "/trader/reports", icon: BarChart3 },
   { label: "Profile", href: "/trader/profile", icon: User },
   { label: "Subscription & Billing", href: "/trader/billing", icon: CreditCard },
+  { label: "Settings", href: "/trader/settings", icon: Settings },
 ];
 
 export default function TraderNavbar() {
@@ -47,10 +57,7 @@ export default function TraderNavbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const notifDropdownRef = useRef<HTMLDivElement>(null);
-
-  const [reports, setReports] = useState<any[]>([]);
-  const [reportOpen, setReportOpen] = useState(false);
-  const reportDropdownRef = useRef<HTMLDivElement>(null);
+  const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   // Profile state from API
   const [userName, setUserName] = useState("Loading...");
@@ -103,7 +110,7 @@ export default function TraderNavbar() {
         if (Array.isArray(stored)) {
           readIdSet = new Set(stored.map(String));
         }
-      } catch (e) {}
+      } catch (e) { }
 
       setNotifications(
         notifList.map((n: any) => {
@@ -116,15 +123,6 @@ export default function TraderNavbar() {
       setUnreadCount(unread);
     } catch (error) {
       console.error("Failed to load notifications", error);
-    }
-  };
-
-  const fetchReports = async () => {
-    try {
-      const res = await authApi.getMyReports();
-      setReports(res?.data || []);
-    } catch (error) {
-      console.error("Failed to load reports", error);
     }
   };
 
@@ -167,9 +165,9 @@ export default function TraderNavbar() {
         list.push(String(n.id));
         localStorage.setItem(NOTIF_STORAGE_KEY, JSON.stringify(list));
       }
-    } catch (e) {}
+    } catch (e) { }
 
-    authApi.markNotificationRead(n.id).catch(() => {});
+    authApi.markNotificationRead(n.id).catch(() => { });
 
     const targetUrl = n.actionUrl || n.link || n.url;
     if (targetUrl) {
@@ -191,12 +189,6 @@ export default function TraderNavbar() {
       try {
         const res = await authApi.getMyProfile();
         const profile = res?.data || res;
-
-        console.log("Full Profile Response:", profile);
-        console.log("Trader Logo:", profile?.traderProfile?.logo);
-        console.log("Logo:", profile?.logo);
-        console.log("Avatar:", profile?.avatar);
-        console.log("Profile Image:", profile?.profileImage);
 
         setUserName(profile?.fullName || profile?.name || "Trader");
 
@@ -229,9 +221,6 @@ export default function TraderNavbar() {
           };
 
           const imageUrl = getImageUrl(avatar);
-
-          console.log("Final Avatar URL:", imageUrl);
-
           setUserAvatar(imageUrl);
         }
       } catch (err) {
@@ -253,10 +242,28 @@ export default function TraderNavbar() {
     fetchProfile();
     fetchStatus();
     fetchNotifications();
-
   }, []);
 
-  // Close dropdowns when clicking outside
+  // Close menus on route change
+  useEffect(() => {
+    setMobileOpen(false);
+    setDropdownOpen(false);
+    setNotifOpen(false);
+  }, [pathname]);
+
+  // Lock body scroll when mobile drawer is open
+  useEffect(() => {
+    if (mobileOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [mobileOpen]);
+
+  // Close dropdowns & mobile menu when clicking outside or pressing Escape
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -265,10 +272,31 @@ export default function TraderNavbar() {
       if (notifDropdownRef.current && !notifDropdownRef.current.contains(e.target as Node)) {
         setNotifOpen(false);
       }
+      if (
+        mobileOpen &&
+        mobileMenuRef.current &&
+        !mobileMenuRef.current.contains(e.target as Node) &&
+        !(e.target as HTMLElement).closest(".trader-mobile-toggle")
+      ) {
+        setMobileOpen(false);
+      }
     };
+
+    const keyHandler = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setDropdownOpen(false);
+        setNotifOpen(false);
+        setMobileOpen(false);
+      }
+    };
+
     document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
+    window.addEventListener("keydown", keyHandler);
+    return () => {
+      document.removeEventListener("mousedown", handler);
+      window.removeEventListener("keydown", keyHandler);
+    };
+  }, [mobileOpen]);
 
   const isActive = (href: string) => {
     if (href === "/trader") return pathname === "/trader";
@@ -276,7 +304,6 @@ export default function TraderNavbar() {
   };
 
   const isApproved = traderStatus === "APPROVED";
-  const displayedNavLinks = navLinks;
 
   const handleRestrictedNav = (e: React.MouseEvent, label: string) => {
     if (!isApproved && label !== "Profile") {
@@ -289,15 +316,13 @@ export default function TraderNavbar() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 font-sans">
-      {/* ── Top utility bar removed ─────────────────────────────── */}
-
       {/* ── Main navbar ─────────────────────────────────── */}
       <div className="bg-white border-b border-[#E5E7EB] shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 h-[60px] flex items-center gap-6">
+        <div className="max-w-[1400px] mx-auto px-3 sm:px-6 lg:px-8 h-[60px] flex items-center justify-between gap-2 sm:gap-4">
 
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 mr-4">
-            <div className="relative h-12 w-[200px] sm:h-[50px] sm:w-[220px] overflow-hidden">
+          <Link href="/" className="flex items-center flex-shrink-0 self-center mr-1 sm:mr-4">
+            <div className="relative h-9 w-[130px] sm:h-11 sm:w-[180px] md:h-12 md:w-[200px] overflow-hidden">
               <Image
                 src="/TugaLogo.png"
                 alt="TugaTrades Logo"
@@ -308,9 +333,9 @@ export default function TraderNavbar() {
             </div>
           </Link>
 
-          {/* Desktop nav links */}
-          <nav className="hidden md:flex items-stretch h-full flex-1 gap-1">
-            {displayedNavLinks.map(({ label, href, icon: Icon }) => {
+          {/* Desktop nav links (visible on xl and wider screens) */}
+          <nav className="hidden xl:flex items-stretch h-full flex-1 gap-1 justify-center">
+            {desktopNavLinks.map(({ label, href, icon: Icon }) => {
               const active = isActive(href);
               const restricted = !isApproved && label !== "Profile";
               return (
@@ -319,15 +344,14 @@ export default function TraderNavbar() {
                   href={href}
                   onClick={(e) => handleRestrictedNav(e, label)}
                   className={`
-                      relative flex items-center gap-1.5 px-3 text-[13px] font-semibold
-                      transition-all duration-200 whitespace-nowrap h-full group
-                      ${active ? "text-[#1C2C1C]" : "text-[#1C2C1C]/60 hover:text-[#1C2C1C] hover:scale-[1.02]"}
-                      ${restricted ? "opacity-60 cursor-not-allowed" : ""}
-                    `}
+                    relative flex items-center gap-1.5 px-3 text-[13px] font-semibold
+                    transition-all duration-200 whitespace-nowrap h-full group
+                    ${active ? "text-[#1C2C1C]" : "text-[#1C2C1C]/60 hover:text-[#1C2C1C] hover:scale-[1.02]"}
+                    ${restricted ? "opacity-60 cursor-not-allowed" : ""}
+                  `}
                 >
                   <Icon size={14} className={`transition-all duration-200 ${active ? "text-[#6E9625] scale-110" : "text-current group-hover:text-[#6E9625]"}`} />
                   {label}
-                  {/* Active underline with spring transition */}
                   {active && (
                     <span className="absolute bottom-0 left-2 right-2 h-[3px] rounded-t-full bg-[#6E9625] shadow-[0_-2px_8px_rgba(110,150,37,0.4)] animate-fade-in-up" />
                   )}
@@ -336,8 +360,8 @@ export default function TraderNavbar() {
             })}
           </nav>
 
-          {/* Right side */}
-          <div className="ml-auto flex items-center gap-3 flex-shrink-0">
+          {/* Right side controls */}
+          <div className="ml-auto flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
             {/* Notification bell */}
             {isApproved && (
               <div className="relative" ref={notifDropdownRef}>
@@ -349,20 +373,19 @@ export default function TraderNavbar() {
                       handleMarkAllRead();
                     }
                   }}
-                  className="relative w-10 h-10 rounded-full flex items-center justify-center text-[#1C2C1C]/60 hover:bg-[#F5F5F5] hover:text-[#1C2C1C] transition-all hover:scale-105 active:scale-95"
+                  className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center text-[#1C2C1C]/60 hover:bg-[#F5F5F5] hover:text-[#1C2C1C] transition-all hover:scale-105 active:scale-95"
                   aria-label="Notifications"
                 >
-                  <Bell size={26} />
-                  {/* Unread dot with pulse */}
+                  <Bell size={22} className="sm:w-[24px] sm:h-[24px]" />
                   {unreadCount > 0 && (
-                    <span className="absolute top-0 right-0 w-5 h-5 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-[10px] text-white font-bold animate-pulse">
-                      {unreadCount}
+                    <span className="absolute top-0 right-0 w-4 h-4 sm:w-5 sm:h-5 bg-red-500 rounded-full border-2 border-white flex items-center justify-center text-[9px] sm:text-[10px] text-white font-bold animate-pulse">
+                      {unreadCount > 99 ? "99+" : unreadCount}
                     </span>
                   )}
                 </button>
 
                 {notifOpen && (
-                  <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 bg-white/95 backdrop-blur-md border border-[#E5E5E5] rounded-2xl shadow-2xl py-3 z-50 overflow-hidden animate-fade-in-up">
+                  <div className="fixed sm:absolute right-2 sm:right-0 top-[62px] sm:top-full mt-1 sm:mt-2 w-[calc(100vw-16px)] sm:w-96 max-w-[380px] bg-white/95 backdrop-blur-md border border-[#E5E5E5] rounded-2xl shadow-2xl py-3 z-50 overflow-hidden animate-fade-in-up">
                     <div className="flex items-center justify-between px-4 pb-2 border-b border-gray-100">
                       <span className="font-bold text-[14px] text-[#1C2C1C]">Notifications</span>
                       {unreadCount > 0 && (
@@ -412,10 +435,11 @@ export default function TraderNavbar() {
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
-                className="flex items-center gap-2.5 py-1 px-2 rounded-lg hover:bg-[#F5F5F5] transition-all hover:scale-[1.01]"
+                className="flex items-center gap-1.5 sm:gap-2.5 py-1 px-1.5 sm:px-2 rounded-lg hover:bg-[#F5F5F5] transition-all hover:scale-[1.01]"
+                aria-label="User profile menu"
               >
                 <div className="text-right hidden sm:block">
-                  <p className="text-[12px] font-bold text-[#1C2C1C] leading-tight tracking-wide uppercase">
+                  <p className="text-[12px] font-bold text-[#1C2C1C] leading-tight tracking-wide uppercase max-w-[120px] truncate">
                     {userName}
                   </p>
                   <p className="text-[11px] text-[#6E9625] font-semibold leading-tight flex items-center justify-end gap-1">
@@ -425,7 +449,7 @@ export default function TraderNavbar() {
                 </div>
 
                 {/* Avatar */}
-                <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-[#6E9625] flex-shrink-0 bg-[#1C2C1C] flex items-center justify-center shadow-sm hover:rotate-6 transition-transform">
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden border-2 border-[#6E9625] flex-shrink-0 bg-[#1C2C1C] flex items-center justify-center shadow-sm hover:rotate-6 transition-transform">
                   {userAvatar ? (
                     <Image
                       src={userAvatar}
@@ -435,7 +459,7 @@ export default function TraderNavbar() {
                       className="object-cover w-full h-full"
                     />
                   ) : (
-                    <span className="text-white font-bold text-[14px]">
+                    <span className="text-white font-bold text-[13px] sm:text-[14px]">
                       {userName.charAt(0)}
                     </span>
                   )}
@@ -448,7 +472,15 @@ export default function TraderNavbar() {
 
               {/* Dropdown menu */}
               {dropdownOpen && (
-                <div className="absolute right-0 top-full mt-2 w-56 bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] border border-[#E5E5E5] overflow-hidden z-50 py-1.5 animate-fade-in-up">
+                <div className="absolute right-0 top-full mt-2 w-52 sm:w-56 bg-white/95 backdrop-blur-md rounded-2xl shadow-[0_12px_40px_rgba(0,0,0,0.12)] border border-[#E5E5E5] overflow-hidden z-50 py-1.5 animate-fade-in-up">
+                  <div className="px-4 py-2 border-b border-gray-100 sm:hidden">
+                    <p className="font-bold text-[13px] text-[#1C2C1C] truncate uppercase">
+                      {userName}
+                    </p>
+                    <p className="text-[11px] text-[#6E9625] font-semibold">
+                      {userRole}
+                    </p>
+                  </div>
 
                   <Link
                     href="/trader/profile"
@@ -480,7 +512,7 @@ export default function TraderNavbar() {
                   )}
                   <div className="border-t border-[#E5E5E5] my-1" />
                   <button
-                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-red-500 hover:bg-red-50 transition-colors"
+                    className="w-full flex items-center gap-2.5 px-4 py-2.5 text-[13px] text-red-500 hover:bg-red-50 transition-colors cursor-pointer"
                     onClick={() => {
                       setDropdownOpen(false);
                       handleLogout();
@@ -493,47 +525,138 @@ export default function TraderNavbar() {
               )}
             </div>
 
-            {/* Mobile hamburger */}
+            {/* Mobile / Responsive hamburger toggle button (visible below xl breakpoint) */}
             <button
-              className="md:hidden w-8 h-8 flex items-center justify-center text-[#1C2C1C] rounded-lg hover:bg-[#F5F5F5]"
+              className="trader-mobile-toggle xl:hidden relative p-1.5 sm:p-2 rounded-lg text-[#1C2C1C] hover:bg-gray-100 transition-colors flex items-center justify-center cursor-pointer"
               onClick={() => setMobileOpen(!mobileOpen)}
+              aria-label="Toggle Navigation Menu"
+              aria-expanded={mobileOpen}
             >
-              {mobileOpen ? <X size={18} /> : <Menu size={18} />}
+              {mobileOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
           </div>
         </div>
-
-        {/* Mobile nav */}
-        {mobileOpen && (
-          <div className="md:hidden border-t border-[#E5E5E5] bg-white">
-            {displayedNavLinks.map(({ label, href, icon: Icon }) => {
-              const active = isActive(href);
-              const restricted = !isApproved && label !== "Profile";
-              return (
-                <Link
-                  key={href}
-                  href={href}
-                  onClick={(e) => {
-                    handleRestrictedNav(e, label);
-                    if (isApproved || label === "Profile") {
-                      setMobileOpen(false);
-                    }
-                  }}
-                  className={`flex items-center gap-3 px-5 py-3 text-[14px] font-semibold border-l-4 transition-colors ${active
-                    ? "border-[#6E9625] text-[#1C2C1C] bg-[#6E9625]/5"
-                    : "border-transparent text-[#1C2C1C]/60 hover:text-[#1C2C1C] hover:bg-[#F5F5F5]"
-                    } ${restricted ? "opacity-60 cursor-not-allowed" : ""}`}
-                >
-                  <Icon size={16} className={active ? "text-[#6E9625]" : "text-current"} />
-                  {label}
-                </Link>
-              );
-            })}
-          </div>
-        )}
       </div>
+
+      {/* ── Responsive Mobile Navigation Drawer (Overlay + Menu) ── */}
+      {mobileOpen && (
+        <div className="xl:hidden">
+          {/* Dark Backdrop Overlay */}
+          <div
+            className="fixed inset-0 top-[60px] bg-black/40 backdrop-blur-xs z-40 transition-opacity"
+            onClick={() => setMobileOpen(false)}
+          />
+
+          {/* Drawer Container (Scrollable on small mobile heights) */}
+          <div
+            ref={mobileMenuRef}
+            className="fixed top-[60px] left-0 right-0 max-h-[calc(100vh-60px)] bg-white border-b border-[#E5E5E5] shadow-2xl z-50 overflow-y-auto transition-all animate-in slide-in-from-top duration-200 flex flex-col"
+          >
+            {/* User Profile Header in Mobile Drawer */}
+            <div className="p-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#6E9625] flex-shrink-0 bg-[#1C2C1C] flex items-center justify-center shadow-sm">
+                  {userAvatar ? (
+                    <Image
+                      src={userAvatar}
+                      alt={userName}
+                      width={40}
+                      height={40}
+                      className="object-cover w-full h-full"
+                    />
+                  ) : (
+                    <span className="text-white font-bold text-[14px]">
+                      {userName.charAt(0)}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-col min-w-0">
+                  <span className="text-[14px] font-bold text-[#1C2C1C] truncate uppercase">
+                    {userName}
+                  </span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-[11px] text-[#6E9625] font-semibold truncate">
+                      {userRole}
+                    </span>
+                    <span
+                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full ${isApproved
+                        ? "bg-green-100 text-green-700"
+                        : "bg-amber-100 text-amber-700"
+                        }`}
+                    >
+                      {traderStatus}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <Link
+                href="/trader/profile"
+                onClick={() => setMobileOpen(false)}
+                className="text-[12px] font-semibold text-[#6E9625] bg-[#6E9625]/10 hover:bg-[#6E9625]/20 px-3 py-1.5 rounded-lg transition-colors whitespace-nowrap flex-shrink-0"
+              >
+                View Profile
+              </Link>
+            </div>
+
+            {/* All Menus in Mobile Navigation Links */}
+            <nav className="p-3 space-y-1">
+              {mobileNavLinks.map(({ label, href, icon: Icon }) => {
+                const active = isActive(href);
+                const restricted = !isApproved && label !== "Profile";
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={(e) => {
+                      handleRestrictedNav(e, label);
+                      if (isApproved || label === "Profile") {
+                        setMobileOpen(false);
+                      }
+                    }}
+                    className={`
+                      flex items-center justify-between px-4 py-3 rounded-xl text-[14px] font-medium transition-all
+                      ${active
+                        ? "bg-[#6E9625]/10 text-[#6E9625] font-semibold shadow-xs"
+                        : "text-[#1C2C1C]/80 hover:bg-gray-50 hover:text-[#1C2C1C]"
+                      }
+                      ${restricted ? "opacity-60 cursor-not-allowed" : ""}
+                    `}
+                  >
+                    <div className="flex items-center gap-3">
+                      <Icon
+                        size={18}
+                        className={active ? "text-[#6E9625]" : "text-gray-500"}
+                      />
+                      <span>{label}</span>
+                    </div>
+
+                    {restricted && (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 bg-gray-100 text-gray-500 rounded-md">
+                        Pending
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </nav>
+
+            {/* Mobile Drawer Footer with Logout */}
+            <div className="p-3 mt-auto border-t border-gray-100 bg-gray-50/60">
+              <button
+                onClick={() => {
+                  setMobileOpen(false);
+                  handleLogout();
+                }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 text-[14px] font-semibold text-red-600 hover:bg-red-50 rounded-xl transition-colors cursor-pointer"
+              >
+                <LogOut size={16} />
+                Log Out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
-
-
   );
 }

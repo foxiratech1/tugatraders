@@ -169,8 +169,8 @@ export default function CustomerProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#F8F9F5] p-8">
-        <div className="max-w-3xl mx-auto space-y-4">
+      <div className="min-h-screen bg-[#F8F9F5] px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
+        <div className="max-w-4xl mx-auto space-y-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="h-24 rounded-2xl bg-white animate-pulse border border-gray-100" />
           ))}
@@ -181,25 +181,25 @@ export default function CustomerProfilePage() {
 
   return (
     <div className="min-h-screen bg-[#F8F9F5]">
-      <div className="max-w-4xl mx-auto px-6 py-10">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8 lg:py-10">
 
         {/* Page Title */}
-        <div className="mb-8">
-          <h1 className="text-[1.75rem] font-bold text-[#1C2C1C] leading-tight">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-[1.75rem] font-bold text-[#1C2C1C] leading-tight">
             Profile Management
           </h1>
-          <p className="text-[13px] text-gray-500 mt-1">
-            Manage how your professional identity appears to clients.
+          <p className="text-[12px] sm:text-[13px] text-gray-500 mt-1">
+            Manage how your personal identity appears to clients.
           </p>
         </div>
 
-        <div className="flex gap-6 items-start">
+        <div className="flex flex-col md:flex-row gap-5 md:gap-6 items-start">
 
           {/* Left Sidebar Tab */}
-          <div className="w-44 flex-shrink-0">
+          <div className="w-full md:w-44 flex-shrink-0">
             <button
               type="button"
-              className="w-full flex items-center gap-2.5 px-4 py-2.5 rounded-lg bg-[#1C2C1C] text-white text-[13px] font-semibold shadow-sm"
+              className="w-full flex items-center justify-center md:justify-start gap-2.5 px-4 py-2.5 rounded-xl bg-[#1C2C1C] text-white text-[13px] font-semibold shadow-sm cursor-pointer"
             >
               <User size={15} />
               Personal Info
@@ -207,11 +207,11 @@ export default function CustomerProfilePage() {
           </div>
 
           {/* Right Content */}
-          <form onSubmit={handleSubmit} className="flex-1 space-y-5">
+          <form onSubmit={handleSubmit} className="w-full flex-1 space-y-4 sm:space-y-5">
 
             {/* Profile Photo Card */}
-            <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm px-6 py-5">
-              <div className="flex items-center gap-5">
+            <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm p-4 sm:p-5 md:p-6">
+              <div className="flex flex-col sm:flex-row items-center sm:items-center text-center sm:text-left gap-4 sm:gap-5">
 
                 {/* Avatar with camera icon */}
                 <div className="relative flex-shrink-0">
@@ -227,23 +227,24 @@ export default function CustomerProfilePage() {
                   <button
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
-                    className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-[#1C2C1C] flex items-center justify-center border-2 border-white hover:bg-[#2c3e2c] transition-colors"
+                    aria-label="Change photo"
+                    className="absolute bottom-0 right-0 w-6 h-6 rounded-full bg-[#1C2C1C] flex items-center justify-center border-2 border-white hover:bg-[#2c3e2c] transition-colors cursor-pointer shadow-sm"
                   >
                     <Camera size={11} className="text-white" />
                   </button>
                 </div>
 
                 {/* Info + Buttons */}
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-[14px] font-bold text-[#1C2C1C] mb-0.5">Profile Photo</p>
                   <p className="text-[12px] text-gray-400 mb-3">
-                    Upload a professional photo for better visibility.
+                    Upload a photo for better visibility.
                   </p>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-center sm:justify-start gap-2 flex-wrap">
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
-                      className="flex items-center gap-1.5 px-4 py-1.5 bg-[#1C2C1C] text-white rounded-lg text-[12px] font-semibold hover:bg-[#2c3e2c] transition-colors"
+                      className="flex items-center gap-1.5 px-4 py-2 bg-[#1C2C1C] text-white rounded-xl text-[12px] font-semibold hover:bg-[#2c3e2c] transition-colors cursor-pointer shadow-sm"
                     >
                       <Upload size={12} />
                       Upload New
@@ -251,7 +252,7 @@ export default function CustomerProfilePage() {
                     <button
                       type="button"
                       onClick={handleRemovePhoto}
-                      className="px-4 py-1.5 border border-gray-200 text-gray-600 rounded-lg text-[12px] font-semibold hover:bg-gray-50 transition-colors"
+                      className="px-4 py-2 border border-gray-200 text-gray-600 rounded-xl text-[12px] font-semibold hover:bg-gray-50 transition-colors cursor-pointer"
                     >
                       Remove
                     </button>
@@ -269,10 +270,10 @@ export default function CustomerProfilePage() {
             </div>
 
             {/* Personal Details Card */}
-            <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm px-6 py-6">
-              <h2 className="text-[14px] font-bold text-[#1C2C1C] mb-5">Personal Details</h2>
+            <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm p-4 sm:p-5 md:p-6">
+              <h2 className="text-[14px] font-bold text-[#1C2C1C] mb-4 sm:mb-5">Personal Details</h2>
 
-              <div className="grid grid-cols-2 gap-x-5 gap-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 sm:gap-x-5 gap-y-3.5 sm:gap-y-4">
 
                 {/* Name */}
                 <div>
@@ -284,7 +285,7 @@ export default function CustomerProfilePage() {
                     value={form.fullName}
                     onChange={handleChange}
                     placeholder="Your full name"
-                    className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
                   />
                 </div>
 
@@ -299,12 +300,12 @@ export default function CustomerProfilePage() {
                     onChange={handleChange}
                     placeholder="Enter Your Phone No."
                     maxLength={15}
-                    className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
                   />
                 </div>
 
                 {/* Email */}
-                <div>
+                <div className="sm:col-span-2">
                   <label className="block text-[12px] font-medium text-gray-500 mb-1">Email</label>
                   <input
                     id="profile-email"
@@ -313,37 +314,9 @@ export default function CustomerProfilePage() {
                     value={form.email}
                     onChange={handleChange}
                     placeholder="your@email.com"
-                    className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
                   />
                 </div>
-
-                {/* Public Profile Name */}
-                {/* <div>
-                  <label className="block text-[12px] font-medium text-gray-500 mb-1">Public Profile Name</label>
-                  <input
-                    id="profile-public-name"
-                    type="text"
-                    name="publicProfileName"
-                    value={form.publicProfileName}
-                    onChange={handleChange}
-                    placeholder="Display name"
-                    className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
-                  />
-                </div> */}
-
-                {/* Address – full width */}
-                {/* <div className="col-span-2">
-                  <label className="block text-[12px] font-medium text-gray-500 mb-1">Address</label>
-                  <input
-                    id="profile-address"
-                    type="text"
-                    name="address"
-                    value={form.address}
-                    onChange={handleChange}
-                    placeholder="Street, City, Country"
-                    className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
-                  />
-                </div> */}
               </div>
             </div>
 
@@ -352,7 +325,7 @@ export default function CustomerProfilePage() {
               id="update-profile-btn"
               type="submit"
               disabled={saving}
-              className="w-full py-3 rounded-xl bg-[#1C2C1C] hover:bg-[#2c3e2c] text-white text-[14px] font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full py-3 rounded-xl bg-[#1C2C1C] hover:bg-[#2c3e2c] text-white text-[14px] font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer shadow-sm"
             >
               {saving ? (
                 <>

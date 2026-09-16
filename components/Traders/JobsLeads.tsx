@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo, useRef } from "react";
 import { authApi } from "@/app/api/authApi";
-import { Search, MapPin, Tag, MoreHorizontal, Calendar, Star, Send, MessageCircle, ArrowRight, X, Euro, Clock, FileText, Paperclip, Trash2, Play, User, Phone, Mail, Briefcase, Shield, CheckCircle, ChevronDown, Ban, RefreshCw, Pencil, Loader2 } from "lucide-react";
+import { Search, MapPin, Tag, MoreHorizontal, Calendar, Star, Send, MessageCircle, ArrowRight, X, Euro, Clock, FileText, Paperclip, Trash2, Play, User, Phone, Mail, Briefcase, Shield, CheckCircle, ChevronDown, ChevronUp, Ban, RefreshCw, Pencil, Loader2, Check, Filter } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
@@ -162,6 +162,7 @@ export default function JobsLeads() {
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [fullJobData, setFullJobData] = useState<any>(null);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isStartingJob, setIsStartingJob] = useState(false);
   const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
@@ -225,7 +226,7 @@ export default function JobsLeads() {
       matchStatus: effectiveMatchStatus,
       timeAgo: formatTimeAgo(item.createdAt),
       postedDate: formatPostedDate(item.createdAt),
-      description: item.description || "",
+      description: item.description || item.projectDescription || item.details || item.desc || "",
       timescale: item.timescale ? item.timescale.replace(/_/g, " ").toLowerCase().replace(/\b\w/g, (c: string) => c.toUpperCase()) : "Flexible",
       budgetRange: item.budgetRange || "Under €500",
       selectedTraderId: item.selectedTraderId || item.selectedTrader?.id,
@@ -739,12 +740,20 @@ export default function JobsLeads() {
   }, []);
 
   useEffect(() => {
-    if (!selectedJob?.id) return;
+    if (!selectedJob?.id) {
+      setFullJobData(null);
+      setIsDescriptionExpanded(false);
+      return;
+    }
+
+    setFullJobData(null);
+    setIsDescriptionExpanded(false);
 
     const loadJobDetails = async () => {
       try {
-        const data = await authApi.getCustomerJobById(selectedJob.id);
-        setFullJobData(data?.data || data);
+        const res = await authApi.getCustomerJobById(selectedJob.id);
+        const data = res?.data || res;
+        setFullJobData(data);
       } catch (error) {
         console.error("Failed to load job details", error);
       }
@@ -839,47 +848,69 @@ export default function JobsLeads() {
     <>
       <div className="w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 font-sans text-[#1C2C1C]">
         {/* Full-width Header: Title + Search */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4">
           <div>
-            <h1 className="text-[28px] sm:text-[32px] font-extrabold text-[#1C2C1C] tracking-tight">Jobs & Leads</h1>
-            <p className="text-[13px] text-gray-500 font-medium">Browse and manage matched job requests from customers</p>
+            <h1 className="text-[24px] sm:text-[28px] md:text-[32px] font-extrabold text-[#1C2C1C] tracking-tight">Jobs & Leads</h1>
+            <p className="text-[12px] sm:text-[13px] text-gray-500 font-medium">Browse and manage matched job requests from customers</p>
           </div>
 
           <div className="relative w-full sm:w-[320px]">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
             <input
               type="text"
-              placeholder="Search leads..."
+              placeholder="Search leads by title, location, tag..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-[42px] pl-10 pr-4 rounded-xl border border-gray-200 text-[14px] focus:outline-none focus:ring-2 focus:ring-[#6E9625]/20 focus:border-[#6E9625] transition-all bg-white shadow-xs"
+              className={`w-full h-[42px] pl-10 ${searchQuery ? "pr-9" : "pr-4"} rounded-xl border border-gray-200 text-[13px] sm:text-[14px] focus:outline-none focus:ring-2 focus:ring-[#6E9625]/20 focus:border-[#6E9625] transition-all bg-white shadow-xs`}
             />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-0.5 cursor-pointer"
+                title="Clear search"
+              >
+                <X size={15} />
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Full-width Tabs Bar */}
-        <div className="flex items-center gap-2 mb-6 overflow-x-auto pb-1 scrollbar-hide">
-          {tabs.map((tab) => {
-            const count = getTabCount(tab);
-            const isActive = activeTab === tab;
-            return (
-              <button
-                key={tab}
-                onClick={() => {
-                  setActiveTab(tab);
-                  setCurrentPage(1);
-                  const firstOfTab = jobs.find(j => tab === "All" || (tab === "Closed" ? (j.status === "Closed") : (tab === "New" || tab === "Posted" ? (j.status === "New" || j.status === "Posted" || (j.status as any) === "Rejected" || (j.status as any) === "Declined") : j.status === tab)));
-                  if (firstOfTab) setSelectedJob(firstOfTab);
-                }}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-[13px] font-semibold whitespace-nowrap transition-all ${isActive
-                  ? "bg-[#1C2C1C] text-white shadow-xs"
-                  : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"
-                  }`}
-              >
-                {tab} <span className={isActive ? "text-white/70" : "text-gray-400"}>({count})</span>
-              </button>
-            );
-          })}
+        {/* Filter Tabs Bar (Directly visible on all screens with smooth edge-to-edge mobile touch scrolling) */}
+        <div className="-mx-4 px-4 sm:mx-0 sm:px-0 mb-6 overflow-x-auto pb-2 scrollbar-none [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden touch-pan-x overscroll-x-contain">
+          <div className="flex items-center gap-2 w-max pr-4 sm:pr-0">
+            {tabs.map((tab) => {
+              const count = getTabCount(tab);
+              const isActive = activeTab === tab;
+              return (
+                <button
+                  key={tab}
+                  type="button"
+                  onClick={() => {
+                    setActiveTab(tab);
+                    setCurrentPage(1);
+                    const firstOfTab = jobs.find(j => tab === "All" || (tab === "Closed" ? (j.status === "Closed") : (tab === "New" || tab === "Posted" ? (j.status === "New" || j.status === "Posted" || (j.status as any) === "Rejected" || (j.status as any) === "Declined") : j.status === tab)));
+                    if (firstOfTab) setSelectedJob(firstOfTab);
+                  }}
+                  className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[12.5px] sm:text-[13px] font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer select-none ${isActive
+                    ? "bg-[#1C2C1C] text-white shadow-xs"
+                    : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 active:bg-gray-100"
+                    }`}
+                >
+                  <span>{tab}</span>
+                  <span
+                    className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-none transition-colors ${
+                      isActive
+                        ? "bg-white/20 text-white"
+                        : "bg-gray-100 text-gray-500"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Main 2-Column Grid: Left list (340-360px) + Right details (1fr) */}
@@ -892,8 +923,20 @@ export default function JobsLeads() {
                 Loading jobs...
               </div>
             ) : filteredJobs.length === 0 ? (
-              <div className="text-center py-10 text-gray-500 text-[14px] bg-white rounded-2xl border border-gray-100">
-                No jobs found.
+              <div className="text-center py-10 px-4 text-gray-500 text-[14px] bg-white rounded-2xl border border-gray-100 flex flex-col items-center justify-center gap-2">
+                <p className="font-medium text-gray-600">No jobs found.</p>
+                {(activeTab !== "All" || searchQuery.trim()) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setActiveTab("All");
+                      setSearchQuery("");
+                    }}
+                    className="text-[12px] font-semibold text-[#6E9625] hover:underline cursor-pointer"
+                  >
+                    Clear filters & search
+                  </button>
+                )}
               </div>
             ) : (
               paginatedJobs.map((job, idx) => {
@@ -1130,14 +1173,54 @@ export default function JobsLeads() {
                     </div>
                   </div>
 
-                  {/* Full Job Description - No View Full Details Needed */}
+                  {/* Full Job Description with Read More / Read Less Toggle */}
                   <div>
                     <span className="block text-[11px] font-extrabold text-gray-400 uppercase tracking-wider mb-2">
                       JOB DESCRIPTION
                     </span>
-                    <div className="p-4 rounded-2xl bg-[#F8F9FA] border border-gray-100 text-[13.5px] text-gray-700 leading-relaxed whitespace-pre-wrap">
-                      {fullJobData?.description || selectedJob.description}
-                    </div>
+                    {(() => {
+                      const rawDescription = (
+                        fullJobData?.description ||
+                        fullJobData?.job?.description ||
+                        fullJobData?.projectDescription ||
+                        fullJobData?.details ||
+                        selectedJob.description ||
+                        ""
+                      ).trim();
+
+                      const shouldTruncate = rawDescription.length > 100;
+
+                      return (
+                        <div className="p-4 rounded-2xl bg-[#F8F9FA] border border-gray-100 text-[13.5px] text-gray-700 leading-relaxed whitespace-pre-wrap break-words [overflow-wrap:anywhere]">
+                          {rawDescription ? (
+                            <>
+                              <div className={!isDescriptionExpanded && shouldTruncate ? "line-clamp-2" : ""}>
+                                {rawDescription}
+                              </div>
+                              {shouldTruncate && (
+                                <button
+                                  type="button"
+                                  onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                                  className="mt-2.5 text-[12px] font-bold text-[#6E9625] hover:text-[#58791C] hover:underline inline-flex items-center gap-1 cursor-pointer transition-colors"
+                                >
+                                  {isDescriptionExpanded ? (
+                                    <>
+                                      Read Less <ChevronUp size={13} />
+                                    </>
+                                  ) : (
+                                    <>
+                                      Read More <ChevronDown size={13} />
+                                    </>
+                                  )}
+                                </button>
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-gray-400 italic">No description provided for this job.</span>
+                          )}
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Direct Attachments Previews */}

@@ -200,7 +200,6 @@ const MultiSelect = ({
                 </div>
               </div>
             )}
-
             {filteredOptions.length === 0 ? (
               <div className="p-3 text-[12px] text-center text-gray-400">
                 {options.length === 0 ? "No options available" : "No results found"}
@@ -978,41 +977,91 @@ export default function TraderProfilePage() {
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
 
         {/* Page title */}
-        <div className="mb-8">
-          <h1 className="text-[1.75rem] font-bold text-[#1C2C1C] leading-tight">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-[1.75rem] font-bold text-[#1C2C1C] leading-tight">
             Profile Management
           </h1>
-          <p className="text-[13px] text-gray-500 mt-1">
+          <p className="text-[12px] sm:text-[13px] text-gray-500 mt-1">
             Manage how your professional identity appears to clients.
           </p>
         </div>
 
         <form onSubmit={handleSubmit}>
-          <div className="flex gap-6 items-start">
+          <div className="flex flex-col lg:flex-row gap-6 items-start">
 
-            {/* ── Left sidebar ── */}
-            <div className="w-48 flex-shrink-0 space-y-1">
-              {TABS.filter(tab => {
-                if (tab.id === "business" && !isStep2Done) return false;
-                if (tab.id === "portfolio") return !!businessForm.planName;
-                return true;
-              }).map(({ id, label, icon: Icon }) => (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setActiveTab(id)}
-                  className={`w-full flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-[13px] font-semibold transition-colors ${activeTab === id
-                    ? "bg-[#1C2C1C] text-white shadow-sm"
-                    : "text-[#1C2C1C]/60 hover:bg-white hover:text-[#1C2C1C]"
-                    }`}
-                >
-                  <Icon size={15} />
-                  {label}
-                </button>
-              ))}
+            {/* ── Left Sidebar / Mobile Navigation ── */}
+            <div className="w-full lg:w-56 xl:w-60 lg:flex-shrink-0 space-y-3 lg:space-y-6">
 
-              {/* Profile Completeness Bar */}
-              <div className="mt-8 pt-6 border-t border-gray-200">
+              {/* Mobile Profile Completeness: Compact Clean Banner (lg:hidden) */}
+              <div className="lg:hidden bg-white rounded-2xl p-3 sm:p-3.5 border border-gray-200 shadow-xs space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-[#6E9625]/10 flex items-center justify-center text-[#6E9625] shrink-0">
+                      <CheckCircle size={14} />
+                    </div>
+                    <div>
+                      <span className="text-[12px] font-bold text-[#1C2C1C]">Profile Completeness</span>
+                      <p className="text-[11px] text-gray-400">
+                        <span className="font-semibold text-gray-600">Next:</span> {profileNextStep}
+                      </p>
+                    </div>
+                  </div>
+                  <span className="text-[16px] font-black text-[#1C2C1C] shrink-0">{profileCompleteness}%</span>
+                </div>
+                <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-[#6E9625] rounded-full transition-all duration-500"
+                    style={{ width: `${profileCompleteness}%` }}
+                  />
+                </div>
+              </div>
+
+              {/* Mobile Segmented Tab Bar (lg:hidden) */}
+              <div className="lg:hidden w-full bg-[#EBECE7]/70 p-1 rounded-2xl border border-gray-200/80 shadow-xs flex items-center gap-1">
+                {TABS.filter(tab => {
+                  if (tab.id === "business" && !isStep2Done) return false;
+                  if (tab.id === "portfolio") return !!businessForm.planName;
+                  return true;
+                }).map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setActiveTab(id)}
+                    className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-1.5 rounded-xl text-[12px] font-bold transition-all cursor-pointer select-none text-center ${activeTab === id
+                      ? "bg-white text-[#1C2C1C] shadow-xs"
+                      : "text-gray-500 hover:text-[#1C2C1C]"
+                      }`}
+                  >
+                    <Icon size={14} className="shrink-0" />
+                    <span className="truncate">{id === "personal" ? "Personal" : id === "business" ? "Business" : label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Desktop Tabs Navigation (hidden lg:flex) */}
+              <div className="hidden lg:flex flex-col space-y-1">
+                {TABS.filter(tab => {
+                  if (tab.id === "business" && !isStep2Done) return false;
+                  if (tab.id === "portfolio") return !!businessForm.planName;
+                  return true;
+                }).map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setActiveTab(id)}
+                    className={`w-full flex items-center gap-2.5 px-4 py-2.5 rounded-lg text-[13px] font-semibold transition-colors cursor-pointer select-none ${activeTab === id
+                      ? "bg-[#1C2C1C] text-white shadow-sm"
+                      : "text-[#1C2C1C]/60 hover:bg-white hover:text-[#1C2C1C]"
+                      }`}
+                  >
+                    <Icon size={15} className="shrink-0" />
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </div>
+
+              {/* Desktop Profile Completeness Bar (hidden lg:block) */}
+              <div className="hidden lg:block pt-6 border-t border-gray-200">
                 <h3 className="text-[13px] font-bold text-[#1C2C1C] mb-4">Profile Completeness</h3>
                 <div className="flex items-baseline gap-1 mb-3">
                   <span className="text-[24px] font-black text-[#1C2C1C] leading-none">{profileCompleteness}%</span>
@@ -1031,14 +1080,14 @@ export default function TraderProfilePage() {
             </div>
 
             {/* ── Right content ── */}
-            <div className="flex-1 space-y-5">
+            <div className="w-full min-w-0 flex-1 space-y-5">
 
               {/* ════ PERSONAL INFO ════ */}
               {activeTab === "personal" && (
                 <>
                   {/* Profile photo card */}
-                  <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm px-6 py-5">
-                    <div className="flex items-center gap-5">
+                  <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm p-4 sm:p-6">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-5">
                       {/* Avatar */}
                       <div className="relative flex-shrink-0">
                         <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-200 border-2 border-[#E8E8E8]">
@@ -1067,18 +1116,18 @@ export default function TraderProfilePage() {
                       </div>
 
                       {/* Buttons */}
-                      <div>
+                      <div className="flex-1 min-w-0">
                         <p className="text-[14px] font-bold text-[#1C2C1C] mb-0.5">
                           Profile Photo
                         </p>
                         <p className="text-[12px] text-gray-400 mb-3">
                           Upload a professional photo for better visibility.
                         </p>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
                           <button
                             type="button"
                             onClick={() => profileInputRef.current?.click()}
-                            className="flex items-center gap-1.5 px-4 py-1.5 bg-[#1C2C1C] text-white rounded-lg text-[12px] font-semibold hover:bg-[#2c3e2c] transition-colors"
+                            className="flex items-center gap-1.5 px-4 py-1.5 bg-[#1C2C1C] text-white rounded-lg text-[12px] font-semibold hover:bg-[#2c3e2c] transition-colors cursor-pointer"
                           >
                             <Upload size={12} />
                             Upload New
@@ -1086,7 +1135,7 @@ export default function TraderProfilePage() {
                           <button
                             type="button"
                             onClick={handleRemovePhoto}
-                            className="px-4 py-1.5 border border-gray-200 text-gray-600 rounded-lg text-[12px] font-semibold hover:bg-gray-50 transition-colors"
+                            className="px-4 py-1.5 border border-gray-200 text-gray-600 rounded-lg text-[12px] font-semibold hover:bg-gray-50 transition-colors cursor-pointer"
                           >
                             Remove
                           </button>
@@ -1104,11 +1153,11 @@ export default function TraderProfilePage() {
                   </div>
 
                   {/* Personal details card */}
-                  <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm px-6 py-6">
+                  <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm p-4 sm:p-6">
                     <h2 className="text-[14px] font-bold text-[#1C2C1C] mb-5">
                       Personal Details
                     </h2>
-                    <div className="grid grid-cols-2 gap-x-5 gap-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
                       {/* Full Name */}
                       <div>
                         <label className="block text-[12px] font-medium text-gray-500 mb-1">
@@ -1207,7 +1256,7 @@ export default function TraderProfilePage() {
                       </div>
 
                       {/* About Us */}
-                      <div className="col-span-2">
+                      <div className="col-span-1 sm:col-span-2">
                         <label className="block text-[12px] font-medium text-gray-500 mb-1">
                           About Us (optional)
                         </label>
@@ -1281,7 +1330,7 @@ export default function TraderProfilePage() {
                       onDragOver={handleCertDragOver}
                       onDragLeave={handleCertDragLeave}
                       onClick={() => certInputRef.current?.click()}
-                      className={`border-2 border-dashed rounded-xl flex flex-col items-center justify-center py-12 cursor-pointer transition-colors ${isCertDragging
+                      className={`border-2 border-dashed rounded-xl flex flex-col items-center justify-center py-8 sm:py-12 px-4 text-center cursor-pointer transition-colors ${isCertDragging
                         ? "border-[#6E9625] bg-[#6E9625]/5"
                         : "border-[#C8D8B0] hover:border-[#6E9625] hover:bg-[#6E9625]/5"
                         }`}
@@ -1306,7 +1355,7 @@ export default function TraderProfilePage() {
                     </div>
 
                     {certificatePreviews.length > 0 && (
-                      <div className="grid grid-cols-3 gap-3 mt-5">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-5">
                         {certificatePreviews.map((src, i) => (
                           <div
                             key={i}
@@ -1359,7 +1408,7 @@ export default function TraderProfilePage() {
                       onDragOver={handleInsDragOver}
                       onDragLeave={handleInsDragLeave}
                       onClick={() => insInputRef.current?.click()}
-                      className={`border-2 border-dashed rounded-xl flex flex-col items-center justify-center py-12 cursor-pointer transition-colors ${isInsDragging
+                      className={`border-2 border-dashed rounded-xl flex flex-col items-center justify-center py-8 sm:py-12 px-4 text-center cursor-pointer transition-colors ${isInsDragging
                         ? "border-[#6E9625] bg-[#6E9625]/5"
                         : "border-[#C8D8B0] hover:border-[#6E9625] hover:bg-[#6E9625]/5"
                         }`}
@@ -1384,7 +1433,7 @@ export default function TraderProfilePage() {
                     </div>
 
                     {insurancePreviews.length > 0 && (
-                      <div className="grid grid-cols-3 gap-3 mt-5">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-5">
                         {insurancePreviews.map((src, i) => (
                           <div
                             key={i}
@@ -1428,7 +1477,7 @@ export default function TraderProfilePage() {
 
               {/* ════ BUSINESS DETAILS ════ */}
               {activeTab === "business" && (
-                <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm px-6 py-6">
+                <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm p-4 sm:p-6">
                   <h2 className="text-[14px] font-bold text-[#1C2C1C] mb-1">
                     Business Details
                   </h2>
@@ -1436,7 +1485,7 @@ export default function TraderProfilePage() {
                     These details help clients verify your professional credentials.
                   </p>
 
-                  <div className="grid grid-cols-2 gap-x-5 gap-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
                     {/* Company Name */}
                     <div>
                       <label className="block text-[12px] font-medium text-gray-500 mb-1">
@@ -1544,7 +1593,7 @@ export default function TraderProfilePage() {
                     </div>
                   )}
 
-                  <div className="bg-[#FAFAFA] border border-[#E8E8E8] rounded-2xl p-6 mb-6">
+                  <div className="bg-[#FAFAFA] border border-[#E8E8E8] rounded-2xl p-4 sm:p-6 mb-6">
                     <h4 className="text-[13px] font-bold text-[#1C2C1C] mb-3">Select Trade Categories</h4>
                     <MultiSelect
                       options={tradeCategories}
@@ -1593,7 +1642,7 @@ export default function TraderProfilePage() {
                       const subCategories = group.selectedSkillServices.flatMap(skillId => subCategoriesMap[skillId] || []);
 
                       return (
-                        <div key={group.id} className="relative bg-white border border-[#E8E8E8] rounded-2xl p-6 shadow-sm">
+                        <div key={group.id} className="relative bg-white border border-[#E8E8E8] rounded-2xl p-4 sm:p-6 shadow-sm">
                           <div className="flex justify-between items-center mb-5 border-b border-[#E8E8E8] pb-3">
                             <h4 className="text-[14px] font-bold text-[#1C2C1C]">{categoryName} Services</h4>
                           </div>
@@ -1707,7 +1756,7 @@ export default function TraderProfilePage() {
 
               {/* ════ PORTFOLIO ════ */}
               {activeTab === "portfolio" && (
-                <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm px-6 py-6">
+                <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm p-4 sm:p-6">
                   <h2 className="text-[14px] font-bold text-[#1C2C1C] mb-1">
                     Portfolio
                   </h2>
@@ -1721,7 +1770,7 @@ export default function TraderProfilePage() {
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onClick={() => portfolioInputRef.current?.click()}
-                    className={`border-2 border-dashed rounded-xl flex flex-col items-center justify-center py-12 cursor-pointer transition-colors ${isDragging
+                    className={`border-2 border-dashed rounded-xl flex flex-col items-center justify-center py-8 sm:py-12 px-4 text-center cursor-pointer transition-colors ${isDragging
                       ? "border-[#6E9625] bg-[#6E9625]/5"
                       : "border-[#C8D8B0] hover:border-[#6E9625] hover:bg-[#6E9625]/5"
                       }`}
@@ -1747,7 +1796,7 @@ export default function TraderProfilePage() {
 
                   {/* Preview grid */}
                   {portfolioPreviews.length > 0 && (
-                    <div className="grid grid-cols-3 gap-3 mt-5">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mt-5">
                       {portfolioPreviews.map((src, i) => (
                         <div
                           key={i}
