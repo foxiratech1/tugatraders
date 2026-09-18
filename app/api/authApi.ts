@@ -162,8 +162,11 @@ export const authApi = {
 
   // Authentication – login
   login: async (payload: {
-    email: string; password: string, latitude?: number;
+    email: string;
+    password: string;
+    latitude?: number;
     longitude?: number;
+    fcmToken?: string;
   }) => {
     const { data } = await api.post('/api/auth/login', payload);
     return data;
@@ -184,6 +187,7 @@ export const authApi = {
     postalCode?: string;
     latitude?: number;
     longitude?: number;
+    fcmToken?: string;
   }) => {
     const { data } = await api.post('/api/auth/customer/register', payload);
     return data;
@@ -669,6 +673,8 @@ export const traderRegister = async (payload: {
   longitude: number;
   isCheckedTermsCondition: boolean;
   contactNumber: string;
+  location?: string;
+  fcmToken?: string;
 }) => {
   const { data } = await api.post('/api/auth/trader/register-step-1', payload);
   return data;

@@ -11,6 +11,7 @@ import { setTokens, setUser } from "@/utils/auth";
 import PublicGuard from "@/components/Guards/PublicGuard";
 import { PhoneInput } from "react-international-phone";
 import "react-international-phone/style.css";
+import { getFcmToken, prefetchFcmToken } from "@/utils/firebase";
 
 // ─── Trade Categories (COMMENTED OUT) ────────────────────────────────────────
 // // Trade categories will be loaded from the API
@@ -110,6 +111,10 @@ export default function TraderSignupPage() {
         });
       }
     );
+  }, []);
+
+  useEffect(() => {
+    prefetchFcmToken();
   }, []);
 
   // useEffect(() => {
@@ -299,6 +304,7 @@ export default function TraderSignupPage() {
     setLoading(true);
     isSubmitting.current = true;
     try {
+      const fcmToken = await getFcmToken();
       const payload = {
         fullName: formData.fullName,
         email: formData.businessEmail,
@@ -316,6 +322,7 @@ export default function TraderSignupPage() {
         isCheckedTermsCondition: formData.agreeTerms,
         contactNumber: formData.contactNumber,
         location: formData.baseLocation,
+        ...(fcmToken ? { fcmToken } : {}),
       };
       console.log('Submitting payload:', payload);
       const res = await traderRegister(payload);

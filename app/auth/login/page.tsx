@@ -9,6 +9,7 @@ import { setTokens, getUserRole, setUser } from "@/utils/auth";
 import { Role } from "@/utils/role";
 import { authApi, getRegistrationStatus } from "@/app/api/authApi";
 import PublicGuard from "@/components/Guards/PublicGuard";
+import { getFcmToken, prefetchFcmToken } from "@/utils/firebase";
 
 // ─── Animated Eye ──────────────────────────────────────────────────────────────
 const AnimatedEye = ({
@@ -94,6 +95,11 @@ function LoginContent({ role }: { role?: string }) {
   const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
   const eyeBtnRef = useRef<HTMLButtonElement>(null);
 
+  // Prefetch FCM token if notification permission is already granted
+  useEffect(() => {
+    prefetchFcmToken();
+  }, []);
+
   // Random blink effect
   useEffect(() => {
     const scheduleBlink = () => {
@@ -145,8 +151,12 @@ function LoginContent({ role }: { role?: string }) {
     setErrors({});
     setIsLoading(true);
     try {
+      const fcmToken = await getFcmToken();
+      console.log("FCM TOKEN:", fcmToken);
       const data = await authApi.login({
-        email, password
+        email,
+        password,
+        ...(fcmToken ? { fcmToken } : {}),
       });
       console.log("LOGIN RESPONSE:", data);
 

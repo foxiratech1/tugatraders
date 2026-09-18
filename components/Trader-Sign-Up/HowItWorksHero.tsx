@@ -10,6 +10,7 @@ import { PhoneInput } from "react-international-phone";
 import "react-international-phone/style.css";
 import { AnimatedEye } from "@/app/ui/AnimatedEye";
 import Link from "next/link";
+import { getFcmToken } from "@/utils/firebase";
 
 const getPasswordError = (pass: string) => {
   const missing = [];
@@ -153,6 +154,7 @@ const HowItWorksHero = () => {
     setLoading(true);
     isSubmitting.current = true;
     try {
+      const fcmToken = await getFcmToken();
       const payload = {
         fullName: formData.fullName,
         email: formData.businessEmail,
@@ -164,6 +166,7 @@ const HowItWorksHero = () => {
         isCheckedTermsCondition: formData.agreeTerms,
         contactNumber: formData.contactNumber,
         location: formData.baseLocation,
+        ...(fcmToken ? { fcmToken } : {}),
       };
 
       const res = await traderRegister(payload);

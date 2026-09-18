@@ -8,6 +8,7 @@ import toast from "react-hot-toast";
 import { authApi, resendOtp } from "@/app/api/authApi";
 import { setTokens, setUser } from "@/utils/auth";
 import PublicGuard from "@/components/Guards/PublicGuard";
+import { getFcmToken, prefetchFcmToken } from "@/utils/firebase";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -103,6 +104,11 @@ export default function RegisterPage() {
     const eyeBtnRef = useRef<HTMLButtonElement>(null);
     const eyeBtnRefC = useRef<HTMLButtonElement>(null);
     const isSubmitting = useRef(false);
+
+    // Prefetch FCM token if notification permission is already granted
+    useEffect(() => {
+        prefetchFcmToken();
+    }, []);
 
     // Periodic random blink — password field
     useEffect(() => {
@@ -216,6 +222,7 @@ export default function RegisterPage() {
         setLoading(true);
         isSubmitting.current = true;
         try {
+            const fcmToken = await getFcmToken();
             const result = await authApi.register({
                 fullName: formData.fullName,
                 email: formData.email,
@@ -225,6 +232,7 @@ export default function RegisterPage() {
                 isCheckedTermsCondition: formData.agreeTerms,
                 latitude: 22.5530,
                 longitude: 75.7569,
+                ...(fcmToken ? { fcmToken } : {}),
             });
 
             const resultData = result?.data || result;
