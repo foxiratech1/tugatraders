@@ -125,6 +125,7 @@ interface Job {
   selectedTrader?: SelectedTrader;
   hasReviewed?: boolean;
   location?: string;
+  quotes?: Quote[];
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -167,66 +168,70 @@ const isInProgressStatus = (norm: string) =>
   norm.includes("PROGRESS");
 
 const statusConfig: Record<string, { label: string; bg: string; text: string; dot: string }> = {
-  OPEN: { label: "Job Posted", bg: "bg-[#FDE2D6]", text: "text-[#D32F2F]", dot: "bg-[#D32F2F]" },
-  POSTED: { label: "Job Posted", bg: "bg-[#FDE2D6]", text: "text-[#D32F2F]", dot: "bg-[#D32F2F]" },
+  OPEN: { label: "Job Posted", bg: "bg-[#F1AA69]", text: "text-[#9C410F]", dot: "bg-[#9C410F]" },
+  POSTED: { label: "Job Posted", bg: "bg-[#F1AA69]", text: "text-[#9C410F]", dot: "bg-[#9C410F]" },
   QUOTE_RECEIVED: {
     label: "Quote Received",
-    bg: "bg-[#FFF8E1]",
-    text: "text-[#F57C00]",
-    dot: "bg-[#F57C00]",
+    bg: "bg-[#DCEAF7]",
+    text: "text-[#156082]",
+    dot: "bg-[#156082]",
   },
   IN_PROGRESS: {
     label: "In Progress",
-    bg: "bg-[#FFE699]",
-    text: "text-[#C59B11]",
-    dot: "bg-[#C59B11]",
+    bg: "bg-[#EFDB4B]",
+    text: "text-[#8A5C05]",
+    dot: "bg-[#8A5C05]",
   },
   "IN PROGRESS": {
     label: "In Progress",
-    bg: "bg-[#FFE699]",
-    text: "text-[#C59B11]",
-    dot: "bg-[#C59B11]",
+    bg: "bg-[#EFDB4B]",
+    text: "text-[#8A5C05]",
+    dot: "bg-[#8A5C05]",
   },
   "IN-PROGRESS": {
     label: "In Progress",
-    bg: "bg-[#FFE699]",
-    text: "text-[#C59B11]",
-    dot: "bg-[#C59B11]",
+    bg: "bg-[#EFDB4B]",
+    text: "text-[#8A5C05]",
+    dot: "bg-[#8A5C05]",
   },
   INPROGRESS: {
     label: "In Progress",
-    bg: "bg-[#FFE699]",
-    text: "text-[#C59B11]",
-    dot: "bg-[#C59B11]",
+    bg: "bg-[#EFDB4B]",
+    text: "text-[#8A5C05]",
+    dot: "bg-[#8A5C05]",
   },
   STARTED: {
     label: "In Progress",
-    bg: "bg-[#FFE699]",
-    text: "text-[#C59B11]",
-    dot: "bg-[#C59B11]",
+    bg: "bg-[#EFDB4B]",
+    text: "text-[#8A5C05]",
+    dot: "bg-[#8A5C05]",
   },
 
-  ASSIGNED: { label: "Contacted", bg: "bg-[#8EAADB]", text: "text-[#1F3F73]", dot: "bg-[#1F3F73]" },
-  COMPLETED: { label: "Completed", bg: "bg-[#1E5624]", text: "text-white", dot: "bg-white" },
-  CANCELLED: { label: "Closed", bg: "bg-[#A5A5A5]", text: "text-[#515151]", dot: "bg-[#515151]" },
-  CLOSED: { label: "Closed", bg: "bg-[#A5A5A5]", text: "text-[#515151]", dot: "bg-[#515151]" },
-  EXPIRED: { label: "Expired", bg: "bg-[#A5A5A5]", text: "text-[#515151]", dot: "bg-[#515151]" },
-  ACTIVE: { label: "Job Posted", bg: "bg-[#FDE2D6]", text: "text-[#D32F2F]", dot: "bg-[#D32F2F]" },
+  ASSIGNED: { label: "Contacted", bg: "bg-[#7DB0E3]", text: "text-[#103270]", dot: "bg-[#103270]" },
+  CONTACTED: { label: "Contacted", bg: "bg-[#7DB0E3]", text: "text-[#103270]", dot: "bg-[#103270]" },
+  QUOTE_ACCEPTED: { label: "Quote Accepted", bg: "bg-[#D9F2D0]", text: "text-[#1C6D26]", dot: "bg-[#1C6D26]" },
+  QUOTE_DECLINED: { label: "Quote Declined", bg: "bg-[#FF9797]", text: "text-[#E53935]", dot: "bg-[#E53935]" },
+  DECLINED: { label: "Quote Declined", bg: "bg-[#FF9797]", text: "text-[#E53935]", dot: "bg-[#E53935]" },
+  COMPLETED: { label: "Completed", bg: "bg-[#13501B]", text: "text-white", dot: "bg-white" },
+  CANCELLED: { label: "Closed", bg: "bg-[#A6A6A6]", text: "text-[#333333]", dot: "bg-[#333333]" },
+  CLOSED: { label: "Closed", bg: "bg-[#A6A6A6]", text: "text-[#333333]", dot: "bg-[#333333]" },
+  EXPIRED: { label: "Closed", bg: "bg-[#A6A6A6]", text: "text-[#333333]", dot: "bg-[#333333]" },
+  ACTIVE: { label: "Job Posted", bg: "bg-[#F1AA69]", text: "text-[#9C410F]", dot: "bg-[#9C410F]" },
 };
 
-function SidebarStatusBadge({ status }: { status: string }) {
+function SidebarStatusBadge({ status, job }: { status: string; job?: Job }) {
   const norm = normalizeStatus(status);
   if (norm === "COMPLETED") {
     return (
       <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[#4E7B24]">
-        <span className="w-2 h-2 rounded-full bg-[#4E7B24]" />
+        <span className="w-2 h-2  bg-[#4E7B24]" />
         Completed
       </div>
     );
   }
   if (norm === "CLOSED" || norm === "CANCELLED" || norm === "EXPIRED") {
     return (
-      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#E2E8F0] text-[#475569] text-[11px] font-semibold">
+      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm bg-[#E2E8F0] text-[#475569] text-[11px] font-semibold">
         <span className="w-1.5 h-1.5 rounded-full bg-[#64748B]" />
         Closed
       </div>
@@ -234,60 +239,106 @@ function SidebarStatusBadge({ status }: { status: string }) {
   }
   if (isInProgressStatus(norm)) {
     return (
-      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFE699] text-[#C59B11] text-[11px] font-bold">
+      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm bg-[#FFE699] text-[#C59B11] text-[11px] font-bold">
         <span className="w-1.5 h-1.5 rounded-full bg-[#C59B11]" />
         In Progress
       </div>
     );
   }
-  if (norm === "ASSIGNED" || norm === "CONTACTED") {
+  if (norm === "ASSIGNED" || norm === "CONTACTED" || norm === "ACCEPTED" || norm === "QUOTE_ACCEPTED") {
     return (
-      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#B6D5F4] text-[#1565C0] text-[11px] font-semibold">
+      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm bg-[#B6D5F4] text-[#1565C0] text-[11px] font-semibold">
         <span className="w-1.5 h-1.5 rounded-full bg-[#1565C0]" />
         Contacted
       </div>
     );
   }
+  const hasAcceptedQuote = job && Array.isArray(job.quotes) && job.quotes.some((q: any) => q.status?.toUpperCase() === "ACCEPTED");
+  if (hasAcceptedQuote) {
+    return (
+      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm bg-[#B6D5F4] text-[#1565C0] text-[11px] font-semibold">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#1565C0]" />
+        Contacted
+      </div>
+    );
+  }
+  const quotes = job ? (job.quotesReceived ?? job.quotesCount ?? (job as any)._count?.quotes ?? (Array.isArray(job.quotes) ? job.quotes.length : 0)) : 0;
+  if (
+    norm === "QUOTE_RECEIVED" ||
+    norm === "QUOTES_RECEIVED" ||
+    norm === "QUOTED" ||
+    norm === "QUOTE_SENT" ||
+    ((norm === "OPEN" || norm === "POSTED" || norm === "ACTIVE") && quotes > 0)
+  ) {
+    return (
+      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm bg-[#FFF8E1] text-[#F57C00] text-[11px] font-semibold">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#F57C00]" />
+        Quote Received
+      </div>
+    );
+  }
   return (
-    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FDE2D6] text-[#D32F2F] text-[11px] font-semibold">
+    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm bg-[#FDE2D6] text-[#D32F2F] text-[11px] font-semibold">
       <span className="w-1.5 h-1.5 rounded-full bg-[#D32F2F]" />
       Job Posted
     </div>
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, job, quotesCount }: { status: string; job?: Job; quotesCount?: number }) {
   const norm = normalizeStatus(status);
   if (norm === "COMPLETED") {
     return (
-      <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#D8F3D7] text-[#2E7D32] text-[11px] font-bold tracking-wide">
+      <span className="inline-flex items-center px-3 py-1 rounded-sm bg-[#D8F3D7] text-[#2E7D32] text-[11px] font-bold tracking-wide">
         COMPLETED
       </span>
     );
   }
   if (norm === "CLOSED" || norm === "CANCELLED" || norm === "EXPIRED") {
     return (
-      <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#E2E8F0] text-[#475569] text-[11px] font-bold tracking-wide">
+      <span className="inline-flex items-center px-3 py-1 rounded-sm bg-[#E2E8F0] text-[#475569] text-[11px] font-bold tracking-wide">
         CLOSED
       </span>
     );
   }
   if (isInProgressStatus(norm)) {
     return (
-      <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#FFE699] text-[#C59B11] text-[11px] font-bold tracking-wide">
+      <span className="inline-flex items-center px-3 py-1 rounded-sm bg-[#FFE699] text-[#C59B11] text-[11px] font-bold tracking-wide">
         IN PROGRESS
       </span>
     );
   }
-  if (norm === "ASSIGNED" || norm === "CONTACTED") {
+  if (norm === "ASSIGNED" || norm === "CONTACTED" || norm === "ACCEPTED") {
     return (
-      <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#B6D5F4] text-[#1565C0] text-[11px] font-bold tracking-wide">
+      <span className="inline-flex items-center px-3 py-1 rounded-sm bg-[#B6D5F4] text-[#1565C0] text-[11px] font-bold tracking-wide">
         CONTACTED
       </span>
     );
   }
+  const hasAcceptedQuote = job && Array.isArray(job.quotes) && job.quotes.some((q: any) => q.status?.toUpperCase() === "ACCEPTED");
+  if (hasAcceptedQuote) {
+    return (
+      <span className="inline-flex items-center px-3 py-1 rounded-sm bg-[#B6D5F4] text-[#1565C0] text-[11px] font-bold tracking-wide">
+        CONTACTED
+      </span>
+    );
+  }
+  const quotes = quotesCount ?? (job ? (job.quotesReceived ?? job.quotesCount ?? (job as any)._count?.quotes ?? (Array.isArray(job.quotes) ? job.quotes.length : 0)) : 0);
+  if (
+    norm === "QUOTE_RECEIVED" ||
+    norm === "QUOTES_RECEIVED" ||
+    norm === "QUOTED" ||
+    norm === "QUOTE_SENT" ||
+    ((norm === "OPEN" || norm === "POSTED" || norm === "ACTIVE") && quotes > 0)
+  ) {
+    return (
+      <span className="inline-flex items-center px-3 py-1 rounded-sm bg-[#FFF8E1] text-[#F57C00] text-[11px] font-bold tracking-wide">
+        QUOTE RECEIVED
+      </span>
+    );
+  }
   return (
-    <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#FDE2D6] text-[#D32F2F] text-[11px] font-bold tracking-wide">
+    <span className="inline-flex items-center px-3 py-1 rounded-sm bg-[#FDE2D6] text-[#D32F2F] text-[11px] font-bold tracking-wide">
       JOB POSTED
     </span>
   );
@@ -886,6 +937,30 @@ export default function CustomerJobDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalJobs, setTotalJobs] = useState(0);
+  const [customerName, setCustomerName] = useState<string>("Hannah");
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("user");
+      if (stored) {
+        const u = JSON.parse(stored);
+        if (u?.fullName) {
+          setCustomerName(u.fullName.split(" ")[0]);
+        } else if (u?.name) {
+          setCustomerName(u.name.split(" ")[0]);
+        }
+      }
+    } catch (e) {}
+
+    authApi.getMyProfile().then((res: any) => {
+      const profile = res?.data || res;
+      if (profile?.fullName) {
+        setCustomerName(profile.fullName.split(" ")[0]);
+      } else if (profile?.name) {
+        setCustomerName(profile.name.split(" ")[0]);
+      }
+    }).catch(() => {});
+  }, []);
 
   // Share Your Review popup states
   const [shareReviewModalJob, setShareReviewModalJob] = useState<Job | null>(null);
@@ -915,16 +990,29 @@ export default function CustomerJobDashboard() {
         setJobs((prev) =>
           prev.map((j) => {
             if (j.id === quoteJobId) {
-              const currentReceived = j.quotesReceived || j.quotesCount || 0;
+              const currentReceived = j.quotesReceived || j.quotesCount || (j.quotes?.length ?? 0) || 0;
               return {
                 ...j,
                 quotesReceived: currentReceived + 1,
                 quotesCount: currentReceived + 1,
+                quotes: j.quotes ? [quote, ...j.quotes] : [quote],
               };
             }
             return j;
           })
         );
+        setSelectedJob((prev) => {
+          if (prev && prev.id === quoteJobId) {
+            const currentReceived = prev.quotesReceived || prev.quotesCount || (prev.quotes?.length ?? 0) || 0;
+            return {
+              ...prev,
+              quotesReceived: currentReceived + 1,
+              quotesCount: currentReceived + 1,
+              quotes: prev.quotes ? [quote, ...prev.quotes] : [quote],
+            };
+          }
+          return prev;
+        });
       }
       if (selectedJob && (quoteJobId === selectedJob.id || quote.id)) {
         setQuotes((prev) => {
@@ -1140,13 +1228,51 @@ export default function CustomerJobDashboard() {
             ? jobsRes.data
             : [];
 
-        setJobs(arr);
+        // Check if jobs already have quote counts. If not, fetch quote counts for open/posted/active jobs
+        const enhancedJobs = await Promise.all(
+          arr.map(async (job) => {
+            const rawCount = job.quotesReceived ?? job.quotesCount ?? (job as any)._count?.quotes ?? (Array.isArray(job.quotes) ? job.quotes.length : 0);
+            if (rawCount > 0) {
+              return { ...job, quotesReceived: rawCount, quotesCount: rawCount };
+            }
+            const norm = normalizeStatus(job.status);
+            if (norm === "OPEN" || norm === "POSTED" || norm === "ACTIVE") {
+              try {
+                const qRes = await authApi.getJobQuotes(job.id);
+                const qArr = Array.isArray(qRes) ? qRes : Array.isArray(qRes?.data) ? qRes.data : [];
+                return {
+                  ...job,
+                  quotes: qArr,
+                  quotesReceived: qArr.length,
+                  quotesCount: qArr.length,
+                };
+              } catch {
+                return job;
+              }
+            }
+            return job;
+          })
+        );
+
+        setJobs(enhancedJobs);
 
         const meta = jobsRes?.meta;
 
-        setTotalJobs(meta?.total ?? arr.length);
+        setTotalJobs(meta?.total ?? enhancedJobs.length);
         setTotalPages(meta?.totalPages ?? 1);
-        if (arr.length > 0) setSelectedJob(arr[0]);
+        if (enhancedJobs.length > 0) {
+          let targetJobId = null;
+          if (typeof window !== "undefined") {
+            const searchParams = new URLSearchParams(window.location.search);
+            targetJobId = searchParams.get('jobId');
+          }
+          if (targetJobId) {
+            const match = enhancedJobs.find((j: Job) => j.id === targetJobId);
+            setSelectedJob(match || enhancedJobs[0]);
+          } else {
+            setSelectedJob(enhancedJobs[0]);
+          }
+        }
 
         const reviewsArr = Array.isArray(reviewsRes)
           ? reviewsRes
@@ -1226,6 +1352,22 @@ export default function CustomerJobDashboard() {
         const res = await authApi.getJobQuotes(selectedJob.id);
         const arr = Array.isArray(res) ? res : Array.isArray(res?.data) ? res.data : [];
         setQuotes(arr);
+        if (arr.length > 0) {
+          setSelectedJob((prev) => (prev && prev.id === selectedJob.id ? {
+            ...prev,
+            quotes: arr,
+            quotesReceived: Math.max(prev.quotesReceived || 0, arr.length),
+            quotesCount: Math.max(prev.quotesCount || 0, arr.length),
+          } : prev));
+          setJobs((prev) =>
+            prev.map((j) => (j.id === selectedJob.id ? {
+              ...j,
+              quotes: arr,
+              quotesReceived: Math.max(j.quotesReceived || 0, arr.length),
+              quotesCount: Math.max(j.quotesCount || 0, arr.length),
+            } : j))
+          );
+        }
       } catch (e) {
         console.error("Failed to fetch quotes", e);
       } finally {
@@ -1233,43 +1375,160 @@ export default function CustomerJobDashboard() {
       }
     }
     fetchQuotes();
-  }, [selectedJob]);
+  }, [selectedJob?.id]);
 
-  const quotesCount = selectedJob?.quotesReceived ?? selectedJob?.quotesCount ?? 0;
+  const quotesCount = Math.max(quotes.length, selectedJob?.quotesReceived ?? 0, selectedJob?.quotesCount ?? 0);
+
+  const renderJobHistory = () => (
+    <div
+      className={`${mobileTab === "history" ? "flex" : "hidden"
+        } lg:flex bg-white rounded-2xl p-4 border border-[#E2EED2] flex-col gap-3 lg:sticky lg:top-8 max-h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar`}
+    >
+      <div className="flex items-center justify-between mb-1">
+        <h2 className="text-[17px] sm:text-[18px] font-extrabold text-[#1C2C1C]">Job History</h2>
+        <span className="text-[11px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+          {totalJobs || jobs.length}
+        </span>
+      </div>
+
+      {loading ? (
+        <div className="space-y-2">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="h-[75px] rounded-xl bg-gray-50 animate-pulse border border-gray-100" />
+          ))}
+        </div>
+      ) : jobs.length === 0 ? (
+        <p className="text-[13px] text-gray-400 px-2 py-6 text-center">No jobs posted yet.</p>
+      ) : (
+        <div className="space-y-3">
+          {jobs.map((job) => {
+            const isSelected = selectedJob?.id === job.id;
+            const isClosed =
+              job.status === "CLOSED" || job.status === "CANCELLED" || job.status === "EXPIRED";
+            const isCompleted = job.status === "COMPLETED";
+
+            return (
+              <button
+                key={job.id}
+                onClick={() => {
+                  setSelectedJob(job);
+                  setMobileTab("detail");
+                }}
+                className={`w-full p-3.5 sm:p-4 rounded-2xl transition-all text-left flex flex-col gap-2 ${isClosed
+                  ? isSelected
+                    ? "border-2 border-gray-300 bg-[#EFF2F5] shadow-xs"
+                    : "border border-transparent bg-[#EFF2F5] hover:border-gray-200"
+                  : isCompleted
+                    ? isSelected
+                      ? "border-2 border-[#6E9625] bg-[#F2F7EB] shadow-xs ring-2 ring-[#6E9625]/20"
+                      : "border border-transparent bg-[#F2F7EB] hover:border-[#D4E8C2]"
+                    : isSelected
+                      ? "border-2 border-[#6E9625] bg-white shadow-xs ring-2 ring-[#6E9625]/20"
+                      : "border border-transparent bg-white hover:border-gray-200"
+                  }`}
+              >
+                <div className="flex items-center justify-between">
+                  <SidebarStatusBadge status={job.status} job={job} />
+                </div>
+                <p className="text-[13px] font-bold text-[#1C2C1C] leading-snug line-clamp-2">
+                  {job.title}
+                </p>
+                {(job.category?.name || job.location || job.postcode) && (
+                  <div className="flex items-center gap-1 text-[11px] text-gray-500 font-medium">
+                    <MapPin size={12} className="text-gray-400 shrink-0" />
+                    <span className="truncate">{job.category?.name || job.location || job.postcode}</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between text-[11px] text-gray-400 font-medium pt-1">
+                  <div className="flex items-center gap-1 font-bold text-gray-400 uppercase">
+                    <span>€</span>
+                    {job.budgetRange && <span>{formatBudget(job.budgetRange)}</span>}
+                  </div>
+                  <div className="flex items-center gap-1 text-gray-400">
+                    <Calendar size={11} />
+                    {formatDate(job.createdAt)}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between pt-3 mt-auto border-t border-[#E2EED2]">
+          <button
+            onClick={() => {
+              setCurrentPage((prev) => Math.max(prev - 1, 1));
+              setSelectedJob(null);
+            }}
+            disabled={currentPage === 1}
+            className="px-2.5 py-1 text-[11px] font-semibold rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Previous
+          </button>
+
+          <span className="text-[11px] font-semibold text-gray-500">
+            Page {currentPage} of {totalPages}
+          </span>
+
+          <button
+            onClick={() => {
+              setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+              setSelectedJob(null);
+            }}
+            disabled={currentPage === totalPages}
+            className="px-2.5 py-1 text-[11px] font-semibold rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Next
+          </button>
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-[#F8F9F5]">
       <div className="max-w-[1400px] mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8">
 
-        {/* ── Page Header (Responsive Layout) ───────────────────────────────── */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 sm:mb-8">
-          <h1 className="text-[1.75rem] sm:text-[2rem] font-bold text-[#1C2C1C] leading-tight">
-            Dashboard
-          </h1>
+        {/* ── Page Header (Welcome Banner & Actions matching UI) ────────────── */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 sm:mb-8">
+          {/* Welcome Banner */}
+          <div className="bg-[#EFF5EB] rounded-[18px] border border-[#DFEBDD] px-5 sm:px-7 py-3.5 sm:py-4.5 flex items-center gap-3">
+            <div>
+              <h1 className="text-[20px] sm:text-[23px] font-black text-[#1C2C1C] flex items-center gap-2">
+                Hello, {customerName} <span className="select-none">👋</span>
+              </h1>
+              <p className="text-[13px] sm:text-[14px] text-[#556958] mt-0.5 font-medium">
+                Here&apos;s your latest activity and updates.
+              </p>
+            </div>
+          </div>
+
+          {/* Top Actions */}
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <Link href="/directory-listing/search" className="flex-1 sm:flex-initial">
-              <button className="w-full sm:w-auto flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 rounded-[12px] border border-gray-200 cursor-pointer bg-white text-[13px] sm:text-[14px] font-bold text-[#1C2C1C] hover:bg-gray-50 transition-colors shadow-xs">
-                <Users size={15} />
+            <Link href="/directory-listing/search">
+              <button className="flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-4.5 py-2 sm:py-2.5 rounded-[12px] border border-gray-200 cursor-pointer bg-white text-[13px] sm:text-[14px] font-bold text-[#1C2C1C] hover:bg-gray-50 transition-colors shadow-xs">
+                <Users size={16} />
                 Find a Trader
               </button>
             </Link>
-            {selectedJob &&
-              !reviewedJobIds.has(selectedJob.id) &&
-              selectedJob.status !== "EXPIRED" && (
-                <button
-                  onClick={() => handleNavigateToReview(selectedJob, selectedJob.selectedTrader)}
-                  className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 px-3 sm:px-4 md:px-5 py-2 sm:py-2.5 rounded-[12px] border border-gray-200 bg-white cursor-pointer text-[13px] sm:text-[14px] font-bold text-[#1C2C1C] hover:bg-gray-50 transition-colors shadow-xs"
-                >
-                  <Star size={15} className={selectedJob.status === "COMPLETED" ? "text-[#6E9625] fill-[#6E9625]" : ""} />
-                  {selectedJob.status === "COMPLETED"
-                    ? "Leave a Review"
-                    : selectedJob.status === "CLOSED" || selectedJob.status === "CANCELLED"
-                      ? "Share Experience"
-                      : "Leave Review"}
-                </button>
-              )}
-            <Link href="/customer-dashboard/post-job" className="flex-1 sm:flex-initial">
-              <button className="w-full sm:w-auto flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-4 md:px-5 py-2 sm:py-2.5 rounded-[12px] bg-[#6E9625] text-white text-[13px] sm:text-[14px] cursor-pointer font-bold hover:bg-[#58791C] transition-colors shadow-xs">
+            <button
+              onClick={() => {
+                if (selectedJob && !reviewedJobIds.has(selectedJob.id) && selectedJob.status !== "EXPIRED") {
+                  handleNavigateToReview(selectedJob, selectedJob.selectedTrader);
+                } else {
+                  handleActionRequiredLeaveReview();
+                }
+              }}
+              className="flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-4.5 py-2 sm:py-2.5 rounded-[12px] border border-gray-200 bg-white cursor-pointer text-[13px] sm:text-[14px] font-bold text-[#1C2C1C] hover:bg-gray-50 transition-colors shadow-xs"
+            >
+              <Star size={16} className={selectedJob?.status === "COMPLETED" ? "text-[#6E9625] fill-[#6E9625]" : ""} />
+              Leave Review
+            </button>
+            <Link href="/customer-dashboard/post-job">
+              <button className="flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-4.5 py-2 sm:py-2.5 rounded-[12px] bg-[#6E9625] text-white text-[13px] sm:text-[14px] cursor-pointer font-bold hover:bg-[#58791C] transition-colors shadow-xs">
                 <PlusCircle size={16} strokeWidth={2.2} />
                 Post a Job
               </button>
@@ -1282,8 +1541,8 @@ export default function CustomerJobDashboard() {
           <button
             onClick={() => setMobileTab("detail")}
             className={`flex-1 py-2 px-3 text-[13px] sm:text-[14px] font-bold rounded-lg transition-all ${mobileTab === "detail"
-                ? "bg-white text-[#1C2C1C] shadow-xs"
-                : "text-gray-600 hover:text-gray-900"
+              ? "bg-white text-[#1C2C1C] shadow-xs"
+              : "text-gray-600 hover:text-gray-900"
               }`}
           >
             Job Details
@@ -1291,126 +1550,18 @@ export default function CustomerJobDashboard() {
           <button
             onClick={() => setMobileTab("history")}
             className={`flex-1 py-2 px-3 text-[13px] sm:text-[14px] font-bold rounded-lg transition-all ${mobileTab === "history"
-                ? "bg-white text-[#1C2C1C] shadow-xs"
-                : "text-gray-600 hover:text-gray-900"
+              ? "bg-white text-[#1C2C1C] shadow-xs"
+              : "text-gray-600 hover:text-gray-900"
               }`}
           >
             Job History ({totalJobs || jobs.length})
           </button>
         </div>
 
-        {/* ── Main Grid: left (290px/320px on lg+) + right (1fr) ────────────────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[290px_1fr] xl:grid-cols-[320px_1fr] gap-6 items-start relative">
+        {/* ── Main Grid: left (1fr on lg+) + right (320px/360px on lg+) ───────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_360px] gap-6 items-start relative">
 
-          {/* ── Left: Job History (Hidden on mobile/tablet if viewing 'detail' tab) ──────── */}
-          <div
-            className={`${mobileTab === "history" ? "flex" : "hidden"
-              } lg:flex bg-white rounded-2xl p-4 border border-[#E2EED2] flex-col gap-3 lg:sticky lg:top-8 max-h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar`}
-          >
-            <div className="flex items-center justify-between mb-1">
-              <h2 className="text-[17px] sm:text-[18px] font-extrabold text-[#1C2C1C]">Job History</h2>
-              <span className="text-[11px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
-                {totalJobs || jobs.length}
-              </span>
-            </div>
-
-            {loading ? (
-              <div className="space-y-2">
-                {[1, 2, 3].map((i) => (
-                  <div key={i} className="h-[75px] rounded-xl bg-gray-50 animate-pulse border border-gray-100" />
-                ))}
-              </div>
-            ) : jobs.length === 0 ? (
-              <p className="text-[13px] text-gray-400 px-2 py-6 text-center">No jobs posted yet.</p>
-            ) : (
-              <div className="space-y-3">
-                {jobs.map((job) => {
-                  const isSelected = selectedJob?.id === job.id;
-                  const isClosed =
-                    job.status === "CLOSED" || job.status === "CANCELLED" || job.status === "EXPIRED";
-                  const isCompleted = job.status === "COMPLETED";
-
-                  return (
-                    <button
-                      key={job.id}
-                      onClick={() => {
-                        setSelectedJob(job);
-                        setMobileTab("detail");
-                      }}
-                      className={`w-full p-3.5 sm:p-4 rounded-2xl transition-all text-left flex flex-col gap-2 ${isClosed
-                        ? isSelected
-                          ? "border-2 border-gray-300 bg-[#EFF2F5] shadow-xs"
-                          : "border border-transparent bg-[#EFF2F5] hover:border-gray-200"
-                        : isCompleted
-                          ? isSelected
-                            ? "border-2 border-[#8BC34A] bg-[#F2F7EB] shadow-xs ring-2 ring-[#8BC34A]/20"
-                            : "border border-transparent bg-[#F2F7EB] hover:border-[#D4E8C2]"
-                          : isSelected
-                            ? "border-2 border-[#8BC34A] bg-white shadow-xs ring-2 ring-[#8BC34A]/20"
-                            : "border border-transparent bg-white hover:border-gray-200"
-                        }`}
-                    >
-                      <div className="flex items-center justify-between">
-                        <SidebarStatusBadge status={job.status} />
-                      </div>
-                      <p className="text-[13px] font-bold text-[#1C2C1C] leading-snug line-clamp-2">
-                        {job.title}
-                      </p>
-                      {(job.category?.name || job.location || job.postcode) && (
-                        <div className="flex items-center gap-1 text-[11px] text-gray-500 font-medium">
-                          <MapPin size={12} className="text-gray-400 shrink-0" />
-                          <span className="truncate">{job.category?.name || job.location || job.postcode}</span>
-                        </div>
-                      )}
-                      <div className="flex items-center justify-between text-[11px] text-gray-400 font-medium pt-1">
-                        <div className="flex items-center gap-1 font-bold text-gray-400 uppercase">
-                          <span>€</span>
-                          {job.budgetRange && <span>{formatBudget(job.budgetRange)}</span>}
-                        </div>
-                        <div className="flex items-center gap-1 text-gray-400">
-                          <Calendar size={11} />
-                          {formatDate(job.createdAt)}
-                        </div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* Pagination Controls */}
-            {totalPages > 1 && (
-              <div className="flex items-center justify-between pt-3 mt-auto border-t border-[#E2EED2]">
-                <button
-                  onClick={() => {
-                    setCurrentPage((prev) => Math.max(prev - 1, 1));
-                    setSelectedJob(null);
-                  }}
-                  disabled={currentPage === 1}
-                  className="px-2.5 py-1 text-[11px] font-semibold rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
-
-                <span className="text-[11px] font-semibold text-gray-500">
-                  Page {currentPage} of {totalPages}
-                </span>
-
-                <button
-                  onClick={() => {
-                    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-                    setSelectedJob(null);
-                  }}
-                  disabled={currentPage === totalPages}
-                  className="px-2.5 py-1 text-[11px] font-semibold rounded-lg border border-gray-200 bg-white text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* ── Right: Selected Job Detail & Dashboard (Hidden on mobile/tablet if viewing 'history' tab) ──────── */}
+          {/* ── Left: Selected Job Detail & Dashboard (Hidden on mobile/tablet if viewing 'history' tab) ──────── */}
           <div
             className={`${mobileTab === "detail" ? "flex" : "hidden"
               } lg:flex flex-col gap-5 sm:gap-6 w-full min-w-0`}
@@ -1509,11 +1660,11 @@ export default function CustomerJobDashboard() {
                         key={job.id}
                         onClick={() => setSelectedJob(job)}
                         className={`flex items-center gap-2 sm:gap-2.5 px-3 sm:px-3.5 py-2 sm:py-2.5 rounded-xl border text-left shrink-0 transition-all ${isSelected
-                            ? "border-[#8BC34A] bg-[#F2F7EB] ring-1 sm:ring-2 ring-[#8BC34A]/30 shadow-xs"
-                            : "border-gray-200 bg-white hover:bg-gray-50 shadow-xs"
+                          ? "border-[#8BC34A] bg-[#F2F7EB] ring-1 sm:ring-2 ring-[#8BC34A]/30 shadow-xs"
+                          : "border-gray-200 bg-white hover:bg-gray-50 shadow-xs"
                           }`}
                       >
-                        <SidebarStatusBadge status={job.status} />
+                        <SidebarStatusBadge status={job.status} job={job} />
                         <span className="text-[12px] sm:text-[13px] font-bold text-[#1C2C1C] max-w-[130px] sm:max-w-[200px] truncate">
                           {job.title}
                         </span>
@@ -1529,16 +1680,17 @@ export default function CustomerJobDashboard() {
                 {/* Header Pill & Title */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <span className="inline-block bg-[#EAF3DE] text-[#557A18] font-bold text-[11px] px-3 py-1 rounded-full mb-2 tracking-wide">
-                      JOB-{selectedJob.id?.substring(0, 8).toUpperCase()}
-                    </span>
                     <h2 className="text-[18px] sm:text-[22px] font-extrabold text-[#1C2C1C] leading-snug sm:leading-tight mb-2 break-words">
                       {selectedJob.title}
                     </h2>
                     <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
-                      <StatusBadge status={selectedJob.status} />
+                      <StatusBadge status={selectedJob.status} job={selectedJob} quotesCount={Math.max(quotes.length, quotesCount)} />
                       <span className="text-[11px] sm:text-[12px] text-gray-400 font-medium flex items-center gap-1">
                         <Clock size={12} /> Posted {formatDate(selectedJob.createdAt)}
+                      </span>
+                      <span className="text-gray-300 text-[10px]">•</span>
+                      <span className="text-[11px] sm:text-[12px] text-gray-400 font-medium">
+                        JOB-{selectedJob.id?.substring(0, 8).toUpperCase()}
                       </span>
                     </div>
                   </div>
@@ -1604,7 +1756,7 @@ export default function CustomerJobDashboard() {
                 </div>
 
                 {/* 5 Block Info Grid matching mockup */}
-                <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-2 sm:gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
                   <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-[#F8F9FA] border border-gray-100 min-w-0">
                     <span className="text-[9.5px] sm:text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-0.5 sm:mb-1 truncate">
                       LOCATION
@@ -1631,7 +1783,7 @@ export default function CustomerJobDashboard() {
                     </span>
                     <div className="flex items-center gap-1 text-[12px] sm:text-[13px] font-bold text-[#1C2C1C] truncate">
                       <Clock size={13} className="text-[#6E9625] shrink-0" />
-                      <span className="truncate">{formatTimescale(selectedJob.timescale)}</span>
+                      <span className="truncate uppercase">{formatTimescale(selectedJob.timescale)}</span>
                     </div>
                   </div>
 
@@ -1641,11 +1793,11 @@ export default function CustomerJobDashboard() {
                     </span>
                     <div className={`flex items-center gap-1 text-[12px] sm:text-[13px] font-bold truncate ${["CLOSED", "COMPLETED", "CANCELLED", "EXPIRED"].includes(selectedJob.status) ? "text-gray-400" : "text-[#1C2C1C]"}`}>
                       <Euro size={13} className={`shrink-0 ${["CLOSED", "COMPLETED", "CANCELLED", "EXPIRED"].includes(selectedJob.status) ? "text-gray-400" : "text-[#6E9625]"}`} />
-                      <span className="truncate">{formatBudget(selectedJob.budgetRange)}</span>
+                      <span className="truncate uppercase">{formatBudget(selectedJob.budgetRange)}</span>
                     </div>
                   </div>
 
-                  <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-[#F8F9FA] border border-gray-100 col-span-2 sm:col-span-2 xl:col-span-1 min-w-0">
+                  <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-[#F8F9FA] border border-gray-100 col-span-2 sm:col-span-1 md:col-span-1 min-w-0">
                     <span className="text-[9.5px] sm:text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-0.5 sm:mb-1 truncate">
                       QUOTES RECEIVED
                     </span>
@@ -1764,6 +1916,9 @@ export default function CustomerJobDashboard() {
               </div>
             ) : null}
           </div>
+
+          {/* ── Right: Job History ──────── */}
+          {renderJobHistory()}
         </div>
       </div>
 

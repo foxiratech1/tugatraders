@@ -5,7 +5,7 @@ import { authApi } from '@/app/api/authApi';
 import {
   Star, MapPin, Phone, ShieldCheck, BadgeCheck, Building,
   Wrench, List, ChevronDown, Check, ChevronRight, ChevronLeft, Filter, Search,
-  CheckCircle, Heart, Award, Briefcase, MessageSquare, Camera, LogIn, X, Target, Layers
+  CheckCircle, Heart, Award, Briefcase, MessageSquare, Camera, LogIn, X, Target, Layers, Plus
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -655,8 +655,89 @@ const DirectorySearchResults = () => {
     <>
       <section className="bg-[#F8F9F7] pt-3 sm:pt-5 pb-14 px-4 sm:px-6 lg:px-8 xl:px-12">
         <div className="max-w-[1400px] mx-auto">
+          {/* Post a Job Banner Card */}
+          <div className="bg-[#F4F8F3] border border-[#DFE8DE] rounded-2xl sm:rounded-[24px] overflow-hidden mb-6 sm:mb-8 flex flex-col xl:flex-row items-stretch shadow-[0_2px_12px_rgba(0,0,0,0.03)] relative">
+
+            {/* Left Video */}
+            <div className="hidden xl:block w-[360px] relative shrink-0  bg-[#F4F8F3]">
+              <video
+                src="/postjob.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="absolute inset-0 w-full h-full object-contain"
+              />
+            </div>
+
+            {/* Middle and Right Content Wrapper */}
+            <div className="flex-1 flex flex-col md:flex-row items-center justify-between p-6 sm:p-8 lg:px-10 lg:py-8 gap-6 lg:gap-10">
+              {/* Text Content */}
+              <div className="flex-1 max-w-[580px] text-left">
+                <h2 className="text-[22px] sm:text-[28px] lg:text-[32px] font-extrabold text-[#19331E] tracking-tight leading-[1.2] mb-2.5">
+                  Need a trader? Post a job instead.
+                </h2>
+                <p className="text-[#4E6252] text-[14px] sm:text-[15.5px] leading-relaxed mb-6 font-medium">
+                  Add photos, more details and get tailored quotes from trusted tradespeople in your area &mdash; or browse the directory below.
+                </p>
+                <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
+                  <Link
+                    href="/post-job"
+                    className="inline-flex items-center gap-2 bg-[#447132] hover:bg-[#385E28] text-white font-bold text-[14px] sm:text-[15px] px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl transition-all shadow-sm hover:shadow active:scale-[0.98] cursor-pointer"
+                  >
+                    <Plus size={18} strokeWidth={2.8} />
+                    <span>Post a job</span>
+                  </Link>
+
+                </div>
+              </div>
+
+              {/* Right Side: Photo preview + annotations */}
+              <div className="relative shrink-0 flex flex-col items-center select-none pt-2 pb-1 pr-2 sm:pr-6">
+                {/* Radiating accent lines at top right of image */}
+                <div className="absolute -top-1 -right-0 sm:right-2 text-[#447132] pointer-events-none">
+                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                    <line x1="5" y1="17" x2="18" y2="6" />
+                    <line x1="7" y1="21" x2="24" y2="20" />
+                    <line x1="8" y1="25" x2="21" y2="31" />
+                  </svg>
+                </div>
+
+                {/* Photo Collage Preview */}
+                <div className="relative w-[210px] sm:w-[250px] md:w-[270px] lg:w-[290px]">
+                  <Image
+                    src="/before.jfif"
+                    alt="Post a job preview"
+                    width={600}
+                    height={400}
+                    className="w-full h-auto object-contain mix-blend-multiply pointer-events-none"
+                    priority
+                  />
+                </div>
+
+                {/* Annotation: Arrow + "Add photos and details" */}
+                <div className="flex items-center gap-2 -mt-1 self-center sm:self-end pr-2 sm:pr-6">
+                  {/* Curved Arrow pointing towards photos */}
+                  <div className="text-[#447132] -mt-2">
+                    <svg width="38" height="44" viewBox="0 0 38 44" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M 6 40 C 4 24 13 12 30 8" />
+                      <path d="M 21 4 L 32 8 L 24 16" />
+                    </svg>
+                  </div>
+
+                  {/* Handwritten script text */}
+                  <div className="font-[family-name:var(--font-caveat)] text-[#2B4725] text-[22px] sm:text-[25px] font-bold leading-[1.05] tracking-wide -rotate-2">
+                    <span>Add photos</span>
+                    <br />
+                    <span>and details</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Header */}
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
+          <div id="directory-results" className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
             <h2 className="text-[18px] sm:text-[22px] font-extrabold text-[#1C2C1C]">
               {filteredResults.length} Professional{filteredResults.length !== 1 && 's'} found
             </h2>
@@ -1037,10 +1118,10 @@ const DirectorySearchResults = () => {
 
                             return (
                               <div className="flex flex-wrap gap-2">
-                                {visibleSkills.map((item: any, i: number) => (
+                                {/* {visibleSkills.map((item: any, i: number) => (
                                   <span key={`skill-sub-${i}`} className="bg-[#F3F4F6] text-[#4B5563] px-3.5 py-1.5 rounded-full text-[12px] font-bold">{item.name}</span>
-                                ))}
-                                {!isExpanded && combinedSkills.length > 4 && (
+                                ))} */}
+                                {/* {!isExpanded && combinedSkills.length > 4 && (
                                   <button
                                     onClick={(e) => { e.preventDefault(); toggleSkills(trader.id); }}
                                     className="bg-[#F4F7F1] text-[#6E9625] px-3.5 py-1.5 rounded-full text-[12px] font-bold cursor-pointer hover:bg-[#E5F0DA] transition-colors"
@@ -1055,7 +1136,7 @@ const DirectorySearchResults = () => {
                                   >
                                     Show less
                                   </button>
-                                )}
+                                )} */}
                               </div>
                             );
                           })()}

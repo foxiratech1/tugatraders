@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Bricolage_Grotesque, Wix_Madefor_Display } from "next/font/google";
+import { Bricolage_Grotesque, Wix_Madefor_Display, Caveat } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "react-hot-toast";
 import React from "react";
@@ -15,6 +15,12 @@ const bricolage = Bricolage_Grotesque({
 
 const wix = Wix_Madefor_Display({
   variable: "--font-wix",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const caveat = Caveat({
+  variable: "--font-caveat",
   subsets: ["latin"],
   display: "swap",
 });
@@ -35,7 +41,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${bricolage.variable} ${wix.variable} h-full antialiased `}
+      className={`${bricolage.variable} ${wix.variable} ${caveat.variable} h-full antialiased `}
       suppressHydrationWarning
     >
       <body className={`${wix.className} min-h-full flex flex-col`} suppressHydrationWarning>

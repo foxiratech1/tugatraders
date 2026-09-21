@@ -142,9 +142,8 @@ function TraderAvatar({ trader }: { trader: any }) {
   const src = avatarUrl
     ? avatarUrl.startsWith("http")
       ? avatarUrl
-      : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "")}${
-          avatarUrl.startsWith("/") ? avatarUrl : `/${avatarUrl}`
-        }`
+      : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "")}${avatarUrl.startsWith("/") ? avatarUrl : `/${avatarUrl}`
+      }`
     : "/avt.png";
 
   return (
@@ -175,9 +174,8 @@ function StarRating({ rating }: { rating: number }) {
           <Star
             key={star}
             size={14}
-            className={`sm:w-4 sm:h-4 ${
-              star <= rating ? "text-[#FACC15] fill-[#FACC15]" : "text-gray-300 fill-gray-100"
-            }`}
+            className={`sm:w-4 sm:h-4 ${star <= rating ? "text-[#FACC15] fill-[#FACC15]" : "text-gray-300 fill-gray-100"
+              }`}
             strokeWidth={1.5}
           />
         ))}
@@ -311,16 +309,16 @@ export default function CustomerReviews() {
         const parsedUnreviewed: UnreviewedJob[] = Array.isArray(unreviewedRes)
           ? unreviewedRes
           : Array.isArray(unreviewedRes?.data)
-          ? unreviewedRes.data
-          : Array.isArray(unreviewedRes?.jobs)
-          ? unreviewedRes.jobs
-          : Array.isArray(unreviewedRes?.data?.jobs)
-          ? unreviewedRes.data.jobs
-          : Array.isArray(unreviewedRes?.unreviewedJobs)
-          ? unreviewedRes.unreviewedJobs
-          : Array.isArray(unreviewedRes?.data?.unreviewedJobs)
-          ? unreviewedRes.data.unreviewedJobs
-          : [];
+            ? unreviewedRes.data
+            : Array.isArray(unreviewedRes?.jobs)
+              ? unreviewedRes.jobs
+              : Array.isArray(unreviewedRes?.data?.jobs)
+                ? unreviewedRes.data.jobs
+                : Array.isArray(unreviewedRes?.unreviewedJobs)
+                  ? unreviewedRes.unreviewedJobs
+                  : Array.isArray(unreviewedRes?.data?.unreviewedJobs)
+                    ? unreviewedRes.data.unreviewedJobs
+                    : [];
         setUnreviewedJobs(parsedUnreviewed);
 
         // If no explicit tab query param, smart default based on whether pending reviews exist
@@ -359,11 +357,10 @@ export default function CustomerReviews() {
               setActiveTab("pending");
               router.replace("/customer-dashboard/reviews?tab=pending");
             }}
-            className={`pb-3 sm:pb-3.5 px-1 text-[14px] sm:text-[15px] font-bold transition-all relative flex items-center gap-2 whitespace-nowrap cursor-pointer ${
-              activeTab === "pending"
-                ? "text-[#6E9625] border-b-2 border-[#6E9625]"
-                : "text-gray-500 hover:text-gray-800"
-            }`}
+            className={`pb-3 sm:pb-3.5 px-1 text-[14px] sm:text-[15px] font-bold transition-all relative flex items-center gap-2 whitespace-nowrap cursor-pointer ${activeTab === "pending"
+              ? "text-[#6E9625] border-b-2 border-[#6E9625]"
+              : "text-gray-500 hover:text-gray-800"
+              }`}
           >
             <Clock size={17} />
             <span>Pending Reviews</span>
@@ -379,11 +376,10 @@ export default function CustomerReviews() {
               setActiveTab("submitted");
               router.replace("/customer-dashboard/reviews?tab=submitted");
             }}
-            className={`pb-3 sm:pb-3.5 px-1 text-[14px] sm:text-[15px] font-bold transition-all relative flex items-center gap-2 whitespace-nowrap cursor-pointer ${
-              activeTab === "submitted"
-                ? "text-[#6E9625] border-b-2 border-[#6E9625]"
-                : "text-gray-500 hover:text-gray-800"
-            }`}
+            className={`pb-3 sm:pb-3.5 px-1 text-[14px] sm:text-[15px] font-bold transition-all relative flex items-center gap-2 whitespace-nowrap cursor-pointer ${activeTab === "submitted"
+              ? "text-[#6E9625] border-b-2 border-[#6E9625]"
+              : "text-gray-500 hover:text-gray-800"
+              }`}
           >
             <CheckCircle size={17} />
             <span>Submitted Reviews</span>
@@ -483,11 +479,7 @@ export default function CustomerReviews() {
                             <span className="inline-block bg-green-50 text-green-700 font-bold text-[10px] px-2.5 py-0.5 rounded-full">
                               COMPLETED
                             </span>
-                            {categoryName && (
-                              <span className="text-[11px] font-semibold text-gray-500">
-                                • {categoryName}
-                              </span>
-                            )}
+
                           </div>
 
                           {/* Job Title */}
@@ -542,7 +534,7 @@ export default function CustomerReviews() {
                           className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 sm:px-6 py-2.5 rounded-xl bg-[#6E9625] text-white text-[13px] font-bold hover:bg-[#58791C] shadow-sm hover:shadow transition-all cursor-pointer"
                         >
                           <Star size={15} className="fill-current" />
-                          Give a Review
+                          Leave a Review
                         </button>
                       </div>
                     </div>
@@ -594,11 +586,10 @@ export default function CustomerReviews() {
                       {/* Badge + Rating */}
                       <div className="flex items-center sm:items-end justify-between sm:flex-col gap-1.5 sm:gap-1 flex-shrink-0 pt-1 sm:pt-0 border-t sm:border-t-0 border-gray-50">
                         <span
-                          className={`text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 rounded-full ${
-                            r.reviewType === "JOB"
-                              ? "bg-[#E9F3DC] text-[#4A7C10]"
-                              : "bg-blue-50 text-blue-600"
-                          }`}
+                          className={`text-[10px] sm:text-[11px] font-semibold px-2 sm:px-2.5 py-0.5 rounded-full ${r.reviewType === "JOB"
+                            ? "bg-[#E9F3DC] text-[#4A7C10]"
+                            : "bg-blue-50 text-blue-600"
+                            }`}
                         >
                           {r.reviewType === "JOB" ? "Job Review" : "Directory Review"}
                         </span>
@@ -657,9 +648,8 @@ export default function CustomerReviews() {
                         )}
                         {r.wouldRecommendTrader !== undefined && (
                           <span
-                            className={`font-semibold flex items-center gap-1 ${
-                              r.wouldRecommendTrader ? "text-[#6E9625]" : "text-red-500"
-                            }`}
+                            className={`font-semibold flex items-center gap-1 ${r.wouldRecommendTrader ? "text-[#6E9625]" : "text-red-500"
+                              }`}
                           >
                             {r.wouldRecommendTrader ? "✓ Would recommend" : "✗ Would not recommend"}
                           </span>

@@ -658,7 +658,7 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
                 const starConfigs: Record<number, { label: string; color: string }> = {
                   1: { label: "1 - Very Poor", color: "text-[#991B1B]" },
                   2: { label: "2 - Poor", color: "text-[#DC2626]" },
-                  3: { label: "3 - Good", color: "text-[#EA580C]" },
+                  3: { label: "3 - Good", color: "text-[#90EE90]" },
                   4: { label: "4 - Very Good", color: "text-[#16A34A]" },
                   5: { label: "5 - Excellent", color: "text-[#14532D]" },
                 };

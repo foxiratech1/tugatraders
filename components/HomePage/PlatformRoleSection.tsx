@@ -90,7 +90,7 @@ const PlatformRoleSection = () => {
               {/* Background Image with Overlay */}
               <div className="absolute inset-0 z-0">
                 <Image
-                  src="/Contact Support.png"
+                  src="/Concern.jfif"
                   alt="Contact Support"
                   fill
                   className="object-cover object-[center_10%]"
@@ -98,7 +98,7 @@ const PlatformRoleSection = () => {
                 />
                 {/* Green tinted overlay matching screenshot */}
                 <div className="absolute inset-0 bg-[#162617]/72" />
-                <div className="absolute inset-0 bg-gradient-to-b from-[#162617]/50 via-[#182a19]/70 to-[#122013]/92" />
+                {/* <div className="absolute inset-0 bg-gradient-to-b from-[#162617]/50 via-[#182a19]/70 to-[#122013]/92" /> */}
               </div>
 
               {/* Card Content */}

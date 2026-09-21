@@ -15,7 +15,7 @@ interface JobLead {
   title: string;
   location: string;
   tag: string;
-  status: "New" | "Posted" | "Contacted" | "In Progress" | "Completed" | "Closed" | "Rejected" | "Declined";
+  status: "New" | "Posted" | "Quote Sent" | "Contacted" | "In Progress" | "Completed" | "Closed" | "Rejected" | "Declined";
   rawStatus?: string;
   matchStatus?: string;
   timeAgo: string;
@@ -90,7 +90,7 @@ const formatPostedDate = (dateStr: string) => {
   });
 };
 
-function getUIStatus(item: any): "New" | "Posted" | "Contacted" | "In Progress" | "Completed" | "Closed" {
+function getUIStatus(item: any): "New" | "Posted" | "Quote Sent" | "Contacted" | "In Progress" | "Completed" | "Closed" {
   const rawStatus = (item.rawStatus || item.status || "").toUpperCase();
 
   if (rawStatus === "COMPLETED") return "Completed";
@@ -147,7 +147,23 @@ function getUIStatus(item: any): "New" | "Posted" | "Contacted" | "In Progress" 
     return "In Progress";
   }
 
-  // Until another trader's quote is accepted, the job status is ALWAYS "New"!
+  // Check if this trader has sent a quote that is still pending or was declined while job is still open
+  const hasQuoted = Boolean(
+    matchStatus === "QUOTED" ||
+    matchStatus === "DECLINED" ||
+    item.hasQuoted ||
+    item.isQuoted ||
+    item.hasSentQuote ||
+    (Array.isArray(item.quotes) && item.quotes.some((q: any) =>
+      (q.traderId === item.traderId || q.isMyQuote)
+    ))
+  );
+
+  if (hasQuoted && !isAccepted && !hasOtherTraderAccepted) {
+    return "Quote Sent";
+  }
+
+  // Until another trader's quote is accepted or trader has quoted, the job status is ALWAYS "New"!
   return "New";
 }
 
@@ -300,7 +316,7 @@ export default function JobsLeads() {
       } else if (isRejected && quoteJobId) {
         const rawUpper = (selectedJob?.rawStatus || "").toUpperCase();
         const hasOtherTrader = (rawUpper === "IN_PROGRESS" || rawUpper === "ASSIGNED" || rawUpper === "COMPLETED") || Boolean(selectedJob?.selectedTraderId && !selectedJob?.isQuoteAccepted);
-        const newStatus = hasOtherTrader ? (statusUpper === "DECLINED" ? "Declined" : "Rejected") : "New";
+        const newStatus = hasOtherTrader ? (statusUpper === "DECLINED" ? "Declined" : "Rejected") : "Quote Sent";
         setJobs((prev) =>
           prev.map((j) =>
             j.id === quoteJobId
@@ -335,7 +351,7 @@ export default function JobsLeads() {
             } else if (statusUpper === "REJECTED" || statusUpper === "DECLINED") {
               const rawUpper = (selectedJob.rawStatus || "").toUpperCase();
               const hasOtherTrader = (rawUpper === "IN_PROGRESS" || rawUpper === "ASSIGNED" || rawUpper === "COMPLETED") || Boolean(selectedJob.selectedTraderId && !selectedJob.isQuoteAccepted);
-              const newStatus = hasOtherTrader ? (statusUpper === "DECLINED" ? "Declined" : "Rejected") : "New";
+              const newStatus = hasOtherTrader ? (statusUpper === "DECLINED" ? "Declined" : "Rejected") : "Quote Sent";
               setSelectedJob((prev) => prev ? { ...prev, isQuoteAccepted: false, matchStatus: statusUpper, status: newStatus } : null);
               setJobs((prev) => prev.map((j) => j.id === selectedJob.id ? { ...j, isQuoteAccepted: false, matchStatus: statusUpper, status: newStatus } : j));
             }
@@ -358,7 +374,7 @@ export default function JobsLeads() {
               } else if (statusUpper === "REJECTED" || statusUpper === "DECLINED") {
                 const rawUpper = (selectedJob.rawStatus || "").toUpperCase();
                 const hasOtherTrader = (rawUpper === "IN_PROGRESS" || rawUpper === "ASSIGNED" || rawUpper === "COMPLETED") || Boolean(selectedJob.selectedTraderId && !selectedJob.isQuoteAccepted);
-                const newStatus = hasOtherTrader ? (statusUpper === "DECLINED" ? "Declined" : "Rejected") : "New";
+                const newStatus = hasOtherTrader ? (statusUpper === "DECLINED" ? "Declined" : "Rejected") : "Quote Sent";
                 setSelectedJob((prev) => prev ? { ...prev, isQuoteAccepted: false, matchStatus: statusUpper, status: newStatus } : null);
                 setJobs((prev) => prev.map((j) => j.id === selectedJob.id ? { ...j, isQuoteAccepted: false, matchStatus: statusUpper, status: newStatus } : j));
               }
@@ -702,10 +718,10 @@ export default function JobsLeads() {
       setShowSuccessModal(true);
       setJobs((prevJobs) =>
         prevJobs.map((j) =>
-          j.id === selectedJob.id ? { ...j, hasQuoted: true, status: "New", matchStatus: "QUOTED" } : j
+          j.id === selectedJob.id ? { ...j, hasQuoted: true, status: "Quote Sent", matchStatus: "QUOTED" } : j
         )
       );
-      setSelectedJob((prev) => (prev ? { ...prev, hasQuoted: true, status: "New", matchStatus: "QUOTED" } : null));
+      setSelectedJob((prev) => (prev ? { ...prev, hasQuoted: true, status: "Quote Sent", matchStatus: "QUOTED" } : null));
     } catch (error: any) {
       console.error("Failed to send quote", error);
       toast.error(error?.response?.data?.message || "Failed to send job quote");
@@ -768,7 +784,9 @@ export default function JobsLeads() {
       if (activeTab === "Closed") {
         result = result.filter((j) => j.status === "Closed");
       } else if (activeTab === "New" || activeTab === "Posted") {
-        result = result.filter((j) => j.status === "New" || j.status === "Posted" || (j.status as any) === "Rejected" || (j.status as any) === "Declined");
+        result = result.filter((j) => j.status === "New" || j.status === "Posted");
+      } else if (activeTab === "Quote Sent") {
+        result = result.filter((j) => j.status === "Quote Sent" || (j.status as any) === "Rejected" || (j.status as any) === "Declined");
       } else {
         result = result.filter((j) => j.status === activeTab);
       }
@@ -796,49 +814,65 @@ export default function JobsLeads() {
     setCurrentPage(1);
   }, [activeTab, searchQuery]);
 
-  const tabs = ["All", "New", "Contacted", "In Progress", "Completed", "Closed"];
+  const tabs = ["All", "New", "Quote Sent", "Contacted", "In Progress", "Completed", "Closed"];
 
   // Helper to count jobs for tabs
   const getTabCount = (tab: string) => {
     if (tab === "All") return jobs.length;
     if (tab === "Closed") return jobs.filter((j) => j.status === "Closed").length;
-    if (tab === "New" || tab === "Posted") return jobs.filter((j) => j.status === "New" || j.status === "Posted" || (j.status as any) === "Rejected" || (j.status as any) === "Declined").length;
+    if (tab === "New" || tab === "Posted") return jobs.filter((j) => j.status === "New" || j.status === "Posted").length;
+    if (tab === "Quote Sent") return jobs.filter((j) => j.status === "Quote Sent" || (j.status as any) === "Rejected" || (j.status as any) === "Declined").length;
     return jobs.filter((j) => j.status === tab).length;
   };
 
   const renderStatusBadge = (status: string) => {
     const s = status?.toUpperCase();
-    if (status === "Contacted" || s === "CONTACTED") {
+    if (status === "Quote Accepted" || s === "QUOTE_ACCEPTED" || s === "ACCEPTED" || status === "Contacted" || s === "CONTACTED") {
       return (
-        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#72A8E5] border border-[#5B9BD5] text-[#103B75] text-[11px] font-bold">
+        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#7DB0E3] border border-[#679FD8] text-[#103270] text-[11px] font-bold">
           Contacted
         </div>
       );
     }
-    if (status === "In Progress" || s === "IN_PROGRESS" || s === "IN PROGRESS") {
+    if (status === "Quote Declined" || s === "QUOTE_DECLINED" || s === "DECLINED" || s === "REJECTED") {
       return (
-        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#F4D03F] border border-[#D8BA28] text-[#9A5B13] text-[11px] font-bold">
+        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#FF9797] border border-[#F08282] text-[#E53935] text-[11px] font-bold">
+          Quote Declined
+        </div>
+      );
+    }
+    if (status === "Quote Sent" || s === "QUOTE_SENT" || s === "QUOTED") {
+      return (
+        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#DCEAF7] border border-[#C2D9EE] text-[#156082] text-[11px] font-bold">
+          Quote Sent
+        </div>
+      );
+    }
+
+    if (status === "In Progress" || s === "IN_PROGRESS" || s === "IN PROGRESS" || s === "STARTED") {
+      return (
+        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#EFDB4B] border border-[#DFC736] text-[#8A5C05] text-[11px] font-bold">
           In Progress
         </div>
       );
     }
     if (status === "Completed" || s === "COMPLETED") {
       return (
-        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#144A20] border border-[#0E3816] text-white text-[11px] font-bold">
+        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#13501B] border border-[#0E3F15] text-white text-[11px] font-bold">
           Completed
         </div>
       );
     }
     if (status === "Closed" || s === "CLOSED" || s === "CANCELLED" || s === "EXPIRED") {
       return (
-        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#A8A8A8] border border-[#8C8C8C] text-[#3D3D3D] text-[11px] font-bold">
+        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#A6A6A6] border border-[#8E8E8E] text-[#333333] text-[11px] font-bold">
           Closed
         </div>
       );
     }
     // All other statuses (New, Posted, Open, Quoted, or rejected quotes where job is still open) render as New
     return (
-      <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#D4EDDA] border border-[#A9D18E] text-[#1E6B24] text-[11px] font-bold">
+      <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#D9F2D0] border border-[#C2E2B8] text-[#1C6D26] text-[11px] font-bold">
         New
       </div>
     );
@@ -899,11 +933,10 @@ export default function JobsLeads() {
                 >
                   <span>{tab}</span>
                   <span
-                    className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-none transition-colors ${
-                      isActive
-                        ? "bg-white/20 text-white"
-                        : "bg-gray-100 text-gray-500"
-                    }`}
+                    className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-none transition-colors ${isActive
+                      ? "bg-white/20 text-white"
+                      : "bg-gray-100 text-gray-500"
+                      }`}
                   >
                     {count}
                   </span>
@@ -945,19 +978,32 @@ export default function JobsLeads() {
                   (job.rawStatus || job.status)?.toUpperCase() === "CLOSED" ||
                   (job.rawStatus || job.status)?.toUpperCase() === "CANCELLED" ||
                   (job.rawStatus || job.status)?.toUpperCase() === "EXPIRED";
+                const isJobCompleted =
+                  (job.rawStatus || job.status)?.toUpperCase() === "COMPLETED";
+                
+                let bgClass = "bg-white";
+                if (isJobClosed) bgClass = "bg-[#F5F5F5]";
+                else if (isJobCompleted) bgClass = "bg-[#F4F7F1]";
+
                 return (
                   <div
                     key={`${job.id}-${idx}`}
                     onClick={() => setSelectedJob(job)}
-                    className={`cursor-pointer rounded-2xl p-4 transition-all duration-200 border-2 flex flex-col gap-2.5 shadow-xs ${isJobClosed ? "bg-[#F5F5F5]" : "bg-white"
-                      } ${isSelected
-                        ? "border-[#6E9625] bg-white ring-2 ring-[#6E9625]/20 shadow-sm"
+                    className={`cursor-pointer rounded-2xl p-4 transition-all duration-200 border-2 flex flex-col gap-2.5 shadow-xs ${bgClass} ${isSelected
+                        ? "border-[#6E9625] ring-2 ring-[#6E9625]/20 shadow-sm"
                         : "border-transparent hover:border-gray-200"
                       }`}
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-2">
                       {renderStatusBadge(job.status)}
-                      <span className="text-[12px] text-gray-400 font-medium">{job.timeAgo}</span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {/* {job.jobId && (
+                          <span className="text-[11px] font-medium text-gray-500 border border-gray-300 rounded px-1.5 py-0.5">
+                            JOB-{job.jobId}
+                          </span>
+                        )} */}
+                        <span className="text-[12px] text-gray-400 font-medium">{job.timeAgo}</span>
+                      </div>
                     </div>
 
                     <h3 className="text-[15px] font-bold text-[#1C2C1C] leading-snug line-clamp-2">
@@ -1036,9 +1082,6 @@ export default function JobsLeads() {
                   {/* Header Row: Badges & Timestamps */}
                   <div className="flex items-center justify-between gap-3 flex-wrap pb-3 border-b border-gray-100">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <span className="inline-block bg-[#EAF3DE] text-[#557A18] font-bold text-[11px] px-3 py-1 rounded-full tracking-wide">
-                        JOB-{selectedJob.jobId}
-                      </span>
                       {(() => {
                         const quoteStatusUpper = quoteDetails?.status?.toUpperCase();
                         const matchStatusUpper = selectedJob.matchStatus?.toUpperCase();
@@ -1078,7 +1121,7 @@ export default function JobsLeads() {
                           if (hasOtherTraderAccepted) {
                             return renderStatusBadge("In Progress");
                           }
-                          return renderStatusBadge("New");
+                          return renderStatusBadge(selectedJob.status || "Quote Sent");
                         }
                         const isAccepted = Boolean(
                           selectedJob.isQuoteAccepted ||
@@ -1087,6 +1130,9 @@ export default function JobsLeads() {
                         );
                         if (isAccepted) {
                           return renderStatusBadge("Contacted");
+                        }
+                        if (selectedJob.hasQuoted || quoteStatusUpper === "PENDING" || selectedJob.status === "Quote Sent") {
+                          return renderStatusBadge("Quote Sent");
                         }
                         return renderStatusBadge(selectedJob.status || "New");
                       })()}
@@ -1097,7 +1143,12 @@ export default function JobsLeads() {
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2.5 text-[12px] text-gray-400 font-medium">
+                    <div className="flex items-center gap-2.5 text-[12px] text-gray-400 font-medium flex-wrap">
+                      {selectedJob.jobId && (
+                        <span className="text-[11px] font-medium text-gray-500 border border-gray-300 rounded px-1.5 py-0.5">
+                          JOB-{selectedJob.jobId}
+                        </span>
+                      )}
                       <span className="flex items-center gap-1">
                         <Clock size={13} /> Posted {selectedJob.timeAgo}
                       </span>
@@ -1162,7 +1213,7 @@ export default function JobsLeads() {
                       </div>
                     </div>
 
-                    <div className="p-3 rounded-2xl bg-[#F8F9FA] border border-gray-100">
+                    {/* <div className="p-3 rounded-2xl bg-[#F8F9FA] border border-gray-100">
                       <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-1">
                         QUOTES
                       </span>
@@ -1170,7 +1221,7 @@ export default function JobsLeads() {
                         <span className="w-2 h-2 rounded-full bg-[#6E9625]" />
                         <span>{fullJobData?.quotesReceived ?? fullJobData?.quotesCount ?? (selectedJob.hasQuoted ? 1 : 0)} received</span>
                       </div>
-                    </div>
+                    </div> */}
                   </div>
 
                   {/* Full Job Description with Read More / Read Less Toggle */}
@@ -1339,7 +1390,7 @@ export default function JobsLeads() {
                         <div className="flex items-center justify-between mb-2">
                           {isAutoRejected ? (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FF3B30]/10 text-[#FF3B30] border border-[#FF3B30]/30 text-[11px] font-bold uppercase tracking-wide">
-                              <Ban size={12} className="text-[#FF3B30]" /> Quote Rejected
+                              <Ban size={12} className="text-[#FF3B30]" /> Quote Declined
                             </span>
                           ) : isManualDecline ? (
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 text-[11px] font-bold uppercase tracking-wide">
@@ -1445,7 +1496,7 @@ export default function JobsLeads() {
 
                     let buttonText = "Send Job Quote";
                     if (isAccepted) buttonText = "Quote Accepted";
-                    else if (isAutoRejected) buttonText = "Quote Rejected";
+                    else if (isAutoRejected) buttonText = "Quote Declined";
                     else if (isManualDecline) buttonText = "Revoke Quote";
                     else if (hasQuoted) buttonText = "Quote Sent";
                     else if (isCompleted) buttonText = "Job Completed";
@@ -1471,34 +1522,34 @@ export default function JobsLeads() {
 
                       const currentJobStatus = formatJobStatusText(fullJobData?.status || selectedJob.rawStatus || selectedJob.status);
 
-                      return (
-                        <div className="w-full bg-[#FEF2F2] border border-[#FCA5A5] rounded-2xl p-4 sm:px-6 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
-                          <div className="flex items-center gap-3.5">
-                            <div className="w-10 h-10 rounded-xl bg-red-100 border border-red-200 text-[#D32F2F] flex items-center justify-center shrink-0">
-                              <Ban size={20} className="text-[#D32F2F]" />
-                            </div>
-                            <div>
-                              <h4 className="text-[14px] sm:text-[15px] font-bold text-[#D32F2F] leading-snug">
-                                Your Quote has been Rejected
-                              </h4>
-                              <div className="flex flex-wrap items-center gap-x-2 text-[12px] sm:text-[13px] text-red-800/80 mt-1 font-medium">
-                                <span>Job: <strong className="font-semibold text-red-950">{selectedJob.title}</strong></span>
-                                {selectedJob.jobId && (
-                                  <span className="text-[11px] font-mono text-red-700 bg-red-100/80 px-1.5 py-0.5 rounded border border-red-200">
-                                    {selectedJob.jobId}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="flex items-center gap-2 self-start sm:self-center pl-12 sm:pl-0 shrink-0">
-                            <span className="text-[12px] font-bold text-red-800">Job Status:</span>
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] sm:text-[12px] font-bold uppercase tracking-wide bg-white border border-red-300 text-[#D32F2F] shadow-2xs">
-                              {currentJobStatus}
-                            </span>
-                          </div>
-                        </div>
-                      );
+                      // return (
+                      //   <div className="w-full bg-[#FEF2F2] border border-[#FCA5A5] rounded-2xl p-4 sm:px-6 sm:py-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xs">
+                      //     <div className="flex items-center gap-3.5">
+                      //       <div className="w-10 h-10 rounded-xl bg-red-100 border border-red-200 text-[#D32F2F] flex items-center justify-center shrink-0">
+                      //         <Ban size={20} className="text-[#D32F2F]" />
+                      //       </div>
+                      //       <div>
+                      //         <h4 className="text-[14px] sm:text-[15px] font-bold text-[#D32F2F] leading-snug">
+                      //           Your Quote has been Rejected
+                      //         </h4>
+                      //         <div className="flex flex-wrap items-center gap-x-2 text-[12px] sm:text-[13px] text-red-800/80 mt-1 font-medium">
+                      //           <span>Job: <strong className="font-semibold text-red-950">{selectedJob.title}</strong></span>
+                      //           {selectedJob.jobId && (
+                      //             <span className="text-[11px] font-mono text-red-700 bg-red-100/80 px-1.5 py-0.5 rounded border border-red-200">
+                      //               {selectedJob.jobId}
+                      //             </span>
+                      //           )}
+                      //         </div>
+                      //       </div>
+                      //     </div>
+                      //     <div className="flex items-center gap-2 self-start sm:self-center pl-12 sm:pl-0 shrink-0">
+                      //       <span className="text-[12px] font-bold text-red-800">Job Status:</span>
+                      //       <span className="inline-flex items-center px-3 py-1 rounded-full text-[11px] sm:text-[12px] font-bold uppercase tracking-wide bg-white border border-red-300 text-[#D32F2F] shadow-2xs">
+                      //         {currentJobStatus}
+                      //       </span>
+                      //     </div>
+                      //   </div>
+                      // );
                     }
 
                     return (
@@ -1710,19 +1761,25 @@ export default function JobsLeads() {
 
               {/* Availability */}
               <div>
-                <label className="block text-[12px] font-semibold text-[#1C2C1C] mb-1.5">
+                <label htmlFor="send-quote-availability" className="block text-[12px] font-semibold text-[#1C2C1C] mb-1.5">
                   Availability
                 </label>
                 <div className="relative">
                   <Calendar size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                  <input
-                    type="text"
+                  <select
+                    id="send-quote-availability"
                     required
-                    placeholder="e.g. Can start immediately / Within 24 hours"
                     value={quoteForm.availability}
                     onChange={(e) => setQuoteForm((f) => ({ ...f, availability: e.target.value }))}
-                    className="w-full px-4 py-2.5 pl-9 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] bg-white focus:outline-none focus:border-[#8BC34A] focus:ring-2 focus:ring-[#8BC34A]/20 transition-all placeholder:text-gray-400"
-                  />
+                    className="w-full px-4 py-2.5 pl-9 pr-8 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] bg-white focus:outline-none focus:border-[#8BC34A] focus:ring-2 focus:ring-[#8BC34A]/20 transition-all cursor-pointer appearance-none"
+                  >
+                    <option value="">Select availability</option>
+                    <option value="Can start immediately">Can start immediately</option>
+                    <option value="Within 24 hours">Within 24 hours</option>
+                    <option value="Within 3 days">Within 3 days</option>
+                    <option value="Within 7 days">Within 7 days</option>
+                    <option value="7days +">7days +</option>
+                  </select>
                 </div>
               </div>
 

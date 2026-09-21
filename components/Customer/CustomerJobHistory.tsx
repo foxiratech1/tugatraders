@@ -24,6 +24,7 @@ import {
   Table as TableIcon,
   LayoutGrid,
   ArrowLeftRight,
+  Euro,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -106,6 +107,7 @@ interface Job {
   skillServices?: SkillService[];
   subCategories?: SubCategory[];
   selectedTrader?: SelectedTrader;
+  quotes?: any[];
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -145,25 +147,25 @@ const statusConfig: Record<
   string,
   { label: string; bg: string; text: string; border: string }
 > = {
-  OPEN: { label: "Job Posted", bg: "bg-[#F4B185]", text: "text-[#C45E20]", border: "border-[#E29D70]" },
-  POSTED: { label: "Job Posted", bg: "bg-[#F4B185]", text: "text-[#C45E20]", border: "border-[#E29D70]" },
-  ACTIVE: { label: "Job Posted", bg: "bg-[#F4B185]", text: "text-[#C45E20]", border: "border-[#E29D70]" },
-  JOB_POSTED: { label: "Job Posted", bg: "bg-[#F4B185]", text: "text-[#C45E20]", border: "border-[#E29D70]" },
-  QUOTE_RECEIVED: { label: "Quotes Recieved", bg: "bg-[#DDEBF7]", text: "text-[#2B608F]", border: "border-[#C5D9EB]" },
-  QUOTES_RECIEVED: { label: "Quotes Recieved", bg: "bg-[#DDEBF7]", text: "text-[#2B608F]", border: "border-[#C5D9EB]" },
-  QUOTES_RECEIVED: { label: "Quotes Recieved", bg: "bg-[#DDEBF7]", text: "text-[#2B608F]", border: "border-[#C5D9EB]" },
-  CONTACTED: { label: "Contacted", bg: "bg-[#8EAADB]", text: "text-[#1F3F73]", border: "border-[#7B9ACA]" },
-  ASSIGNED: { label: "Contacted", bg: "bg-[#8EAADB]", text: "text-[#1F3F73]", border: "border-[#7B9ACA]" },
-  QUOTE_ACCEPTED: { label: "Quote Accepted", bg: "bg-[#E2EFDA]", text: "text-[#4F903A]", border: "border-[#CBE0C2]" },
-  ACCEPTED: { label: "Quote Accepted", bg: "bg-[#E2EFDA]", text: "text-[#4F903A]", border: "border-[#CBE0C2]" },
-  QUOTE_DECLINED: { label: "Quote Declined", bg: "bg-[#FF9999]", text: "text-[#E70000]", border: "border-[#FF8080]" },
-  DECLINED: { label: "Quote Declined", bg: "bg-[#FF9999]", text: "text-[#E70000]", border: "border-[#FF8080]" },
-  REJECTED: { label: "Quote Declined", bg: "bg-[#FF9999]", text: "text-[#E70000]", border: "border-[#FF8080]" },
-  IN_PROGRESS: { label: "In Progress", bg: "bg-[#FFE699]", text: "text-[#C59B11]", border: "border-[#F0D580]" },
-  COMPLETED: { label: "Completed", bg: "bg-[#1E5624]", text: "text-white", border: "border-[#16441B]" },
-  CLOSED: { label: "Closed", bg: "bg-[#A5A5A5]", text: "text-[#515151]", border: "border-[#939393]" },
-  CANCELLED: { label: "Closed", bg: "bg-[#A5A5A5]", text: "text-[#515151]", border: "border-[#939393]" },
-  EXPIRED: { label: "Closed", bg: "bg-[#A5A5A5]", text: "text-[#515151]", border: "border-[#939393]" },
+  OPEN: { label: "Job Posted", bg: "bg-[#F1AA69]", text: "text-[#9C410F]", border: "border-[#DDA066]" },
+  POSTED: { label: "Job Posted", bg: "bg-[#F1AA69]", text: "text-[#9C410F]", border: "border-[#DDA066]" },
+  ACTIVE: { label: "Job Posted", bg: "bg-[#F1AA69]", text: "text-[#9C410F]", border: "border-[#DDA066]" },
+  JOB_POSTED: { label: "Job Posted", bg: "bg-[#F1AA69]", text: "text-[#9C410F]", border: "border-[#DDA066]" },
+  QUOTE_RECEIVED: { label: "Quote Received", bg: "bg-[#DCEAF7]", text: "text-[#156082]", border: "border-[#C2D9EE]" },
+  QUOTES_RECIEVED: { label: "Quote Received", bg: "bg-[#DCEAF7]", text: "text-[#156082]", border: "border-[#C2D9EE]" },
+  QUOTES_RECEIVED: { label: "Quote Received", bg: "bg-[#DCEAF7]", text: "text-[#156082]", border: "border-[#C2D9EE]" },
+  CONTACTED: { label: "Contacted", bg: "bg-[#7DB0E3]", text: "text-[#103270]", border: "border-[#679FD8]" },
+  ASSIGNED: { label: "Contacted", bg: "bg-[#7DB0E3]", text: "text-[#103270]", border: "border-[#679FD8]" },
+  QUOTE_ACCEPTED: { label: "Quote Accepted", bg: "bg-[#D9F2D0]", text: "text-[#1C6D26]", border: "border-[#C2E2B8]" },
+  ACCEPTED: { label: "Quote Accepted", bg: "bg-[#D9F2D0]", text: "text-[#1C6D26]", border: "border-[#C2E2B8]" },
+  QUOTE_DECLINED: { label: "Quote Declined", bg: "bg-[#FF9797]", text: "text-[#E53935]", border: "border-[#F08282]" },
+  DECLINED: { label: "Quote Declined", bg: "bg-[#FF9797]", text: "text-[#E53935]", border: "border-[#F08282]" },
+  REJECTED: { label: "Quote Declined", bg: "bg-[#FF9797]", text: "text-[#E53935]", border: "border-[#F08282]" },
+  IN_PROGRESS: { label: "In Progress", bg: "bg-[#EFDB4B]", text: "text-[#8A5C05]", border: "border-[#DFC736]" },
+  COMPLETED: { label: "Completed", bg: "bg-[#13501B]", text: "text-white", border: "border-[#0E3F15]" },
+  CLOSED: { label: "Closed", bg: "bg-[#A6A6A6]", text: "text-[#333333]", border: "border-[#8E8E8E]" },
+  CANCELLED: { label: "Closed", bg: "bg-[#A6A6A6]", text: "text-[#333333]", border: "border-[#8E8E8E]" },
+  EXPIRED: { label: "Closed", bg: "bg-[#A6A6A6]", text: "text-[#333333]", border: "border-[#8E8E8E]" },
 };
 
 const isJobPostedStatus = (status: string) => {
@@ -186,11 +188,15 @@ const FILTER_TABS = [
 
 function StatusBadge({ status, job }: { status: string; job?: Job }) {
   let s = status?.toUpperCase() || "";
-  if (job && (s === "OPEN" || s === "POSTED" || s === "ACTIVE")) {
-    const quotes = job.quotesReceived ?? job.quotesCount ?? 0;
-    if (quotes > 0) {
-      s = "QUOTE_RECEIVED";
-    }
+  const quotes = job ? (job.quotesReceived ?? job.quotesCount ?? (job as any)._count?.quotes ?? (Array.isArray(job.quotes) ? job.quotes.length : 0)) : 0;
+  if (
+    s === "QUOTE_RECEIVED" ||
+    s === "QUOTES_RECEIVED" ||
+    s === "QUOTED" ||
+    s === "QUOTE_SENT" ||
+    ((s === "OPEN" || s === "POSTED" || s === "ACTIVE") && quotes > 0)
+  ) {
+    s = "QUOTE_RECEIVED";
   }
 
   const cfg = statusConfig[s] ?? {
@@ -217,145 +223,88 @@ function JobExpandedContent({
   job: Job;
   onViewDashboard: () => void;
 }) {
+  const trader = (job as any).assignedTrader || job.selectedTrader;
+  const quote = trader?.quote || (job as any).selectedQuote || (job as any).quote;
+
   return (
     <div className="bg-[#FAFBF8] border-t border-b border-[#E8ECE0] px-4 sm:px-5 md:px-6 lg:px-8 py-4 sm:py-5 lg:py-6">
-      <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] lg:grid-cols-[1fr_280px] gap-4 md:gap-5 lg:gap-6">
-        {/* Left: Description + Info */}
-        <div className="space-y-3.5 sm:space-y-4">
-          {/* Description */}
+      <div className="flex flex-col md:flex-row justify-between gap-6">
+        {/* Left Section (Job Description & Trader) */}
+        <div className="flex-1 space-y-6">
+          {/* Job Description */}
           <div>
-            <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 sm:mb-2">
+            <h4 className="text-[11px] font-bold text-[#9DA39E] uppercase tracking-wider mb-2">
               Job Description
             </h4>
-            <p className="text-[13px] text-gray-600 leading-relaxed max-w-[650px] break-words">
+            <p className="text-[13px] text-[#69746A] leading-relaxed max-w-[800px] break-words">
               {job.description || "No description provided."}
             </p>
           </div>
 
-          {/* Info Chips */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5">
-            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 sm:px-3.5 sm:py-2.5">
-              <Clock size={13} className="text-[#6E9625] flex-shrink-0" />
-              <div className="min-w-0">
-                <p className="text-[9px] font-bold text-gray-400 uppercase">Timescale</p>
-                <p className="text-[12px] font-semibold text-[#1C2C1C] truncate">
-                  {job.timescale?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) ?? "—"}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 sm:px-3.5 sm:py-2.5">
-              <FileText size={13} className="text-[#6E9625] flex-shrink-0" />
-              <div className="min-w-0">
-                <p className="text-[9px] font-bold text-gray-400 uppercase">Budget</p>
-                <p className="text-[12px] font-semibold text-[#1C2C1C] truncate">
-                  {formatBudget(job.budgetRange)}
-                </p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 sm:px-3.5 sm:py-2.5">
-              <MapPin size={13} className="text-[#6E9625] flex-shrink-0" />
-              <div className="min-w-0">
-                <p className="text-[9px] font-bold text-gray-400 uppercase">Radius</p>
-                <p className="text-[12px] font-semibold text-[#1C2C1C] truncate">
-                  {job.currentRadiusKm} km
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Tags — show all categories, skill services & sub-categories */}
-          {(() => {
-            const cats = (job as any).categories?.length
-              ? (job as any).categories
-              : job.category ? [job.category] : [];
-            const skills = (job as any).skillServices?.length
-              ? (job as any).skillServices
-              : job.skillService ? [job.skillService] : [];
-            const subs = (job as any).subCategories?.length
-              ? (job as any).subCategories
-              : job.subCategory ? [job.subCategory] : [];
-
-            const hasAny = cats.length > 0 || skills.length > 0 || subs.length > 0;
-            if (!hasAny) return null;
-
-            return (
-              <div className="space-y-2">
-                {cats.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider w-full">Categories</span>
-                    {cats.map((c: Category) => (
-                      <span key={c.id} className="px-2.5 py-1 rounded-full bg-[#EDF3E1] text-[#4A6B0A] text-[11px] font-medium">
-                        {c.name}
-                      </span>
-                    ))}
+          {/* Assigned Trader Card */}
+          {trader && (
+            <div className="flex flex-wrap items-center gap-6 bg-white border border-[#4A6B0A] rounded-xl p-3 max-w-fit">
+              {/* Trader Info */}
+              <div className="flex items-center gap-3 pr-2">
+                {trader.profileImage ? (
+                  <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border border-emerald-100">
+                    <img
+                      src={getAttachmentUrl(trader.profileImage)}
+                      alt={trader.fullName || "Trader"}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-[#4CAF50] flex items-center justify-center text-white text-[14px] font-bold flex-shrink-0">
+                    {trader.fullName?.[0]?.toUpperCase() ?? "T"}
                   </div>
                 )}
-                {skills.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider w-full">Service Types</span>
-                    {skills.map((s: SkillService) => (
-                      <span key={s.id} className="px-2.5 py-1 rounded-full bg-[#E8F0FF] text-[#1D4ED8] text-[11px] font-medium">
-                        {s.name}
-                      </span>
-                    ))}
-                  </div>
-                )}
-                {subs.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider w-full">Sub-Categories</span>
-                    {subs.map((sc: SubCategory) => (
-                      <span key={sc.id} className="px-2.5 py-1 rounded-full bg-[#FFF3E0] text-[#C05621] text-[11px] font-medium">
-                        {sc.name}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })()}
-
-          {/* Assigned Trader */}
-          {job.selectedTrader && (
-            <div className="flex items-center gap-3 bg-white border border-emerald-200 rounded-xl p-3 max-w-full sm:max-w-[400px]">
-              {job.selectedTrader.profileImage ? (
-                <div className="w-9 h-9 rounded-full overflow-hidden flex-shrink-0 border border-emerald-100">
-                  <img 
-                    src={getAttachmentUrl(job.selectedTrader.profileImage)} 
-                    alt={job.selectedTrader.fullName || "Trader"} 
-                    className="w-full h-full object-cover"
-                  />
+                <div className="flex flex-col">
+                  <Link href={`/customer-dashboard/trader-profile/${trader.id}`}>
+                    <p className="text-[14px] font-bold text-[#1C2C1C] hover:underline cursor-pointer truncate">
+                      {trader.fullName}
+                    </p>
+                  </Link>
+                  <p className="text-[11px] text-gray-400 font-medium">Assigned Trader</p>
                 </div>
-              ) : (
-                <div className="w-9 h-9 rounded-full bg-[#4CAF50] flex items-center justify-center text-white text-[12px] font-bold flex-shrink-0">
-                  {job.selectedTrader.fullName?.[0]?.toUpperCase() ?? "T"}
-                </div>
+              </div>
+
+              {/* Separator / Additional Details */}
+              {quote && (
+                <>
+                  <div className="w-[1px] h-8 bg-gray-200 hidden sm:block"></div>
+
+                  {/* Price */}
+                  <div className="flex flex-col pr-2">
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Price</p>
+                    <p className="text-[14px] font-bold text-[#1C2C1C]">
+                      €{quote.price}
+                    </p>
+                  </div>
+
+                  {/* Estimated Duration */}
+                  <div className="flex flex-col">
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Estimated Duration</p>
+                    <p className="text-[14px] font-bold text-[#1C2C1C]">
+                      {quote.estimatedDays} {quote.estimatedDays === 1 ? "day" : "days"}
+                    </p>
+                  </div>
+                </>
               )}
-              <div className="flex-1 min-w-0">
-                <Link href={`/customer-dashboard/trader-profile/${job.selectedTrader.id}`}>
-                  <p className="text-[13px] font-bold text-[#1C2C1C] hover:underline cursor-pointer truncate">
-                    {job.selectedTrader.fullName}
-                  </p>
-                </Link>
-                <p className="text-[11px] text-gray-500">Assigned Trader</p>
-              </div>
-              <CheckCircle size={15} className="text-emerald-500 flex-shrink-0" />
             </div>
           )}
-        </div>
 
-        {/* Right: Attachments + Action */}
-        <div className="flex flex-col gap-3.5 sm:gap-4 justify-between">
-          {/* Attachments */}
+          {/* Attachments (Optional, below description if any) */}
           {job.attachments?.length > 0 && (
             <div>
               <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
                 Attachments ({job.attachments.length})
               </h4>
-              <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-4 gap-2">
+              <div className="flex gap-2 flex-wrap">
                 {job.attachments.slice(0, 4).map((att) => (
                   <div
                     key={att.id}
-                    className="aspect-square rounded-lg overflow-hidden bg-gray-100 border border-gray-200"
+                    className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 border border-gray-200"
                   >
                     <img
                       src={getAttachmentUrl(att.url || att.file)}
@@ -365,22 +314,50 @@ function JobExpandedContent({
                   </div>
                 ))}
                 {job.attachments.length > 4 && (
-                  <div className="aspect-square rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center text-[12px] font-bold text-gray-500">
+                  <div className="w-16 h-16 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center text-[12px] font-bold text-gray-500">
                     +{job.attachments.length - 4}
                   </div>
                 )}
               </div>
             </div>
           )}
+        </div>
 
-          {/* Action */}
-          <button
-            onClick={onViewDashboard}
-            className="flex items-center justify-center gap-2 w-full px-4 py-2.5 bg-[#1C2C1C] text-white rounded-xl text-[12px] sm:text-[13px] font-bold hover:bg-[#2c3e2c] transition-colors mt-auto cursor-pointer shadow-sm"
-          >
-            <ExternalLink size={13} />
-            Open in Dashboard
-          </button>
+        {/* Right Section (Stats Cards & CTA) */}
+        <div className="flex flex-col justify-between gap-6 md:w-[360px] flex-shrink-0">
+          {/* Top: Info Chips Grid */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-white border border-gray-100 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] rounded-xl px-4 py-3.5 flex flex-col justify-center">
+              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Budget</p>
+              <div className="flex items-center gap-1.5">
+                <Euro size={13} className="text-[#6E9625]" />
+                <p className="text-[13px] font-bold text-[#1C2C1C] truncate">
+                  {formatBudget(job.budgetRange)}
+                </p>
+              </div>
+            </div>
+
+            <div className="bg-white border border-gray-100 shadow-[0_2px_8px_-4px_rgba(0,0,0,0.05)] rounded-xl px-4 py-3.5 flex flex-col justify-center">
+              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">Timescale</p>
+              <div className="flex items-center gap-1.5">
+                <Clock size={13} className="text-[#6E9625]" />
+                <p className="text-[13px] font-bold text-[#1C2C1C] truncate">
+                  {job.timescale?.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) ?? "—"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Bottom: Action Button */}
+          <div className="mt-auto flex justify-end">
+            <button
+              onClick={onViewDashboard}
+              className="flex items-center justify-center gap-2 px-5 py-2.5 bg-[#1C2C1C] text-white rounded-xl text-[13px] font-bold hover:bg-[#2c3e2c] transition-colors cursor-pointer shadow-sm w-full md:w-auto"
+            >
+              <ExternalLink size={14} />
+              Open in Dashboard
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -650,11 +627,10 @@ export default function CustomerJobHistory() {
               <button
                 type="button"
                 onClick={() => setMobileView("table")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
-                  mobileView === "table"
-                    ? "bg-[#1C2C1C] text-white shadow-xs"
-                    : "text-gray-500 hover:text-gray-800"
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${mobileView === "table"
+                  ? "bg-[#1C2C1C] text-white shadow-xs"
+                  : "text-gray-500 hover:text-gray-800"
+                  }`}
               >
                 <TableIcon size={12} />
                 Table View
@@ -662,11 +638,10 @@ export default function CustomerJobHistory() {
               <button
                 type="button"
                 onClick={() => setMobileView("card")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
-                  mobileView === "card"
-                    ? "bg-[#1C2C1C] text-white shadow-xs"
-                    : "text-gray-500 hover:text-gray-800"
-                }`}
+                className={`flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${mobileView === "card"
+                  ? "bg-[#1C2C1C] text-white shadow-xs"
+                  : "text-gray-500 hover:text-gray-800"
+                  }`}
               >
                 <LayoutGrid size={12} />
                 Cards
@@ -821,7 +796,7 @@ export default function CustomerJobHistory() {
                             <JobExpandedContent
                               job={job}
                               onViewDashboard={() =>
-                                router.push("/customer-dashboard/jobs")
+                                router.push(`/customer-dashboard/jobs?jobId=${job.id}`)
                               }
                             />
                           </div>
@@ -1015,7 +990,7 @@ export default function CustomerJobHistory() {
                               key={`detail-${job.id}`}
                               job={job}
                               onViewDashboard={() =>
-                                router.push("/customer-dashboard/jobs")
+                                router.push(`/customer-dashboard/jobs?jobId=${job.id}`)
                               }
                             />
                           )}

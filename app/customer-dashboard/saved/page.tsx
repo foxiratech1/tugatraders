@@ -33,6 +33,7 @@ type SavedTrader = {
   location?: string;
   skills?: string[];
   tradeCategories?: string[];
+  tradeCategoryDetails?: { name: string; image: string | null }[];
   skillServices?: string[];
   subCategories?: string[];
 };
@@ -182,6 +183,7 @@ export default function SavedTradersPage() {
             location: profile.location ?? t.location ?? "",
             skills: t.skills ?? [],
             tradeCategories: extractNames(profile.tradeCategoryDetails),
+            tradeCategoryDetails: profile.tradeCategoryDetails || [],
             skillServices: extractNames(profile.skillServiceDetails),
             subCategories: extractNames(profile.subCategoryDetails),
           };
@@ -244,26 +246,26 @@ export default function SavedTradersPage() {
   }, [traders, search, sort]);
 
   const groupedByCategory = useMemo(() => {
-    const groups: Record<string, SavedTrader[]> = {};
+    const groups: Record<string, { traders: SavedTrader[]; image: string | null }> = {};
 
     filtered.forEach((trader) => {
-      const categories = trader.tradeCategories?.filter(Boolean) || [];
+      const categories = trader.tradeCategoryDetails?.filter(Boolean) || [];
 
       if (categories.length === 0) {
         if (!groups["Other"]) {
-          groups["Other"] = [];
+          groups["Other"] = { traders: [], image: null };
         }
 
-        groups["Other"].push(trader);
+        groups["Other"].traders.push(trader);
         return;
       }
 
-      categories.forEach((category) => {
-        if (!groups[category]) {
-          groups[category] = [];
+      categories.forEach((cat) => {
+        if (!groups[cat.name]) {
+          groups[cat.name] = { traders: [], image: cat.image || null };
         }
 
-        groups[category].push(trader);
+        groups[cat.name].traders.push(trader);
       });
     });
 
@@ -360,11 +362,21 @@ export default function SavedTradersPage() {
           </div>
         ) : (
           <div className="flex flex-col gap-8 sm:gap-10">
-            {groupedByCategory.map(([category, categoryTraders]) => (
+            {groupedByCategory.map(([category, data]) => (
               <section key={category}>
                 <div className="flex items-center gap-2.5 sm:gap-3 mb-3.5 sm:mb-5">
-                  <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#E9F3DC] flex items-center justify-center flex-shrink-0">
-                    <Wrench size={18} className="text-[#6E9625]" />
+                  <div className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#E9F3DC] overflow-hidden flex items-center justify-center flex-shrink-0 border border-emerald-100">
+                    {data.image ? (
+                      <Image
+                        src={getImageUrl(data.image)}
+                        alt={category}
+                        fill
+                        className="object-cover p-1.5"
+                        unoptimized
+                      />
+                    ) : (
+                      <Wrench size={18} className="text-[#6E9625]" />
+                    )}
                   </div>
 
                   <div>
@@ -373,14 +385,14 @@ export default function SavedTradersPage() {
                     </h2>
 
                     <p className="text-[11px] sm:text-[12px] text-[#1C2C1C]/50 mt-0.5">
-                      {categoryTraders.length}{" "}
-                      {categoryTraders.length === 1 ? "trader" : "traders"}
+                      {data.traders.length}{" "}
+                      {data.traders.length === 1 ? "trader" : "traders"}
                     </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-5">
-                  {categoryTraders.map((trader) => (
+                  {data.traders.map((trader) => (
                     <TraderCard
                       key={`${category}-${trader.id}`}
                       trader={trader}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { authApi } from "@/app/api/authApi";
 import {
@@ -26,7 +26,7 @@ import { useSocket } from "@/hooks/useSocket";
 interface Quote {
   id: string;
   status: string;
-  price?: number;
+  price?: number | string;
   createdAt: string;
   updatedAt?: string;
   job?: {
@@ -34,15 +34,13 @@ interface Quote {
     title: string;
     postcode?: string;
   };
-  // fallback flat fields for older API shapes
   jobId?: string;
   jobTitle?: string;
   jobPostcode?: string;
-  // added properties
   estimatedDays?: number;
   availability?: string;
   message?: string;
-  attachments?: string[];
+  attachments?: any[];
 }
 
 const getAvailabilityFromDays = (days: number) => {
@@ -54,35 +52,43 @@ const getAvailabilityFromDays = (days: number) => {
 
 const statusConfig: Record<
   string,
-  { label: string; bg: string; text: string; dot: string; icon: React.ReactNode }
+  { label: string; bg: string; text: string; icon: React.ReactNode }
 > = {
   PENDING: {
     label: "Pending",
-    bg: "bg-amber-50",
-    text: "text-amber-700",
-    dot: "bg-amber-400",
-    icon: <Clock size={12} />,
+    bg: "bg-[#DCEAF7]",
+    text: "text-[#156082]",
+    icon: <Clock size={12} className="text-[#156082]" />,
   },
   ACCEPTED: {
     label: "Accepted",
-    bg: "bg-emerald-50",
-    text: "text-emerald-700",
-    dot: "bg-emerald-500",
-    icon: <CheckCircle size={12} />,
+    bg: "bg-[#D9F2D0]",
+    text: "text-[#1C6D26]",
+    icon: <CheckCircle size={12} className="text-[#1C6D26]" />,
   },
   REJECTED: {
-    label: "Rejected",
-    bg: "bg-red-50",
-    text: "text-red-600",
-    dot: "bg-red-400",
-    icon: <XCircle size={12} />,
+    label: "Declined",
+    bg: "bg-[#FF9797]",
+    text: "text-[#E53935]",
+    icon: <XCircle size={12} className="text-[#E53935]" />,
+  },
+  DECLINED: {
+    label: "Declined",
+    bg: "bg-[#FF9797]",
+    text: "text-[#E53935]",
+    icon: <XCircle size={12} className="text-[#E53935]" />,
+  },
+  WITHDRAWN: {
+    label: "Withdrawn",
+    bg: "bg-[#A6A6A6]",
+    text: "text-[#333333]",
+    icon: <Clock size={12} className="text-[#333333]" />,
   },
   EXPIRED: {
-    label: "Expired",
-    bg: "bg-gray-100",
-    text: "text-gray-500",
-    dot: "bg-gray-400",
-    icon: <XCircle size={12} />,
+    label: "Closed",
+    bg: "bg-[#A6A6A6]",
+    text: "text-[#333333]",
+    icon: <Clock size={12} className="text-[#333333]" />,
   },
 };
 
@@ -90,13 +96,12 @@ function QuoteStatusBadge({ status }: { status: string }) {
   const cfg = statusConfig[status?.toUpperCase()] ?? {
     label: status,
     bg: "bg-gray-100",
-    text: "text-gray-500",
-    dot: "bg-gray-400",
+    text: "text-gray-600",
     icon: null,
   };
   return (
     <span
-      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold ${cfg.bg} ${cfg.text}`}
+      className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${cfg.bg} ${cfg.text}`}
     >
       {cfg.icon}
       {cfg.label}
@@ -107,58 +112,120 @@ function QuoteStatusBadge({ status }: { status: string }) {
 function formatDate(iso: string) {
   if (!iso) return "—";
   const d = new Date(iso);
-  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+  const day = d.getDate();
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "June", "July", "Aug", "Sept", "Oct", "Nov", "Dec"];
+  const month = months[d.getMonth()];
+  const year = d.getFullYear();
+  return `${day} ${month} ${year}`;
 }
 
-function formatPrice(price?: number) {
-  if (price == null) return "—";
-  return new Intl.NumberFormat("en-GB", { style: "currency", currency: "GBP" }).format(price);
+function formatPrice(price?: number | string) {
+  if (price == null || price === "") return "—";
+  const num = typeof price === "number" ? price : parseFloat(String(price));
+  if (isNaN(num)) return String(price);
+  return new Intl.NumberFormat("en-GB", {
+    style: "currency",
+    currency: "GBP",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(num);
 }
 
-function QuoteCard({ quote, onEdit, onView, onWithdraw, isWithdrawing }: { quote: Quote; onEdit: (quote: Quote) => void; onView: (quote: Quote) => void; onWithdraw: (quote: Quote) => void; isWithdrawing: boolean }) {
-  const jobTitle = quote.job?.title || quote.jobTitle || "Job";
-  const jobPostcode = quote.job?.postcode || quote.jobPostcode || "";
-  const jobId = quote.job?.id || quote.jobId || "";
+function QuoteCard({
+  quote,
+  onEdit,
+  onView,
+  onWithdraw,
+  isWithdrawing,
+}: {
+  quote: Quote;
+  onEdit: (quote: Quote) => void;
+  onView: (quote: Quote) => void;
+  onWithdraw: (quote: Quote) => void;
+  isWithdrawing: boolean;
+}) {
+  const jobTitle = quote.job?.title || quote.jobTitle || "Job Title";
 
   return (
-    <div className="bg-white rounded-2xl border border-[#E8E8E8] shadow-sm p-5 hover:shadow-md hover:border-[#C8D9A8] transition-all duration-200 group cursor-pointer">
-      <div className="flex items-start justify-between gap-4">
-        {/* Left – Job info */}
-        <div className="flex-1 min-w-0">
-          <p className="text-[14px] font-bold text-[#1C2C1C] truncate">{jobTitle}</p>
-          {jobPostcode && (
-            <p className="text-[12px] text-gray-500 mt-1 flex items-center gap-1">
-              <FileText size={12} /> {jobPostcode}
+    <div
+      onClick={() => onView(quote)}
+      className="bg-white rounded-2xl border border-gray-100 shadow-[0_2px_12px_rgba(0,0,0,0.03)] p-5 sm:p-6 hover:shadow-md hover:border-gray-200 transition-all duration-200 cursor-pointer"
+    >
+      <div className="flex flex-col lg:flex-row lg:items-stretch justify-between gap-5">
+        {/* Left Section: Job Title, Message, Date */}
+        <div className="flex-1 min-w-0 pr-0 lg:pr-4 flex flex-col justify-between">
+          <div>
+            <h3 className="text-[15px] sm:text-[16px] font-bold text-[#1C2C1C] leading-snug mb-1.5">
+              {jobTitle}
+            </h3>
+            <p className="text-[13px] text-gray-500 font-normal leading-relaxed line-clamp-2 max-w-[480px]">
+              {quote.message || "No message provided."}
             </p>
-          )}
+          </div>
+          <span className="text-[11.5px] text-gray-400 font-normal block mt-4 lg:mt-0">
+            {formatDate(quote.createdAt)}
+          </span>
         </div>
-        {/* Right – Price & status */}
-        <div className="flex flex-col items-end gap-2 flex-shrink-0">
-          <p className="text-[18px] font-black text-[#1C2C1C]">{formatPrice(quote.price)}</p>
-          <QuoteStatusBadge status={quote.status ?? "PENDING"} />
-        </div>
-      </div>
-      <div className="flex items-center justify-between mt-3 text-[11px] text-gray-500">
-        {/* Date */}
-        <span>{formatDate(quote.createdAt)}</span>
 
-        {/* Actions */}
-        <div className="flex items-center gap-3">
-          {/* Edit Quote - only show for pending quotes */}
-          {quote.status?.toUpperCase() === "PENDING" && (
-            <>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onWithdraw(quote);
-                }}
-                disabled={isWithdrawing}
-                title="Withdraw Quote"
-                aria-label="Withdraw Quote"
-                className="inline-flex items-center justify-center text-red-400 hover:text-red-600 transition-colors disabled:opacity-50"
-              >
-                <Trash2 size={15} strokeWidth={2} />
-              </button>
+        {/* Middle Section: 3 Stat Boxes */}
+        <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+          {/* Estimated Days */}
+          <div className="bg-[#F8F9FA] rounded-xl px-4 py-3 min-w-[120px] sm:min-w-[125px] flex flex-col justify-center">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+              ESTIMATED DAYS
+            </span>
+            <span className="text-[14px] sm:text-[15px] font-extrabold text-[#1C2C1C]">
+              {quote.estimatedDays ? `${quote.estimatedDays} ${quote.estimatedDays === 1 ? "day" : "days"}` : "—"}
+            </span>
+          </div>
+
+          {/* Availability */}
+          <div className="bg-[#F8F9FA] rounded-xl px-4 py-3 min-w-[120px] sm:min-w-[125px] flex flex-col justify-center">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+              AVAILABILITY
+            </span>
+            <span
+              className="text-[14px] sm:text-[15px] font-extrabold text-[#1C2C1C] truncate max-w-[140px]"
+              title={quote.availability || (quote.estimatedDays ? getAvailabilityFromDays(quote.estimatedDays) : "—")}
+            >
+              {quote.availability || (quote.estimatedDays ? getAvailabilityFromDays(quote.estimatedDays) : "—")}
+            </span>
+          </div>
+
+          {/* Status */}
+          <div className="bg-[#F8F9FA] rounded-xl px-4 py-3 min-w-[120px] sm:min-w-[125px] flex flex-col justify-center">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+              STATUS
+            </span>
+            <div>
+              <QuoteStatusBadge status={quote.status ?? "PENDING"} />
+            </div>
+          </div>
+        </div>
+
+        {/* Right Section: Price & Action Buttons */}
+        <div className="flex flex-row lg:flex-col items-center lg:items-end justify-between self-stretch sm:self-auto min-w-[130px] pt-3 lg:pt-0 border-t lg:border-t-0 border-gray-100 gap-3">
+          <span className="text-[20px] sm:text-[22px] font-extrabold text-[#1C2C1C] tracking-tight">
+            {formatPrice(quote.price)}
+          </span>
+
+          <div className="flex items-center gap-2">
+            {/* Trash Button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onWithdraw(quote);
+              }}
+              disabled={isWithdrawing}
+              title="Withdraw Quote"
+              aria-label="Withdraw Quote"
+              className="inline-flex items-center justify-center p-1 text-red-400 hover:text-red-600 transition-colors cursor-pointer disabled:opacity-50"
+            >
+              <Trash2 size={16} strokeWidth={1.75} />
+            </button>
+
+            {/* Edit Button - only for pending */}
+            {quote.status?.toUpperCase() === "PENDING" && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -166,24 +233,24 @@ function QuoteCard({ quote, onEdit, onView, onWithdraw, isWithdrawing }: { quote
                 }}
                 title="Edit Quote"
                 aria-label="Edit Quote"
-                className="inline-flex items-center justify-center text-[#6E9625] hover:text-[#4A6B0A] transition-colors"
+                className="inline-flex items-center justify-center p-1 text-[#6E9625] hover:text-[#557A18] transition-colors cursor-pointer"
               >
-                <SquarePen size={15} strokeWidth={2} />
+                <SquarePen size={16} strokeWidth={1.75} />
               </button>
-            </>
-          )}
+            )}
 
-          {/* View Quote */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onView(quote);
-            }}
-            className="flex items-center gap-1 text-[#6E9625] hover:text-[#4A6B0A] transition-colors bg-transparent border-none cursor-pointer"
-          >
-            View Quote
-            <ArrowRight size={12} />
-          </button>
+            {/* View Quote Button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onView(quote);
+              }}
+              className="inline-flex items-center gap-1 text-[12.5px] font-bold text-[#6E9625] hover:text-[#557A18] hover:underline transition-colors bg-transparent border-none cursor-pointer ml-1"
+            >
+              View Quote
+              <ArrowRight size={13} strokeWidth={2.5} />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -194,6 +261,7 @@ export default function TraderQuotesComponent() {
   const [quotes, setQuotes] = useState<Quote[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"All" | "Accepted" | "Pending" | "Declined" | "Withdrawn">("All");
 
   // Edit quote states
   const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
@@ -462,49 +530,101 @@ export default function TraderQuotesComponent() {
     fetchQuotes(page);
   };
 
+  const filteredQuotes = useMemo(() => {
+    if (activeTab === "All") return quotes;
+    const tabUpper = activeTab.toUpperCase();
+    if (activeTab === "Declined") {
+      return quotes.filter((q) => {
+        const s = q.status?.toUpperCase();
+        return s === "DECLINED" || s === "REJECTED";
+      });
+    }
+    if (activeTab === "Withdrawn") {
+      return quotes.filter((q) => {
+        const s = q.status?.toUpperCase();
+        return s === "WITHDRAWN" || s === "EXPIRED" || s === "CANCELLED";
+      });
+    }
+    return quotes.filter((q) => q.status?.toUpperCase() === tabUpper);
+  }, [quotes, activeTab]);
+
   return (
     <div className="min-h-screen bg-[#F8F9F5]">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        <div className="flex items-center justify-between mb-8">
-          <h1 className="text-[2rem] font-bold text-[#1C2C1C]">My Quotes</h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-[28px] sm:text-[32px] font-bold text-[#1C2C1C]">My Quotes</h1>
           <button
             onClick={() => fetchQuotes(currentPage)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-full border border-gray-200 bg-white text-[13px] font-semibold text-[#1C2C1C] hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 bg-white text-[13px] font-semibold text-[#1C2C1C] hover:bg-gray-50 transition-colors shadow-xs cursor-pointer"
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Refresh
           </button>
         </div>
+
+        {/* Filter Tabs Bar */}
+        <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap mb-6">
+          {(["All", "Accepted", "Pending", "Declined", "Withdrawn"] as const).map((tab) => {
+            const isActive = activeTab === tab;
+            return (
+              <button
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-1.5 sm:py-2 rounded-lg text-[13px] transition-all cursor-pointer ${isActive
+                    ? "border border-gray-400 bg-white text-[#1C2C1C] font-semibold shadow-xs"
+                    : "border border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:text-gray-900 font-medium"
+                  }`}
+              >
+                {tab}
+              </button>
+            );
+          })}
+        </div>
+
         {loading ? (
           <div className="space-y-4">
-            {[1, 2, 3, 4].map(i => (
-              <div key={i} className="bg-white rounded-2xl p-5 animate-pulse" />
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white rounded-2xl p-6 animate-pulse h-28 border border-gray-100" />
             ))}
           </div>
         ) : error ? (
           <div className="bg-white rounded-2xl border border-red-100 p-10 text-center">
             <XCircle size={40} className="mx-auto text-red-400 mb-3" />
             <p className="text-[14px] font-semibold text-red-600">{error}</p>
-            <button onClick={() => fetchQuotes(currentPage)} className="mt-4 px-5 py-2 rounded-full bg-[#1C2C1C] text-white text-[13px] font-bold hover:bg-[#2c3e2c] transition-colors">
+            <button
+              onClick={() => fetchQuotes(currentPage)}
+              className="mt-4 px-5 py-2 rounded-full bg-[#1C2C1C] text-white text-[13px] font-bold hover:bg-[#2c3e2c] transition-colors cursor-pointer"
+            >
               Try Again
             </button>
           </div>
-        ) : quotes.length === 0 ? (
+        ) : filteredQuotes.length === 0 ? (
           <div className="bg-white rounded-2xl border border-[#E8E8E8] p-16 text-center">
             <FileText size={48} className="mx-auto text-gray-200 mb-4" />
-            <p className="text-[15px] font-semibold text-gray-400">No quotes yet.</p>
-            <p className="text-[12px] text-gray-400 mt-1">When traders receive quotes on your jobs they will appear here.</p>
+            <p className="text-[15px] font-semibold text-gray-400">No quotes found.</p>
+            <p className="text-[12px] text-gray-400 mt-1">
+              {activeTab === "All"
+                ? "When you submit quotes on jobs, they will appear here."
+                : `No quotes found under "${activeTab}".`}
+            </p>
           </div>
         ) : (
           <div className="space-y-4">
-            {quotes.map(q => (
-              <QuoteCard key={q.id} quote={q} onEdit={handleEditClick} onView={handleViewClick} onWithdraw={handleWithdrawClick} isWithdrawing={false} />
+            {filteredQuotes.map((q) => (
+              <QuoteCard
+                key={q.id}
+                quote={q}
+                onEdit={handleEditClick}
+                onView={handleViewClick}
+                onWithdraw={handleWithdrawClick}
+                isWithdrawing={isWithdrawing && quoteToWithdraw?.id === q.id}
+              />
             ))}
           </div>
         )}
       </div>
 
-      {!loading && quotes.length > 0 && totalPages > 1 && (
-        <div className="flex items-center justify-between mt-8">
+      {!loading && filteredQuotes.length > 0 && totalPages > 1 && (
+        <div className="flex items-center justify-between mt-8 max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
           <p className="text-[12px] text-gray-500">
             Showing {(currentPage - 1) * ITEMS_PER_PAGE + 1}–
             {Math.min(currentPage * ITEMS_PER_PAGE, totalQuotes)} of {totalQuotes} quotes
@@ -624,19 +744,25 @@ export default function TraderQuotesComponent() {
 
                 {/* Availability */}
                 <div>
-                  <label className="block text-[12px] font-semibold text-[#1C2C1C] mb-1.5">
+                  <label htmlFor="edit-availability-dropdown" className="block text-[12px] font-semibold text-[#1C2C1C] mb-1.5">
                     Availability
                   </label>
                   <div className="relative">
-                    <Calendar size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="text"
+                    <Calendar size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    <select
+                      id="edit-availability-dropdown"
                       required
-                      placeholder="e.g. Can start immediately / Within 24 hours"
                       value={availability}
                       onChange={(e) => setAvailability(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] placeholder:text-gray-400 focus:outline-none focus:border-[#C8D9A8] focus:ring-2 focus:ring-[#C8D9A8]/20 transition-all"
-                    />
+                      className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] bg-white focus:outline-none focus:border-[#C8D9A8] focus:ring-2 focus:ring-[#C8D9A8]/20 transition-all cursor-pointer appearance-none"
+                    >
+                      <option value="">Select availability</option>
+                      <option value="Can start immediately">Can start immediately</option>
+                      <option value="Within 24 hours">Within 24 hours</option>
+                      <option value="Within 3 days">Within 3 days</option>
+                      <option value="Within 7 days">Within 7 days</option>
+                      <option value="7days +">7days +</option>
+                    </select>
                   </div>
                 </div>
 
@@ -838,7 +964,6 @@ export default function TraderQuotesComponent() {
                       {viewQuoteDetails.attachments.map((urlItem: any, idx: number) => {
                         const urlString = typeof urlItem === 'string' ? urlItem : (urlItem?.url || urlItem?.fileUrl || urlItem?.path || String(urlItem));
                         const fileName = urlString.substring(urlString.lastIndexOf("/") + 1) || `attachment-${idx + 1}`;
-                        const isImage = /\.(jpeg|jpg|gif|png|webp)$/i.test(urlString);
                         return (
                           <a
                             key={idx}
