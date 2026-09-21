@@ -224,7 +224,7 @@ function SidebarStatusBadge({ status, job }: { status: string; job?: Job }) {
   if (norm === "COMPLETED") {
     return (
       <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[#4E7B24]">
-        <span className="w-2 h-2  bg-[#4E7B24]" />
+        <span className="w-2 h-2 rounded-full bg-[#4E7B24]" />
         Completed
       </div>
     );
@@ -950,7 +950,7 @@ export default function CustomerJobDashboard() {
           setCustomerName(u.name.split(" ")[0]);
         }
       }
-    } catch (e) {}
+    } catch (e) { }
 
     authApi.getMyProfile().then((res: any) => {
       const profile = res?.data || res;
@@ -959,7 +959,7 @@ export default function CustomerJobDashboard() {
       } else if (profile?.name) {
         setCustomerName(profile.name.split(" ")[0]);
       }
-    }).catch(() => {});
+    }).catch(() => { });
   }, []);
 
   // Share Your Review popup states

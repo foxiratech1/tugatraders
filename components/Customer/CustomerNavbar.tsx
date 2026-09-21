@@ -44,37 +44,12 @@ export default function CustomerNavbar() {
   const mobileMenuRef = useRef<HTMLDivElement>(null);
 
   const processInboxData = (convos: any[]) => {
-    let activeConvId: string | null = null;
-    if (typeof window !== "undefined" && window.location.pathname.includes("/inbox")) {
-      const urlParams = new URLSearchParams(window.location.search);
-      activeConvId = urlParams.get("conversationId");
-    }
-    const unreadMsgs = convos.reduce((acc: number, c: any) => {
-      const cid = String(c.id || c._id);
-      if (activeConvId && cid === String(activeConvId)) return acc;
-      return acc + (c.unreadCount || 0);
-    }, 0);
-
+    let unreadMsgs = 0;
+    convos.forEach((c) => {
+      unreadMsgs += c.unreadCount || 0;
+    });
     setInboxTotalUnread(unreadMsgs);
-
-    let seenInboxCount = 0;
-    if (typeof window !== "undefined") {
-      try {
-        seenInboxCount = parseInt(localStorage.getItem("customer_seen_inbox_count") || "0", 10);
-        if (isNaN(seenInboxCount)) seenInboxCount = 0;
-      } catch (e) { }
-    }
-
-    if (unreadMsgs > seenInboxCount) {
-      setInboxUnread(unreadMsgs);
-    } else {
-      setInboxUnread(0);
-      if (unreadMsgs < seenInboxCount && typeof window !== "undefined") {
-        try {
-          localStorage.setItem("customer_seen_inbox_count", String(unreadMsgs));
-        } catch (e) { }
-      }
-    }
+    setInboxUnread(unreadMsgs);
   };
 
   const processJobsData = (actionRequired: any) => {
@@ -321,12 +296,8 @@ export default function CustomerNavbar() {
   const handleNavClick = (linkName: string) => {
     setMobileOpen(false);
     if (linkName === "Inbox") {
-      setInboxUnread(0);
-      if (typeof window !== "undefined") {
-        try {
-          localStorage.setItem("customer_seen_inbox_count", String(inboxTotalUnread));
-        } catch (e) { }
-      }
+      // Unread count is handled by the server state now. 
+      // We don't reset it to 0 just by clicking the link, it resets when messages are actually read.
     }
     if (linkName === "Jobs") {
       setJobsUnread(0);

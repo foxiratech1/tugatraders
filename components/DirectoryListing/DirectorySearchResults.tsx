@@ -605,9 +605,24 @@ const DirectorySearchResults = () => {
       }
 
       const data = await authApi.searchTraders(params);
-      console.log("Search Traders API Response:", data);
-      const results = Array.isArray(data) ? data : data?.data || [];
-      console.log("Search Traders API Response:", data);
+      let results = Array.isArray(data) ? data : data?.data || [];
+      
+      try {
+        const savedData = await authApi.getSavedTraders();
+        const rawList = Array.isArray(savedData) ? savedData : savedData?.data || [];
+        const savedIds = new Set(rawList.map((item: any) => {
+          const t = item.trader || item;
+          return t.id;
+        }));
+        
+        results = results.map((t: any) => ({
+          ...t,
+          isSaved: savedIds.has(t.id)
+        }));
+      } catch (err) {
+        // Ignore, user might not be logged in
+      }
+
       setTraderResults(results);
       // Reset pagination when new results arrive
       setDisplayCount(3);

@@ -712,7 +712,7 @@ export default function TraderDashboard() {
 
             {/* List */}
             <div className="divide-y divide-[#EEF3ED] p-2 sm:p-3">
-              {rawWorkingOn.map((job: JobItem, index: number) => (
+              {rawWorkingOn.slice(0, 2).map((job: JobItem, index: number) => (
                 <div
                   key={job.id || index}
                   onClick={() => router.push(`/trader/jobs?jobId=${job.id || job.jobId}`)}

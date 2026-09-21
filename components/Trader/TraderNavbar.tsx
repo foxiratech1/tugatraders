@@ -68,6 +68,24 @@ export default function TraderNavbar() {
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  const [inboxUnread, setInboxUnread] = useState(0);
+
+  const fetchBadges = async () => {
+    try {
+      const convRes = await authApi.getConversations().catch(() => null);
+      const convos = convRes?.data || convRes || [];
+      if (Array.isArray(convos)) {
+        let unreadMsgs = 0;
+        convos.forEach((c) => {
+          unreadMsgs += c.unreadCount || 0;
+        });
+        setInboxUnread(unreadMsgs);
+      }
+    } catch (err) {
+      console.error("Failed to fetch badges", err);
+    }
+  };
+
   // Hook up socket for new notifications
   useSocket({
     onNewNotification: (notif) => {
@@ -76,6 +94,9 @@ export default function TraderNavbar() {
         return [notif, ...prev];
       });
       setUnreadCount((prev) => prev + 1);
+    },
+    onNewMessage: () => {
+      fetchBadges();
     },
   });
 
@@ -242,6 +263,7 @@ export default function TraderNavbar() {
     fetchProfile();
     fetchStatus();
     fetchNotifications();
+    fetchBadges();
   }, []);
 
   // Close menus on route change
@@ -351,7 +373,14 @@ export default function TraderNavbar() {
                   `}
                 >
                   <Icon size={14} className={`transition-all duration-200 ${active ? "text-[#6E9625] scale-110" : "text-current group-hover:text-[#6E9625]"}`} />
-                  {label}
+                  <div className="flex items-center gap-1.5 relative">
+                    {label}
+                    {label === "Inbox" && inboxUnread > 0 && !active && (
+                      <span className="flex items-center justify-center min-w-[15px] h-[15px] px-1 bg-[#E53935] rounded-full text-[9px] font-bold text-white shadow-sm">
+                        {inboxUnread > 99 ? "99+" : inboxUnread}
+                      </span>
+                    )}
+                  </div>
                   {active && (
                     <span className="absolute bottom-0 left-2 right-2 h-[3px] rounded-t-full bg-[#6E9625] shadow-[0_-2px_8px_rgba(110,150,37,0.4)] animate-fade-in-up" />
                   )}

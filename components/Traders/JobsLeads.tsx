@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { authApi } from "@/app/api/authApi";
 import { Search, MapPin, Tag, MoreHorizontal, Calendar, Star, Send, MessageCircle, ArrowRight, X, Euro, Clock, FileText, Paperclip, Trash2, Play, User, Phone, Mail, Briefcase, Shield, CheckCircle, ChevronDown, ChevronUp, Ban, RefreshCw, Pencil, Loader2, Check, Filter } from "lucide-react";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import toast from "react-hot-toast";
 import { useSocket } from "@/hooks/useSocket";
 
@@ -169,6 +169,8 @@ function getUIStatus(item: any): "New" | "Posted" | "Quote Sent" | "Contacted" |
 
 export default function JobsLeads() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialJobId = searchParams?.get("jobId");
   const [jobs, setJobs] = useState<JobLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -738,7 +740,13 @@ export default function JobsLeads() {
         if (res && res.data && res.data.length > 0) {
           const mappedJobs: JobLead[] = res.data.map((item: any) => mapJobLeadItem(item));
           setJobs(mappedJobs);
-          setSelectedJob(mappedJobs[0]);
+          
+          if (initialJobId) {
+            const match = mappedJobs.find(j => j.id === initialJobId || j.jobId === initialJobId);
+            setSelectedJob(match || mappedJobs[0]);
+          } else {
+            setSelectedJob(mappedJobs[0]);
+          }
         } else {
           setJobs([]);
           setSelectedJob(null);

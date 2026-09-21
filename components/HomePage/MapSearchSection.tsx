@@ -144,15 +144,14 @@ const MapSearchSection = () => {
 
 
           {/* Center Map */}
-          <div className="relative h-[460px] w-full max-w-[380px] shrink-0 overflow-hidden sm:h-[500px] sm:max-w-[420px] lg:h-[520px] lg:max-w-[450px] xl:max-w-[480px]">
+          <div className="relative h-[460px] w-full max-w-[380px] shrink-0 sm:h-[500px] sm:max-w-[420px] lg:h-[520px] lg:max-w-[450px] xl:max-w-[480px]">
             <Image
               src="/maplogo.jfif"
               alt="Portugal Map with Trades"
-              width={650}
-              height={520}
+              fill
               unoptimized
               priority
-              className="absolute left-1/2 top-1/2 h-auto w-[480px] max-w-none -translate-x-1/2 -translate-y-1/2 object-contain"
+              className="object-contain"
             />
           </div>
 
