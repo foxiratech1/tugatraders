@@ -333,6 +333,10 @@ export default function TraderNavbar() {
       toast.error("Complete your verification to access this feature.", {
         id: "trader-restricted-feature",
       });
+      return;
+    }
+    if (label === "Inbox") {
+      setInboxUnread(0);
     }
   };
 

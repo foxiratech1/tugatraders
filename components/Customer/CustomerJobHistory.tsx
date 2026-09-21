@@ -180,6 +180,7 @@ const isClosedStatus = (status: string) => {
 
 const FILTER_TABS = [
   { key: "JOB_POSTED", label: "Jobs Posted" },
+  { key: "QUOTE_RECEIVED", label: "Quotes Received" },
   { key: "COMPLETED", label: "Completed" },
   { key: "CLOSED", label: "Closed" },
 ];
@@ -432,6 +433,8 @@ export default function CustomerJobHistory() {
         const upper = tab.toUpperCase();
         if (upper === "JOB_POSTED" || upper === "JOB POSTED" || upper === "POSTED" || upper === "ASSIGNED" || upper === "ALL") {
           setActiveFilter("JOB_POSTED");
+        } else if (upper === "QUOTE_RECEIVED" || upper === "QUOTES RECEIVED" || upper === "QUOTES_RECEIVED") {
+          setActiveFilter("QUOTE_RECEIVED");
         } else if (upper === "COMPLETED") {
           setActiveFilter("COMPLETED");
         } else if (upper === "CLOSED") {
@@ -445,6 +448,10 @@ export default function CustomerJobHistory() {
   const filteredJobs = jobs
     .filter((j) => {
       if (activeFilter === "JOB_POSTED" || activeFilter === "ALL") return true;
+      if (activeFilter === "QUOTE_RECEIVED") {
+        const qCount = j.quotesReceived ?? j.quotesCount ?? (j as any)._count?.quotes ?? (Array.isArray(j.quotes) ? j.quotes.length : 0);
+        return qCount > 0 || j.status?.toUpperCase() === "QUOTE_RECEIVED" || j.status?.toUpperCase() === "QUOTED";
+      }
       if (activeFilter === "COMPLETED") {
         return j.status?.toUpperCase() === "COMPLETED";
       }

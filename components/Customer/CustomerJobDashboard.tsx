@@ -1596,7 +1596,7 @@ export default function CustomerJobDashboard() {
 
                 {/* Card 2 */}
                 <div
-                  onClick={() => router.push('/customer-dashboard/job-history')}
+                  onClick={() => router.push('/customer-dashboard/job-history?tab=QUOTE_RECEIVED')}
                   className="px-4 sm:px-5 py-3.5 sm:py-4 flex items-center gap-3 sm:gap-4 hover:bg-gray-50/50 rounded-xl transition-colors cursor-pointer"
                 >
                   <div className="w-[44px] h-[44px] sm:w-[48px] sm:h-[48px] md:w-[52px] md:h-[52px] rounded-full bg-[#E3F2FD] flex items-center justify-center flex-shrink-0">

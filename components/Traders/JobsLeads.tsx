@@ -171,10 +171,11 @@ export default function JobsLeads() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const initialJobId = searchParams?.get("jobId");
+  const initialTab = searchParams?.get("tab") || "All";
   const [jobs, setJobs] = useState<JobLead[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeTab, setActiveTab] = useState("All");
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [selectedJob, setSelectedJob] = useState<JobLead | null>(null);
   const [isSendingQuote, setIsSendingQuote] = useState(false);
   const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
@@ -762,6 +763,14 @@ export default function JobsLeads() {
 
     fetchJobs();
   }, []);
+
+  // Update tab if URL changes
+  useEffect(() => {
+    const tabParam = searchParams?.get("tab");
+    if (tabParam) {
+      setActiveTab(tabParam);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!selectedJob?.id) {

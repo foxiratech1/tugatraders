@@ -296,8 +296,7 @@ export default function CustomerNavbar() {
   const handleNavClick = (linkName: string) => {
     setMobileOpen(false);
     if (linkName === "Inbox") {
-      // Unread count is handled by the server state now. 
-      // We don't reset it to 0 just by clicking the link, it resets when messages are actually read.
+      setInboxUnread(0);
     }
     if (linkName === "Jobs") {
       setJobsUnread(0);

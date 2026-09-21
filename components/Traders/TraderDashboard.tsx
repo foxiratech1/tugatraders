@@ -369,7 +369,7 @@ export default function TraderDashboard() {
         <div className="bg-white px-6 sm:px-8 lg:px-10 py-5 sm:py-6 flex items-center justify-between sm:justify-end gap-6 sm:gap-10 lg:gap-12 shrink-0 border-t lg:border-t-0 lg:border-l border-[#DFEBDD] overflow-x-auto">
           {/* Card 1: In progress jobs */}
           <div
-            onClick={() => router.push("/trader/jobs")}
+            onClick={() => router.push("/trader/jobs?tab=In Progress")}
             className="flex flex-col cursor-pointer group shrink-0"
           >
             <div className="flex items-center gap-3.5">
