@@ -469,6 +469,11 @@ export const authApi = {
     const url = `${process.env.NEXT_PUBLIC_API_URL}api/auth/deactivate`;
     return fetchWithAuth(url, { method: 'POST' });
   },
+
+  requestReactivation: async (payload: { email: string; name: string; message: string }) => {
+    const { data } = await api.post('/api/auth/request-reactivation', payload);
+    return data;
+  },
   // Submit contact form
   submitContactForm: async (formData: FormData) => {
     const { data } = await api.post("/api/contact", formData, {

@@ -823,22 +823,20 @@ export default function ChatWindow({
               <button
                 type="button"
                 onClick={() => setModalTab("select")}
-                className={`py-2.5 px-4 text-[13px] font-bold border-b-2 transition-all cursor-pointer ${
-                  modalTab === "select"
+                className={`py-2.5 px-4 text-[13px] font-bold border-b-2 transition-all cursor-pointer ${modalTab === "select"
                     ? "border-[#6E9625] text-[#6E9625]"
                     : "border-transparent text-gray-400 hover:text-gray-600"
-                }`}
+                  }`}
               >
                 Select Existing Job {myJobs.length > 0 && `(${myJobs.length})`}
               </button>
               <button
                 type="button"
                 onClick={() => setModalTab("create")}
-                className={`py-2.5 px-4 text-[13px] font-bold border-b-2 transition-all cursor-pointer ${
-                  modalTab === "create"
+                className={`py-2.5 px-4 text-[13px] font-bold border-b-2 transition-all cursor-pointer ${modalTab === "create"
                     ? "border-[#6E9625] text-[#6E9625]"
                     : "border-transparent text-gray-400 hover:text-gray-600"
-                }`}
+                  }`}
               >
                 Quick Create Job
               </button>
@@ -879,11 +877,10 @@ export default function ChatWindow({
                             <div
                               key={jId}
                               onClick={() => setSelectedJobIdToStart(jId)}
-                              className={`p-3.5 rounded-xl border transition-all cursor-pointer ${
-                                isSel
+                              className={`p-3.5 rounded-xl border transition-all cursor-pointer ${isSel
                                   ? "border-[#6E9625] bg-[#F4F7F1]/60 shadow-xs"
                                   : "border-gray-200 hover:border-gray-300 bg-white"
-                              }`}
+                                }`}
                             >
                               <div className="flex items-center justify-between">
                                 <p className="text-[14px] font-bold text-[#1C2C1C] truncate">{j.title}</p>

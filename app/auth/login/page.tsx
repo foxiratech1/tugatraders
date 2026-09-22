@@ -91,6 +91,12 @@ function LoginContent({ role }: { role?: string }) {
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const [isLoading, setIsLoading] = useState(false);
 
+  const [showInactiveModal, setShowInactiveModal] = useState(false);
+  const [inactiveMsg, setInactiveMsg] = useState("");
+  const [showSupportForm, setShowSupportForm] = useState(false);
+  const [supportForm, setSupportForm] = useState({ name: "", email: "", message: "" });
+  const [isSubmittingSupport, setIsSubmittingSupport] = useState(false);
+
   const [isBlinking, setIsBlinking] = useState(false);
   const [mouseOffset, setMouseOffset] = useState({ x: 0, y: 0 });
   const eyeBtnRef = useRef<HTMLButtonElement>(null);
@@ -270,9 +276,17 @@ function LoginContent({ role }: { role?: string }) {
         msg = "Login failed";
       }
 
+      const lowerMsg = msg.toLowerCase();
+
+      if (lowerMsg.includes("inactive") || lowerMsg.includes("deactivate") || lowerMsg.includes("deactivated")) {
+        setInactiveMsg(msg);
+        setShowInactiveModal(true);
+        setSupportForm(prev => ({ ...prev, email: email }));
+        return;
+      }
+
       toast.error(msg, { id: 'login-error' });
 
-      const lowerMsg = msg.toLowerCase();
       if (lowerMsg.includes("email") || lowerMsg.includes("user") || lowerMsg.includes("found") || lowerMsg.includes("exist")) {
         setErrors({ email: msg });
       } else if (lowerMsg.includes("password") && !lowerMsg.includes("email")) {
@@ -449,6 +463,135 @@ function LoginContent({ role }: { role?: string }) {
           </div>
         </div>
       </div>
+
+      {/* INACTIVE ACCOUNT / SUPPORT MODAL */}
+      {showInactiveModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 animate-fade-in backdrop-blur-sm">
+          <div className="bg-white rounded-[24px] w-full max-w-md p-6 sm:p-8 shadow-2xl transform transition-all">
+            {!showSupportForm ? (
+              <div className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 rounded-full bg-red-100 text-red-500 flex items-center justify-center mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                  </svg>
+                </div>
+                <h3 className="text-[22px] font-bold text-[#1C2C1C] mb-2" style={{ fontFamily: 'var(--font-bricolage), sans-serif' }}>
+                  Account Inactive
+                </h3>
+                <p className="text-[14px] text-[#1C2C1C]/70 font-medium mb-8">
+                  {inactiveMsg || "Your account has been deactivated. Please contact support to reactivate your account."}
+                </p>
+                <div className="flex flex-col w-full gap-3">
+                  <button
+                    onClick={() => setShowSupportForm(true)}
+                    className="w-full h-[48px] rounded-[12px] bg-[#1C2C1C] text-white font-bold text-[15px] hover:bg-[#121E12] transition-colors"
+                  >
+                    Contact Support
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowInactiveModal(false);
+                      setShowSupportForm(false);
+                    }}
+                    className="w-full h-[48px] rounded-[12px] bg-gray-100 text-[#1C2C1C] font-bold text-[15px] hover:bg-gray-200 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col">
+                <div className="flex justify-between items-center mb-6">
+                  <h3 className="text-[20px] font-bold text-[#1C2C1C]" style={{ fontFamily: 'var(--font-bricolage), sans-serif' }}>
+                    Request Reactivation
+                  </h3>
+                  <button
+                    onClick={() => setShowInactiveModal(false)}
+                    className="text-gray-400 hover:text-gray-600 transition-colors"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                <form
+                  onSubmit={async (e) => {
+                    e.preventDefault();
+                    if (!supportForm.name || !supportForm.email || !supportForm.message) {
+                      toast.error("Please fill all fields");
+                      return;
+                    }
+                    setIsSubmittingSupport(true);
+                    try {
+                      await authApi.requestReactivation(supportForm);
+                      toast.success("Request submitted successfully. Support will contact you soon.");
+                      setShowInactiveModal(false);
+                      setShowSupportForm(false);
+                      setSupportForm({ name: "", email: "", message: "" });
+                    } catch (err: any) {
+                      toast.error(err?.response?.data?.message || err?.message || "Failed to submit request");
+                    } finally {
+                      setIsSubmittingSupport(false);
+                    }
+                  }}
+                  className="flex flex-col gap-4"
+                >
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[12px] font-extrabold text-[#1C2C1C] uppercase tracking-wider">Name</label>
+                    <input
+                      type="text"
+                      required
+                      value={supportForm.name}
+                      onChange={(e) => setSupportForm(prev => ({ ...prev, name: e.target.value }))}
+                      placeholder="Your full name"
+                      className="h-[44px] w-full rounded-[12px] border bg-white px-4 text-[14px] text-[#1C2C1C] placeholder-[#1C2C1C]/30 outline-none transition-all font-medium border-[#243A241F] focus:border-[#6E9625] focus:ring-1 focus:ring-[#6E9625]"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[12px] font-extrabold text-[#1C2C1C] uppercase tracking-wider">Email</label>
+                    <input
+                      type="email"
+                      required
+                      value={supportForm.email}
+                      onChange={(e) => setSupportForm(prev => ({ ...prev, email: e.target.value }))}
+                      placeholder="name@example.com"
+                      className="h-[44px] w-full rounded-[12px] border bg-white px-4 text-[14px] text-[#1C2C1C] placeholder-[#1C2C1C]/30 outline-none transition-all font-medium border-[#243A241F] focus:border-[#6E9625] focus:ring-1 focus:ring-[#6E9625]"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[12px] font-extrabold text-[#1C2C1C] uppercase tracking-wider">Message</label>
+                    <textarea
+                      required
+                      value={supportForm.message}
+                      onChange={(e) => setSupportForm(prev => ({ ...prev, message: e.target.value }))}
+                      placeholder="Why do you want to reactivate?"
+                      className="h-[100px] w-full rounded-[12px] border bg-white p-4 text-[14px] text-[#1C2C1C] placeholder-[#1C2C1C]/30 outline-none transition-all font-medium border-[#243A241F] focus:border-[#6E9625] focus:ring-1 focus:ring-[#6E9625] resize-none"
+                    />
+                  </div>
+
+                  <div className="flex gap-3 mt-4">
+                    <button
+                      type="button"
+                      onClick={() => setShowSupportForm(false)}
+                      className="flex-1 h-[48px] rounded-[12px] bg-gray-100 text-[#1C2C1C] font-bold text-[15px] hover:bg-gray-200 transition-colors"
+                    >
+                      Back
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmittingSupport}
+                      className="flex-[2] h-[48px] rounded-[12px] bg-[#1C2C1C] text-white font-bold text-[15px] hover:bg-[#121E12] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                    >
+                      {isSubmittingSupport ? "Submitting..." : "Submit Request"}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </main>
   );
 }
