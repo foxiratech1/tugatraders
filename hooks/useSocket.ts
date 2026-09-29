@@ -19,6 +19,7 @@ interface UseSocketProps {
   onNewJob?: (job: any) => void;
   onTraderDashboardUpdate?: (data: any) => void;
   onCustomerDashboardUpdate?: (data: any) => void;
+  onDirectJobUpdated?: (data: any) => void;
 }
 
 // Global socket variables for singleton pattern
@@ -40,6 +41,7 @@ export function useSocket({
   onNewJob,
   onTraderDashboardUpdate,
   onCustomerDashboardUpdate,
+  onDirectJobUpdated,
 }: UseSocketProps = {}) {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
@@ -59,6 +61,7 @@ export function useSocket({
   const onNewJobRef = useRef(onNewJob);
   const onTraderDashboardUpdateRef = useRef(onTraderDashboardUpdate);
   const onCustomerDashboardUpdateRef = useRef(onCustomerDashboardUpdate);
+  const onDirectJobUpdatedRef = useRef(onDirectJobUpdated);
 
   useEffect(() => {
     onNewMessageRef.current = onNewMessage;
@@ -74,6 +77,7 @@ export function useSocket({
     onNewJobRef.current = onNewJob;
     onTraderDashboardUpdateRef.current = onTraderDashboardUpdate;
     onCustomerDashboardUpdateRef.current = onCustomerDashboardUpdate;
+    onDirectJobUpdatedRef.current = onDirectJobUpdated;
   });
 
   // Connection handler (Run once on mount)
@@ -141,6 +145,7 @@ export function useSocket({
     const handleNewJob = (data: any) => onNewJobRef.current?.(data);
     const handleTraderDashboardUpdate = (data: any) => onTraderDashboardUpdateRef.current?.(data);
     const handleCustomerDashboardUpdate = (data: any) => onCustomerDashboardUpdateRef.current?.(data);
+    const handleDirectJobUpdated = (data: any) => onDirectJobUpdatedRef.current?.(data);
 
     // Setup active listeners
     socket.on("connect", handleConnect);
@@ -159,6 +164,7 @@ export function useSocket({
     socket.on("newJob", handleNewJob);
     socket.on("traderDashboardUpdate", handleTraderDashboardUpdate);
     socket.on("customerDashboardUpdate", handleCustomerDashboardUpdate);
+    socket.on("directJobUpdated", handleDirectJobUpdated);
 
     return () => {
       // Remove listeners specific to this component instance
@@ -178,6 +184,7 @@ export function useSocket({
       socket.off("newJob", handleNewJob);
       socket.off("traderDashboardUpdate", handleTraderDashboardUpdate);
       socket.off("customerDashboardUpdate", handleCustomerDashboardUpdate);
+      socket.off("directJobUpdated", handleDirectJobUpdated);
 
       connectionCount--;
       if (connectionCount === 0) {

@@ -147,10 +147,10 @@ const statusConfig: Record<
   string,
   { label: string; bg: string; text: string; border: string }
 > = {
-  OPEN: { label: "Job Posted", bg: "bg-[#F1AA69]", text: "text-[#9C410F]", border: "border-[#DDA066]" },
-  POSTED: { label: "Job Posted", bg: "bg-[#F1AA69]", text: "text-[#9C410F]", border: "border-[#DDA066]" },
-  ACTIVE: { label: "Job Posted", bg: "bg-[#F1AA69]", text: "text-[#9C410F]", border: "border-[#DDA066]" },
-  JOB_POSTED: { label: "Job Posted", bg: "bg-[#F1AA69]", text: "text-[#9C410F]", border: "border-[#DDA066]" },
+  OPEN: { label: "Job Posted", bg: "bg-[#EFDB4B]", text: "text-[#8A5C05]", border: "border-[#DFC736]" },
+  POSTED: { label: "Job Posted", bg: "bg-[#EFDB4B]", text: "text-[#8A5C05]", border: "border-[#DFC736]" },
+  ACTIVE: { label: "Job Posted", bg: "bg-[#EFDB4B]", text: "text-[#8A5C05]", border: "border-[#DFC736]" },
+  JOB_POSTED: { label: "Job Posted", bg: "bg-[#EFDB4B]", text: "text-[#8A5C05]", border: "border-[#DFC736]" },
   QUOTE_RECEIVED: { label: "Quote Received", bg: "bg-[#DCEAF7]", text: "text-[#156082]", border: "border-[#C2D9EE]" },
   QUOTES_RECIEVED: { label: "Quote Received", bg: "bg-[#DCEAF7]", text: "text-[#156082]", border: "border-[#C2D9EE]" },
   QUOTES_RECEIVED: { label: "Quote Received", bg: "bg-[#DCEAF7]", text: "text-[#156082]", border: "border-[#C2D9EE]" },
@@ -161,11 +161,11 @@ const statusConfig: Record<
   QUOTE_DECLINED: { label: "Quote Declined", bg: "bg-[#FF9797]", text: "text-[#E53935]", border: "border-[#F08282]" },
   DECLINED: { label: "Quote Declined", bg: "bg-[#FF9797]", text: "text-[#E53935]", border: "border-[#F08282]" },
   REJECTED: { label: "Quote Declined", bg: "bg-[#FF9797]", text: "text-[#E53935]", border: "border-[#F08282]" },
-  IN_PROGRESS: { label: "In Progress", bg: "bg-[#EFDB4B]", text: "text-[#8A5C05]", border: "border-[#DFC736]" },
+  IN_PROGRESS: { label: "In Progress", bg: "bg-[#F1AA69]", text: "text-[#9C410F]", border: "border-[#DDA066]" },
   COMPLETED: { label: "Completed", bg: "bg-[#13501B]", text: "text-white", border: "border-[#0E3F15]" },
-  CLOSED: { label: "Closed", bg: "bg-[#A6A6A6]", text: "text-[#333333]", border: "border-[#8E8E8E]" },
-  CANCELLED: { label: "Closed", bg: "bg-[#A6A6A6]", text: "text-[#333333]", border: "border-[#8E8E8E]" },
-  EXPIRED: { label: "Closed", bg: "bg-[#A6A6A6]", text: "text-[#333333]", border: "border-[#8E8E8E]" },
+  CLOSED: { label: "Closed", bg: "bg-[#A6A6A6]", text: "text-white", border: "border-[#8E8E8E]" },
+  CANCELLED: { label: "Closed", bg: "bg-[#A6A6A6]", text: "text-white", border: "border-[#8E8E8E]" },
+  EXPIRED: { label: "Closed", bg: "bg-[#A6A6A6]", text: "text-white", border: "border-[#8E8E8E]" },
 };
 
 const isJobPostedStatus = (status: string) => {
@@ -226,6 +226,7 @@ function JobExpandedContent({
 }) {
   const trader = (job as any).assignedTrader || job.selectedTrader;
   const quote = trader?.quote || (job as any).selectedQuote || (job as any).quote;
+  const avatarSrc = trader?.profileImage || trader?.avatar || trader?.traderProfile?.logo || trader?.logo;
 
   return (
     <div className="bg-[#FAFBF8] border-t border-b border-[#E8ECE0] px-4 sm:px-5 md:px-6 lg:px-8 py-4 sm:py-5 lg:py-6">
@@ -247,10 +248,10 @@ function JobExpandedContent({
             <div className="flex flex-wrap items-center gap-6 bg-white border border-[#4A6B0A] rounded-xl p-3 max-w-fit">
               {/* Trader Info */}
               <div className="flex items-center gap-3 pr-2">
-                {trader.profileImage ? (
+                {avatarSrc ? (
                   <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border border-emerald-100">
                     <img
-                      src={getAttachmentUrl(trader.profileImage)}
+                      src={getAttachmentUrl(avatarSrc).replace(/([^:]\/)\/+/g, "$1")}
                       alt={trader.fullName || "Trader"}
                       className="w-full h-full object-cover"
                     />

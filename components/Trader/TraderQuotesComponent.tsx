@@ -37,7 +37,7 @@ interface Quote {
   jobId?: string;
   jobTitle?: string;
   jobPostcode?: string;
-  estimatedDays?: number;
+  estimatedDays?: number | string;
   availability?: string;
   message?: string;
   attachments?: any[];
@@ -172,10 +172,10 @@ function QuoteCard({
           {/* Estimated Days */}
           <div className="bg-[#F8F9FA] rounded-xl px-4 py-3 min-w-[120px] sm:min-w-[125px] flex flex-col justify-center">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
-              ESTIMATED DAYS
+              ESTIMATED DURATION
             </span>
             <span className="text-[14px] sm:text-[15px] font-extrabold text-[#1C2C1C]">
-              {quote.estimatedDays ? `${quote.estimatedDays} ${quote.estimatedDays === 1 ? "day" : "days"}` : "—"}
+              {quote.estimatedDays ? (isNaN(Number(quote.estimatedDays)) ? quote.estimatedDays : `${quote.estimatedDays} ${Number(quote.estimatedDays) === 1 ? "day" : "days"}`) : "—"}
             </span>
           </div>
 
@@ -186,9 +186,9 @@ function QuoteCard({
             </span>
             <span
               className="text-[14px] sm:text-[15px] font-extrabold text-[#1C2C1C] truncate max-w-[140px]"
-              title={quote.availability || (quote.estimatedDays ? getAvailabilityFromDays(quote.estimatedDays) : "—")}
+              title={quote.availability || (quote.estimatedDays ? (isNaN(Number(quote.estimatedDays)) ? String(quote.estimatedDays) : getAvailabilityFromDays(Number(quote.estimatedDays))) : "—")}
             >
-              {quote.availability || (quote.estimatedDays ? getAvailabilityFromDays(quote.estimatedDays) : "—")}
+              {quote.availability || (quote.estimatedDays ? (isNaN(Number(quote.estimatedDays)) ? String(quote.estimatedDays) : getAvailabilityFromDays(Number(quote.estimatedDays))) : "—")}
             </span>
           </div>
 
@@ -287,9 +287,7 @@ export default function TraderQuotesComponent() {
   const [newAttachments, setNewAttachments] = useState<File[]>([]);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalQuotes, setTotalQuotes] = useState(0);
-  const ITEMS_PER_PAGE = 10;
+  const ITEMS_PER_PAGE = 5;
 
   useSocket({
     onQuoteUpdated: (updatedQuote) => {
@@ -299,12 +297,13 @@ export default function TraderQuotesComponent() {
     },
   });
 
-  const fetchQuotes = async (page = currentPage) => {
+  const fetchQuotes = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      const res = await authApi.getMyQuotes(page, ITEMS_PER_PAGE);
+      // Fetch all quotes without passing any limit parameter
+      const res = await authApi.getMyQuotes();
 
       console.log("TraderQuotesComponent response", res);
 
@@ -317,19 +316,6 @@ export default function TraderQuotesComponent() {
           : [];
 
       setQuotes(arr);
-
-      // Pagination metadata
-      const meta = res?.meta ?? possible?.meta;
-
-      if (meta) {
-        setCurrentPage(meta.page ?? page);
-        setTotalPages(meta.totalPages ?? 1);
-        setTotalQuotes(meta.total ?? 0);
-      } else {
-        // fallback if API doesn't return meta
-        setTotalPages(1);
-        setTotalQuotes(arr.length);
-      }
     } catch (e) {
       console.error("Failed to fetch trader quotes", e);
       setError("Failed to load quotes. Please try again.");
@@ -344,7 +330,7 @@ export default function TraderQuotesComponent() {
     setModalLoading(true);
     setPrice(quote.price ? String(quote.price) : "");
     setEstimatedDays(quote.estimatedDays ? String(quote.estimatedDays) : "");
-    setAvailability(quote.availability || (quote.estimatedDays ? getAvailabilityFromDays(quote.estimatedDays) : ""));
+    setAvailability(quote.availability || (quote.estimatedDays && !isNaN(Number(quote.estimatedDays)) ? getAvailabilityFromDays(Number(quote.estimatedDays)) : ""));
     setMessage(quote.message || "");
     setExistingAttachments(Array.isArray(quote.attachments) ? quote.attachments : []);
     setNewAttachments([]);
@@ -357,7 +343,7 @@ export default function TraderQuotesComponent() {
         if (data) {
           setPrice(data.price ? String(data.price) : (quote.price ? String(quote.price) : ""));
           setEstimatedDays(data.estimatedDays ? String(data.estimatedDays) : "");
-          setAvailability(data.availability || quote.availability || (data.estimatedDays ? getAvailabilityFromDays(data.estimatedDays) : ""));
+          setAvailability(data.availability || quote.availability || (data.estimatedDays && !isNaN(Number(data.estimatedDays)) ? getAvailabilityFromDays(Number(data.estimatedDays)) : ""));
           setMessage(data.message || "");
           setExistingAttachments(Array.isArray(data.attachments) ? data.attachments : []);
         }
@@ -421,9 +407,8 @@ export default function TraderQuotesComponent() {
       return;
     }
 
-    const parsedDays = parseFloat(estimatedDays);
-    if (isNaN(parsedDays) || parsedDays <= 0) {
-      toast.error("Please enter a valid estimated days");
+    if (!estimatedDays.trim()) {
+      toast.error("Please select an estimated duration");
       return;
     }
 
@@ -441,7 +426,7 @@ export default function TraderQuotesComponent() {
     try {
       const payload: any = {
         price: parsedPrice,
-        estimatedDays: parsedDays,
+        estimatedDays: estimatedDays,
         message: message.trim(),
       };
       if (availability.trim()) {
@@ -467,7 +452,7 @@ export default function TraderQuotesComponent() {
             ? {
               ...q,
               price: parsedPrice,
-              estimatedDays: parsedDays,
+              estimatedDays: estimatedDays,
               availability: availability.trim(),
               message: message.trim(),
               attachments: existingAttachments,
@@ -500,7 +485,6 @@ export default function TraderQuotesComponent() {
       await authApi.withdrawQuote(quoteToWithdraw.id);
       toast.success("Quote withdrawn successfully");
       setQuotes((prev) => prev.filter((q) => q.id !== quoteToWithdraw.id));
-      setTotalQuotes((prev) => Math.max(0, prev - 1));
 
       // Close view modal if withdrawing from it
       if (isViewModalOpen && viewingQuote?.id === quoteToWithdraw.id) {
@@ -520,14 +504,16 @@ export default function TraderQuotesComponent() {
   };
 
   useEffect(() => {
-    fetchQuotes(1);
+    fetchQuotes();
   }, []);
 
   const handlePageChange = (page: number) => {
-    if (page < 1 || page > totalPages || page === currentPage) return;
-
     setCurrentPage(page);
-    fetchQuotes(page);
+  };
+
+  const handleTabChange = (tab: "All" | "Accepted" | "Pending" | "Declined" | "Withdrawn") => {
+    setActiveTab(tab);
+    setCurrentPage(1);
   };
 
   const filteredQuotes = useMemo(() => {
@@ -548,13 +534,41 @@ export default function TraderQuotesComponent() {
     return quotes.filter((q) => q.status?.toUpperCase() === tabUpper);
   }, [quotes, activeTab]);
 
+  const totalQuotes = filteredQuotes.length;
+  const totalPages = Math.ceil(totalQuotes / ITEMS_PER_PAGE) || 1;
+
+  const paginatedQuotes = useMemo(() => {
+    const start = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredQuotes.slice(start, start + ITEMS_PER_PAGE);
+  }, [filteredQuotes, currentPage]);
+
+  const getTabCount = (tab: "All" | "Accepted" | "Pending" | "Declined" | "Withdrawn") => {
+    if (tab === "All") return quotes.length;
+    if (tab === "Declined") {
+      return quotes.filter((q) => {
+        const s = q.status?.toUpperCase();
+        return s === "DECLINED" || s === "REJECTED";
+      }).length;
+    }
+    if (tab === "Withdrawn") {
+      return quotes.filter((q) => {
+        const s = q.status?.toUpperCase();
+        return s === "WITHDRAWN" || s === "EXPIRED" || s === "CANCELLED";
+      }).length;
+    }
+    return quotes.filter((q) => q.status?.toUpperCase() === tab.toUpperCase()).length;
+  };
+
   return (
     <div className="min-h-screen bg-[#F8F9F5]">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-[28px] sm:text-[32px] font-bold text-[#1C2C1C]">My Quotes</h1>
           <button
-            onClick={() => fetchQuotes(currentPage)}
+            onClick={() => {
+              setCurrentPage(1);
+              fetchQuotes();
+            }}
             className="flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 bg-white text-[13px] font-semibold text-[#1C2C1C] hover:bg-gray-50 transition-colors shadow-xs cursor-pointer"
           >
             <RefreshCw size={14} className={loading ? "animate-spin" : ""} /> Refresh
@@ -565,16 +579,25 @@ export default function TraderQuotesComponent() {
         <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap mb-6">
           {(["All", "Accepted", "Pending", "Declined", "Withdrawn"] as const).map((tab) => {
             const isActive = activeTab === tab;
+            const count = getTabCount(tab);
             return (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`px-4 py-1.5 sm:py-2 rounded-lg text-[13px] transition-all cursor-pointer ${isActive
-                    ? "border border-gray-400 bg-white text-[#1C2C1C] font-semibold shadow-xs"
-                    : "border border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:text-gray-900 font-medium"
+                onClick={() => handleTabChange(tab)}
+                className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-[8px] text-[12.5px] sm:text-[13px] font-semibold whitespace-nowrap transition-all cursor-pointer select-none ${isActive
+                  ? "bg-[#1C2C1C] text-white shadow-xs border border-[#1C2C1C]"
+                  : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 active:bg-gray-100"
                   }`}
               >
-                {tab}
+                <span>{tab}</span>
+                <span
+                  className={`text-[11px] font-bold px-1.5 py-0.5 rounded-[4px] min-w-[18px] text-center leading-none transition-colors ${isActive
+                    ? "bg-white/20 text-white"
+                    : "bg-gray-100 text-gray-500"
+                    }`}
+                >
+                  {count}
+                </span>
               </button>
             );
           })}
@@ -591,7 +614,7 @@ export default function TraderQuotesComponent() {
             <XCircle size={40} className="mx-auto text-red-400 mb-3" />
             <p className="text-[14px] font-semibold text-red-600">{error}</p>
             <button
-              onClick={() => fetchQuotes(currentPage)}
+              onClick={() => fetchQuotes()}
               className="mt-4 px-5 py-2 rounded-full bg-[#1C2C1C] text-white text-[13px] font-bold hover:bg-[#2c3e2c] transition-colors cursor-pointer"
             >
               Try Again
@@ -609,7 +632,7 @@ export default function TraderQuotesComponent() {
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredQuotes.map((q) => (
+            {paginatedQuotes.map((q) => (
               <QuoteCard
                 key={q.id}
                 quote={q}
@@ -725,20 +748,27 @@ export default function TraderQuotesComponent() {
                 {/* Estimated Days */}
                 <div>
                   <label className="block text-[12px] font-semibold text-[#1C2C1C] mb-1.5">
-                    Estimated Days
+                    Estimated Duration
                   </label>
                   <div className="relative">
-                    <Clock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="number"
-                      step="1"
-                      min={1}
+                    <Clock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+                    <select
                       required
-                      placeholder="e.g. 3"
                       value={estimatedDays}
                       onChange={(e) => setEstimatedDays(e.target.value)}
-                      className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] placeholder:text-gray-400 focus:outline-none focus:border-[#C8D9A8] focus:ring-2 focus:ring-[#C8D9A8]/20 transition-all"
-                    />
+                      className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] bg-white focus:outline-none focus:border-[#C8D9A8] focus:ring-2 focus:ring-[#C8D9A8]/20 transition-all cursor-pointer appearance-none"
+                    >
+                      <option value="">Select duration</option>
+                      <option value="Few Hours">Few Hours</option>
+                      <option value="Half day">Half day</option>
+                      <option value="1 day">1 day</option>
+                      <option value="2–3 days">2–3 days</option>
+                      <option value="Under a week">Under a week</option>
+                      <option value="1 – 2 weeks">1 – 2 weeks</option>
+                      <option value="2 – 3 weeks">2 – 3 weeks</option>
+                      <option value="3 – 4 weeks">3 – 4 weeks</option>
+                      <option value="1 month +">1 month +</option>
+                    </select>
                   </div>
                 </div>
 

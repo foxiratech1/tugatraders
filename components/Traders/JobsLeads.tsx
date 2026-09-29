@@ -15,7 +15,7 @@ interface JobLead {
   title: string;
   location: string;
   tag: string;
-  status: "New" | "Posted" | "Quote Sent" | "Contacted" | "In Progress" | "Completed" | "Closed" | "Rejected" | "Declined";
+  status: "New" | "Posted" | "Quote Sent" | "Connected" | "In Progress" | "Completed" | "Closed" | "Rejected" | "Declined";
   rawStatus?: string;
   matchStatus?: string;
   timeAgo: string;
@@ -23,6 +23,7 @@ interface JobLead {
   description: string;
   hasQuoted?: boolean;
   isQuoteAccepted?: boolean;
+  traderStarted?: boolean;
   timescale?: string;
   budgetRange?: string;
   selectedTraderId?: string;
@@ -90,7 +91,7 @@ const formatPostedDate = (dateStr: string) => {
   });
 };
 
-function getUIStatus(item: any): "New" | "Posted" | "Quote Sent" | "Contacted" | "In Progress" | "Completed" | "Closed" {
+function getUIStatus(item: any): "New" | "Posted" | "Quote Sent" | "Connected" | "In Progress" | "Completed" | "Closed" {
   const rawStatus = (item.rawStatus || item.status || "").toUpperCase();
 
   if (rawStatus === "COMPLETED") return "Completed";
@@ -130,10 +131,10 @@ function getUIStatus(item: any): "New" | "Posted" | "Quote Sent" | "Contacted" |
   );
 
   if (isAccepted) {
-    if (rawStatus === "IN_PROGRESS" || item.status === "In Progress") {
+    if (rawStatus === "IN_PROGRESS" || item.status === "In Progress" || item.traderStarted) {
       return "In Progress";
     }
-    return "Contacted";
+    return "Connected";
   }
 
   // Check if another trader's quote is accepted
@@ -142,6 +143,10 @@ function getUIStatus(item: any): "New" | "Posted" | "Quote Sent" | "Contacted" |
     (item.selectedTraderId && item.selectedTraderId !== item.traderId && !isAccepted) ||
     (Array.isArray(item.quotes) && item.quotes.some((q: any) => q.status?.toUpperCase() === "ACCEPTED" && (q.traderId !== item.traderId && !q.isMyQuote)))
   );
+
+  if (isThisTraderRejected && hasOtherTraderAccepted) {
+    return "Closed";
+  }
 
   if (hasOtherTraderAccepted || rawStatus === "IN_PROGRESS" || rawStatus === "ASSIGNED") {
     return "In Progress";
@@ -300,13 +305,13 @@ export default function JobsLeads() {
         setJobs((prev) =>
           prev.map((j) =>
             j.id === quoteJobId
-              ? { ...j, isQuoteAccepted: true, matchStatus: "ACCEPTED", status: "Contacted" }
+              ? { ...j, isQuoteAccepted: true, matchStatus: "ACCEPTED", status: "Connected" }
               : j
           )
         );
         setSelectedJob((prev) => {
           if (prev && prev.id === quoteJobId) {
-            return { ...prev, isQuoteAccepted: true, matchStatus: "ACCEPTED", status: "Contacted" };
+            return { ...prev, isQuoteAccepted: true, matchStatus: "ACCEPTED", status: "Connected" };
           }
           return prev;
         });
@@ -319,7 +324,7 @@ export default function JobsLeads() {
       } else if (isRejected && quoteJobId) {
         const rawUpper = (selectedJob?.rawStatus || "").toUpperCase();
         const hasOtherTrader = (rawUpper === "IN_PROGRESS" || rawUpper === "ASSIGNED" || rawUpper === "COMPLETED") || Boolean(selectedJob?.selectedTraderId && !selectedJob?.isQuoteAccepted);
-        const newStatus = hasOtherTrader ? (statusUpper === "DECLINED" ? "Declined" : "Rejected") : "Quote Sent";
+        const newStatus = hasOtherTrader ? "Closed" : "Quote Sent";
         setJobs((prev) =>
           prev.map((j) =>
             j.id === quoteJobId
@@ -354,7 +359,7 @@ export default function JobsLeads() {
             } else if (statusUpper === "REJECTED" || statusUpper === "DECLINED") {
               const rawUpper = (selectedJob.rawStatus || "").toUpperCase();
               const hasOtherTrader = (rawUpper === "IN_PROGRESS" || rawUpper === "ASSIGNED" || rawUpper === "COMPLETED") || Boolean(selectedJob.selectedTraderId && !selectedJob.isQuoteAccepted);
-              const newStatus = hasOtherTrader ? (statusUpper === "DECLINED" ? "Declined" : "Rejected") : "Quote Sent";
+              const newStatus = hasOtherTrader ? "Closed" : "Quote Sent";
               setSelectedJob((prev) => prev ? { ...prev, isQuoteAccepted: false, matchStatus: statusUpper, status: newStatus } : null);
               setJobs((prev) => prev.map((j) => j.id === selectedJob.id ? { ...j, isQuoteAccepted: false, matchStatus: statusUpper, status: newStatus } : j));
             }
@@ -377,7 +382,7 @@ export default function JobsLeads() {
               } else if (statusUpper === "REJECTED" || statusUpper === "DECLINED") {
                 const rawUpper = (selectedJob.rawStatus || "").toUpperCase();
                 const hasOtherTrader = (rawUpper === "IN_PROGRESS" || rawUpper === "ASSIGNED" || rawUpper === "COMPLETED") || Boolean(selectedJob.selectedTraderId && !selectedJob.isQuoteAccepted);
-                const newStatus = hasOtherTrader ? (statusUpper === "DECLINED" ? "Declined" : "Rejected") : "Quote Sent";
+                const newStatus = hasOtherTrader ? "Closed" : "Quote Sent";
                 setSelectedJob((prev) => prev ? { ...prev, isQuoteAccepted: false, matchStatus: statusUpper, status: newStatus } : null);
                 setJobs((prev) => prev.map((j) => j.id === selectedJob.id ? { ...j, isQuoteAccepted: false, matchStatus: statusUpper, status: newStatus } : j));
               }
@@ -741,7 +746,7 @@ export default function JobsLeads() {
         if (res && res.data && res.data.length > 0) {
           const mappedJobs: JobLead[] = res.data.map((item: any) => mapJobLeadItem(item));
           setJobs(mappedJobs);
-          
+
           if (initialJobId) {
             const match = mappedJobs.find(j => j.id === initialJobId || j.jobId === initialJobId);
             setSelectedJob(match || mappedJobs[0]);
@@ -831,7 +836,7 @@ export default function JobsLeads() {
     setCurrentPage(1);
   }, [activeTab, searchQuery]);
 
-  const tabs = ["All", "New", "Quote Sent", "Contacted", "In Progress", "Completed", "Closed"];
+  const tabs = ["All", "New", "Quote Sent", "Connected", "In Progress", "Completed", "Closed"];
 
   // Helper to count jobs for tabs
   const getTabCount = (tab: string) => {
@@ -844,10 +849,10 @@ export default function JobsLeads() {
 
   const renderStatusBadge = (status: string) => {
     const s = status?.toUpperCase();
-    if (status === "Quote Accepted" || s === "QUOTE_ACCEPTED" || s === "ACCEPTED" || status === "Contacted" || s === "CONTACTED") {
+    if (status === "Quote Accepted" || s === "QUOTE_ACCEPTED" || s === "ACCEPTED" || status === "Contacted" || s === "CONTACTED" || status === "Connected" || s === "CONNECTED") {
       return (
         <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#7DB0E3] border border-[#679FD8] text-[#103270] text-[11px] font-bold">
-          Contacted
+          Connected
         </div>
       );
     }
@@ -868,7 +873,7 @@ export default function JobsLeads() {
 
     if (status === "In Progress" || s === "IN_PROGRESS" || s === "IN PROGRESS" || s === "STARTED") {
       return (
-        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#EFDB4B] border border-[#DFC736] text-[#8A5C05] text-[11px] font-bold">
+        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#EBA75B] border border-[#E09D50] text-[#7A3E06] text-[11px] font-bold">
           In Progress
         </div>
       );
@@ -943,14 +948,14 @@ export default function JobsLeads() {
                     const firstOfTab = jobs.find(j => tab === "All" || (tab === "Closed" ? (j.status === "Closed") : (tab === "New" || tab === "Posted" ? (j.status === "New" || j.status === "Posted" || (j.status as any) === "Rejected" || (j.status as any) === "Declined") : j.status === tab)));
                     if (firstOfTab) setSelectedJob(firstOfTab);
                   }}
-                  className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-full text-[12.5px] sm:text-[13px] font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer select-none ${isActive
+                  className={`flex items-center gap-1.5 px-3.5 sm:px-4 py-1.5 sm:py-2 rounded-[8px] text-[12.5px] sm:text-[13px] font-semibold whitespace-nowrap shrink-0 transition-all cursor-pointer select-none ${isActive
                     ? "bg-[#1C2C1C] text-white shadow-xs"
                     : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50 active:bg-gray-100"
                     }`}
                 >
                   <span>{tab}</span>
                   <span
-                    className={`text-[11px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-none transition-colors ${isActive
+                    className={`text-[11px] font-bold px-1.5 py-0.5 rounded-[4px] min-w-[18px] text-center leading-none transition-colors ${isActive
                       ? "bg-white/20 text-white"
                       : "bg-gray-100 text-gray-500"
                       }`}
@@ -997,7 +1002,7 @@ export default function JobsLeads() {
                   (job.rawStatus || job.status)?.toUpperCase() === "EXPIRED";
                 const isJobCompleted =
                   (job.rawStatus || job.status)?.toUpperCase() === "COMPLETED";
-                
+
                 let bgClass = "bg-white";
                 if (isJobClosed) bgClass = "bg-[#F5F5F5]";
                 else if (isJobCompleted) bgClass = "bg-[#F4F7F1]";
@@ -1007,8 +1012,8 @@ export default function JobsLeads() {
                     key={`${job.id}-${idx}`}
                     onClick={() => setSelectedJob(job)}
                     className={`cursor-pointer rounded-2xl p-4 transition-all duration-200 border-2 flex flex-col gap-2.5 shadow-xs ${bgClass} ${isSelected
-                        ? "border-[#6E9625] ring-2 ring-[#6E9625]/20 shadow-sm"
-                        : "border-transparent hover:border-gray-200"
+                      ? "border-[#6E9625] ring-2 ring-[#6E9625]/20 shadow-sm"
+                      : "border-transparent hover:border-gray-200"
                       }`}
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -1120,9 +1125,30 @@ export default function JobsLeads() {
                           (Array.isArray(selectedJob.quotes) && selectedJob.quotes.some((q: any) => q.status?.toUpperCase() === "ACCEPTED" && q.id !== quoteDetails?.id))
                         );
 
+                        const isAccepted = Boolean(
+                          selectedJob.isQuoteAccepted ||
+                          quoteStatusUpper === "ACCEPTED" ||
+                          matchStatusUpper === "ACCEPTED"
+                        );
+
                         if (selectedJob.status === "Completed" || selectedJob.rawStatus === "COMPLETED" || jobRawUpper === "COMPLETED") {
                           return renderStatusBadge("Completed");
                         }
+
+                        if (isAccepted) {
+                          if (selectedJob.status === "In Progress" || selectedJob.rawStatus === "IN_PROGRESS" || selectedJob.traderStarted) {
+                            return renderStatusBadge("In Progress");
+                          }
+                          return renderStatusBadge("Connected");
+                        }
+
+                        if (isQuoteOrMatchRejected) {
+                          if (hasOtherTraderAccepted) {
+                            return renderStatusBadge("Closed");
+                          }
+                          return renderStatusBadge(selectedJob.status || "Quote Sent");
+                        }
+
                         if (selectedJob.status === "In Progress" || selectedJob.rawStatus === "IN_PROGRESS" || jobRawUpper === "IN_PROGRESS") {
                           return renderStatusBadge("In Progress");
                         }
@@ -1133,20 +1159,6 @@ export default function JobsLeads() {
                           selectedJob.rawStatus === "EXPIRED"
                         ) {
                           return renderStatusBadge("Closed");
-                        }
-                        if (isQuoteOrMatchRejected) {
-                          if (hasOtherTraderAccepted) {
-                            return renderStatusBadge("In Progress");
-                          }
-                          return renderStatusBadge(selectedJob.status || "Quote Sent");
-                        }
-                        const isAccepted = Boolean(
-                          selectedJob.isQuoteAccepted ||
-                          quoteStatusUpper === "ACCEPTED" ||
-                          matchStatusUpper === "ACCEPTED"
-                        );
-                        if (isAccepted) {
-                          return renderStatusBadge("Contacted");
                         }
                         if (selectedJob.hasQuoted || quoteStatusUpper === "PENDING" || selectedJob.status === "Quote Sent") {
                           return renderStatusBadge("Quote Sent");
@@ -1176,25 +1188,73 @@ export default function JobsLeads() {
                     </div>
                   </div>
 
-                  {/* Title & Service Category Tags */}
-                  <div>
-                    <h2 className="text-[22px] sm:text-[25px] font-extrabold text-[#1C2C1C] leading-tight mb-2.5">
-                      {selectedJob.title}
-                    </h2>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#F4F7EE] text-[#557A18] text-[12px] font-semibold">
-                        <Tag size={12} /> {fullJobData?.category?.name || selectedJob.tag}
-                      </span>
-                      {fullJobData?.subCategory?.name && (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 text-[12px] font-medium">
-                          {fullJobData.subCategory.name}
+                  {/* Title, Service Category Tags, & Customer Info */}
+                  <div className="flex justify-between items-start gap-4">
+                    <div>
+                      <h2 className="text-[22px] sm:text-[25px] font-extrabold text-[#1C2C1C] leading-tight mb-2.5">
+                        {selectedJob.title}
+                      </h2>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#F4F7EE] text-[#557A18] text-[12px] font-semibold">
+                          <Tag size={12} /> {fullJobData?.category?.name || selectedJob.tag}
                         </span>
-                      )}
-                      {fullJobData?.skillService?.name && (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 text-[12px] font-medium">
-                          {fullJobData.skillService.name}
+                        {fullJobData?.subCategory?.name && (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 text-[12px] font-medium">
+                            {fullJobData.subCategory.name}
+                          </span>
+                        )}
+                        {fullJobData?.skillService?.name && (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-gray-100 text-gray-700 text-[12px] font-medium">
+                            {fullJobData.skillService.name}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {/* Customer Info (Moved from bottom) */}
+                    <div
+                      onClick={async () => {
+                        const customerId = selectedJob.customer?.id;
+                        if (!customerId) {
+                          toast.error("Customer ID not available");
+                          return;
+                        }
+                        try {
+                          setIsLoadingCustomerProfile(true);
+                          setIsCustomerProfileModalOpen(true);
+                          setCustomerProfileData(null);
+                          const res = await authApi.getCustomerProfileForTrader(customerId);
+                          setCustomerProfileData(res?.data || res);
+                        } catch (err: any) {
+                          console.error("Failed to load customer profile", err);
+                          toast.error(err?.response?.data?.message || "Failed to load customer profile");
+                          setIsCustomerProfileModalOpen(false);
+                        } finally {
+                          setIsLoadingCustomerProfile(false);
+                        }
+                      }}
+                      className="flex items-center gap-2.5 p-1.5 pr-4 rounded-sm bg-[#F8F9FA] hover:bg-gray-100 cursor-pointer transition-colors border border-gray-100 shrink-0 shadow-xs mt-1"
+                    >
+                      <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 shrink-0 flex items-center justify-center font-bold text-gray-600 text-xs">
+                        {fullJobData?.customer?.profileImage || selectedJob.customer?.avatar ? (
+                          <img
+                            src={getImageUrl(fullJobData?.customer?.profileImage || selectedJob.customer?.avatar)}
+                            alt={fullJobData?.customer?.fullName || selectedJob.customer?.name || ''}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <span>
+                            {(fullJobData?.customer?.fullName || selectedJob.customer?.name) ? (fullJobData?.customer?.fullName || selectedJob.customer?.name).charAt(0).toUpperCase() : 'C'}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-col text-left">
+                        <span className="text-[9px] font-extrabold text-gray-400 uppercase tracking-wider block leading-none mb-1">
+                          POSTED BY
                         </span>
-                      )}
+                        <span className="text-[12px] font-bold text-[#1C2C1C] truncate max-w-[100px] leading-none">
+                          {fullJobData?.customer?.fullName || selectedJob.customer?.name || 'Customer'}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
@@ -1335,93 +1395,24 @@ export default function JobsLeads() {
                     </div>
                   )}
 
-                  {/* Customer Information Bar */}
-                  <div className="p-3.5 rounded-2xl border border-gray-100 bg-[#F8F9FA] flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3.5 min-w-0">
-                      <div className="w-11 h-11 rounded-full overflow-hidden bg-gray-200 shrink-0 flex items-center justify-center font-bold text-gray-600 text-sm shadow-xs">
-                        {fullJobData?.customer?.profileImage || selectedJob.customer?.avatar ? (
-                          <img
-                            src={getImageUrl(fullJobData?.customer?.profileImage || selectedJob.customer?.avatar)}
-                            alt={fullJobData?.customer?.fullName || selectedJob.customer?.name || ''}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          <span>
-                            {(fullJobData?.customer?.fullName || selectedJob.customer?.name) ? (fullJobData?.customer?.fullName || selectedJob.customer?.name).charAt(0).toUpperCase() : 'C'}
-                          </span>
-                        )}
-                      </div>
-                      <div className="min-w-0">
-                        <span className="text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-0.5">
-                          POSTED BY
-                        </span>
-                        <h4 className="text-[14px] font-bold text-[#1C2C1C] truncate">
-                          {fullJobData?.customer?.fullName || selectedJob.customer?.name || 'Customer'}
-                        </h4>
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={async () => {
-                        const customerId = selectedJob.customer?.id;
-                        if (!customerId) {
-                          toast.error("Customer ID not available");
-                          return;
-                        }
-                        try {
-                          setIsLoadingCustomerProfile(true);
-                          setIsCustomerProfileModalOpen(true);
-                          setCustomerProfileData(null);
-                          const res = await authApi.getCustomerProfileForTrader(customerId);
-                          setCustomerProfileData(res?.data || res);
-                        } catch (err: any) {
-                          console.error("Failed to load customer profile", err);
-                          toast.error(err?.response?.data?.message || "Failed to load customer profile");
-                          setIsCustomerProfileModalOpen(false);
-                        } finally {
-                          setIsLoadingCustomerProfile(false);
-                        }
-                      }}
-                      className="px-4 py-2 border border-gray-200 bg-white text-[#6E9625] rounded-xl text-[12px] font-bold hover:bg-gray-50 transition-colors shrink-0 cursor-pointer shadow-xs"
-                    >
-                      View Profile
-                    </button>
-                  </div>
-
-                  {/* Quote Sent Info Card (if already quoted) */}
+                  {/* Customer Information moved to top right */}
+                  {/* Quote Sent Info Card (if already quoted but not accepted/declined — pending state) */}
                   {selectedJob.hasQuoted && quoteDetails && (() => {
                     const isQuoteRejected = quoteDetails?.status?.toUpperCase() === "REJECTED" || quoteDetails?.status?.toUpperCase() === "DECLINED" || selectedJob.matchStatus === "REJECTED";
                     const rawUpper = (selectedJob.rawStatus || "").toUpperCase();
                     const isAutoRejected = isQuoteRejected && (rawUpper === "IN_PROGRESS" || rawUpper === "ASSIGNED" || rawUpper === "COMPLETED");
                     const isManualDecline = isQuoteRejected && !isAutoRejected;
+                    const isAcceptedQuote = quoteDetails?.status?.toUpperCase() === "ACCEPTED" || selectedJob.isQuoteAccepted;
+
+                    // Only render the inline pending quote card when the quote is still pending (not accepted/declined)
+                    if (isAutoRejected || isManualDecline || isAcceptedQuote) return null;
 
                     return (
-                      <div className={`p-3.5 rounded-2xl border ${isAutoRejected
-                        ? "border-red-200 bg-red-50/40"
-                        : isManualDecline
-                          ? "border-amber-200 bg-amber-50/40"
-                          : (quoteDetails?.status?.toUpperCase() === "ACCEPTED" || selectedJob.isQuoteAccepted)
-                            ? "border-emerald-200 bg-emerald-50/40"
-                            : "border-[#D5E8B5] bg-[#F7FAF2]"
-                        }`}>
+                      <div className="p-3.5 rounded-2xl border border-[#D5E8B5] bg-[#F7FAF2]">
                         <div className="flex items-center justify-between mb-2">
-                          {isAutoRejected ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FF3B30]/10 text-[#FF3B30] border border-[#FF3B30]/30 text-[11px] font-bold uppercase tracking-wide">
-                              <Ban size={12} className="text-[#FF3B30]" /> Quote Declined
-                            </span>
-                          ) : isManualDecline ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 text-[11px] font-bold uppercase tracking-wide">
-                              <RefreshCw size={12} /> Quote Declined
-                            </span>
-                          ) : quoteDetails?.status?.toUpperCase() === "ACCEPTED" || selectedJob.isQuoteAccepted ? (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[11px] font-bold uppercase tracking-wide">
-                              <CheckCircle size={12} /> Quote Accepted
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#E4F2CC] text-[#4E7519] text-[11px] font-bold uppercase tracking-wide">
-                              <CheckCircle size={12} /> Your Quote Sent
-                            </span>
-                          )}
+                          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#E4F2CC] text-[#4E7519] text-[11px] font-bold uppercase tracking-wide">
+                            <CheckCircle size={12} /> Your Quote Sent
+                          </span>
 
                           {(!isAutoRejected && !isManualDecline && quoteDetails?.status?.toUpperCase() !== "ACCEPTED" && !selectedJob.isQuoteAccepted) && (
                             <div className="flex items-center gap-2">
@@ -1462,8 +1453,8 @@ export default function JobsLeads() {
                   })()}
                 </div>
 
-                {/* Sticky Pinned Action Bar at the Bottom: 100% visible always */}
-                <div className="p-4 sm:px-6 bg-white/95 backdrop-blur-xs border-t border-gray-100 shrink-0">
+                {/* Sticky Pinned Action Bar at the Bottom */}
+                <div className="bg-white/95 backdrop-blur-xs border-t border-gray-100 shrink-0">
                   {(() => {
                     const quoteStatusUpper = quoteDetails?.status?.toUpperCase();
                     const matchStatusUpper = selectedJob.matchStatus?.toUpperCase();
@@ -1569,129 +1560,291 @@ export default function JobsLeads() {
                       // );
                     }
 
+                    /* ─── ACCEPTED QUOTE: green inset container (2-row layout) ─── */
+                    if (isAccepted && quoteDetails) {
+                      return (
+                        <div className="p-4 sm:px-6 pb-5">
+                          <div className="rounded-xl border border-[#A5D6A7] bg-[#F1F8E9] p-5 sm:p-6">
+                            {/* Row 1: Badge + Primary Action */}
+                            <div className="flex items-center justify-between mb-5">
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#E4F2CC] text-[#4E7519] text-[12px] font-bold whitespace-nowrap">
+                                <CheckCircle size={14} /> Quote Accepted
+                              </span>
+                              {showStartJob && (
+                                <button
+                                  disabled={isStartingJob || selectedJob.rawStatus === "IN_PROGRESS"}
+                                  onClick={async () => {
+                                    try {
+                                      setIsStartingJob(true);
+                                      toast.loading("Starting job...", { id: "startJob" });
+                                      await authApi.startJob(selectedJob.id);
+                                      toast.success("Job started successfully!", { id: "startJob" });
+
+                                      setJobs((prevJobs) =>
+                                        prevJobs.map((j) =>
+                                          j.id === selectedJob.id ? { ...j, status: "In Progress", rawStatus: "IN_PROGRESS", traderStarted: true } : j
+                                        )
+                                      );
+                                      setSelectedJob((prev) => (prev ? { ...prev, status: "In Progress", rawStatus: "IN_PROGRESS", traderStarted: true } : null));
+                                    } catch (error: any) {
+                                      console.error("Failed to start job", error);
+                                      toast.error(error?.response?.data?.message || "Failed to start job", { id: "startJob" });
+                                    } finally {
+                                      setIsStartingJob(false);
+                                    }
+                                  }}
+                                  className={`h-[42px] px-6 rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 transition-all ${isStartingJob || selectedJob.rawStatus === "IN_PROGRESS"
+                                    ? "bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300"
+                                    : "bg-[#7CB342] hover:bg-[#689F38] text-white shadow-sm cursor-pointer active:scale-[0.98]"
+                                    }`}
+                                >
+                                  {selectedJob.rawStatus === "IN_PROGRESS" ? (
+                                    "Job Started"
+                                  ) : isStartingJob ? (
+                                    "Starting..."
+                                  ) : (
+                                    <>
+                                      <Play size={15} className="fill-current" />
+                                      Start Job
+                                    </>
+                                  )}
+                                </button>
+                              )}
+                            </div>
+                            {/* Row 2: Price + Duration + Contact Customer */}
+                            <div className="flex items-end justify-between gap-4">
+                              <div className="flex items-end gap-8">
+                                <div>
+                                  <span className="text-[10px] font-bold text-[#6E9625] uppercase tracking-wider block leading-tight mb-1">PRICE</span>
+                                  <span className="text-[18px] font-extrabold text-[#1C2C1C] leading-tight">€{quoteDetails.price}</span>
+                                </div>
+                                <div>
+                                  <span className="text-[10px] font-bold text-[#6E9625] uppercase tracking-wider block leading-tight mb-1">ESTIMATED DURATION</span>
+                                  <span className="text-[18px] font-extrabold text-[#1C2C1C] leading-tight">{quoteDetails.estimatedDays} {quoteDetails.estimatedDays === 1 ? 'day' : 'days'}</span>
+                                </div>
+                              </div>
+                              <button
+                                onClick={async () => {
+                                  const targetCustomerId = fullJobData?.customer?.id || fullJobData?.customer?._id || fullJobData?.customerId || selectedJob?.customer?.id;
+
+                                  if (!targetCustomerId) {
+                                    toast.error("Could not find customer contact details.");
+                                    return;
+                                  }
+
+                                  try {
+                                    toast.loading("Opening conversation...", {
+                                      id: "openConversation",
+                                    });
+
+                                    const res = await authApi.getOrCreateTraderConversation(
+                                      targetCustomerId,
+                                      selectedJob.id
+                                    );
+
+                                    const conversation = res?.data || res;
+                                    const conversationId = conversation?.id || conversation?._id;
+
+                                    if (!conversationId) {
+                                      toast.error("Failed to create conversation.", {
+                                        id: "openConversation",
+                                      });
+                                      return;
+                                    }
+
+                                    toast.success("Conversation opened", {
+                                      id: "openConversation",
+                                    });
+
+                                    router.push(
+                                      `/trader/inbox?conversationId=${conversationId}&customerId=${targetCustomerId}&jobId=${selectedJob.id}`
+                                    );
+                                  } catch (error: any) {
+                                    console.error("Failed to open customer conversation:", error);
+                                    toast.error(
+                                      error?.response?.data?.message ||
+                                      error?.message ||
+                                      "Failed to open conversation.",
+                                      {
+                                        id: "openConversation",
+                                      }
+                                    );
+                                  }
+                                }}
+                                className="h-[42px] px-6 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-[#1C2C1C] text-[13px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98] shrink-0"
+                              >
+                                <MessageCircle size={15} className="text-gray-400" />
+                                Contact Customer
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    /* ─── DECLINED QUOTE (Manual or Auto): red inset container (2-row layout) ─── */
+                    if ((isAutoRejected || isManualDecline) && quoteDetails) {
+                      return (
+                        <div className="p-4 sm:px-6 pb-5">
+                          <div className="rounded-xl border border-[#EF9A9A] bg-[#FFF5F5] p-5 sm:p-6">
+                            {/* Row 1: Badge + Primary Action */}
+                            <div className="flex items-center justify-between mb-5">
+                              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-sm border bg-[#FFEBEE] text-[#C62828] text-[12px] font-bold whitespace-nowrap">
+                                <Ban size={14} /> Quote Declined
+                              </span>
+                              {isManualDecline && (
+                                <button
+                                  onClick={openRevokeQuoteModal}
+                                  className="h-[42px] px-6 rounded-xl bg-[#1C2C1C] hover:bg-[#1C2C1C] text-white text-[14px] font-bold flex items-center justify-center gap-2 transition-all shadow-sm cursor-pointer active:scale-[0.98]"
+                                >
+                                  <RefreshCw size={15} />
+                                  Revise Quote
+                                </button>
+                              )}
+                            </div>
+                            {/* Row 2: Price + Duration + Contact Customer */}
+                            <div className="flex items-end justify-between gap-4">
+                              <div className="flex items-end gap-8">
+                                <div>
+                                  <span className="text-[10px] font-bold text-[#D32F2F] uppercase tracking-wider block leading-tight mb-1">PRICE</span>
+                                  <span className="text-[18px] font-extrabold text-[#1C2C1C] leading-tight">€{quoteDetails.price}</span>
+                                </div>
+                                <div>
+                                  <span className="text-[10px] font-bold text-[#D32F2F] uppercase tracking-wider block leading-tight mb-1">ESTIMATED DURATION</span>
+                                  <span className="text-[18px] font-extrabold text-[#1C2C1C] leading-tight">{quoteDetails.estimatedDays} {quoteDetails.estimatedDays === 1 ? 'day' : 'days'}</span>
+                                </div>
+                              </div>
+                              <button
+                                onClick={async () => {
+                                  const targetCustomerId = fullJobData?.customer?.id || fullJobData?.customer?._id || fullJobData?.customerId || selectedJob?.customer?.id;
+
+                                  if (!targetCustomerId) {
+                                    toast.error("Could not find customer contact details.");
+                                    return;
+                                  }
+
+                                  try {
+                                    toast.loading("Opening conversation...", {
+                                      id: "openConversation",
+                                    });
+
+                                    const res = await authApi.getOrCreateTraderConversation(
+                                      targetCustomerId,
+                                      selectedJob.id
+                                    );
+
+                                    const conversation = res?.data || res;
+                                    const conversationId = conversation?.id || conversation?._id;
+
+                                    if (!conversationId) {
+                                      toast.error("Failed to create conversation.", {
+                                        id: "openConversation",
+                                      });
+                                      return;
+                                    }
+
+                                    toast.success("Conversation opened", {
+                                      id: "openConversation",
+                                    });
+
+                                    router.push(
+                                      `/trader/inbox?conversationId=${conversationId}&customerId=${targetCustomerId}&jobId=${selectedJob.id}`
+                                    );
+                                  } catch (error: any) {
+                                    console.error("Failed to open customer conversation:", error);
+                                    toast.error(
+                                      error?.response?.data?.message ||
+                                      error?.message ||
+                                      "Failed to open conversation.",
+                                      {
+                                        id: "openConversation",
+                                      }
+                                    );
+                                  }
+                                }}
+                                className="h-[42px] px-6 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-[#1C2C1C] text-[13px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98] shrink-0"
+                              >
+                                <MessageCircle size={15} className="text-[#6E9625]" />
+                                Contact Customer
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    /* ─── DEFAULT: Send Quote / Quote Sent / Closed / Completed ─── */
                     return (
-                      <div className={`grid gap-3 ${showStartJob ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2"}`}>
-                        {/* Send / Status Quote Button */}
-                        <button
-                          onClick={isManualDecline ? openRevokeQuoteModal : openQuoteModal}
-                          disabled={isSendDisabled}
-                          className={`w-full h-[46px] rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 transition-all ${isAutoRejected
-                            ? "bg-red-50 text-[#FF3B30] border border-[#FF3B30]/30 cursor-not-allowed"
-                            : isManualDecline
-                              ? "bg-amber-500 hover:bg-amber-600 text-white shadow-xs cursor-pointer active:scale-[0.99]"
-                              : isSendDisabled
-                                ? "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
-                                : "bg-[#1C2C1C] hover:bg-[#2A412A] text-white shadow-sm cursor-pointer active:scale-[0.99]"
-                            }`}
-                        >
-                          {isAutoRejected ? (
-                            <Ban size={16} className="text-[#FF3B30]" />
-                          ) : isManualDecline ? (
-                            <RefreshCw size={16} className="text-white" />
-                          ) : isAccepted ? (
-                            <CheckCircle size={16} className="text-emerald-600" />
-                          ) : (
-                            <Send size={16} />
-                          )}
-                          {buttonText}
-                        </button>
-
-                        {/* Start Job Button (if accepted) */}
-                        {showStartJob && (
+                      <div className="p-4 sm:px-6 pb-5">
+                        <div className={`grid gap-3 ${showStartJob ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2"}`}>
+                          {/* Send / Status Quote Button */}
                           <button
-                            disabled={isStartingJob || selectedJob.rawStatus === "IN_PROGRESS"}
-                            onClick={async () => {
-                              try {
-                                setIsStartingJob(true);
-                                toast.loading("Starting job...", { id: "startJob" });
-                                await authApi.startJob(selectedJob.id);
-                                toast.success("Job started successfully!", { id: "startJob" });
-
-                                setJobs((prevJobs) =>
-                                  prevJobs.map((j) =>
-                                    j.id === selectedJob.id ? { ...j, status: "In Progress", rawStatus: "IN_PROGRESS" } : j
-                                  )
-                                );
-                                setSelectedJob((prev) => (prev ? { ...prev, status: "In Progress", rawStatus: "IN_PROGRESS" } : null));
-                              } catch (error: any) {
-                                console.error("Failed to start job", error);
-                                toast.error(error?.response?.data?.message || "Failed to start job", { id: "startJob" });
-                              } finally {
-                                setIsStartingJob(false);
-                              }
-                            }}
-                            className={`w-full h-[46px] rounded-xl text-[14px] font-extrabold flex items-center justify-center gap-2 transition-all ${isStartingJob || selectedJob.rawStatus === "IN_PROGRESS"
-                              ? "bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300"
-                              : "bg-gradient-to-r from-[#6E9625] to-[#8BC34A] hover:from-[#58791C] hover:to-[#6E9625] text-white shadow-[0_4px_12px_rgba(110,150,37,0.3)] hover:shadow-[0_6px_16px_rgba(110,150,37,0.4)] cursor-pointer active:scale-[0.99]"
+                            onClick={isManualDecline ? openRevokeQuoteModal : openQuoteModal}
+                            disabled={isSendDisabled}
+                            className={`w-full h-[46px] rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 transition-all ${isSendDisabled
+                              ? "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
+                              : "bg-[#1C2C1C] hover:bg-[#2A412A] text-white shadow-sm cursor-pointer active:scale-[0.99]"
                               }`}
                           >
-                            {selectedJob.rawStatus === "IN_PROGRESS" ? (
-                              "Job Started"
-                            ) : isStartingJob ? (
-                              "Starting..."
-                            ) : (
-                              <>
-                                <Play size={17} className="fill-current" />
-                                Start Job
-                              </>
-                            )}
+                            <Send size={16} />
+                            {buttonText}
                           </button>
-                        )}
 
-                        {/* Contact Customer Button */}
-                        <button
-                          onClick={async () => {
-                            const targetCustomerId = fullJobData?.customer?.id || fullJobData?.customer?._id || fullJobData?.customerId || selectedJob?.customer?.id;
+                          {/* Contact Customer Button */}
+                          <button
+                            onClick={async () => {
+                              const targetCustomerId = fullJobData?.customer?.id || fullJobData?.customer?._id || fullJobData?.customerId || selectedJob?.customer?.id;
 
-                            if (!targetCustomerId) {
-                              toast.error("Could not find customer contact details.");
-                              return;
-                            }
-
-                            try {
-                              toast.loading("Opening conversation...", {
-                                id: "openConversation",
-                              });
-
-                              const res = await authApi.getOrCreateTraderConversation(
-                                targetCustomerId,
-                                selectedJob.id
-                              );
-
-                              const conversation = res?.data || res;
-                              const conversationId = conversation?.id || conversation?._id;
-
-                              if (!conversationId) {
-                                toast.error("Failed to create conversation.", {
-                                  id: "openConversation",
-                                });
+                              if (!targetCustomerId) {
+                                toast.error("Could not find customer contact details.");
                                 return;
                               }
 
-                              toast.success("Conversation opened", {
-                                id: "openConversation",
-                              });
-
-                              router.push(
-                                `/trader/inbox?conversationId=${conversationId}&customerId=${targetCustomerId}&jobId=${selectedJob.id}`
-                              );
-                            } catch (error: any) {
-                              console.error("Failed to open customer conversation:", error);
-                              toast.error(
-                                error?.response?.data?.message ||
-                                error?.message ||
-                                "Failed to open conversation.",
-                                {
+                              try {
+                                toast.loading("Opening conversation...", {
                                   id: "openConversation",
+                                });
+
+                                const res = await authApi.getOrCreateTraderConversation(
+                                  targetCustomerId,
+                                  selectedJob.id
+                                );
+
+                                const conversation = res?.data || res;
+                                const conversationId = conversation?.id || conversation?._id;
+
+                                if (!conversationId) {
+                                  toast.error("Failed to create conversation.", {
+                                    id: "openConversation",
+                                  });
+                                  return;
                                 }
-                              );
-                            }
-                          }}
-                          className="w-full h-[46px] rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-[#1C2C1C] text-[14px] font-bold flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer active:scale-[0.99]"
-                        >
-                          <MessageCircle size={16} className="text-[#6E9625]" />
-                          Contact Customer
-                        </button>
+
+                                toast.success("Conversation opened", {
+                                  id: "openConversation",
+                                });
+
+                                router.push(
+                                  `/trader/inbox?conversationId=${conversationId}&customerId=${targetCustomerId}&jobId=${selectedJob.id}`
+                                );
+                              } catch (error: any) {
+                                console.error("Failed to open customer conversation:", error);
+                                toast.error(
+                                  error?.response?.data?.message ||
+                                  error?.message ||
+                                  "Failed to open conversation.",
+                                  {
+                                    id: "openConversation",
+                                  }
+                                );
+                              }
+                            }}
+                            className="w-full h-[46px] rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-[#1C2C1C] text-[14px] font-bold flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer active:scale-[0.99]"
+                          >
+                            <MessageCircle size={16} className="text-grey-400" />
+                            Contact Customer
+                          </button>
+                        </div>
                       </div>
                     );
                   })()}

@@ -495,7 +495,10 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
       const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 
       selectedFiles.forEach(file => {
-        if (file.size >= MAX_SIZE) {
+        const validTypes = ["image/jpeg", "image/jpg", "image/png"];
+        if (!validTypes.includes(file.type)) {
+          toast.error(`${file.name} is not a valid format. Please upload JPG or PNG images only.`);
+        } else if (file.size >= MAX_SIZE) {
           toast.error(`${file.name} is 5MB or larger. Please upload a smaller file.`);
         } else {
           validFiles.push(file);
@@ -848,7 +851,7 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
                 className="hidden"
                 ref={fileInputRef}
                 onChange={handleFileChange}
-                accept="image/jpeg,image/png,application/pdf"
+                accept="image/jpeg,image/png"
               />
               <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center mb-4 shadow-sm">
                 <CloudUpload size={20} className="text-[#6E9625]" />
@@ -860,7 +863,7 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
                 Click to browse files
               </p>
               <p className="text-[10px] text-[#555555]/60 font-bold tracking-wider uppercase mb-2">
-                MAX FILE SIZE 5MB • JPEG, PNG, PDF
+                MAX FILE SIZE 5MB • JPEG, PNG
               </p>
               {files.length > 0 && (
                 <div

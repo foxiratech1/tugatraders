@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { authApi } from "@/app/api/authApi";
-import { MapPin, Calendar, Tag, Star, CheckCircle, ShieldCheck } from "lucide-react";
+import { MapPin, Calendar, Tag, Star, CheckCircle, ShieldCheck, Mail, Phone } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -86,62 +86,7 @@ export default function CustomerChatSidebar({ jobId, traderId }: SidebarProps) {
         </div>
       ) : (
         <>
-          {/* Job Details Section */}
-          {job && (
-            <div>
-              <h3 className="text-[12px] font-bold text-gray-400 tracking-wider mb-4 uppercase">Job Details</h3>
-              <div className="bg-[#F9FAF9] rounded-2xl p-5 border border-gray-50">
-                <p className="text-[10px] font-bold text-gray-500 uppercase mb-1">
-                  JOB-{job?.id?.slice(0, 5)?.toUpperCase() || "N/A"}
-                </p>
-                <h4 className="text-[16px] font-bold text-[#1C2C1C] mb-5">{job?.title}</h4>
 
-                <div className="space-y-4">
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
-                      <MapPin size={14} className="text-[#6E9625]" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase">Location</p>
-                      <p className="text-[13px] font-semibold text-[#1C2C1C]">{job?.location || "Not specified"}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
-                      <Calendar size={14} className="text-[#6E9625]" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase">Date Posted</p>
-                      <p className="text-[13px] font-semibold text-[#1C2C1C]">{formatDate(job?.createdAt)}</p>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center shadow-sm">
-                      <Tag size={14} className="text-[#6E9625]" />
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase">Category</p>
-                      <p className="text-[13px] font-semibold text-[#1C2C1C]">{job?.categoryDetails?.[0]?.name || job?.category?.name || "Other"}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between mt-6 pt-5 border-t border-gray-200">
-                  <p className="text-[12px] font-bold text-[#1C2C1C]">Status</p>
-                  <span className="bg-[#F0F9F1] text-[#6E9625] px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider">
-                    {job?.status || "Contacted"}
-                  </span>
-                </div>
-              </div>
-              <div className="text-center mt-4">
-                <Link href={`/customer-dashboard/job-history`} className="text-[#6E9625] text-[13px] font-bold hover:underline">
-                  View Full Job Post &rarr;
-                </Link>
-              </div>
-            </div>
-          )}
 
           {/* Trader Details Section */}
           {trader && (
@@ -152,7 +97,7 @@ export default function CustomerChatSidebar({ jobId, traderId }: SidebarProps) {
                   <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
                     <Image src={getAvatar()} alt={trader?.fullName} width={56} height={56} className="object-cover w-full h-full" />
                   </div>
-                  <div>
+                  <div className="flex flex-col items-start">
                     <h4 className="text-[16px] font-bold text-[#1C2C1C]">{trader?.fullName || trader?.companyName}</h4>
                     <div className="flex items-center gap-1.5 mt-1">
                       <Star size={14} className="text-[#F59E0B] fill-[#F59E0B]" />
@@ -163,34 +108,33 @@ export default function CustomerChatSidebar({ jobId, traderId }: SidebarProps) {
                         ({trader?.traderMetrics?.totalReviews || trader?.reviewCount || 0} reviews)
                       </span>
                     </div>
+                    <Link href={`/customer-dashboard/trader-profile/${trader?.id}`} className="mt-3 bg-[#1C2C1C] text-white text-[11px] font-bold px-4 py-1.5 rounded-lg hover:bg-[#2c3e2c] transition-colors">
+                      View Profile
+                    </Link>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 mb-5">
-                  <div className="bg-[#F9FAFB] rounded-xl p-3 text-center">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Jobs Done</p>
-                    <p className="text-[16px] font-bold text-[#1C2C1C]">
-                      {trader?.traderMetrics?.completedJobs || 0}
-                    </p>
+                <div className="flex flex-col gap-4 mt-6">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-[#F0F9F1] flex items-center justify-center flex-shrink-0">
+                      <Mail size={14} className="text-[#6E9625]" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase">Email</span>
+                      <span className="text-[13px] font-semibold text-[#6E9625] truncate max-w-[200px]">{trader?.email || "Not specified"}</span>
+                    </div>
                   </div>
-                  <div className="bg-[#F9FAFB] rounded-xl p-3 text-center">
-                    <p className="text-[10px] font-bold text-gray-400 uppercase mb-1">Member Since</p>
-                    <p className="text-[16px] font-bold text-[#1C2C1C]">
-                      {new Date(trader?.createdAt || Date.now()).getFullYear()}
-                    </p>
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-[#F0F9F1] flex items-center justify-center flex-shrink-0">
+                      <Phone size={14} className="text-[#6E9625]" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-bold text-gray-400 uppercase">Phone</span>
+                      <span className="text-[13px] font-semibold text-[#6E9625]">{trader?.phone || "Not specified"}</span>
+                    </div>
                   </div>
                 </div>
 
-                <div className="space-y-3 pt-4 border-t border-gray-100">
-                  <div className="flex items-center gap-2">
-                    <CheckCircle size={16} className="text-[#6E9625]" />
-                    <span className="text-[12px] text-[#1C2C1C] font-medium">Identity Verified</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck size={16} className="text-[#6E9625]" />
-                    <span className="text-[12px] text-[#1C2C1C] font-medium">Insurance Uploaded</span>
-                  </div>
-                </div>
               </div>
             </div>
           )}

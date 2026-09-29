@@ -360,7 +360,7 @@ export default function TraderNavbar() {
           </Link>
 
           {/* Desktop nav links (visible on xl and wider screens) */}
-          <nav className="hidden xl:flex items-stretch h-full flex-1 gap-1 justify-center">
+          <nav className="hidden xl:flex items-stretch h-full flex-1 gap-1 2xl:gap-1.5 justify-center">
             {desktopNavLinks.map(({ label, href, icon: Icon }) => {
               const active = isActive(href);
               const restricted = !isApproved && label !== "Profile";
@@ -370,17 +370,17 @@ export default function TraderNavbar() {
                   href={href}
                   onClick={(e) => handleRestrictedNav(e, label)}
                   className={`
-                    relative flex items-center gap-1.5 px-3 text-[13px] font-semibold
+                    relative flex items-center gap-2 px-3 2xl:px-3.5 text-[15.5px] font-semibold
                     transition-all duration-200 whitespace-nowrap h-full group
-                    ${active ? "text-[#1C2C1C]" : "text-[#1C2C1C]/60 hover:text-[#1C2C1C] hover:scale-[1.02]"}
+                    ${active ? "text-[#1C2C1C]" : "text-[#1C2C1C]/65 hover:text-[#1C2C1C] hover:scale-[1.02]"}
                     ${restricted ? "opacity-60 cursor-not-allowed" : ""}
                   `}
                 >
-                  <Icon size={14} className={`transition-all duration-200 ${active ? "text-[#6E9625] scale-110" : "text-current group-hover:text-[#6E9625]"}`} />
+                  <Icon size={17} className={`transition-all duration-200 ${active ? "text-[#6E9625] scale-110" : "text-current group-hover:text-[#6E9625]"}`} />
                   <div className="flex items-center gap-1.5 relative">
                     {label}
                     {label === "Inbox" && inboxUnread > 0 && !active && (
-                      <span className="flex items-center justify-center min-w-[15px] h-[15px] px-1 bg-[#E53935] rounded-full text-[9px] font-bold text-white shadow-sm">
+                      <span className="flex items-center justify-center min-w-[16px] h-[16px] px-1 bg-[#E53935] rounded-full text-[10px] font-bold text-white shadow-sm">
                         {inboxUnread > 99 ? "99+" : inboxUnread}
                       </span>
                     )}
@@ -648,9 +648,9 @@ export default function TraderNavbar() {
                       }
                     }}
                     className={`
-                      flex items-center justify-between px-4 py-3 rounded-xl text-[14px] font-medium transition-all
+                      flex items-center justify-between px-4 py-3 rounded-xl text-[15.5px] font-semibold transition-all
                       ${active
-                        ? "bg-[#6E9625]/10 text-[#6E9625] font-semibold shadow-xs"
+                        ? "bg-[#6E9625]/10 text-[#6E9625] shadow-xs"
                         : "text-[#1C2C1C]/80 hover:bg-gray-50 hover:text-[#1C2C1C]"
                       }
                       ${restricted ? "opacity-60 cursor-not-allowed" : ""}
@@ -658,7 +658,7 @@ export default function TraderNavbar() {
                   >
                     <div className="flex items-center gap-3">
                       <Icon
-                        size={18}
+                        size={20}
                         className={active ? "text-[#6E9625]" : "text-gray-500"}
                       />
                       <span>{label}</span>

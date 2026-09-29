@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
-import { Star, MapPin, Calendar, DollarSign, Shield, ShieldCheck, Mail, Info, AlertTriangle, CheckCircle, Phone, X, Briefcase, Plus } from "lucide-react";
+import { Star, MapPin, Calendar, DollarSign, Shield, ShieldCheck, Mail, Info, AlertTriangle, CheckCircle, Phone, X, Briefcase, Plus, Clock, Play, XCircle, Send } from "lucide-react";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
 import { authApi } from "@/app/api/authApi";
@@ -113,6 +113,29 @@ export default function ChatWindow({
   const [linkedJobId, setLinkedJobId] = useState<string | null>(null);
   const effectiveJobId = isDirectOrNoJob ? null : (activeJobId || linkedJobId);
 
+  const traderId = conversation.traderId || conversation.trader?.id || (conversation.trader as any)?._id;
+  const [actualUserId, setActualUserId] = useState<string | null>(currentUserId || null);
+
+  useEffect(() => {
+    // Check trader identity explicitly
+    const fetchProfile = async () => {
+      try {
+        const res = await authApi.getMyProfile();
+        const pData = res?.data || res;
+        if (pData?.id || pData?._id) {
+          setActualUserId(pData.id || pData._id);
+        }
+      } catch (err) {
+        console.error("Failed to fetch profile in ChatWindow", err);
+      }
+    };
+    if (!currentUserId) {
+      fetchProfile();
+    }
+  }, [currentUserId]);
+
+  const isActualTrader = actualUserId && traderId && (actualUserId === traderId);
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [isPartnerOnline, setIsPartnerOnline] = useState(false);
@@ -139,6 +162,22 @@ export default function ChatWindow({
   const [customReason, setCustomReason] = useState("");
   const [submittingReport, setSubmittingReport] = useState(false);
   const [isReported, setIsReported] = useState(false);
+
+  // Direct Job states
+  const [directJob, setDirectJob] = useState<any | null>(null);
+  const [loadingDirectJob, setLoadingDirectJob] = useState(false);
+  const [showDirectStartModal, setShowDirectStartModal] = useState(false);
+  const [directJobTitle, setDirectJobTitle] = useState("");
+  const [directJobPrice, setDirectJobPrice] = useState("");
+  const [directJobNotes, setDirectJobNotes] = useState("");
+  const [isSubmittingDirectJob, setIsSubmittingDirectJob] = useState(false);
+
+  // Review Modal state (for direct job review)
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewRating, setReviewRating] = useState(0);
+  const [reviewTitle, setReviewTitle] = useState("");
+  const [reviewComment, setReviewComment] = useState("");
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
 
   const [jobStatus, setJobStatus] = useState<string | null>(job?.status || null);
 
@@ -197,6 +236,25 @@ export default function ChatWindow({
     };
     fetchJobStatus();
   }, [effectiveJobId]);
+
+  // Fetch Direct Job if no regular job is linked
+  useEffect(() => {
+    if (isDirectOrNoJob && conversationId) {
+      const fetchDirectJob = async () => {
+        try {
+          setLoadingDirectJob(true);
+          const res = await authApi.getDirectJobForConversation(conversationId).catch(() => null);
+          const jobData = res?.data || res;
+          setDirectJob(jobData || null);
+        } catch (err) {
+          console.warn("Could not fetch direct job for conversation:", err);
+        } finally {
+          setLoadingDirectJob(false);
+        }
+      };
+      fetchDirectJob();
+    }
+  }, [isDirectOrNoJob, conversationId]);
 
   // Load customer jobs when Start Job modal opens
   const loadCustomerJobs = async () => {
@@ -526,9 +584,106 @@ export default function ChatWindow({
     }
   };
 
+  const handleDirectJobStart = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!directJobTitle.trim()) {
+      toast.error("Please enter a job title");
+      return;
+    }
+    try {
+      setIsSubmittingDirectJob(true);
+      const res = await authApi.startDirectJob({
+        conversationId,
+        title: directJobTitle,
+        agreedPrice: directJobPrice ? Number(directJobPrice) : undefined,
+        description: directJobNotes,
+      });
+      setDirectJob(res?.data || res);
+      setShowDirectStartModal(false);
+      toast.success("Job started successfully");
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to start job");
+    } finally {
+      setIsSubmittingDirectJob(false);
+    }
+  };
+
+  const handleDirectJobClose = async () => {
+    if (!confirm("Are you sure you want to mark this job as completed? The customer will be asked to confirm.")) return;
+    try {
+      setIsSubmittingDirectJob(true);
+      const res = await authApi.closeDirectJob(directJob.id || directJob._id);
+      setDirectJob(res?.data || res);
+      toast.success("Job marked as completed");
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to close job");
+    } finally {
+      setIsSubmittingDirectJob(false);
+    }
+  };
+
+  const handleDirectJobRemind = async () => {
+    try {
+      setIsSubmittingDirectJob(true);
+      const res = await authApi.remindCustomerDirectJob(directJob.id || directJob._id);
+      toast.success("Reminder sent to customer");
+      setDirectJob(res?.data || res);
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to send reminder");
+    } finally {
+      setIsSubmittingDirectJob(false);
+    }
+  };
+
+  const handleDirectJobConfirm = async () => {
+    try {
+      setIsSubmittingDirectJob(true);
+      const res = await authApi.confirmDirectJob(directJob.id || directJob._id);
+      setDirectJob(res?.data || res);
+      toast.success("Job completion confirmed! You can now leave a review.");
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to confirm completion");
+    } finally {
+      setIsSubmittingDirectJob(false);
+    }
+  };
+
+  const handleDirectJobReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (reviewRating === 0) {
+      toast.error("Please select a rating");
+      return;
+    }
+    try {
+      setIsSubmittingReview(true);
+      const formData = new FormData();
+      formData.append('directJobId', directJob.id || directJob._id);
+      formData.append('traderId', directJob.traderId);
+      formData.append('reviewType', 'DIRECTORY');
+      formData.append('wasWorkCompleted', 'true');
+      formData.append('rating', String(reviewRating));
+      formData.append('title', reviewTitle);
+      formData.append('review', reviewComment);
+
+      // Use existing postReview which accepts FormData
+      const res = await authApi.postReview(formData);
+
+      setDirectJob((prev: any) => ({
+        ...prev,
+        reviews: [res?.data || res]
+      }));
+      setShowReviewModal(false);
+      toast.success("Review submitted successfully");
+    } catch (error: any) {
+      toast.error(error?.message || "Failed to submit review");
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
   return (
     <>
-      <div className="flex-1 flex overflow-hidden bg-white rounded-3xl border border-gray-100 shadow-sm min-h-[75vh]">
+      <div className="flex-1 flex overflow-hidden bg-white rounded-3xl border border-gray-100 shadow-sm min-h-[75vh] max-h-[75vh]">
         {/* Central Chat Panel */}
         <div className="flex-1 flex flex-col min-w-0 border-r border-gray-50">
           {/* Chat Header */}
@@ -640,6 +795,103 @@ export default function ChatWindow({
               })()}
             </div>
           </div>
+
+          {/* Direct Job Banner */}
+          {isDirectOrNoJob && !loadingDirectJob && (
+            <div className={`p-4 border-b flex flex-col md:flex-row md:items-center justify-between gap-4 flex-shrink-0 ${directJob?.status === 'IN_PROGRESS' ? 'bg-[#FFFBEB] border-amber-200' :
+              directJob?.status === 'AWAITING_CONFIRMATION' ? 'bg-[#EFF6FF] border-blue-200' :
+                directJob?.status === 'COMPLETED' ? 'bg-[#F0FDF4] border-green-200' :
+                  'bg-[#FEFCE8] border-yellow-200'
+              }`}>
+              <div className="flex items-center gap-3">
+                {directJob?.status === 'COMPLETED' ? (
+                  <CheckCircle className="text-[#16A34A]" size={20} />
+                ) : directJob?.status === 'IN_PROGRESS' ? (
+                  <Clock className="text-[#F59E0B]" size={20} />
+                ) : directJob?.status === 'AWAITING_CONFIRMATION' ? (
+                  <Clock className="text-[#3B82F6]" size={20} />
+                ) : (
+                  <Info className="text-[#F59E0B]" size={20} />
+                )}
+                <div>
+                  <p className="text-[14px] font-bold text-gray-800">
+                    {directJob?.status === 'COMPLETED' ? 'Job Completed' :
+                      directJob?.status === 'AWAITING_CONFIRMATION' ? 'Job is Completed' :
+                        directJob?.status === 'IN_PROGRESS' ? 'Job in Progress' :
+                          'No job started from this conversation.'}
+                  </p>
+                  <p className="text-[12px] text-gray-600 mt-0.5">
+                    {directJob?.status === 'COMPLETED' ? `Completed on ${new Date(directJob.confirmedAt || directJob.completedAt).toLocaleDateString()}` :
+                      directJob?.status === 'AWAITING_CONFIRMATION' ? 'Trader marked this job as complete. Awaiting customer confirmation.' :
+                        directJob?.status === 'IN_PROGRESS' ? `Started on ${new Date(directJob.startedAt).toLocaleDateString()}` :
+                          'You can start a job to track progress, get a review and add it to the trader\'s profile.'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {(!directJob?.status || directJob.status === 'CANCELLED') && isActualTrader && (
+                  <button
+                    onClick={() => setShowDirectStartModal(true)}
+                    className="px-4 py-1.5 bg-[#F59E0B] hover:bg-[#D97706] text-white rounded-xl text-[12px] font-bold shadow-sm transition-all flex items-center gap-1.5"
+                  >
+                    <Play size={14} fill="currentColor" />
+                    Start Job
+                  </button>
+                )}
+
+                {directJob?.status === 'IN_PROGRESS' && isActualTrader && (
+                  <button
+                    onClick={handleDirectJobClose}
+                    disabled={isSubmittingDirectJob}
+                    className="px-4 py-1.5 bg-[#EA580C] hover:bg-[#C2410C] text-white rounded-xl text-[12px] font-bold shadow-sm transition-all flex items-center gap-1.5"
+                  >
+                    <XCircle size={14} />
+                    Close Job
+                  </button>
+                )}
+
+                {directJob?.status === 'AWAITING_CONFIRMATION' && (
+                  isActualTrader ? (
+                    <button
+                      onClick={handleDirectJobRemind}
+                      disabled={isSubmittingDirectJob}
+                      className="px-4 py-1.5 border border-[#3B82F6] text-[#3B82F6] hover:bg-blue-50 rounded-xl text-[12px] font-bold transition-all flex items-center gap-1.5"
+                    >
+                      <Send size={14} />
+                      Remind Customer
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleDirectJobConfirm}
+                      disabled={isSubmittingDirectJob}
+                      className="px-4 py-1.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-xl text-[12px] font-bold shadow-sm transition-all flex items-center gap-1.5"
+                    >
+                      <CheckCircle size={14} />
+                      Confirm Completion
+                    </button>
+                  )
+                )}
+
+                {/* {directJob?.status === 'COMPLETED' && !isActualTrader && (
+                  (!directJob.reviews || directJob.reviews.length === 0) ? (
+                    <button
+                      onClick={() => setShowReviewModal(true)}
+                      className="px-4 py-1.5 bg-[#16A34A] hover:bg-[#15803D] text-white rounded-xl text-[12px] font-bold shadow-sm transition-all flex items-center gap-1.5"
+                    >
+                      <Star size={14} fill="currentColor" />
+                      Leave a Review
+                    </button>
+                  ) : (
+                    <span className="px-4 py-1.5 bg-green-100 text-green-700 rounded-xl text-[12px] font-bold flex items-center gap-1.5">
+                      <Star size={14} fill="currentColor" />
+                      Reviewed
+                    </span>
+                  )
+                )} */}
+              </div>
+            </div>
+          )}
 
           {/* Message feed */}
           {loadingMessages ? (
@@ -824,8 +1076,8 @@ export default function ChatWindow({
                 type="button"
                 onClick={() => setModalTab("select")}
                 className={`py-2.5 px-4 text-[13px] font-bold border-b-2 transition-all cursor-pointer ${modalTab === "select"
-                    ? "border-[#6E9625] text-[#6E9625]"
-                    : "border-transparent text-gray-400 hover:text-gray-600"
+                  ? "border-[#6E9625] text-[#6E9625]"
+                  : "border-transparent text-gray-400 hover:text-gray-600"
                   }`}
               >
                 Select Existing Job {myJobs.length > 0 && `(${myJobs.length})`}
@@ -834,8 +1086,8 @@ export default function ChatWindow({
                 type="button"
                 onClick={() => setModalTab("create")}
                 className={`py-2.5 px-4 text-[13px] font-bold border-b-2 transition-all cursor-pointer ${modalTab === "create"
-                    ? "border-[#6E9625] text-[#6E9625]"
-                    : "border-transparent text-gray-400 hover:text-gray-600"
+                  ? "border-[#6E9625] text-[#6E9625]"
+                  : "border-transparent text-gray-400 hover:text-gray-600"
                   }`}
               >
                 Quick Create Job
@@ -878,8 +1130,8 @@ export default function ChatWindow({
                               key={jId}
                               onClick={() => setSelectedJobIdToStart(jId)}
                               className={`p-3.5 rounded-xl border transition-all cursor-pointer ${isSel
-                                  ? "border-[#6E9625] bg-[#F4F7F1]/60 shadow-xs"
-                                  : "border-gray-200 hover:border-gray-300 bg-white"
+                                ? "border-[#6E9625] bg-[#F4F7F1]/60 shadow-xs"
+                                : "border-gray-200 hover:border-gray-300 bg-white"
                                 }`}
                             >
                               <div className="flex items-center justify-between">
@@ -1001,7 +1253,115 @@ export default function ChatWindow({
           </div>
         </div>
       )}
-    </>
+      {showDirectStartModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="text-[18px] font-bold text-[#1C2C1C]">Start Direct Job</h3>
+              <button onClick={() => setShowDirectStartModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleDirectJobStart} className="space-y-4">
+              <div>
+                <label className="block text-[12px] font-bold text-gray-500 mb-1">Job Title</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Kitchen Tap Repair"
+                  value={directJobTitle}
+                  onChange={(e) => setDirectJobTitle(e.target.value)}
+                  className="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl px-4 py-2.5 text-[13px] focus:border-[#F59E0B] outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-[12px] font-bold text-gray-500 mb-1">Agreed Price (Optional)</label>
+                <input
+                  type="number"
+                  placeholder="e.g. 150"
+                  value={directJobPrice}
+                  onChange={(e) => setDirectJobPrice(e.target.value)}
+                  className="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl px-4 py-2.5 text-[13px] focus:border-[#F59E0B] outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-[12px] font-bold text-gray-500 mb-1">Notes / Scope (Optional)</label>
+                <textarea
+                  rows={3}
+                  placeholder="Additional details..."
+                  value={directJobNotes}
+                  onChange={(e) => setDirectJobNotes(e.target.value)}
+                  className="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl px-4 py-2.5 text-[13px] focus:border-[#F59E0B] outline-none"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isSubmittingDirectJob}
+                className="w-full py-3 bg-[#F59E0B] text-white rounded-xl font-bold hover:bg-[#D97706] transition-colors disabled:opacity-50"
+              >
+                {isSubmittingDirectJob ? "Starting..." : "Start Job"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
 
+      {showReviewModal && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">
+            <div className="flex justify-between items-center mb-5">
+              <h3 className="text-[18px] font-bold text-[#1C2C1C]">Leave a Review</h3>
+              <button onClick={() => setShowReviewModal(false)} className="text-gray-400 hover:text-gray-600">
+                <X size={20} />
+              </button>
+            </div>
+            <form onSubmit={handleDirectJobReviewSubmit} className="space-y-4">
+              <div>
+                <label className="block text-[12px] font-bold text-gray-500 mb-2 text-center">Rating</label>
+                <div className="flex justify-center gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      size={32}
+                      className={`cursor-pointer ${reviewRating >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
+                      onClick={() => setReviewRating(star)}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-[12px] font-bold text-gray-500 mb-1">Review Title</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="e.g. Excellent service"
+                  value={reviewTitle}
+                  onChange={(e) => setReviewTitle(e.target.value)}
+                  className="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl px-4 py-2.5 text-[13px] focus:border-[#16A34A] outline-none"
+                />
+              </div>
+              <div>
+                <label className="block text-[12px] font-bold text-gray-500 mb-1">Comment</label>
+                <textarea
+                  required
+                  rows={4}
+                  placeholder="Describe your experience..."
+                  value={reviewComment}
+                  onChange={(e) => setReviewComment(e.target.value)}
+                  className="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl px-4 py-2.5 text-[13px] focus:border-[#16A34A] outline-none"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isSubmittingReview}
+                className="w-full py-3 bg-[#16A34A] text-white rounded-xl font-bold hover:bg-[#15803D] transition-colors disabled:opacity-50"
+              >
+                {isSubmittingReview ? "Submitting..." : "Submit Review"}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

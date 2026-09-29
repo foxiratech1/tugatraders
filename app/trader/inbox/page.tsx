@@ -293,39 +293,7 @@ function TraderInboxContent() {
             </div>
           </div>
 
-          {/* Profile score card (matches the figma design layout at bottom left) */}
-          <div className="bg-[#1C2C1C] text-white rounded-3xl p-4.5 border border-gray-900 shadow-sm flex-shrink-0 flex items-center justify-between">
-            <div className="min-w-0">
-              <span className="text-[10px] uppercase font-bold text-[#6E9625] tracking-wider block mb-1">profile score</span>
-              <div className="flex items-baseline gap-1">
-                <span className="text-[28px] font-extrabold leading-none">156</span>
-                <span className="text-[12px] text-gray-400 font-semibold">/ 18%</span>
-              </div>
-              <div className="flex items-center gap-1.5 mt-2 bg-black/10 px-2 py-0.5 rounded-full border border-white/5 w-fit">
-                <Star size={10} fill="#F59E0B" className="text-[#F59E0B]" />
-                <span className="text-[11px] font-bold">4.8</span>
-                <span className="text-[10px] text-gray-400">12 reviews</span>
-              </div>
-            </div>
 
-            {/* Micro circle animation visualization */}
-            <div className="relative w-14 h-14 rounded-full border-4 border-gray-800 flex items-center justify-center">
-              <svg className="absolute -rotate-90 w-full h-full">
-                <circle
-                  cx="24"
-                  cy="24"
-                  r="20"
-                  stroke="#6E9625"
-                  strokeWidth="4"
-                  fill="transparent"
-                  strokeDasharray="125"
-                  strokeDashoffset="25"
-                  className="translate-x-[2px] translate-y-[2px]"
-                />
-              </svg>
-              <span className="text-[11px] font-bold">18%</span>
-            </div>
-          </div>
 
         </div>
 

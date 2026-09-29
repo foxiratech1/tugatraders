@@ -103,7 +103,7 @@ const MapSearchSection = () => {
         >
 
           {/* Left Categories */}
-          <div className="hidden shrink-0 flex-col gap-3 md:flex md:w-[280px] lg:w-[300px] xl:w-[320px]">
+          <div className="hidden shrink-0 flex-col gap-3 md:flex md:w-[260px] lg:w-[280px] xl:w-[310px]">
             {leftCategories.map((cat, i) => (
               <motion.div
                 key={cat.id || cat._id || i}
@@ -142,21 +142,20 @@ const MapSearchSection = () => {
             ))}
           </div>
 
-
           {/* Center Map */}
-          <div className="relative h-[460px] w-full max-w-[380px] shrink-0 sm:h-[500px] sm:max-w-[420px] lg:h-[520px] lg:max-w-[450px] xl:max-w-[480px]">
+          <div className="relative h-[560px] w-full max-w-[440px] shrink-0 sm:h-[660px] sm:max-w-[520px] md:h-[740px] md:max-w-[580px] lg:h-[840px] lg:max-w-[680px] xl:h-[920px] xl:max-w-[760px]">
             <Image
               src="/maplogo.jfif"
               alt="Portugal Map with Trades"
               fill
               unoptimized
               priority
-              className="object-contain"
+              className="object-contain transform scale-105 sm:scale-110 transition-transform duration-500"
             />
           </div>
 
           {/* Right Categories */}
-          <div className="hidden shrink-0 flex-col gap-3 md:flex md:w-[280px] lg:w-[300px] xl:w-[320px]">
+          <div className="hidden shrink-0 flex-col gap-3 md:flex md:w-[260px] lg:w-[280px] xl:w-[310px]">
             {rightCategories.map((cat, i) => (
               <motion.div
                 key={cat.id || cat._id || i}

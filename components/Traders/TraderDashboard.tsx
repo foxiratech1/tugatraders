@@ -4,6 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import toast from "react-hot-toast";
 import { authApi, getRegistrationStatus } from "@/app/api/authApi";
 import { useSocket } from "@/hooks/useSocket";
 import {
@@ -19,12 +20,18 @@ import {
   ArrowRight,
   MapPin,
   Compass,
-  SlidersHorizontal,
   BellRing,
   ClipboardCheck,
   ChevronDown,
   Loader2,
-  Check
+  Check,
+  Flame,
+  Euro,
+  Clock,
+  Calendar,
+  Paperclip,
+  Trash2,
+  X
 } from "lucide-react";
 
 interface JobItem {
@@ -41,9 +48,15 @@ interface JobItem {
   updatedAt?: string;
   tags?: string[];
   imageUrl?: string | null;
-  category?: { name?: string; image?: string | null };
+  category?: { id?: string; name?: string; image?: string | null };
+  categoryName?: string;
   attachments?: Array<{ url?: string; file?: string }>;
   quotesCount?: number;
+  budget?: string | number;
+  budgetRange?: string;
+  emergency?: boolean;
+  isEmergency?: boolean;
+  timescale?: string;
 }
 
 interface TraderDashboardData {
@@ -128,32 +141,48 @@ export default function TraderDashboard() {
   const [profileData, setProfileData] = useState<TraderProfileData | null>(null);
   const [regData, setRegData] = useState<RegistrationData | null>(null);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
+  const [matchedJobs, setMatchedJobs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Filters state
-  const [selectedService, setSelectedService] = useState<string>("All Services");
-  const [selectedDistance, setSelectedDistance] = useState<string>("Within 10 km");
-  const [selectedSort, setSelectedSort] = useState<string>("All");
+  // Filters state (Emergency | Category | Timescale)
+  const [selectedEmergency, setSelectedEmergency] = useState<string>("ALL");
+  const [selectedCategory, setSelectedCategory] = useState<string>("ALL");
+  const [selectedTimescale, setSelectedTimescale] = useState<string>("ALL");
 
-  const [serviceDropdownOpen, setServiceDropdownOpen] = useState(false);
-  const [distanceDropdownOpen, setDistanceDropdownOpen] = useState(false);
-  const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+  const [emergencyDropdownOpen, setEmergencyDropdownOpen] = useState(false);
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const [timescaleDropdownOpen, setTimescaleDropdownOpen] = useState(false);
 
-  const serviceRef = useRef<HTMLDivElement>(null);
-  const distanceRef = useRef<HTMLDivElement>(null);
-  const sortRef = useRef<HTMLDivElement>(null);
+  const emergencyRef = useRef<HTMLDivElement>(null);
+  const categoryRef = useRef<HTMLDivElement>(null);
+  const timescaleRef = useRef<HTMLDivElement>(null);
+
+  const [categoriesList, setCategoriesList] = useState<Array<{ id: string; name: string }>>([]);
+
+  // Send Quote Modal state
+  const [isQuoteModalOpen, setIsQuoteModalOpen] = useState(false);
+  const [selectedQuoteJob, setSelectedQuoteJob] = useState<JobItem | null>(null);
+  const [quoteForm, setQuoteForm] = useState({
+    price: "",
+    estimatedDays: "",
+    availability: "",
+    message: "",
+  });
+  const [quoteAttachments, setQuoteAttachments] = useState<File[]>([]);
+  const [isSubmittingQuote, setIsSubmittingQuote] = useState(false);
+  const quoteFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (serviceRef.current && !serviceRef.current.contains(event.target as Node)) {
-        setServiceDropdownOpen(false);
+      if (emergencyRef.current && !emergencyRef.current.contains(event.target as Node)) {
+        setEmergencyDropdownOpen(false);
       }
-      if (distanceRef.current && !distanceRef.current.contains(event.target as Node)) {
-        setDistanceDropdownOpen(false);
+      if (categoryRef.current && !categoryRef.current.contains(event.target as Node)) {
+        setCategoryDropdownOpen(false);
       }
-      if (sortRef.current && !sortRef.current.contains(event.target as Node)) {
-        setSortDropdownOpen(false);
+      if (timescaleRef.current && !timescaleRef.current.contains(event.target as Node)) {
+        setTimescaleDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -161,16 +190,50 @@ export default function TraderDashboard() {
   }, []);
 
   useEffect(() => {
+    authApi
+      .getCategories()
+      .then((res) => {
+        const arr = Array.isArray(res)
+          ? res
+          : Array.isArray(res?.data)
+          ? res.data
+          : Array.isArray(res?.categories)
+          ? res.categories
+          : [];
+        if (arr.length > 0) setCategoriesList(arr);
+      })
+      .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    if (!isQuoteModalOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !isSubmittingQuote) {
+        setIsQuoteModalOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isQuoteModalOpen, isSubmittingQuote]);
+
+  useEffect(() => {
     const fetchData = async () => {
       try {
-        const [dashRes, myProfileRes, regRes] = await Promise.all([
+        const [dashRes, myProfileRes, regRes, matchedJobsRes] = await Promise.all([
           authApi.getTraderDashboard().catch(() => null),
           authApi.getMyProfile().catch(() => null),
           getRegistrationStatus().catch(() => null),
+          authApi.getMatchedJobs().catch(() => null),
         ]);
         setDashboardDetails(dashRes?.data || dashRes || {});
         setProfileData(myProfileRes?.data || myProfileRes || null);
         setRegData(regRes?.data || regRes || null);
+        const mJobs = Array.isArray(matchedJobsRes?.data)
+          ? matchedJobsRes.data
+          : Array.isArray(matchedJobsRes)
+          ? matchedJobsRes
+          : [];
+        setMatchedJobs(mJobs);
       } catch (err) {
         console.error("Failed to fetch dashboard data", err);
       } finally {
@@ -187,6 +250,10 @@ export default function TraderDashboard() {
         setDashboardDetails(data?.data || data);
         authApi.getMyProfile().then((res) => setProfileData(res?.data || res)).catch(() => { });
         getRegistrationStatus().then((res) => setRegData(res?.data || res)).catch(() => { });
+        authApi.getMatchedJobs().then((res) => {
+          const mJobs = Array.isArray(res?.data) ? res.data : Array.isArray(res) ? res : [];
+          setMatchedJobs(mJobs);
+        }).catch(() => { });
       }
     },
   });
@@ -254,7 +321,7 @@ export default function TraderDashboard() {
   const strokeDashoffset = circumference - (displayPercentage / 100) * circumference;
 
   // New Jobs List (Fallback to mockup data if empty)
-  const defaultNewJobs = [
+  const defaultNewJobs: JobItem[] = [
     {
       id: "63d71eba-1a48-4b86-a4ab-346fda469260",
       title: "Outer building",
@@ -264,7 +331,10 @@ export default function TraderDashboard() {
       postcode: "8200-112",
       distanceText: "2.3 km",
       postedAgo: "16 min ago",
-      tags: ["Builder", "Exterior", "Local"],
+      category: { name: "Builder" },
+      budgetRange: "UNDER_2000",
+      emergency: false,
+      timescale: "WITHIN_1_WEEK",
       imageUrl: "/Homepageimage.png",
       quotesCount: 0,
     },
@@ -277,7 +347,10 @@ export default function TraderDashboard() {
       postcode: "8365-184",
       distanceText: "5.8 km",
       postedAgo: "42 min ago",
-      tags: ["Plumber", "Tiling", "Interior"],
+      category: { name: "Plumber" },
+      budgetRange: "UNDER_4000",
+      emergency: true,
+      timescale: "URGENT",
       imageUrl: "/before.jfif",
       quotesCount: 1,
     },
@@ -290,63 +363,263 @@ export default function TraderDashboard() {
       postcode: "8125-001",
       distanceText: "7.4 km",
       postedAgo: "1 hr ago",
-      tags: ["Builder", "Landscaping", "Exterior"],
+      category: { name: "Builder" },
+      budgetRange: "UNDER_1000",
+      emergency: false,
+      timescale: "WITHIN_3_DAYS",
       imageUrl: "/Container.png",
       quotesCount: 1,
     },
   ];
 
-  const rawNewJobs = Array.isArray(rawData?.newJobs) && rawData.newJobs.length > 0
+  const rawNewJobs: JobItem[] = Array.isArray(rawData?.newJobs) && rawData.newJobs.length > 0
     ? rawData.newJobs
     : defaultNewJobs;
 
-  // Working on / In progress jobs (Fallback to mockup data if empty)
-  const defaultWorkingOn = [
-    {
-      id: "fe87ea9b-0946-4bfc-9d8c-aec44b409eaa",
-      title: "Kitchen fitting",
-      location: "Albufeira • 8200-112",
-      quotesCount: 2,
-      updatedText: "Updated 2 days ago",
-      imageUrl: "/before.jfif",
-    },
-    {
-      id: "fe87ea9b-0946-4bfc-9d8c-sample-2",
-      title: "Plumbing repair",
-      location: "Lagoa • 8400-312",
-      quotesCount: 1,
-      updatedText: "Updated 3 days ago",
-      imageUrl: "/before.jfif",
-    },
-  ];
+  // Derive in-progress jobs from matchedJobs if not returned in dashboard payload
+  const inProgressFromMatchedJobs: JobItem[] =
+    Array.isArray(matchedJobs) && matchedJobs.length > 0
+      ? matchedJobs
+          .filter((item: any) => {
+            const rawStatus = (item.rawStatus || item.status || "").toUpperCase();
+            const matchStatus = (
+              item.matchStatus ||
+              item.match?.status ||
+              item.myMatch?.status ||
+              item.jobMatch?.status ||
+              (Array.isArray(item.matches)
+                ? item.matches.find(
+                    (m: any) =>
+                      m.traderId === item.traderId ||
+                      m.isQuoteSubmitted ||
+                      m.isSelected !== undefined
+                  )?.status || item.matches[0]?.status
+                : undefined) ||
+              item.quoteDetails?.status ||
+              item.myQuote?.status
+            )?.toUpperCase();
 
-  const rawWorkingOn =
+            const isThisTraderRejected =
+              matchStatus === "REJECTED" ||
+              matchStatus === "DECLINED" ||
+              item.status === "REJECTED" ||
+              item.rawStatus === "REJECTED" ||
+              item.status === "DECLINED" ||
+              item.rawStatus === "DECLINED";
+
+            const isAccepted = Boolean(
+              (item.isQuoteAccepted ||
+                matchStatus === "ACCEPTED" ||
+                (Array.isArray(item.quotes) &&
+                  item.quotes.some(
+                    (q: any) =>
+                      q.status?.toUpperCase() === "ACCEPTED" &&
+                      (q.traderId === item.traderId || q.isMyQuote)
+                  ))) &&
+                !isThisTraderRejected
+            );
+
+            return (
+              isAccepted ||
+              rawStatus === "IN_PROGRESS" ||
+              rawStatus === "ASSIGNED" ||
+              item.status === "In Progress"
+            );
+          })
+          .map(
+            (item: any): JobItem => ({
+              id: item.id || item.jobId,
+              title: item.title || "Job",
+              description:
+                item.description ||
+                item.projectDescription ||
+                item.details ||
+                "",
+              location: item.location || item.postcode || "Albufeira",
+              postcode: item.postcode || "",
+              imageUrl:
+                item.imageUrl ||
+                item.attachments?.[0]?.url ||
+                item.category?.image,
+              quotesCount: item.quotes?.length || item.quotesCount || 0,
+            })
+          )
+      : [];
+
+  // Working on / In progress jobs (Real API data only - no static data)
+  const rawWorkingOn: JobItem[] =
     Array.isArray(rawData?.jobsWorkingOn) && rawData.jobsWorkingOn.length > 0
       ? rawData.jobsWorkingOn
       : Array.isArray(rawData?.inProgressJobs) && rawData.inProgressJobs.length > 0
         ? rawData.inProgressJobs
-        : defaultWorkingOn;
+        : inProgressFromMatchedJobs;
 
-  // Filter new jobs based on dropdown selections
-  const filteredJobs = rawNewJobs.filter((job: JobItem) => {
-    if (selectedService !== "All Services") {
-      const match =
-        job.tags?.some((t: string) => t.toLowerCase() === selectedService.toLowerCase()) ||
-        job.category?.name?.toLowerCase() === selectedService.toLowerCase();
-      if (!match) return false;
+  // Helpers
+  const formatBudget = (budget?: string | number) => {
+    if (!budget) return "Under €500";
+    const b = String(budget);
+    if (b.startsWith("UNDER_")) return `Under €${b.replace("UNDER_", "").replace(/,/g, "")}`;
+    if (b.startsWith("OVER_") || b.startsWith("ABOVE_")) return `Above €${b.replace(/(OVER_|ABOVE_)/, "")}`;
+    if (b.startsWith("BETWEEN_")) {
+      const parts = b.replace("BETWEEN_", "").split("_");
+      if (parts.length === 2) {
+        return `€${Number(parts[0]).toLocaleString()} - €${Number(parts[1]).toLocaleString()}`;
+      }
     }
+    if (!isNaN(Number(b))) return `€${Number(b).toLocaleString()}`;
+    return b;
+  };
+
+  const formatTimescale = (t?: string) => {
+    if (!t) return "Flexible";
+    const upper = t.toUpperCase().replace(/[-\s]+/g, "_");
+    if (upper === "FLEXIBLE") return "Flexible";
+    if (upper === "URGENT") return "Urgent";
+    if (upper === "WITHIN_3_DAYS") return "Within 3 days";
+    if (upper === "WITHIN_1_WEEK") return "Within 1 week";
+    if (upper === "WITHIN_1_MONTH") return "Within 1 month";
+    return t.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  };
+
+  // Filter new jobs based on Emergency, Category, and Timescale
+  const filteredJobs = rawNewJobs.filter((job: JobItem) => {
+    // 1. Emergency Filter
+    if (selectedEmergency === "EMERGENCY") {
+      const isEmerg = Boolean(
+        job.emergency ||
+        job.isEmergency ||
+        job.tags?.some((t: string) => t.toLowerCase().includes("emergency"))
+      );
+      if (!isEmerg) return false;
+    } else if (selectedEmergency === "STANDARD") {
+      const isEmerg = Boolean(
+        job.emergency ||
+        job.isEmergency ||
+        job.tags?.some((t: string) => t.toLowerCase().includes("emergency"))
+      );
+      if (isEmerg) return false;
+    }
+
+    // 2. Category Filter
+    if (selectedCategory !== "ALL") {
+      const jobCategory = (
+        job.category?.name ||
+        job.categoryName ||
+        (job.tags && job.tags[0]) ||
+        ""
+      ).toLowerCase();
+      if (jobCategory !== selectedCategory.toLowerCase()) return false;
+    }
+
+    // 3. Timescale Filter
+    if (selectedTimescale !== "ALL") {
+      const jobTs = (job.timescale || "").toUpperCase().replace(/[-\s]+/g, "_");
+      const filterTs = selectedTimescale.toUpperCase().replace(/[-\s]+/g, "_");
+      if (jobTs !== filterTs && !jobTs.includes(filterTs) && !filterTs.includes(jobTs)) {
+        return false;
+      }
+    }
+
     return true;
   });
 
-  // Services list for dropdown
-  const availableServices = [
-    "All Services",
-    "Builder",
-    "Plumber",
-    "Electrician",
-    "Leak Repairs",
-    "Tiling",
+  // Filter options
+  const emergencyOptions = [
+    { id: "ALL", name: "All (Emergency & Standard)" },
+    { id: "EMERGENCY", name: "Emergency Only 🚨" },
+    { id: "STANDARD", name: "Standard Only" },
   ];
+
+  const timescaleOptions = [
+    { id: "ALL", name: "All Timescales" },
+    { id: "URGENT", name: "Urgent" },
+    { id: "WITHIN_3_DAYS", name: "Within 3 days" },
+    { id: "WITHIN_1_WEEK", name: "Within 1 week" },
+    { id: "WITHIN_1_MONTH", name: "Within 1 month" },
+    { id: "FLEXIBLE", name: "Flexible / Planning" },
+  ];
+
+  const allCategoryNames = Array.from(
+    new Set([
+      ...categoriesList.map((c) => c.name),
+      ...rawNewJobs.map((j) => j.category?.name || j.categoryName || (j.tags && j.tags[0])).filter(Boolean),
+    ])
+  ).filter(Boolean) as string[];
+
+  // Quote form submission handler
+  const handleOpenSendQuote = (job: JobItem) => {
+    setSelectedQuoteJob(job);
+    setQuoteForm({
+      price: "",
+      estimatedDays: "",
+      availability: "",
+      message: "",
+    });
+    setQuoteAttachments([]);
+    setIsQuoteModalOpen(true);
+  };
+
+  const handleAttachmentSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const selected = Array.from(e.target.files);
+      setQuoteAttachments((prev) => [...prev, ...selected]);
+    }
+  };
+
+  const handleRemoveAttachment = (index: number) => {
+    setQuoteAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleSendQuoteSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedQuoteJob) return;
+    try {
+      setIsSubmittingQuote(true);
+      const mapAvailabilityToDays = (availability: string) => {
+        switch (availability) {
+          case "Can start immediately":
+            return 1;
+          case "Within 24 hours":
+            return 1;
+          case "Within 3 days":
+            return 3;
+          case "Within 7 days":
+            return 7;
+          case "7days +":
+            return 14;
+          default:
+            return 1;
+        }
+      };
+      const mappedDays =
+        Number(quoteForm.estimatedDays) > 0
+          ? Number(quoteForm.estimatedDays)
+          : mapAvailabilityToDays(quoteForm.availability);
+
+      const formData = new FormData();
+      formData.append("price", quoteForm.price);
+      formData.append("estimatedDays", String(mappedDays));
+      formData.append("message", quoteForm.message);
+      if (quoteForm.availability?.trim()) {
+        formData.append("availability", quoteForm.availability.trim());
+      }
+      quoteAttachments.forEach((file) => {
+        formData.append("attachments", file);
+      });
+
+      await authApi.sendJobQuote(selectedQuoteJob.id, formData);
+      toast.success("Quote sent successfully!");
+      setIsQuoteModalOpen(false);
+      setQuoteForm({ price: "", estimatedDays: "", availability: "", message: "" });
+      setQuoteAttachments([]);
+    } catch (err: any) {
+      console.error("Failed to send quote", err);
+      const msg = err?.response?.data?.message || err?.message || "Failed to send quote. Please try again.";
+      toast.error(msg);
+    } finally {
+      setIsSubmittingQuote(false);
+    }
+  };
 
   return (
     <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 bg-[#F7F9F5] min-h-screen font-sans">
@@ -373,12 +646,12 @@ export default function TraderDashboard() {
             className="flex flex-col cursor-pointer group shrink-0"
           >
             <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-full bg-[#EBF4E7] text-[#2B5921] flex items-center justify-center shrink-0">
+              <div className="w-11 h-11 rounded-full bg-[#FFF4E6] text-[#EA580C] flex items-center justify-center shrink-0">
                 <Luggage size={18} strokeWidth={2.2} />
               </div>
               <div>
                 <span className="text-[20px] font-black text-[#143118] leading-tight block">
-                  {actionRequired?.inProgressJobsCount ?? rawWorkingOn.length ?? 1}
+                  {actionRequired?.inProgressJobsCount ?? rawWorkingOn.length}
                 </span>
                 <span className="text-[11.5px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
                   In progress job
@@ -396,7 +669,7 @@ export default function TraderDashboard() {
             className="flex flex-col cursor-pointer group shrink-0"
           >
             <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-full bg-[#FFF1E2] text-[#E07A28] flex items-center justify-center shrink-0">
+              <div className="w-11 h-11 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0">
                 <MessageSquare size={18} strokeWidth={2.2} />
               </div>
               <div>
@@ -419,7 +692,7 @@ export default function TraderDashboard() {
             className="flex flex-col cursor-pointer group shrink-0"
           >
             <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-full bg-[#EAF2FC] text-[#3B82F6] flex items-center justify-center shrink-0">
+              <div className="w-11 h-11 rounded-full bg-[#EBF4E7] text-[#2E7D32] flex items-center justify-center shrink-0">
                 <Star size={18} strokeWidth={2.2} />
               </div>
               <div>
@@ -454,117 +727,199 @@ export default function TraderDashboard() {
                 </h2>
               </div>
 
-              {/* Filters row */}
+              {/* Filters row: Emergency | Category | Timescale */}
               <div className="flex items-center gap-2 flex-wrap">
-                {/* Filter button */}
-                <button
-                  type="button"
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#CFDCD0] text-[#1B311E] text-[12px] font-bold hover:bg-[#F4F8F3] transition-colors cursor-pointer bg-white"
-                >
-                  <SlidersHorizontal size={13} className="text-[#5A6E5E]" />
-                  <span>Filters</span>
-                </button>
-
-                {/* All Services Dropdown */}
-                <div className="relative" ref={serviceRef}>
+                {/* Emergency Filter */}
+                <div className="relative" ref={emergencyRef}>
                   <button
                     type="button"
-                    onClick={() => setServiceDropdownOpen(!serviceDropdownOpen)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#CFDCD0] text-[#1B311E] text-[12px] font-bold hover:bg-[#F4F8F3] transition-colors cursor-pointer bg-white"
+                    onClick={() => {
+                      setEmergencyDropdownOpen(!emergencyDropdownOpen);
+                      setCategoryDropdownOpen(false);
+                      setTimescaleDropdownOpen(false);
+                    }}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[12px] font-bold transition-colors cursor-pointer bg-white ${
+                      selectedEmergency !== "ALL"
+                        ? "border-[#2B5921] text-[#2B5921] bg-[#EFF5EB]"
+                        : "border-[#CFDCD0] text-[#1B311E] hover:bg-[#F4F8F3]"
+                    }`}
                   >
-                    <span>{selectedService}</span>
-                    <ChevronDown size={13} className="text-[#768779]" />
+                    <Flame
+                      size={13}
+                      className={
+                        selectedEmergency === "EMERGENCY"
+                          ? "text-red-500 fill-red-500"
+                          : "text-[#5A6E5E]"
+                      }
+                    />
+                    <span>
+                      {selectedEmergency === "EMERGENCY"
+                        ? "Emergency Only"
+                        : selectedEmergency === "STANDARD"
+                        ? "Standard Only"
+                        : "Emergency: All"}
+                    </span>
+                    <ChevronDown
+                      size={13}
+                      className={`text-[#768779] transition-transform ${
+                        emergencyDropdownOpen ? "rotate-180" : ""
+                      }`}
+                    />
                   </button>
 
-                  {serviceDropdownOpen && (
-                    <div className="absolute right-0 top-full mt-1.5 w-44 bg-white rounded-xl shadow-lg border border-[#DFEBDD] z-30 py-1">
-                      {availableServices.map((service) => (
+                  {emergencyDropdownOpen && (
+                    <div className="absolute left-0 sm:right-0 sm:left-auto top-full mt-1.5 w-48 bg-white rounded-xl shadow-lg border border-[#DFEBDD] z-30 py-1">
+                      {emergencyOptions.map((opt) => (
                         <div
-                          key={service}
+                          key={opt.id}
                           onClick={() => {
-                            setSelectedService(service);
-                            setServiceDropdownOpen(false);
+                            setSelectedEmergency(opt.id);
+                            setEmergencyDropdownOpen(false);
                           }}
-                          className={`px-3 py-1.5 text-[12px] cursor-pointer flex items-center justify-between hover:bg-[#F4F8F3] ${selectedService === service
-                            ? "text-[#2B5921] font-bold bg-[#EFF5EB]"
-                            : "text-[#1B311E]"
-                            }`}
-                        >
-                          <span>{service}</span>
-                          {selectedService === service && <Check size={12} />}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Within 10 km Dropdown */}
-                <div className="relative" ref={distanceRef}>
-                  <button
-                    type="button"
-                    onClick={() => setDistanceDropdownOpen(!distanceDropdownOpen)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#CFDCD0] text-[#1B311E] text-[12px] font-bold hover:bg-[#F4F8F3] transition-colors cursor-pointer bg-white"
-                  >
-                    <span>{selectedDistance}</span>
-                    <ChevronDown size={13} className="text-[#768779]" />
-                  </button>
-
-                  {distanceDropdownOpen && (
-                    <div className="absolute right-0 top-full mt-1.5 w-36 bg-white rounded-xl shadow-lg border border-[#DFEBDD] z-30 py-1">
-                      {["Within 5 km", "Within 10 km", "Within 25 km", "Within 50 km"].map(
-                        (dist) => (
-                          <div
-                            key={dist}
-                            onClick={() => {
-                              setSelectedDistance(dist);
-                              setDistanceDropdownOpen(false);
-                            }}
-                            className={`px-3 py-1.5 text-[12px] cursor-pointer flex items-center justify-between hover:bg-[#F4F8F3] ${selectedDistance === dist
+                          className={`px-3 py-2 text-[12px] cursor-pointer flex items-center justify-between hover:bg-[#F4F8F3] ${
+                            selectedEmergency === opt.id
                               ? "text-[#2B5921] font-bold bg-[#EFF5EB]"
                               : "text-[#1B311E]"
-                              }`}
-                          >
-                            <span>{dist}</span>
-                            {selectedDistance === dist && <Check size={12} />}
-                          </div>
-                        )
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* All Sort Dropdown */}
-                <div className="relative" ref={sortRef}>
-                  <button
-                    type="button"
-                    onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#CFDCD0] text-[#1B311E] text-[12px] font-bold hover:bg-[#F4F8F3] transition-colors cursor-pointer bg-white"
-                  >
-                    <span>{selectedSort}</span>
-                    <ChevronDown size={13} className="text-[#768779]" />
-                  </button>
-
-                  {sortDropdownOpen && (
-                    <div className="absolute right-0 top-full mt-1.5 w-32 bg-white rounded-xl shadow-lg border border-[#DFEBDD] z-30 py-1">
-                      {["All", "Most Recent", "Urgent"].map((s) => (
-                        <div
-                          key={s}
-                          onClick={() => {
-                            setSelectedSort(s);
-                            setSortDropdownOpen(false);
-                          }}
-                          className={`px-3 py-1.5 text-[12px] cursor-pointer flex items-center justify-between hover:bg-[#F4F8F3] ${selectedSort === s
-                            ? "text-[#2B5921] font-bold bg-[#EFF5EB]"
-                            : "text-[#1B311E]"
-                            }`}
+                          }`}
                         >
-                          <span>{s}</span>
-                          {selectedSort === s && <Check size={12} />}
+                          <span>{opt.name}</span>
+                          {selectedEmergency === opt.id && <Check size={12} />}
                         </div>
                       ))}
                     </div>
                   )}
                 </div>
+
+                {/* Category Filter */}
+                <div className="relative" ref={categoryRef}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setCategoryDropdownOpen(!categoryDropdownOpen);
+                      setEmergencyDropdownOpen(false);
+                      setTimescaleDropdownOpen(false);
+                    }}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[12px] font-bold transition-colors cursor-pointer bg-white ${
+                      selectedCategory !== "ALL"
+                        ? "border-[#2B5921] text-[#2B5921] bg-[#EFF5EB]"
+                        : "border-[#CFDCD0] text-[#1B311E] hover:bg-[#F4F8F3]"
+                    }`}
+                  >
+                    <span>{selectedCategory === "ALL" ? "All Categories" : selectedCategory}</span>
+                    <ChevronDown
+                      size={13}
+                      className={`text-[#768779] transition-transform ${
+                        categoryDropdownOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {categoryDropdownOpen && (
+                    <div className="absolute left-0 sm:right-0 sm:left-auto top-full mt-1.5 w-48 max-h-60 overflow-y-auto bg-white rounded-xl shadow-lg border border-[#DFEBDD] z-30 py-1">
+                      <div
+                        onClick={() => {
+                          setSelectedCategory("ALL");
+                          setCategoryDropdownOpen(false);
+                        }}
+                        className={`px-3 py-2 text-[12px] cursor-pointer flex items-center justify-between hover:bg-[#F4F8F3] ${
+                          selectedCategory === "ALL"
+                            ? "text-[#2B5921] font-bold bg-[#EFF5EB]"
+                            : "text-[#1B311E]"
+                        }`}
+                      >
+                        <span>All Categories</span>
+                        {selectedCategory === "ALL" && <Check size={12} />}
+                      </div>
+                      {allCategoryNames.map((catName) => (
+                        <div
+                          key={catName}
+                          onClick={() => {
+                            setSelectedCategory(catName);
+                            setCategoryDropdownOpen(false);
+                          }}
+                          className={`px-3 py-2 text-[12px] cursor-pointer flex items-center justify-between hover:bg-[#F4F8F3] ${
+                            selectedCategory.toLowerCase() === catName.toLowerCase()
+                              ? "text-[#2B5921] font-bold bg-[#EFF5EB]"
+                              : "text-[#1B311E]"
+                          }`}
+                        >
+                          <span>{catName}</span>
+                          {selectedCategory.toLowerCase() === catName.toLowerCase() && (
+                            <Check size={12} />
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Timescale Filter */}
+                <div className="relative" ref={timescaleRef}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTimescaleDropdownOpen(!timescaleDropdownOpen);
+                      setEmergencyDropdownOpen(false);
+                      setCategoryDropdownOpen(false);
+                    }}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[12px] font-bold transition-colors cursor-pointer bg-white ${
+                      selectedTimescale !== "ALL"
+                        ? "border-[#2B5921] text-[#2B5921] bg-[#EFF5EB]"
+                        : "border-[#CFDCD0] text-[#1B311E] hover:bg-[#F4F8F3]"
+                    }`}
+                  >
+                    <span>
+                      {selectedTimescale === "ALL"
+                        ? "All Timescales"
+                        : formatTimescale(selectedTimescale)}
+                    </span>
+                    <ChevronDown
+                      size={13}
+                      className={`text-[#768779] transition-transform ${
+                        timescaleDropdownOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
+
+                  {timescaleDropdownOpen && (
+                    <div className="absolute right-0 top-full mt-1.5 w-48 bg-white rounded-xl shadow-lg border border-[#DFEBDD] z-30 py-1">
+                      {timescaleOptions.map((opt) => (
+                        <div
+                          key={opt.id}
+                          onClick={() => {
+                            setSelectedTimescale(opt.id);
+                            setTimescaleDropdownOpen(false);
+                          }}
+                          className={`px-3 py-2 text-[12px] cursor-pointer flex items-center justify-between hover:bg-[#F4F8F3] ${
+                            selectedTimescale === opt.id
+                              ? "text-[#2B5921] font-bold bg-[#EFF5EB]"
+                              : "text-[#1B311E]"
+                          }`}
+                        >
+                          <span>{opt.name}</span>
+                          {selectedTimescale === opt.id && <Check size={12} />}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Reset Filters button if any active */}
+                {(selectedEmergency !== "ALL" ||
+                  selectedCategory !== "ALL" ||
+                  selectedTimescale !== "ALL") && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedEmergency("ALL");
+                      setSelectedCategory("ALL");
+                      setSelectedTimescale("ALL");
+                    }}
+                    className="text-[11px] font-bold text-gray-400 hover:text-red-500 transition-colors ml-1 cursor-pointer"
+                  >
+                    Reset
+                  </button>
+                )}
               </div>
             </div>
 
@@ -572,9 +927,16 @@ export default function TraderDashboard() {
             <div className="divide-y divide-[#EEF3ED]">
               {filteredJobs.length > 0 ? (
                 filteredJobs.map((job: JobItem) => {
-                  const locationString = job.location || "Albufeira";
-                  const postcodeString = job.postcode ? ` • ${job.postcode}` : "";
+                  const locationString = (job.location || "Albufeira").trim();
+                  const postcodeString =
+                    job.postcode &&
+                    !locationString.toLowerCase().includes(job.postcode.toLowerCase())
+                      ? ` • ${job.postcode.trim()}`
+                      : "";
                   const distanceString = job.distanceText || job.distance || "1.5 km";
+                  const categoryName =
+                    job.category?.name || job.categoryName || (job.tags && job.tags[0]);
+                  const budgetFormatted = formatBudget(job.budgetRange || job.budget);
 
                   return (
                     <div
@@ -582,15 +944,19 @@ export default function TraderDashboard() {
                       className="p-5 sm:p-6 flex flex-col md:flex-row items-start justify-between gap-5 hover:bg-[#F9FAF8] transition-colors"
                     >
                       {/* Left: Thumbnail & Details */}
-                      <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-5 flex-1 min-w-0">
-                        {/* Thumbnail */}
-                        <div className="w-full sm:w-[130px] h-[95px] rounded-xl overflow-hidden relative shrink-0">
+                      <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-4 flex-1 min-w-0">
+                        {/* Smaller Thumbnail */}
+                        <div className="w-20 h-16 sm:w-[84px] sm:h-[66px] rounded-xl overflow-hidden relative shrink-0 border border-[#E2EAE1] bg-[#EFF3EE]">
                           <Image
-                            src={imageErrors[job.id] ? "/Homepageimage.png" : getImageUrl(job.imageUrl || job.category?.image)}
+                            src={
+                              imageErrors[job.id]
+                                ? "/Homepageimage.png"
+                                : getImageUrl(job.imageUrl || job.category?.image)
+                            }
                             alt={job.title || "Job"}
                             fill
                             className="object-cover"
-                            sizes="(max-width: 640px) 100vw, 130px"
+                            sizes="(max-width: 640px) 80px, 84px"
                             onError={() => setImageErrors((prev) => ({ ...prev, [job.id]: true }))}
                             unoptimized
                           />
@@ -599,10 +965,16 @@ export default function TraderDashboard() {
                         {/* Text info */}
                         <div className="flex-1 min-w-0">
                           {/* Badge + Posted time */}
-                          <div className="flex items-center gap-2 mb-1.5">
+                          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                             <span className="bg-[#D9F2D0] text-[#1C6D26] border border-[#C2E2B8] text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider leading-none">
                               NEW
                             </span>
+                            {(job.emergency || job.isEmergency) && (
+                              <span className="bg-red-50 text-red-600 border border-red-200 text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider leading-none flex items-center gap-1">
+                                <Flame size={11} className="text-red-500 fill-red-500" />
+                                Emergency
+                              </span>
+                            )}
                             <span className="text-[12px] text-[#768779] font-medium">
                               {job.postedAgo || "16 min ago"}
                             </span>
@@ -611,12 +983,12 @@ export default function TraderDashboard() {
                           {/* Title */}
                           <h3
                             onClick={() => router.push(`/trader/jobs?jobId=${job.id}`)}
-                            className="text-[17px] font-black text-[#1B311E] leading-snug hover:text-[#2B5921] cursor-pointer transition-colors mb-1.5"
+                            className="text-[16px] sm:text-[17px] font-black text-[#1B311E] leading-snug hover:text-[#2B5921] cursor-pointer transition-colors mb-1.5"
                           >
                             {job.title}
                           </h3>
 
-                          {/* Location & distance */}
+                          {/* Location & distance (cleaned to avoid repetition) */}
                           <div className="flex items-center gap-2 text-[12px] text-[#768779] font-medium mb-2 flex-wrap">
                             <span className="flex items-center gap-1 text-[#5A6E5E]">
                               <MapPin size={13} className="text-[#768779] shrink-0" />
@@ -635,19 +1007,24 @@ export default function TraderDashboard() {
                             {job.description}
                           </p>
 
-                          {/* Tags */}
-                          {job.tags && job.tags.length > 0 && (
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              {job.tags.map((tag: string, idx: number) => (
-                                <span
-                                  key={idx}
-                                  className="bg-[#EFF3EE] text-[#4D6050] text-[11px] font-bold px-3 py-1 rounded-full leading-none border border-[#E2EAE1]"
-                                >
-                                  {tag}
-                                </span>
-                              ))}
-                            </div>
-                          )}
+                          {/* Category & Budget only (services removed) */}
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {categoryName && (
+                              <span className="bg-[#EFF5EB] text-[#2B5921] text-[11px] font-bold px-3 py-1 rounded-full leading-none border border-[#DFEBDD]">
+                                {categoryName}
+                              </span>
+                            )}
+                            <span className="bg-[#F8FAF7] text-[#1B311E] text-[11px] font-bold px-3 py-1 rounded-full leading-none border border-[#CFDCD0] flex items-center gap-1">
+                              <Euro size={12} className="text-[#2B5921]" />
+                              <span>Budget: {budgetFormatted}</span>
+                            </span>
+                            {job.timescale && (
+                              <span className="bg-gray-50 text-[#556958] text-[11px] font-medium px-2.5 py-1 rounded-full leading-none border border-gray-200 flex items-center gap-1">
+                                <Clock size={11} className="text-[#768779]" />
+                                <span>{formatTimescale(job.timescale)}</span>
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
 
@@ -662,7 +1039,7 @@ export default function TraderDashboard() {
                         </button>
                         <button
                           type="button"
-                          onClick={() => router.push(`/trader/jobs?jobId=${job.id}&action=quote`)}
+                          onClick={() => handleOpenSendQuote(job)}
                           className="w-full py-2.5 px-4 rounded-xl bg-[#2B5921] hover:bg-[#204418] text-white text-[12.5px] font-bold flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer active:scale-98"
                         >
                           <span>Send Quote</span>
@@ -695,65 +1072,117 @@ export default function TraderDashboard() {
           <div className="bg-white rounded-[22px] shadow-xs border border-[#DFEBDD] overflow-hidden">
             {/* Header */}
             <div className="p-5 sm:p-6 pb-4 flex items-center justify-between border-b border-[#EEF3ED]">
-              <div className="flex items-center gap-2.5">
-                <ClipboardCheck size={20} className="text-[#2B5921]" />
-                <h3 className="text-[17px] font-black text-[#1B311E]">
+              <div className="flex items-center gap-3">
+                <ClipboardCheck size={22} className="text-[#204E1D]" strokeWidth={2.2} />
+                <h3 className="text-[19px] sm:text-[20px] font-black text-[#143118]">
                   Jobs You&apos;re Working On
                 </h3>
               </div>
               <Link
-                href="/trader/jobs"
-                className="text-[12px] font-bold text-[#2B5921] hover:underline flex items-center gap-1"
+                href="/trader/jobs?tab=In Progress"
+                className="text-[13.5px] font-bold text-[#2B5921] hover:underline flex items-center gap-1.5"
               >
                 <span>View all jobs</span>
-                <ArrowRight size={12} />
+                <ArrowRight size={14} strokeWidth={2.5} />
               </Link>
             </div>
 
             {/* List */}
-            <div className="divide-y divide-[#EEF3ED] p-2 sm:p-3">
-              {rawWorkingOn.slice(0, 2).map((job: JobItem, index: number) => (
-                <div
-                  key={job.id || index}
-                  onClick={() => router.push(`/trader/jobs?jobId=${job.id || job.jobId}`)}
-                  className="p-3 sm:p-4 flex items-center justify-between gap-3 hover:bg-[#F9FAF8] rounded-xl transition-colors cursor-pointer"
-                >
-                  <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="w-[52px] h-[40px] rounded-lg overflow-hidden relative bg-[#EFF3EE] shrink-0 border border-[#E2EAE1]">
-                      <Image
-                        src={imageErrors[job.id || String(index)] ? "/before.jfif" : getImageUrl(job.imageUrl || job.attachments?.[0]?.url)}
-                        alt={job.title || "Job"}
-                        fill
-                        className="object-cover"
-                        onError={() => setImageErrors((prev) => ({ ...prev, [job.id || String(index)]: true }))}
-                        unoptimized
-                      />
-                    </div>
-                    <div className="min-w-0">
-                      <h4 className="text-[13.5px] font-bold text-[#1B311E] truncate">
-                        {job.title}
-                      </h4>
-                      <p className="text-[11px] text-[#768779] truncate">
-                        {job.location} {job.postcode ? `• ${job.postcode}` : ""}
-                      </p>
-                    </div>
-                  </div>
+            <div className="divide-y divide-[#EEF3ED]">
+              {rawWorkingOn && rawWorkingOn.length > 0 ? (
+                rawWorkingOn.slice(0, 3).map((job: JobItem, index: number) => {
+                  const loc = (job.location || "Albufeira").trim();
+                  const pc = (job.postcode || "").trim();
+                  const locationText =
+                    pc && !loc.toLowerCase().includes(pc.toLowerCase())
+                      ? `${loc} • ${pc}`
+                      : loc;
 
-                  <div className="flex items-center gap-3 sm:gap-6 shrink-0">
-                    <span className="bg-[#EFDB4B] text-[#8A5C05] border border-[#DFC736] font-extrabold text-[11px] px-2.5 py-1 rounded-md uppercase tracking-wider leading-none">
-                      In Progress
-                    </span>
-                    <div className="hidden sm:flex items-center gap-1 text-[12px] text-[#5A6E5E] font-medium">
-                      <MessageSquare size={13} className="text-[#F59E0B]" />
-                      <span>{job.quotesCount ?? 2} quotes</span>
+                  return (
+                    <div
+                      key={job.id || index}
+                      className="p-5 sm:p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 lg:gap-6 hover:bg-[#FBFDFB] transition-colors"
+                    >
+                      {/* Col 1: Thumbnail & Title + Location */}
+                      <div className="flex items-center gap-3.5 min-w-0 md:w-[210px] lg:w-[230px] xl:w-[240px] shrink-0">
+                        <div className="w-[64px] h-[48px] rounded-xl overflow-hidden relative bg-[#EFF3EE] shrink-0 border border-[#E2EAE1]">
+                          <Image
+                            src={
+                              imageErrors[job.id || String(index)]
+                                ? "/before.jfif"
+                                : getImageUrl(job.imageUrl || job.attachments?.[0]?.url)
+                            }
+                            alt={job.title || "Job"}
+                            fill
+                            className="object-cover"
+                            onError={() =>
+                              setImageErrors((prev) => ({
+                                ...prev,
+                                [job.id || String(index)]: true,
+                              }))
+                            }
+                            unoptimized
+                          />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <h4
+                            onClick={() =>
+                              router.push(
+                                `/trader/jobs?jobId=${job.id || job.jobId}&tab=In Progress`
+                              )
+                            }
+                            className="text-[15.5px] font-extrabold text-[#143118] truncate hover:text-[#2B5921] cursor-pointer"
+                          >
+                            {job.title}
+                          </h4>
+                          <p className="text-[12.5px] text-[#768779] truncate mt-0.5 font-medium">
+                            {locationText}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Col 2: Job Description */}
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[10px] font-bold text-[#8A978E] uppercase tracking-wider block mb-1.5">
+                          JOB DESCRIPTION
+                        </span>
+                        <div className="bg-[#F8FAF8] rounded-xl px-4 py-2.5 text-[12.5px] text-[#4A5568] leading-relaxed line-clamp-2">
+                          {job.description || "No description provided."}
+                        </div>
+                      </div>
+
+                      {/* Col 3: Status */}
+                      <div className="shrink-0 flex flex-col items-start md:items-center">
+                        <span className="bg-[#F1F4F1] text-[#7C8B7F] text-[9.5px] font-bold px-2 py-0.5 rounded tracking-wider uppercase mb-1.5">
+                          STATUS
+                        </span>
+                        <span className="bg-[#DE9B52] text-[#5A2C00] font-bold text-[13px] px-5 py-2 rounded-xl whitespace-nowrap shadow-2xs inline-block text-center">
+                          In Progress
+                        </span>
+                      </div>
+
+                      {/* Col 4: View Job Button */}
+                      <div className="shrink-0 flex items-center md:justify-end">
+                        <button
+                          type="button"
+                          onClick={() =>
+                            router.push(
+                              `/trader/jobs?jobId=${job.id || job.jobId}&tab=In Progress`
+                            )
+                          }
+                          className="px-6 py-2 rounded-xl border border-[#D5DDD4] bg-white hover:bg-gray-50 text-[#1B311E] text-[13px] font-bold transition-colors cursor-pointer shadow-2xs whitespace-nowrap"
+                        >
+                          View Job
+                        </button>
+                      </div>
                     </div>
-                    <span className="hidden md:inline text-[11px] text-[#768779]">
-                      {job.updatedText || (job.updatedAt ? `Updated ${job.postedAgo || '2 days ago'}` : "Updated 2 days ago")}
-                    </span>
-                    <ChevronRight size={16} className="text-[#A3B2A5]" />
-                  </div>
+                  );
+                })
+              ) : (
+                <div className="p-8 text-center text-[#768779] text-[13px] font-medium">
+                  You have no jobs in progress at the moment.
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
@@ -902,58 +1331,58 @@ export default function TraderDashboard() {
                 </div>
               </div>
 
-              {/* Metric 2: Quotes sent */}
-              <div className="bg-white rounded-xl p-3 sm:p-3.5 border border-[#DFEBDD] flex flex-col gap-1.5 shadow-2xs">
-                <div className="w-7 h-7 rounded-lg bg-[#EFF5EB] flex items-center justify-center text-[#2B5921]">
-                  <Send size={14} />
-                </div>
-                <div>
-                  <span className="text-[18px] font-black text-[#1B311E] leading-none block">
-                    {performance?.quotesSent?.value ?? 4}
-                  </span>
-                  <span className="text-[10.5px] text-[#5A6E5E] font-medium block mt-0.5">
-                    Quotes sent
-                  </span>
-                  <span className="text-[10px] font-bold text-[#22781E] block mt-1">
-                    ↑ {performance?.quotesSent?.trendPercentage ?? 33}%{" "}
-                    <span className="text-[#768779] font-normal">vs last 30 days</span>
-                  </span>
-                </div>
-              </div>
-
-              {/* Metric 3: Quote acceptance rate */}
-              <div className="bg-white rounded-xl p-3 sm:p-3.5 border border-[#DFEBDD] flex flex-col gap-1.5 shadow-2xs">
-                <div className="w-7 h-7 rounded-lg bg-[#EFF5EB] flex items-center justify-center text-[#2B5921]">
-                  <CheckCircle2 size={15} />
-                </div>
-                <div>
-                  <span className="text-[18px] font-black text-[#1B311E] leading-none block">
-                    {performance?.quoteAcceptanceRate?.value ?? 50}%
-                  </span>
-                  <span className="text-[10.5px] text-[#5A6E5E] font-medium block mt-0.5">
-                    Quote acceptance rate
-                  </span>
-                  <span className="text-[10px] font-bold text-[#22781E] block mt-1">
-                    ↑ {performance?.quoteAcceptanceRate?.trendPercentage ?? 10}%{" "}
-                    <span className="text-[#768779] font-normal">vs last 30 days</span>
-                  </span>
-                </div>
-              </div>
-
-              {/* Metric 4: Reviews */}
+              {/* Metric 2: Average Rating */}
               <div className="bg-white rounded-xl p-3 sm:p-3.5 border border-[#DFEBDD] flex flex-col gap-1.5 shadow-2xs">
                 <div className="w-7 h-7 rounded-lg bg-[#EFF5EB] flex items-center justify-center text-[#2B5921]">
                   <Star size={15} />
                 </div>
                 <div>
                   <span className="text-[18px] font-black text-[#1B311E] leading-none block">
-                    {performance?.averageRating?.value ?? 3}
+                    {performance?.averageRating?.value ?? 4}
                   </span>
                   <span className="text-[10.5px] text-[#5A6E5E] font-medium block mt-0.5">
-                    Reviews
+                    Average Rating
                   </span>
                   <span className="text-[10px] font-bold text-[#22781E] block mt-1">
-                    ↑ {performance?.averageRating?.trendChange ? (performance.averageRating.trendChange * 100).toFixed(0) : 100}%{" "}
+                    ↑ {performance?.averageRating?.trendChange ?? 0.2}{" "}
+                    <span className="text-[#768779] font-normal">vs last 30 days</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Metric 3: Response Rate */}
+              <div className="bg-white rounded-xl p-3 sm:p-3.5 border border-[#DFEBDD] flex flex-col gap-1.5 shadow-2xs">
+                <div className="w-7 h-7 rounded-lg bg-[#EFF5EB] flex items-center justify-center text-[#2B5921]">
+                  <MessageSquare size={14} />
+                </div>
+                <div>
+                  <span className="text-[18px] font-black text-[#1B311E] leading-none block">
+                    {performance?.responseRate?.value ?? 38}%
+                  </span>
+                  <span className="text-[10.5px] text-[#5A6E5E] font-medium block mt-0.5">
+                    Response Rate
+                  </span>
+                  <span className="text-[10px] font-bold text-[#22781E] block mt-1">
+                    ↑ {performance?.responseRate?.trendPercentage ?? 7}%{" "}
+                    <span className="text-[#768779] font-normal">vs last 30 days</span>
+                  </span>
+                </div>
+              </div>
+
+              {/* Metric 4: Quote Acceptance Rate */}
+              <div className="bg-white rounded-xl p-3 sm:p-3.5 border border-[#DFEBDD] flex flex-col gap-1.5 shadow-2xs">
+                <div className="w-7 h-7 rounded-lg bg-[#EFF5EB] flex items-center justify-center text-[#2B5921]">
+                  <CheckCircle2 size={15} />
+                </div>
+                <div>
+                  <span className="text-[18px] font-black text-[#1B311E] leading-none block">
+                    {performance?.quoteAcceptanceRate?.value ?? 70}%
+                  </span>
+                  <span className="text-[10.5px] text-[#5A6E5E] font-medium block mt-0.5">
+                    Quote Acceptance Rate
+                  </span>
+                  <span className="text-[10px] font-bold text-[#22781E] block mt-1">
+                    ↑ {performance?.quoteAcceptanceRate?.trendPercentage ?? 70}%{" "}
                     <span className="text-[#768779] font-normal">vs last 30 days</span>
                   </span>
                 </div>
@@ -972,6 +1401,230 @@ export default function TraderDashboard() {
           </div>
         </div>
       </div>
+
+      {/* ── SEND QUOTE MODAL (like TraderQuotesComponent / JobsLeads) ── */}
+      {isQuoteModalOpen && selectedQuoteJob && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
+            onClick={() => !isSubmittingQuote && setIsQuoteModalOpen(false)}
+          />
+
+          {/* Modal Content */}
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 z-10 max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h2 className="text-[18px] font-bold text-[#1C2C1C]">Send Quote</h2>
+                <p className="text-[12px] text-gray-500 mt-0.5 truncate max-w-[280px]">
+                  {selectedQuoteJob.title}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsQuoteModalOpen(false)}
+                disabled={isSubmittingQuote}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Quick job details banner */}
+            <div className="bg-[#F8F9F5] border border-[#DFEBDD] rounded-xl p-3 mb-4 flex items-center justify-between text-[12px]">
+              <div>
+                <span className="text-gray-400 block text-[10px] uppercase font-bold tracking-wider">
+                  Location
+                </span>
+                <span className="font-semibold text-[#1C2C1C] truncate">
+                  {selectedQuoteJob.location || "Albufeira"}
+                </span>
+              </div>
+              <div className="text-right">
+                <span className="text-gray-400 block text-[10px] uppercase font-bold tracking-wider">
+                  Budget
+                </span>
+                <span className="font-semibold text-[#2B5921]">
+                  {formatBudget(selectedQuoteJob.budgetRange || selectedQuoteJob.budget)}
+                </span>
+              </div>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSendQuoteSubmit} className="flex flex-col gap-4">
+              {/* Price */}
+              <div>
+                <label className="block text-[12px] font-semibold text-[#1C2C1C] mb-1.5">
+                  Price (€) <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-[14px] font-medium">
+                    €
+                  </span>
+                  <input
+                    type="number"
+                    min={1}
+                    step="any"
+                    required
+                    placeholder="e.g. 500"
+                    value={quoteForm.price}
+                    onChange={(e) => setQuoteForm((f) => ({ ...f, price: e.target.value }))}
+                    className="w-full pl-8 pr-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] placeholder:text-gray-400 focus:outline-none focus:border-[#6E9625] focus:ring-2 focus:ring-[#6E9625]/20 transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Estimated Days */}
+              <div>
+                <label className="block text-[12px] font-semibold text-[#1C2C1C] mb-1.5">
+                  Estimated Days <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Clock
+                    size={15}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                  />
+                  <input
+                    type="number"
+                    step="1"
+                    min={1}
+                    required
+                    placeholder="e.g. 3"
+                    value={quoteForm.estimatedDays}
+                    onChange={(e) =>
+                      setQuoteForm((f) => ({ ...f, estimatedDays: e.target.value }))
+                    }
+                    className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] placeholder:text-gray-400 focus:outline-none focus:border-[#6E9625] focus:ring-2 focus:ring-[#6E9625]/20 transition-all"
+                  />
+                </div>
+              </div>
+
+              {/* Availability */}
+              <div>
+                <label
+                  htmlFor="quote-availability"
+                  className="block text-[12px] font-semibold text-[#1C2C1C] mb-1.5"
+                >
+                  Availability <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <Calendar
+                    size={15}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                  />
+                  <select
+                    id="quote-availability"
+                    required
+                    value={quoteForm.availability}
+                    onChange={(e) =>
+                      setQuoteForm((f) => ({ ...f, availability: e.target.value }))
+                    }
+                    className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] bg-white focus:outline-none focus:border-[#6E9625] focus:ring-2 focus:ring-[#6E9625]/20 transition-all cursor-pointer appearance-none"
+                  >
+                    <option value="">Select availability</option>
+                    <option value="Can start immediately">Can start immediately</option>
+                    <option value="Within 24 hours">Within 24 hours</option>
+                    <option value="Within 3 days">Within 3 days</option>
+                    <option value="Within 7 days">Within 7 days</option>
+                    <option value="7days +">7days +</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Message */}
+              <div>
+                <label className="block text-[12px] font-semibold text-[#1C2C1C] mb-1.5">
+                  Message <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  required
+                  rows={4}
+                  placeholder="Provide details about your quote..."
+                  value={quoteForm.message}
+                  onChange={(e) => setQuoteForm((f) => ({ ...f, message: e.target.value }))}
+                  className="w-full px-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] placeholder:text-gray-400 focus:outline-none focus:border-[#6E9625] focus:ring-2 focus:ring-[#6E9625]/20 transition-all resize-none"
+                />
+              </div>
+
+              {/* Attachments */}
+              <div>
+                <label className="block text-[12px] font-semibold text-[#1C2C1C] mb-1.5">
+                  Attachments <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  ref={quoteFileInputRef}
+                  type="file"
+                  multiple
+                  accept="image/*,.pdf,.doc,.docx,.xls,.xlsx"
+                  onChange={handleAttachmentSelect}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => quoteFileInputRef.current?.click()}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl border border-dashed border-gray-300 text-[13px] text-gray-500 hover:border-[#6E9625] hover:text-[#6E9625] transition-colors cursor-pointer"
+                >
+                  <Paperclip size={15} />
+                  Add Files
+                </button>
+
+                {/* Previews */}
+                {quoteAttachments.length > 0 && (
+                  <div className="mt-2 flex flex-col gap-1.5 max-h-[100px] overflow-y-auto">
+                    {quoteAttachments.map((file, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center gap-2 bg-[#F9FAFB] rounded-lg px-3 py-1.5 border border-gray-100"
+                      >
+                        <span className="text-[12px] text-[#1C2C1C] truncate flex-1">
+                          {file.name}
+                        </span>
+                        <span className="text-[10px] text-gray-400 flex-shrink-0">
+                          {(file.size / 1024).toFixed(0)} KB
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveAttachment(idx)}
+                          className="text-gray-400 hover:text-red-500 transition-colors flex-shrink-0 cursor-pointer"
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={isSubmittingQuote}
+                  onClick={() => setIsQuoteModalOpen(false)}
+                  className="flex-1 py-2.5 px-4 rounded-xl border border-gray-200 text-[#1C2C1C] text-[13px] font-bold hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingQuote}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-[#2B5921] hover:bg-[#204418] text-white text-[13px] font-bold flex items-center justify-center gap-2 transition-colors cursor-pointer disabled:opacity-50 shadow-xs"
+                >
+                  {isSubmittingQuote ? (
+                    <>
+                      <Loader2 size={15} className="animate-spin" />
+                      <span>Sending...</span>
+                    </>
+                  ) : (
+                    <span>Send Quote</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

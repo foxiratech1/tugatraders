@@ -414,12 +414,12 @@ export const authApi = {
   },
 
   // Fetch all quotes for the current customer
-  getMyQuotes: async (page = 1, limit = 10) => {
+  getMyQuotes: async (page?: number, limit?: number) => {
+    const params: Record<string, any> = {};
+    if (page !== undefined) params.page = page;
+    if (limit !== undefined) params.limit = limit;
     const response = await api.get("/api/quotes/my-quotes", {
-      params: {
-        page,
-        limit,
-      },
+      params,
     });
 
     return response.data;
@@ -662,6 +662,39 @@ export const authApi = {
         'Content-Type': 'multipart/form-data',
       },
     });
+    return data;
+  },
+
+  // -----------------------------------------------------------------
+  // Direct Jobs
+  // -----------------------------------------------------------------
+  getDirectJobForConversation: async (conversationId: string) => {
+    const { data } = await api.get(`/api/direct-jobs/conversation/${conversationId}`);
+    return data;
+  },
+
+  startDirectJob: async (payload: { conversationId: string; title?: string; description?: string; agreedPrice?: number }) => {
+    const { data } = await api.post('/api/direct-jobs/start', payload);
+    return data;
+  },
+
+  closeDirectJob: async (jobId: string) => {
+    const { data } = await api.patch(`/api/direct-jobs/${jobId}/close`);
+    return data;
+  },
+
+  remindCustomerDirectJob: async (jobId: string) => {
+    const { data } = await api.post(`/api/direct-jobs/${jobId}/remind`);
+    return data;
+  },
+
+  confirmDirectJob: async (jobId: string) => {
+    const { data } = await api.patch(`/api/direct-jobs/${jobId}/confirm`);
+    return data;
+  },
+
+  cancelDirectJob: async (jobId: string, payload?: { reason: string }) => {
+    const { data } = await api.patch(`/api/direct-jobs/${jobId}/cancel`, payload || {});
     return data;
   },
 };

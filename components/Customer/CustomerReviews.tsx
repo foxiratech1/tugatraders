@@ -476,8 +476,8 @@ export default function CustomerReviews() {
                             <span className="inline-block bg-[#EAF3DE] text-[#557A18] font-bold text-[10px] px-2.5 py-0.5 rounded-full tracking-wide">
                               JOB-{job.id?.substring(0, 8).toUpperCase()}
                             </span>
-                            <span className="inline-block bg-green-50 text-green-700 font-bold text-[10px] px-2.5 py-0.5 rounded-full">
-                              COMPLETED
+                            <span className="inline-block bg-[#13501B] border border-[#0E3F15] text-white font-bold text-[10px] px-2.5 py-0.5 rounded-sm">
+                              Completed
                             </span>
 
                           </div>

@@ -26,6 +26,65 @@ export const AVAILABILITY_OPTIONS = [
   "7days +",
 ] as const;
 
+export const ESTIMATED_DURATION_OPTIONS = [
+  "Few Hours",
+  "Half day",
+  "1 day",
+  "2–3 days",
+  "Under a week",
+  "1 – 2 weeks",
+  "2 – 3 weeks",
+  "3 – 4 weeks",
+  "1 month +",
+] as const;
+
+export const mapDurationToDays = (duration?: string): number | undefined => {
+  if (!duration) return undefined;
+  switch (duration) {
+    case "Few Hours":
+    case "Half day":
+    case "1 day":
+      return 1;
+    case "2–3 days":
+    case "2-3 days":
+      return 3;
+    case "Under a week":
+      return 7;
+    case "1 – 2 weeks":
+    case "1-2 weeks":
+      return 14;
+    case "2 – 3 weeks":
+    case "2-3 weeks":
+      return 21;
+    case "3 – 4 weeks":
+    case "3-4 weeks":
+      return 28;
+    case "1 month +":
+    case "1 month+":
+      return 30;
+    default: {
+      const num = parseInt(duration, 10);
+      return !isNaN(num) ? num : undefined;
+    }
+  }
+};
+
+export const mapDaysToDuration = (days?: number | string): string => {
+  if (!days && days !== 0) return "";
+  if (typeof days === "string" && ESTIMATED_DURATION_OPTIONS.includes(days as any)) {
+    return days;
+  }
+  const n = typeof days === "number" ? days : parseInt(String(days), 10);
+  if (isNaN(n) || n <= 0) return "";
+  if (n <= 1) return "1 day";
+  if (n <= 3) return "2–3 days";
+  if (n <= 7) return "Under a week";
+  if (n <= 14) return "1 – 2 weeks";
+  if (n <= 21) return "2 – 3 weeks";
+  if (n <= 28) return "3 – 4 weeks";
+  return "1 month +";
+};
+
 /**
  * Quote type mirrors the shape returned by GET /api/quotes/my-quotes
  */
@@ -37,6 +96,7 @@ interface Quote {
   updatedAt?: string;
   availability?: string;
   estimatedDays?: number;
+  estimatedDuration?: string;
   message?: string;
   job?: {
     id: string;
@@ -150,7 +210,7 @@ function QuoteCard({
             </p>
           )}
 
-          {/* Availability & Days info */}
+          {/* Availability & Duration info */}
           <div className="flex items-center gap-2 flex-wrap mt-1">
             {quote.availability && (
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-[#F4F6F8] text-[#1C2C1C]">
@@ -159,10 +219,11 @@ function QuoteCard({
                 {quote.availability}
               </span>
             )}
-            {quote.estimatedDays && (
+            {(quote.estimatedDuration || quote.estimatedDays) && (
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-md text-[11px] font-semibold bg-[#F4F6F8] text-[#1C2C1C]">
                 <Clock size={12} className="text-gray-400" />
-                {quote.estimatedDays} {quote.estimatedDays === 1 ? "day" : "days"}
+                <span className="text-gray-500 font-normal">Duration:</span>
+                {quote.estimatedDuration || mapDaysToDuration(quote.estimatedDays)}
               </span>
             )}
           </div>
@@ -220,7 +281,7 @@ export default function TraderQuotePage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingQuote, setEditingQuote] = useState<Quote | null>(null);
   const [editPrice, setEditPrice] = useState("");
-  const [editEstimatedDays, setEditEstimatedDays] = useState("");
+  const [editEstimatedDuration, setEditEstimatedDuration] = useState("");
   const [editAvailability, setEditAvailability] = useState("");
   const [editMessage, setEditMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -252,7 +313,10 @@ export default function TraderQuotePage() {
   const handleEditClick = (quote: Quote) => {
     setEditingQuote(quote);
     setEditPrice(quote.price ? String(quote.price) : "");
-    setEditEstimatedDays(quote.estimatedDays ? String(quote.estimatedDays) : "");
+    setEditEstimatedDuration(
+      quote.estimatedDuration ||
+        (quote.estimatedDays ? mapDaysToDuration(quote.estimatedDays) : "")
+    );
     setEditAvailability(quote.availability || "");
     setEditMessage(quote.message || "");
     setIsEditModalOpen(true);
@@ -264,12 +328,18 @@ export default function TraderQuotePage() {
 
     setIsSubmitting(true);
     try {
+      const mappedDays = mapDurationToDays(editEstimatedDuration);
       const payload: any = {
         price: parseFloat(editPrice),
-        estimatedDays: editEstimatedDays ? parseInt(editEstimatedDays, 10) : undefined,
         availability: editAvailability.trim(),
         message: editMessage.trim(),
       };
+      if (mappedDays !== undefined) {
+        payload.estimatedDays = mappedDays;
+      }
+      if (editEstimatedDuration) {
+        payload.estimatedDuration = editEstimatedDuration;
+      }
 
       try {
         await authApi.updateQuote(editingQuote.id, payload);
@@ -290,7 +360,8 @@ export default function TraderQuotePage() {
             ? {
               ...q,
               price: parseFloat(editPrice),
-              estimatedDays: editEstimatedDays ? parseInt(editEstimatedDays, 10) : q.estimatedDays,
+              estimatedDays: mappedDays !== undefined ? mappedDays : q.estimatedDays,
+              estimatedDuration: editEstimatedDuration,
               availability: editAvailability.trim(),
               message: editMessage.trim(),
             }
@@ -438,22 +509,35 @@ export default function TraderQuotePage() {
                 </div>
               </div>
 
-              {/* Estimated Days */}
+              {/* Estimated Duration */}
               <div>
-                <label className="block text-[12px] font-semibold text-[#1C2C1C] mb-1.5">
-                  Estimated Days
+                <label
+                  htmlFor="modal-estimated-duration-select"
+                  className="block text-[12px] font-semibold text-[#1C2C1C] mb-1.5"
+                >
+                  Estimated Duration <span className="text-gray-400 font-normal">(optional)</span>
                 </label>
                 <div className="relative">
-                  <Clock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="number"
-                    step="1"
-                    min={1}
-                    required
-                    placeholder="e.g. 3"
-                    value={editEstimatedDays}
-                    onChange={(e) => setEditEstimatedDays(e.target.value)}
-                    className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] placeholder:text-gray-400 focus:outline-none focus:border-[#C8D9A8] focus:ring-2 focus:ring-[#C8D9A8]/20 transition-all"
+                  <Clock
+                    size={15}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
+                  />
+                  <select
+                    id="modal-estimated-duration-select"
+                    value={editEstimatedDuration}
+                    onChange={(e) => setEditEstimatedDuration(e.target.value)}
+                    className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] bg-white focus:outline-none focus:border-[#C8D9A8] focus:ring-2 focus:ring-[#C8D9A8]/20 transition-all cursor-pointer appearance-none"
+                  >
+                    <option value="">Select duration (optional)</option>
+                    {ESTIMATED_DURATION_OPTIONS.map((opt) => (
+                      <option key={opt} value={opt}>
+                        {opt}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown
+                    size={14}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                   />
                 </div>
               </div>

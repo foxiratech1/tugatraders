@@ -168,9 +168,27 @@ const isInProgressStatus = (norm: string) =>
   norm.includes("PROGRESS");
 
 const statusConfig: Record<string, { label: string; bg: string; text: string; dot: string }> = {
-  OPEN: { label: "Job Posted", bg: "bg-[#F1AA69]", text: "text-[#9C410F]", dot: "bg-[#9C410F]" },
-  POSTED: { label: "Job Posted", bg: "bg-[#F1AA69]", text: "text-[#9C410F]", dot: "bg-[#9C410F]" },
+  OPEN: { label: "Job Posted", bg: "bg-[#EFDB4B]", text: "text-[#8A5C05]", dot: "bg-[#8A5C05]" },
+  POSTED: { label: "Job Posted", bg: "bg-[#EFDB4B]", text: "text-[#8A5C05]", dot: "bg-[#8A5C05]" },
   QUOTE_RECEIVED: {
+    label: "Quote Received",
+    bg: "bg-[#DCEAF7]",
+    text: "text-[#156082]",
+    dot: "bg-[#156082]",
+  },
+  QUOTES_RECEIVED: {
+    label: "Quote Received",
+    bg: "bg-[#DCEAF7]",
+    text: "text-[#156082]",
+    dot: "bg-[#156082]",
+  },
+  QUOTED: {
+    label: "Quote Received",
+    bg: "bg-[#DCEAF7]",
+    text: "text-[#156082]",
+    dot: "bg-[#156082]",
+  },
+  QUOTE_SENT: {
     label: "Quote Received",
     bg: "bg-[#DCEAF7]",
     text: "text-[#156082]",
@@ -178,33 +196,33 @@ const statusConfig: Record<string, { label: string; bg: string; text: string; do
   },
   IN_PROGRESS: {
     label: "In Progress",
-    bg: "bg-[#EFDB4B]",
-    text: "text-[#8A5C05]",
-    dot: "bg-[#8A5C05]",
+    bg: "bg-[#F1AA69]",
+    text: "text-[#9C410F]",
+    dot: "bg-[#9C410F]",
   },
   "IN PROGRESS": {
     label: "In Progress",
-    bg: "bg-[#EFDB4B]",
-    text: "text-[#8A5C05]",
-    dot: "bg-[#8A5C05]",
+    bg: "bg-[#F1AA69]",
+    text: "text-[#9C410F]",
+    dot: "bg-[#9C410F]",
   },
   "IN-PROGRESS": {
     label: "In Progress",
-    bg: "bg-[#EFDB4B]",
-    text: "text-[#8A5C05]",
-    dot: "bg-[#8A5C05]",
+    bg: "bg-[#F1AA69]",
+    text: "text-[#9C410F]",
+    dot: "bg-[#9C410F]",
   },
   INPROGRESS: {
     label: "In Progress",
-    bg: "bg-[#EFDB4B]",
-    text: "text-[#8A5C05]",
-    dot: "bg-[#8A5C05]",
+    bg: "bg-[#F1AA69]",
+    text: "text-[#9C410F]",
+    dot: "bg-[#9C410F]",
   },
   STARTED: {
     label: "In Progress",
-    bg: "bg-[#EFDB4B]",
-    text: "text-[#8A5C05]",
-    dot: "bg-[#8A5C05]",
+    bg: "bg-[#F1AA69]",
+    text: "text-[#9C410F]",
+    dot: "bg-[#9C410F]",
   },
 
   ASSIGNED: { label: "Contacted", bg: "bg-[#7DB0E3]", text: "text-[#103270]", dot: "bg-[#103270]" },
@@ -216,15 +234,15 @@ const statusConfig: Record<string, { label: string; bg: string; text: string; do
   CANCELLED: { label: "Closed", bg: "bg-[#A6A6A6]", text: "text-[#333333]", dot: "bg-[#333333]" },
   CLOSED: { label: "Closed", bg: "bg-[#A6A6A6]", text: "text-[#333333]", dot: "bg-[#333333]" },
   EXPIRED: { label: "Closed", bg: "bg-[#A6A6A6]", text: "text-[#333333]", dot: "bg-[#333333]" },
-  ACTIVE: { label: "Job Posted", bg: "bg-[#F1AA69]", text: "text-[#9C410F]", dot: "bg-[#9C410F]" },
+  ACTIVE: { label: "Job Posted", bg: "bg-[#EFDB4B]", text: "text-[#8A5C05]", dot: "bg-[#8A5C05]" },
 };
 
 function SidebarStatusBadge({ status, job }: { status: string; job?: Job }) {
   const norm = normalizeStatus(status);
   if (norm === "COMPLETED") {
     return (
-      <div className="flex items-center gap-1.5 text-[12px] font-semibold text-[#4E7B24]">
-        <span className="w-2 h-2 rounded-full bg-[#4E7B24]" />
+      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm bg-[#D8F3D7] text-[#2E7D32] text-[11px] font-semibold">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]" />
         Completed
       </div>
     );
@@ -239,8 +257,8 @@ function SidebarStatusBadge({ status, job }: { status: string; job?: Job }) {
   }
   if (isInProgressStatus(norm)) {
     return (
-      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm bg-[#FFE699] text-[#C59B11] text-[11px] font-bold">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#C59B11]" />
+      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm bg-[#F1AA69] text-[#9C410F] text-[11px] font-bold">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#9C410F]" />
         In Progress
       </div>
     );
@@ -271,15 +289,15 @@ function SidebarStatusBadge({ status, job }: { status: string; job?: Job }) {
     ((norm === "OPEN" || norm === "POSTED" || norm === "ACTIVE") && quotes > 0)
   ) {
     return (
-      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm bg-[#FFF8E1] text-[#F57C00] text-[11px] font-semibold">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#F57C00]" />
+      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm bg-[#DCEAF7] text-[#156082] text-[11px] font-semibold">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#156082]" />
         Quote Received
       </div>
     );
   }
   return (
-    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm bg-[#FDE2D6] text-[#D32F2F] text-[11px] font-semibold">
-      <span className="w-1.5 h-1.5 rounded-full bg-[#D32F2F]" />
+    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm bg-[#EFDB4B] text-[#8A5C05] text-[11px] font-semibold">
+      <span className="w-1.5 h-1.5 rounded-full bg-[#8A5C05]" />
       Job Posted
     </div>
   );
@@ -289,38 +307,43 @@ function StatusBadge({ status, job, quotesCount }: { status: string; job?: Job; 
   const norm = normalizeStatus(status);
   if (norm === "COMPLETED") {
     return (
-      <span className="inline-flex items-center px-3 py-1 rounded-sm bg-[#D8F3D7] text-[#2E7D32] text-[11px] font-bold tracking-wide">
-        COMPLETED
-      </span>
+      <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-sm bg-[#D8F3D7] text-[#2E7D32] text-[11px] font-semibold">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]" />
+        Completed
+      </div>
     );
   }
   if (norm === "CLOSED" || norm === "CANCELLED" || norm === "EXPIRED") {
     return (
-      <span className="inline-flex items-center px-3 py-1 rounded-sm bg-[#E2E8F0] text-[#475569] text-[11px] font-bold tracking-wide">
-        CLOSED
-      </span>
+      <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-sm bg-[#E2E8F0] text-[#475569] text-[11px] font-semibold">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#64748B]" />
+        Closed
+      </div>
     );
   }
   if (isInProgressStatus(norm)) {
     return (
-      <span className="inline-flex items-center px-3 py-1 rounded-sm bg-[#FFE699] text-[#C59B11] text-[11px] font-bold tracking-wide">
-        IN PROGRESS
-      </span>
+      <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-sm bg-[#F1AA69] text-[#9C410F] text-[11px] font-bold">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#9C410F]" />
+        In Progress
+      </div>
     );
   }
-  if (norm === "ASSIGNED" || norm === "CONTACTED" || norm === "ACCEPTED") {
+  if (norm === "ASSIGNED" || norm === "CONTACTED" || norm === "ACCEPTED" || norm === "QUOTE_ACCEPTED") {
     return (
-      <span className="inline-flex items-center px-3 py-1 rounded-sm bg-[#B6D5F4] text-[#1565C0] text-[11px] font-bold tracking-wide">
-        CONTACTED
-      </span>
+      <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-sm bg-[#B6D5F4] text-[#1565C0] text-[11px] font-semibold">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#1565C0]" />
+        Contacted
+      </div>
     );
   }
   const hasAcceptedQuote = job && Array.isArray(job.quotes) && job.quotes.some((q: any) => q.status?.toUpperCase() === "ACCEPTED");
   if (hasAcceptedQuote) {
     return (
-      <span className="inline-flex items-center px-3 py-1 rounded-sm bg-[#B6D5F4] text-[#1565C0] text-[11px] font-bold tracking-wide">
-        CONTACTED
-      </span>
+      <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-sm bg-[#B6D5F4] text-[#1565C0] text-[11px] font-semibold">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#1565C0]" />
+        Contacted
+      </div>
     );
   }
   const quotes = quotesCount ?? (job ? (job.quotesReceived ?? job.quotesCount ?? (job as any)._count?.quotes ?? (Array.isArray(job.quotes) ? job.quotes.length : 0)) : 0);
@@ -332,15 +355,17 @@ function StatusBadge({ status, job, quotesCount }: { status: string; job?: Job; 
     ((norm === "OPEN" || norm === "POSTED" || norm === "ACTIVE") && quotes > 0)
   ) {
     return (
-      <span className="inline-flex items-center px-3 py-1 rounded-sm bg-[#FFF8E1] text-[#F57C00] text-[11px] font-bold tracking-wide">
-        QUOTE RECEIVED
-      </span>
+      <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-sm bg-[#DCEAF7] text-[#156082] text-[11px] font-semibold">
+        <span className="w-1.5 h-1.5 rounded-full bg-[#156082]" />
+        Quote Received
+      </div>
     );
   }
   return (
-    <span className="inline-flex items-center px-3 py-1 rounded-sm bg-[#FDE2D6] text-[#D32F2F] text-[11px] font-bold tracking-wide">
-      JOB POSTED
-    </span>
+    <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-sm bg-[#EFDB4B] text-[#8A5C05] text-[11px] font-semibold">
+      <span className="w-1.5 h-1.5 rounded-full bg-[#8A5C05]" />
+      Job Posted
+    </div>
   );
 }
 
@@ -349,7 +374,7 @@ function ActiveBadge({ status }: { status: string }) {
   const norm = normalizeStatus(status);
   if (isInProgressStatus(norm)) {
     return (
-      <span className="inline-flex items-center px-2.5 py-1 rounded-[6px] bg-[#FFE699] text-[#C59B11] text-[11px] font-bold tracking-wide">
+      <span className="inline-flex items-center px-2.5 py-1 rounded-[6px] bg-[#F1AA69] text-[#9C410F] text-[11px] font-bold tracking-wide">
         IN PROGRESS
       </span>
     );
@@ -475,7 +500,7 @@ function QuotesModal({
         </div>
 
         {/* Quote list */}
-        <div className="overflow-y-auto px-4 sm:px-6 py-3 sm:py-4 space-y-3 sm:space-y-4">
+        <div className="overflow-y-auto px-4 sm:px-6 py-3 sm:py-4 space-y-3 sm:space-y-4 bg-[#EFF5EB]">
           {quotes.length === 0 ? (
             <p className="text-center text-[13px] text-gray-400 py-8">No quotes available.</p>
           ) : (
@@ -484,13 +509,18 @@ function QuotesModal({
               return quotes.map((quote) => {
                 const isThisAccepted = quote.status?.toUpperCase() === "ACCEPTED";
                 const effectiveStatus = hasAnyAccepted && !isThisAccepted ? "REJECTED" : quote.status;
+                const isThisDeclined =
+                  !isThisAccepted &&
+                  (effectiveStatus?.toUpperCase() === "REJECTED" ||
+                    effectiveStatus?.toUpperCase() === "DECLINED" ||
+                    quote.status?.toUpperCase() === "DECLINED");
 
                 return (
                   <div
                     key={quote.id}
-                    className={`border border-gray-200 rounded-xl p-3.5 sm:p-4 transition-all ${effectiveStatus?.toUpperCase() === "REJECTED" || effectiveStatus?.toUpperCase() === "DECLINED"
-                      ? "bg-gray-50"
-                      : "bg-white hover:border-[#8BC34A]/60 hover:shadow-sm"
+                    className={`rounded-2xl p-4 sm:p-5 transition-all ${isThisDeclined
+                      ? "bg-[#F8F9FA] border border-gray-200/80 text-gray-500"
+                      : "bg-white border border-gray-200/80 hover:border-[#8BC34A]/60 hover:shadow-sm"
                       }`}
                   >
                     {/* Trader row */}
@@ -524,22 +554,22 @@ function QuotesModal({
                           {hasAnyAccepted && !isThisAccepted ? "Rejected" : "Declined"}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 text-[11px] font-semibold border border-amber-100 flex-shrink-0">
-                          {effectiveStatus?.toUpperCase() === "PENDING" ? "Pending" : effectiveStatus ?? "Pending"}
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#DCEAF7] text-[#156082] text-[11px] font-semibold border border-[#C2D9EE] flex-shrink-0">
+                          {effectiveStatus?.toUpperCase() === "PENDING" ? "Quote Received" : effectiveStatus ?? "Quote Received"}
                         </span>
                       )}
                     </div>
 
                     {/* Meta grid */}
                     <div className="grid grid-cols-2 gap-2.5 sm:gap-3 mb-3">
-                      <div className="flex items-center gap-2 bg-[#F8F9F5] rounded-lg p-2 sm:p-2.5">
+                      <div className="flex items-center gap-2 rounded-lg p-2 sm:p-2.5 bg-[#F8F9FA] border border-gray-100/60">
                         <DollarSign size={14} className="text-[#6E9625] flex-shrink-0" />
                         <div>
                           <p className="text-[10px] text-gray-400 font-medium">Price</p>
                           <p className="text-[12px] sm:text-[13px] font-bold text-[#1C2C1C]">{formatPrice(quote.price)}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 bg-[#F8F9F5] rounded-lg p-2 sm:p-2.5">
+                      <div className="flex items-center gap-2 rounded-lg p-2 sm:p-2.5 bg-[#F8F9FA] border border-gray-100/60">
                         <Clock size={14} className="text-[#6E9625] flex-shrink-0" />
                         <div>
                           <p className="text-[10px] text-gray-400 font-medium">Est. Days</p>
@@ -549,10 +579,12 @@ function QuotesModal({
                     </div>
 
                     {/* Message */}
-                    <div className="flex items-start gap-2 bg-gray-50 rounded-lg p-2.5 sm:p-3 mb-3">
-                      <MessageSquare size={13} className="text-gray-400 mt-0.5 flex-shrink-0" />
-                      <p className="text-[12px] text-gray-600 leading-relaxed">{quote.message}</p>
-                    </div>
+                    {quote.message && (
+                      <div className="flex items-start gap-2 rounded-lg p-2.5 sm:p-3 mb-3 bg-[#F8F9FA] border border-gray-100/60">
+                        <MessageSquare size={13} className="text-gray-400 mt-0.5 flex-shrink-0" />
+                        <p className="text-[12px] text-gray-600 leading-relaxed break-words">{quote.message}</p>
+                      </div>
+                    )}
 
                     {/* Attachments */}
                     {quote.attachments && quote.attachments.length > 0 && (
@@ -685,8 +717,16 @@ function TraderQuoteCard({
   const [declining, setDeclining] = useState<boolean>(false);
   const [openingChat, setOpeningChat] = useState<boolean>(false);
 
-  const isAcceptedQuote = quoteStatus?.toUpperCase() === "ACCEPTED";
-  const effectiveQuoteStatus = hasAnyAcceptedQuote && !isAcceptedQuote ? "REJECTED" : quoteStatus;
+  const isDirectAccepted = quoteStatus?.toUpperCase() === "ACCEPTED" || isAssigned;
+  const effectiveQuoteStatus = hasAnyAcceptedQuote && !isDirectAccepted ? "REJECTED" : quoteStatus;
+
+  const isAcceptedQuote = isDirectAccepted || effectiveQuoteStatus?.toUpperCase() === "ACCEPTED";
+  const isDeclinedQuote =
+    !isAcceptedQuote &&
+    (effectiveQuoteStatus?.toUpperCase() === "REJECTED" ||
+      effectiveQuoteStatus?.toUpperCase() === "DECLINED" ||
+      quoteStatus?.toUpperCase() === "REJECTED" ||
+      quoteStatus?.toUpperCase() === "DECLINED");
 
   const targetTraderId =
     (trader && trader !== (quote as any) && trader.id ? trader.id : "") ||
@@ -702,12 +742,14 @@ function TraderQuoteCard({
     p ? (isNaN(Number(p)) ? p : `£${Number(p).toLocaleString()}`) : "—";
 
   return (
-    <div className={`border border-gray-200 rounded-xl p-3.5 sm:p-4 mb-3 last:mb-0 transition-all ${effectiveQuoteStatus?.toUpperCase() === "REJECTED" || effectiveQuoteStatus?.toUpperCase() === "DECLINED"
-      ? "bg-gray-50"
-      : "bg-white hover:border-[#8BC34A]/60 hover:shadow-sm"
-      }`}>
+    <div
+      className={`rounded-2xl p-4 sm:p-5 mb-3 last:mb-0 transition-all ${isDeclinedQuote
+        ? "bg-[#F8F9FA] border border-gray-200/80"
+        : "bg-white border border-gray-200/80 hover:border-[#8BC34A]/60 hover:shadow-sm"
+        }`}
+    >
       {/* Header Row */}
-      <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2.5 mb-4">
+      <div className="flex items-start justify-between gap-3 mb-4">
         <div className="flex items-start gap-3 min-w-0">
           <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#7CB342] flex items-center justify-center text-white text-[15px] sm:text-[16px] font-bold flex-shrink-0 mt-0.5 overflow-hidden">
             {trader?.profileImage ? (
@@ -739,16 +781,14 @@ function TraderQuoteCard({
         </div>
 
         {/* Top Right Action */}
-        {quoteStatus?.toUpperCase() === "ACCEPTED" ? (
-          !hasReviewed && (
-            <button
-              onClick={() => onLeaveReview && onLeaveReview()}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#6E9625] text-white text-[11px] font-bold hover:bg-[#58791C] transition-colors flex-shrink-0"
-            >
-              <Star size={12} className="fill-current" />
-              Leave a review
-            </button>
-          )
+        {isAcceptedQuote && !hasReviewed ? (
+          <button
+            onClick={() => onLeaveReview && onLeaveReview()}
+            className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-lg bg-[#6E9625] text-white text-[11px] sm:text-[12px] font-bold hover:bg-[#58791C] transition-colors flex-shrink-0 ml-auto"
+          >
+            <Star size={13} className="fill-current" />
+            Leave a review
+          </button>
         ) : null}
       </div>
 
@@ -756,7 +796,7 @@ function TraderQuoteCard({
       {quote && (
         <>
           <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_2fr] gap-2.5 sm:gap-3 mb-4">
-            <div className="flex flex-col gap-1 bg-[#F9F9F9] rounded-xl p-2.5 sm:p-3 border border-gray-100/50">
+            <div className="flex flex-col gap-1 rounded-xl p-2.5 sm:p-3 bg-[#F8F9FA] border border-gray-100/60">
               <div className="flex items-center gap-1.5 text-gray-400">
                 <DollarSign size={13} className="text-[#4CAF50]" />
                 <span className="text-[11px] font-semibold">Price</span>
@@ -764,7 +804,7 @@ function TraderQuoteCard({
               <span className="text-[13px] sm:text-[14px] font-bold text-[#1C2C1C] pl-5">{formatPrice(quote.price)}</span>
             </div>
 
-            <div className="flex flex-col gap-1 bg-[#F9F9F9] rounded-xl p-2.5 sm:p-3 border border-gray-100/50">
+            <div className="flex flex-col gap-1 rounded-xl p-2.5 sm:p-3 bg-[#F8F9FA] border border-gray-100/60">
               <div className="flex items-center gap-1.5 text-gray-400">
                 <Clock size={13} className="text-[#8BC34A]" />
                 <span className="text-[11px] font-semibold">Est. Days</span>
@@ -772,7 +812,7 @@ function TraderQuoteCard({
               <span className="text-[13px] sm:text-[14px] font-bold text-[#1C2C1C] pl-5">{quote.estimatedDays} day{quote.estimatedDays !== 1 ? 's' : ''}</span>
             </div>
 
-            <div className="flex flex-col gap-1 bg-[#F9F9F9] rounded-xl p-2.5 sm:p-3 border border-gray-100/50">
+            <div className="flex flex-col gap-1 rounded-xl p-2.5 sm:p-3 bg-[#F8F9FA] border border-gray-100/60">
               <div className="flex items-center gap-1.5 text-gray-400">
                 <MessageSquare size={13} className="text-gray-400" />
                 <span className="text-[11px] font-semibold">Message</span>
@@ -835,7 +875,7 @@ function TraderQuoteCard({
               {hasAnyAcceptedQuote && !isAcceptedQuote ? "Quote Rejected" : "Quote Declined"}
             </span>
           ) : effectiveQuoteStatus ? (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#FFF8E1] text-[#F57C00] text-[11px] font-bold border border-[#FFECB3]">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#DCEAF7] text-[#156082] text-[11px] font-bold border border-[#C2D9EE]">
               {effectiveQuoteStatus?.toUpperCase() === "PENDING" ? "Quote Received" : effectiveQuoteStatus ?? "Quote Received"}
             </span>
           ) : null}
@@ -1580,15 +1620,15 @@ export default function CustomerJobDashboard() {
                   onClick={() => router.push('/customer-dashboard/job-history?tab=JOB_POSTED')}
                   className="px-4 sm:px-5 py-3.5 sm:py-4 flex items-center gap-3 sm:gap-4 hover:bg-gray-50/50 rounded-xl transition-colors cursor-pointer"
                 >
-                  <div className="w-[44px] h-[44px] sm:w-[48px] sm:h-[48px] md:w-[52px] md:h-[52px] rounded-full bg-[#FFF3E0] flex items-center justify-center flex-shrink-0">
-                    <Briefcase size={20} className="text-[#E65100]" strokeWidth={2.2} />
+                  <div className="w-[44px] h-[44px] sm:w-[48px] sm:h-[48px] md:w-[52px] md:h-[52px] rounded-full bg-[#FEF9C3] flex items-center justify-center flex-shrink-0">
+                    <Briefcase size={20} className="text-[#CA8A04]" strokeWidth={2.2} />
                   </div>
                   <div>
                     <h4 className="text-[18px] sm:text-[20px] font-extrabold text-[#1C2C1C] leading-none mb-1">
                       {dashboardDetails?.actionRequired?.activeJobsCount ?? jobs.filter(j => ["OPEN", "POSTED", "ACTIVE", "ASSIGNED", "IN_PROGRESS", "STARTED"].includes(j.status?.toUpperCase())).length}
                     </h4>
                     <p className="text-[12px] text-gray-500 font-medium mb-1">Jobs Posted</p>
-                    <button className="text-[12px] font-bold text-[#E65100] flex items-center gap-1 hover:underline">
+                    <button className="text-[12px] font-bold text-[#CA8A04] flex items-center gap-1 hover:underline">
                       View jobs <ArrowRight size={13} />
                     </button>
                   </div>
@@ -1685,12 +1725,11 @@ export default function CustomerJobDashboard() {
                     </h2>
                     <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
                       <StatusBadge status={selectedJob.status} job={selectedJob} quotesCount={Math.max(quotes.length, quotesCount)} />
-                      <span className="text-[11px] sm:text-[12px] text-gray-400 font-medium flex items-center gap-1">
-                        <Clock size={12} /> Posted {formatDate(selectedJob.createdAt)}
-                      </span>
-                      <span className="text-gray-300 text-[10px]">•</span>
                       <span className="text-[11px] sm:text-[12px] text-gray-400 font-medium">
                         JOB-{selectedJob.id?.substring(0, 8).toUpperCase()}
+                      </span>
+                      <span className="text-[11px] sm:text-[12px] text-gray-400 font-medium flex items-center gap-1">
+                        <Clock size={12} /> Posted {formatDate(selectedJob.createdAt)}
                       </span>
                     </div>
                   </div>
@@ -1855,7 +1894,7 @@ export default function CustomerJobDashboard() {
 
                 {/* Quotes Section */}
                 <div className="grid grid-cols-1 gap-5">
-                  <div className="rounded-2xl border border-gray-200/80 p-4 sm:p-5 bg-white shadow-xs min-w-0">
+                  <div className="rounded-2xl border border-[#DFEBDD] p-4 sm:p-5 bg-[#EFF5EB] shadow-xs min-w-0">
                     <div className="flex items-center justify-between mb-4">
                       <h3 className="text-[14px] sm:text-[15px] font-bold text-[#223321]">
                         Quotes ({quotesLoading ? "..." : Math.max(quotes.length, quotesCount)})

@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
-import { Paperclip, Send, X, File } from "lucide-react";
+import { Paperclip, Send, X, File, Smile } from "lucide-react";
+import EmojiPicker, { EmojiClickData } from "emoji-picker-react";
 import toast from "react-hot-toast";
 
 interface ChatInputProps {
@@ -21,8 +22,23 @@ export default function ChatInput({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Click outside to close emoji picker
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+        setShowEmojiPicker(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   // Clear preview URL on cleanup
   useEffect(() => {
@@ -42,6 +58,10 @@ export default function ChatInput({
     typingTimeoutRef.current = setTimeout(() => {
       onStopTyping();
     }, 1500);
+  };
+
+  const onEmojiClick = (emojiData: EmojiClickData) => {
+    setText((prev) => prev + emojiData.emoji);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -157,6 +177,30 @@ export default function ChatInput({
           className="flex-1 bg-transparent border-0 outline-none text-[14px] text-[#1C2C1C] placeholder-gray-400 py-1"
           disabled={disabled || sending}
         />
+
+        {/* Emoji Button & Picker */}
+        <div className="relative" ref={emojiPickerRef}>
+          <button
+            type="button"
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            className="p-2 hover:bg-gray-200 rounded-full text-gray-500 transition-colors flex-shrink-0"
+            disabled={disabled || sending}
+          >
+            <Smile size={20} />
+          </button>
+          
+          {showEmojiPicker && (
+            <div className="absolute bottom-full right-0 mb-3 z-50">
+              <EmojiPicker 
+                onEmojiClick={onEmojiClick} 
+                lazyLoadEmojis={true}
+                searchPlaceHolder="Search emojis..."
+                width={300}
+                height={400}
+              />
+            </div>
+          )}
+        </div>
 
         {/* Send Button */}
         <button

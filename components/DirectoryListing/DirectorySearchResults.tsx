@@ -671,10 +671,10 @@ const DirectorySearchResults = () => {
       <section className="bg-[#F8F9F7] pt-3 sm:pt-5 pb-14 px-4 sm:px-6 lg:px-8 xl:px-12">
         <div className="max-w-[1400px] mx-auto">
           {/* Post a Job Banner Card */}
-          <div className="bg-[#F4F8F3] border border-[#DFE8DE] rounded-2xl sm:rounded-[24px] overflow-hidden mb-6 sm:mb-8 flex flex-col xl:flex-row items-stretch shadow-[0_2px_12px_rgba(0,0,0,0.03)] relative">
+          <div className="bg-[#F4F8F3] border border-[#DFE8DE] rounded-xl overflow-hidden mb-4 sm:mb-5 flex flex-col xl:flex-row items-stretch shadow-[0_2px_12px_rgba(0,0,0,0.03)] relative">
 
             {/* Left Video */}
-            <div className="hidden xl:block w-[360px] relative shrink-0  bg-[#F4F8F3]">
+            <div className="hidden xl:block w-[240px] relative shrink-0 bg-[#F4F8F3]">
               <video
                 src="/postjob.mp4"
                 autoPlay
@@ -686,21 +686,21 @@ const DirectorySearchResults = () => {
             </div>
 
             {/* Middle and Right Content Wrapper */}
-            <div className="flex-1 flex flex-col md:flex-row items-center justify-between p-6 sm:p-8 lg:px-10 lg:py-8 gap-6 lg:gap-10">
+            <div className="flex-1 flex flex-col md:flex-row items-center justify-between p-4 sm:p-5 lg:px-7 lg:py-4 gap-3 lg:gap-6">
               {/* Text Content */}
               <div className="flex-1 max-w-[580px] text-left">
-                <h2 className="text-[22px] sm:text-[28px] lg:text-[32px] font-extrabold text-[#19331E] tracking-tight leading-[1.2] mb-2.5">
+                <h2 className="text-[17px] sm:text-[20px] lg:text-[22px] font-extrabold text-[#19331E] tracking-tight leading-[1.2] mb-1.5">
                   Need a trader? Post a job instead.
                 </h2>
-                <p className="text-[#4E6252] text-[14px] sm:text-[15.5px] leading-relaxed mb-6 font-medium">
+                <p className="text-[#4E6252] text-[13px] leading-relaxed mb-3 font-medium">
                   Add photos, more details and get tailored quotes from trusted tradespeople in your area &mdash; or browse the directory below.
                 </p>
-                <div className="flex items-center gap-4 sm:gap-6 flex-wrap">
+                <div className="flex items-center gap-3 flex-wrap">
                   <Link
                     href="/post-job"
-                    className="inline-flex items-center gap-2 bg-[#447132] hover:bg-[#385E28] text-white font-bold text-[14px] sm:text-[15px] px-5 sm:px-6 py-2.5 sm:py-3 rounded-xl transition-all shadow-sm hover:shadow active:scale-[0.98] cursor-pointer"
+                    className="inline-flex items-center gap-1.5 bg-[#447132] hover:bg-[#385E28] text-white font-bold text-[13px] px-4 py-2 rounded-lg transition-all shadow-sm hover:shadow active:scale-[0.98] cursor-pointer"
                   >
-                    <Plus size={18} strokeWidth={2.8} />
+                    <Plus size={15} strokeWidth={2.8} />
                     <span>Post a job</span>
                   </Link>
 
@@ -708,10 +708,10 @@ const DirectorySearchResults = () => {
               </div>
 
               {/* Right Side: Photo preview + annotations */}
-              <div className="relative shrink-0 flex flex-col items-center select-none pt-2 pb-1 pr-2 sm:pr-6">
+              <div className="relative shrink-0 flex flex-col items-center select-none pt-1 pb-0.5 pr-1 sm:pr-4">
                 {/* Radiating accent lines at top right of image */}
                 <div className="absolute -top-1 -right-0 sm:right-2 text-[#447132] pointer-events-none">
-                  <svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                  <svg width="20" height="20" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
                     <line x1="5" y1="17" x2="18" y2="6" />
                     <line x1="7" y1="21" x2="24" y2="20" />
                     <line x1="8" y1="25" x2="21" y2="31" />
@@ -719,7 +719,7 @@ const DirectorySearchResults = () => {
                 </div>
 
                 {/* Photo Collage Preview */}
-                <div className="relative w-[210px] sm:w-[250px] md:w-[270px] lg:w-[290px]">
+                <div className="relative w-[140px] sm:w-[170px] md:w-[190px] lg:w-[210px]">
                   <Image
                     src="/before.jfif"
                     alt="Post a job preview"
@@ -731,17 +731,17 @@ const DirectorySearchResults = () => {
                 </div>
 
                 {/* Annotation: Arrow + "Add photos and details" */}
-                <div className="flex items-center gap-2 -mt-1 self-center sm:self-end pr-2 sm:pr-6">
+                <div className="flex items-center gap-1.5 -mt-1 self-center sm:self-end pr-1 sm:pr-4">
                   {/* Curved Arrow pointing towards photos */}
                   <div className="text-[#447132] -mt-2">
-                    <svg width="38" height="44" viewBox="0 0 38 44" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <svg width="28" height="32" viewBox="0 0 38 44" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M 6 40 C 4 24 13 12 30 8" />
                       <path d="M 21 4 L 32 8 L 24 16" />
                     </svg>
                   </div>
 
                   {/* Handwritten script text */}
-                  <div className="font-[family-name:var(--font-caveat)] text-[#2B4725] text-[22px] sm:text-[25px] font-bold leading-[1.05] tracking-wide -rotate-2">
+                  <div className="font-[family-name:var(--font-caveat)] text-[#2B4725] text-[17px] sm:text-[19px] font-bold leading-[1.05] tracking-wide -rotate-2">
                     <span>Add photos</span>
                     <br />
                     <span>and details</span>
@@ -993,16 +993,16 @@ const DirectorySearchResults = () => {
                   </button>
                 </div>
               ) : (
-                <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-3">
                   {filteredResults.slice(0, displayCount).map((trader) => (
                     <div
                       key={trader.id}
-                      className="bg-white rounded-2xl p-5 shadow-sm border border-[#E5E7EB] flex flex-col md:flex-row gap-5 xl:gap-6"
+                      className="bg-white rounded-xl p-3.5 shadow-sm border border-[#E5E7EB] flex flex-col md:flex-row gap-3.5 xl:gap-4"
                     >
                       {/* ── Left: Image Gallery ── */}
-                      <div className="w-full md:w-[180px] lg:w-[220px] xl:w-[280px] shrink-0 flex flex-col gap-2">
+                      <div className="w-full md:w-[140px] lg:w-[170px] xl:w-[210px] shrink-0 flex flex-col gap-1.5">
                         <div
-                          className="w-full aspect-[4/3] rounded-xl overflow-hidden relative bg-gray-100 cursor-pointer group"
+                          className="w-full aspect-[4/3] rounded-lg overflow-hidden relative bg-gray-100 cursor-pointer group"
                           onClick={() => {
                             const portfolioUrls = (trader.portfolio && trader.portfolio.length > 0)
                               ? trader.portfolio.map((img: any) => getImageUrl(img))
@@ -1020,19 +1020,19 @@ const DirectorySearchResults = () => {
                             }
                             alt={trader.fullName || 'Trader'}
                             fill
-                            sizes="(max-width: 768px) 100vw, 320px"
+                            sizes="(max-width: 768px) 100vw, 220px"
                             className="object-cover transition-transform duration-300 group-hover:scale-105"
                             unoptimized
                           />
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/25 transition-colors flex items-center justify-center">
-                            <div className="w-9 h-9 rounded-full bg-white/90 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[#1C2C1C] shadow-md">
-                              <Camera size={18} />
+                            <div className="w-7 h-7 rounded-full bg-white/90 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-[#1C2C1C] shadow-md">
+                              <Camera size={14} />
                             </div>
                           </div>
                         </div>
 
                         {trader.portfolio && trader.portfolio.length > 0 && (
-                          <div className="grid grid-cols-4 gap-2">
+                          <div className="grid grid-cols-4 gap-1">
                             {trader.portfolio.slice(0, expandedGallery[trader.id] ? undefined : 4).map((img: any, actualIndex: number) => {
                               const isLastThumb = !expandedGallery[trader.id] && actualIndex === 3 && trader.portfolio!.length > 4;
                               const isActive = (activeImageIndex[trader.id] || 0) === actualIndex;
@@ -1040,7 +1040,7 @@ const DirectorySearchResults = () => {
                               return (
                                 <div
                                   key={actualIndex}
-                                  className={`aspect-[4/3] rounded-xl overflow-hidden relative bg-gray-100 cursor-pointer transition-all ${isActive ? 'ring-2 ring-[#6E9625] ring-offset-1 opacity-100' : 'opacity-70 hover:opacity-100'}`}
+                                  className={`aspect-[4/3] rounded-lg overflow-hidden relative bg-gray-100 cursor-pointer transition-all ${isActive ? 'ring-2 ring-[#6E9625] ring-offset-1 opacity-100' : 'opacity-70 hover:opacity-100'}`}
                                   onClick={() => {
                                     if (isLastThumb) {
                                       setExpandedGallery(prev => ({ ...prev, [trader.id]: true }));
@@ -1051,9 +1051,9 @@ const DirectorySearchResults = () => {
                                   }}
                                   title="Click to view full image"
                                 >
-                                  <Image src={getImageUrl(img)} alt="" fill sizes="(max-width: 768px) 25vw, 80px" className="object-cover hover:scale-105 transition-transform" unoptimized />
+                                  <Image src={getImageUrl(img)} alt="" fill sizes="(max-width: 768px) 25vw, 60px" className="object-cover hover:scale-105 transition-transform" unoptimized />
                                   {isLastThumb && (
-                                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-bold text-[15px]">
+                                    <div className="absolute inset-0 bg-black/60 flex items-center justify-center text-white font-bold text-[13px]">
                                       +{trader.portfolio!.length - 3}
                                     </div>
                                   )}
@@ -1066,7 +1066,7 @@ const DirectorySearchResults = () => {
                         {expandedGallery[trader.id] && trader.portfolio && trader.portfolio.length > 4 && (
                           <button
                             onClick={() => setExpandedGallery(prev => ({ ...prev, [trader.id]: false }))}
-                            className="text-[#6E9625] text-[12px] font-bold hover:underline mt-1 text-center w-full"
+                            className="text-[#6E9625] text-[11px] font-bold hover:underline mt-0.5 text-center w-full"
                           >
                             Show less photos
                           </button>
@@ -1079,9 +1079,9 @@ const DirectorySearchResults = () => {
                               openLightbox(portfolioUrls, activeImageIndex[trader.id] || 0, trader.fullName || 'Trader');
                             }
                           }}
-                          className="text-center text-gray-500 text-[13px] font-medium mt-1 flex justify-center items-center gap-1.5 hover:text-[#6E9625] transition-colors cursor-pointer w-full"
+                          className="text-center text-gray-500 text-[12px] font-medium mt-0.5 flex justify-center items-center gap-1 hover:text-[#6E9625] transition-colors cursor-pointer w-full"
                         >
-                          <Camera size={14} /> {trader.portfolio?.length || 0} Photos
+                          <Camera size={12} /> {trader.portfolio?.length || 0} Photos
                         </button>
                       </div>
 
@@ -1090,40 +1090,40 @@ const DirectorySearchResults = () => {
 
                         <div className="flex justify-between items-start">
                           <div>
-                            <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
-                              <h3 className="text-[18px] lg:text-[20px] xl:text-[22px] font-bold text-[#1C2C1C] leading-tight">{trader.fullName}</h3>
+                            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
+                              <h3 className="text-[15px] lg:text-[16px] xl:text-[17px] font-bold text-[#1C2C1C] leading-tight">{trader.fullName}</h3>
                               {trader.isVerified && (
-                                <span className="flex items-center gap-1 text-[#6E9625] bg-[#F4F7F1] border border-[#6E9625]/20 px-3 py-1 rounded-full text-[11px] xl:text-[12px] font-bold w-fit">
-                                  <CheckCircle size={14} /> Vetted Trader
+                                <span className="flex items-center gap-0.5 text-[#6E9625] bg-[#F4F7F1] border border-[#6E9625]/20 px-2 py-0.5 rounded-full text-[10px] font-bold w-fit">
+                                  <CheckCircle size={11} /> Vetted Trader
                                 </span>
                               )}
                             </div>
 
-                            <div className="flex items-center gap-1.5 mb-4">
+                            <div className="flex items-center gap-1 mb-2">
                               <div className="flex items-center">
                                 {[...Array(5)].map((_, i) => (
-                                  <Star key={i} size={16} fill={i < Math.round(trader.averageRating || 0) ? '#F59E0B' : 'none'} className={i < Math.round(trader.averageRating || 0) ? 'text-[#F59E0B]' : 'text-gray-200'} />
+                                  <Star key={i} size={13} fill={i < Math.round(trader.averageRating || 0) ? '#F59E0B' : 'none'} className={i < Math.round(trader.averageRating || 0) ? 'text-[#F59E0B]' : 'text-gray-200'} />
                                 ))}
                               </div>
-                              <span className="font-bold text-[#1C2C1C] text-[14px]">{trader.averageRating?.toFixed(1) || '0.0'}</span>
-                              <span className="text-gray-400 text-[13px] font-medium">({trader.totalReviews || 0} reviews)</span>
+                              <span className="font-bold text-[#1C2C1C] text-[12px]">{trader.averageRating?.toFixed(1) || '0.0'}</span>
+                              <span className="text-gray-400 text-[11px] font-medium">({trader.totalReviews || 0} reviews)</span>
                             </div>
 
                           </div>
                         </div>
 
                         {/* Checks */}
-                        <div className="flex flex-wrap gap-2 lg:gap-4 xl:gap-6 mb-4 xl:mb-5">
-                          <span className="flex items-center gap-1 text-[12px] xl:text-[13px] font-medium text-gray-500"><CheckCircle size={14} className="text-[#6E9625]" /> ID Check</span>
-                          <span className="flex items-center gap-1 text-[12px] xl:text-[13px] font-medium text-gray-500"><CheckCircle size={14} className="text-[#6E9625]" /> Trade Check</span>
-                          <span className="flex items-center gap-1 text-[12px] xl:text-[13px] font-medium text-gray-500"><CheckCircle size={14} className="text-[#6E9625]" /> Insurance Verified</span>
+                        <div className="flex flex-wrap gap-1.5 mb-2">
+                          <span className="flex items-center gap-0.5 text-[11px] font-medium text-gray-500"><CheckCircle size={12} className="text-[#6E9625]" /> ID Check</span>
+                          <span className="flex items-center gap-0.5 text-[11px] font-medium text-gray-500"><CheckCircle size={12} className="text-[#6E9625]" /> Trade Check</span>
+                          <span className="flex items-center gap-0.5 text-[11px] font-medium text-gray-500"><CheckCircle size={12} className="text-[#6E9625]" /> Insurance Verified</span>
                         </div>
 
                         {/* Categories / Skills */}
-                        <div className="flex flex-col gap-2 mb-5">
-                          <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-col gap-1.5 mb-2">
+                          <div className="flex flex-wrap gap-1.5">
                             {trader.tradeCategories?.map((cat: any, i: number) => (
-                              <span key={`cat-${i}`} className="bg-[#F4F7F1] text-[#6E9625] px-3.5 py-1.5 rounded-full text-[12px] font-bold">{cat.name}</span>
+                              <span key={`cat-${i}`} className="bg-[#F4F7F1] text-[#6E9625] px-2.5 py-0.5 rounded-full text-[11px] font-bold">{cat.name}</span>
                             ))}
                           </div>
                           {(() => {
@@ -1132,7 +1132,7 @@ const DirectorySearchResults = () => {
                             const visibleSkills = isExpanded ? combinedSkills : combinedSkills.slice(0, 4);
 
                             return (
-                              <div className="flex flex-wrap gap-2">
+                              <div className="flex flex-wrap gap-1.5">
                                 {/* {visibleSkills.map((item: any, i: number) => (
                                   <span key={`skill-sub-${i}`} className="bg-[#F3F4F6] text-[#4B5563] px-3.5 py-1.5 rounded-full text-[12px] font-bold">{item.name}</span>
                                 ))} */}
@@ -1157,16 +1157,15 @@ const DirectorySearchResults = () => {
                           })()}
                         </div>
 
-
                         {/* Bio */}
-                        <p className="text-[#4B5563] text-[13px] leading-relaxed line-clamp-2 sm:line-clamp-3 mb-4">
+                        <p className="text-[#4B5563] text-[12px] leading-relaxed line-clamp-2 mb-2">
                           {trader.about || trader.aboutUs || "No description provided."}
                         </p>
 
                         {/* Location */}
                         {trader.location && (
-                          <div className="flex items-center gap-2 text-[13px] font-medium text-[#4B5563] mt-auto">
-                            <MapPin size={15} className="text-[#6E9625] shrink-0" />
+                          <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#4B5563] mt-auto">
+                            <MapPin size={13} className="text-[#6E9625] shrink-0" />
                             <span className="truncate">{trader.location}</span>
                           </div>
                         )}
@@ -1206,15 +1205,15 @@ const DirectorySearchResults = () => {
                       </div>
 
                       {/* ── Right: Action Buttons ── */}
-                      <div className="w-full md:w-[150px] lg:w-[180px] xl:w-[200px] shrink-0 flex flex-col justify-start gap-3 pt-5 md:pt-0 md:pl-4 xl:pl-6 border-t md:border-t-0 md:border-l border-gray-100 mt-2 md:mt-0">
+                      <div className="w-full md:w-[130px] lg:w-[150px] xl:w-[165px] shrink-0 flex flex-col justify-start gap-2 pt-3.5 md:pt-0 md:pl-3 xl:pl-4 border-t md:border-t-0 md:border-l border-gray-100 mt-1.5 md:mt-0">
 
                         {/* Save Button */}
-                        <div className="flex justify-end mb-2">
+                        <div className="flex justify-end mb-1">
                           <button
                             onClick={() => handleToggleSave(trader.id)}
-                            className="flex items-center gap-1.5 text-gray-500 hover:text-[#6E9625] transition-colors font-medium text-[14px] cursor-pointer"
+                            className="flex items-center gap-1 text-gray-500 hover:text-[#6E9625] transition-colors font-medium text-[12px] cursor-pointer"
                           >
-                            <Heart size={18} className={trader.isSaved ? "fill-[#6E9625] text-[#6E9625]" : ""} />
+                            <Heart size={15} className={trader.isSaved ? "fill-[#6E9625] text-[#6E9625]" : ""} />
                             <span>Save</span>
                           </button>
                         </div>
@@ -1223,37 +1222,37 @@ const DirectorySearchResults = () => {
                         {!revealedPhones[trader.id] ? (
                           <button
                             onClick={() => togglePhone(trader.id)}
-                            className="flex items-center justify-center gap-2 w-full bg-white border border-[#E0E0E0] rounded-xl py-3 text-[#4B5563] text-[14px] font-bold hover:bg-gray-50 transition-colors"
+                            className="flex items-center justify-center gap-1.5 w-full bg-white border border-[#E0E0E0] rounded-lg py-2 text-[#4B5563] text-[12px] font-bold hover:bg-gray-50 transition-colors"
                           >
-                            <Phone size={16} fill="currentColor" className="text-[#4B5563] shrink-0" />
+                            <Phone size={13} fill="currentColor" className="text-[#4B5563] shrink-0" />
                             <span>Click to view</span>
                           </button>
                         ) : (
                           <a
                             href={`tel:${trader.phone || ""}`}
-                            className="flex items-center justify-center gap-2 w-full bg-[#F4F7F1] border border-[#6E9625] rounded-xl py-3 px-2 text-[#6E9625] text-[13px] font-bold hover:bg-[#E5F0DA] transition-colors"
+                            className="flex items-center justify-center gap-1.5 w-full bg-[#F4F7F1] border border-[#6E9625] rounded-lg py-2 px-1.5 text-[#6E9625] text-[11px] font-bold hover:bg-[#E5F0DA] transition-colors"
                           >
-                            <Phone size={15} fill="currentColor" className="text-[#6E9625] shrink-0" />
+                            <Phone size={12} fill="currentColor" className="text-[#6E9625] shrink-0" />
                             <span className="whitespace-nowrap">{trader.phone || "No phone"}</span>
                           </a>
                         )}
 
-                        <a href={`/profile/${trader.id}`} target="_blank" rel="noopener noreferrer" className="w-full text-center bg-[#1C2C1C] text-white py-3.5 rounded-xl font-bold text-[14px] hover:bg-black transition-colors block">
+                        <a href={`/profile/${trader.id}`} target="_blank" rel="noopener noreferrer" className="w-full text-center bg-[#1C2C1C] text-white py-2.5 rounded-lg font-bold text-[12px] hover:bg-black transition-colors block">
                           View Profile
                         </a>
 
                         <button
                           onClick={() => handleSendMessage(trader.id)}
-                          className="w-full bg-[#B91C1C] text-white py-3.5 rounded-xl font-bold text-[14px] hover:bg-[#991B1B] transition-colors cursor-pointer block"
+                          className="w-full bg-[#B91C1C] text-white py-2.5 rounded-lg font-bold text-[12px] hover:bg-[#991B1B] transition-colors cursor-pointer block"
                         >
                           Send Message
                         </button>
 
                         {/* Leave a Review */}
-                        <div className="mt-1 xl:mt-2 text-center">
+                        <div className="mt-0.5 text-center">
                           <button
                             onClick={(e) => handleProtectedAction(e, trader.id, "leave-review")}
-                            className="text-gray-500 text-[13px] xl:text-[14px] font-semibold underline underline-offset-4 hover:text-gray-700 transition-colors cursor-pointer"
+                            className="text-gray-500 text-[11px] font-semibold underline underline-offset-4 hover:text-gray-700 transition-colors cursor-pointer"
                           >
                             Leave a review
                           </button>
