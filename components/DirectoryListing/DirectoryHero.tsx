@@ -25,8 +25,8 @@ const CustomDropdown = ({ label, icon: Icon, value, onChange, options, disabled,
   const selectedOption = options.find((o: any) => o.id === value) || null;
 
   return (
-    <div 
-      className={`flex-1 flex items-center justify-start gap-3 lg:gap-4 px-4 lg:px-6 py-4 border-b lg:border-b-0 lg:border-r border-[#F3F4F6] min-w-0 relative ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`} 
+    <div
+      className={`flex-1 flex items-center justify-start gap-3 lg:gap-4 px-4 lg:px-6 py-4 border-b lg:border-b-0 lg:border-r border-[#F3F4F6] min-w-0 relative ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
       ref={dropdownRef}
       onClick={() => !disabled && setIsOpen(!isOpen)}
     >
@@ -40,17 +40,17 @@ const CustomDropdown = ({ label, icon: Icon, value, onChange, options, disabled,
           <ChevronDown size={14} className={`text-[#243A24] transition-transform ${isOpen ? 'rotate-180' : ''}`} />
         </div>
       </div>
-      
+
       {isOpen && (
         <div className="absolute top-full left-0 right-0 mt-2 w-full bg-white rounded-xl shadow-[0_15px_60px_rgba(0,0,0,0.12)] border border-gray-100 z-50 max-h-[320px] overflow-y-auto py-2 text-left [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
-          <div 
+          <div
             className="px-5 py-3 hover:bg-[#F4F7F1] text-[14px] font-semibold text-[#6B7280] cursor-pointer transition-colors"
             onClick={(e) => { e.stopPropagation(); onChange(''); setIsOpen(false); }}
           >
             {placeholder}
           </div>
           {options.map((opt: any) => (
-            <div 
+            <div
               key={opt.id}
               className={`px-5 py-3 hover:bg-[#F4F7F1] text-[14px] cursor-pointer transition-colors flex items-center justify-between ${value === opt.id ? 'bg-[#F4F7F1] text-[#6E9625] font-bold' : 'text-[#243A24] font-medium'}`}
               onClick={(e) => { e.stopPropagation(); onChange(opt.id); setIsOpen(false); }}
@@ -139,13 +139,13 @@ const DirectoryHero = () => {
 
   const handleSearch = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
-    
+
     const params = new URLSearchParams();
     if (selectedCategory) params.append('categoryId', selectedCategory);
     if (selectedSkill) params.append('skillService', selectedSkill);
     if (selectedSubCategory) params.append('subCategory', selectedSubCategory);
     if (location) params.append('location', location);
-    
+
     router.push(`/directory-listing/search?${params.toString()}`);
   };
 
@@ -174,7 +174,7 @@ const DirectoryHero = () => {
         </p>
 
         {/* Search Bar Container */}
-        <div 
+        <div
           className="w-full max-w-[1280px] mx-auto bg-white rounded-[24px] shadow-[0_20px_50px_rgba(0,0,0,0.08)] border-2 border-[#243A24] p-3"
         >
           <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 lg:gap-0">
@@ -216,7 +216,7 @@ const DirectoryHero = () => {
             </div>
 
             {/* Search Button */}
-            <button 
+            <button
               type="button"
               onClick={handleSearch}
               className="bg-[#243A24] hover:bg-[#1A301A] text-white px-6 py-4 lg:px-8 lg:py-5 rounded-[18px] flex items-center justify-center gap-2 lg:gap-3 font-bold text-[15px] lg:text-[16px] transition-all min-w-full lg:min-w-[160px] cursor-pointer flex-shrink-0 mt-2 lg:mt-0"

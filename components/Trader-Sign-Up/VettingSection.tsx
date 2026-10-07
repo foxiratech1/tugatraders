@@ -7,17 +7,18 @@ const VettingSection = () => {
   const vettingSteps = [
     {
       title: "Identity verification",
-      icon: <IdCard className="w-7 h-7 text-[#1A2E1A]" />,
+      icon: <IdCard className="w-9 h-9 text-[#6E9625]" strokeWidth={1.8} />,
     },
     {
       title: "Business details",
-      icon: <Briefcase className="w-7 h-7 text-[#1A2E1A]" />,
+      icon: <Briefcase className="w-9 h-9 text-[#6E9625]" strokeWidth={1.8} />,
     },
     {
       title: "Basic trade information",
-      icon: <FileText className="w-7 h-7 text-[#1A2E1A]" />,
+      icon: <FileText className="w-9 h-9 text-[#6E9625]" strokeWidth={1.8} />,
     },
   ];
+
   useEffect(() => {
     if (typeof window !== "undefined" && window.location.hash === "#vetting-section") {
       setTimeout(() => {
@@ -31,70 +32,58 @@ const VettingSection = () => {
   }, []);
 
   return (
-    <section id="vetting-section" className="py-16 px-4 font-sans bg-[#F8F9F7]">
-      <div className="max-w-6xl mx-auto">
+    <section id="vetting-section" className="bg-white py-14 sm:py-18 lg:py-20 px-6 lg:px-12 xl:px-16 overflow-hidden">
+      <div className="max-w-[880px] mx-auto">
+
         {/* Header */}
-        <div className="mb-12">
-          <h2 className="text-4xl md:text-5xl font-bold text-[#0A2619] mb-4">
-            How <span className="text-[#6E9625]">Vetting</span> Works
+        <div className="mb-8 sm:mb-10">
+          <h2 className="text-[34px] sm:text-[42px] lg:text-[46px] font-extrabold text-[#1E3A2B] leading-tight tracking-tight mb-3">
+            <span className="text-[#6E9625]">Vetting</span> Process
           </h2>
-          <p className="text-[#0A2619B2] text-[16px] md:text-lg max-w-2xl leading-relaxed">
-            To maintain quality on our platform, all traders go through a vetting<br className="hidden md:block" />
-            process before their profile goes live.
+          <p className="text-[14px] sm:text-[15px] text-[#4A5548] leading-relaxed max-w-[720px]">
+            To maintain quality on our platform, all traders go through a vetting process during signup and before their profile goes live.
           </p>
         </div>
 
-        {/* Grid Section */}
-        <div className="text-center mb-10">
-          <h3 className="text-2xl font-bold text-[#0A2619]">What we check:</h3>
-        </div>
+        {/* Unified 3-Item Vetting Box */}
+        <div className="py-6 sm:py-8 mb-8 sm:mb-10">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-4 text-center items-center">
+            {vettingSteps.map((step, index) => (
+              <div key={index} className="flex flex-col items-center justify-between min-h-[140px] gap-2.5">
+                {/* Green Icon */}
+                <div className="flex items-center justify-center shrink-0">
+                  {step.icon}
+                </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4 mb-10 max-w-[860px] mx-auto">
-          {vettingSteps.map((step, index) => (
-            <div
-              key={index}
-              className="bg-[#D6DED0] border border-[#C4CEBE] rounded-[22px] p-4 md:p-5 flex flex-row md:flex-col items-center md:justify-between gap-4 md:gap-0 min-h-0 md:min-h-[210px] shadow-sm hover:shadow-md transition-all text-left md:text-center"
-            >
-              <div className="bg-white p-2.5 md:p-3 rounded-[14px] md:rounded-[16px] shadow-sm md:mb-4 md:mt-1 flex-shrink-0">
-                {step.icon}
-              </div>
+                {/* Title */}
+                <h3 className="text-[15px] sm:text-[16px] font-bold text-[#1E3A2B] leading-tight max-w-[170px]">
+                  {step.title}
+                </h3>
 
-              <h4 className="text-[15px] md:text-[16px] font-bold text-[#0A2619] md:px-1 leading-snug flex-1">
-                {step.title}
-              </h4>
-
-              <div className="mt-0 md:mt-auto md:mb-1 flex-shrink-0">
-                <div className="w-7 h-7 bg-[#0A26190D] border border-[#0A26191A] rounded-full flex items-center justify-center">
-                  <Check className="w-4 h-4 md:w-5 md:h-5 text-[#0A2619] opacity-40" />
+                {/* Solid Green Checkmark Circle */}
+                <div className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-[#2E5A27] text-white flex items-center justify-center shrink-0 shadow-sm mt-1">
+                  <Check className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" strokeWidth={3.5} />
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
 
-        {/* Note Box */}
-        <div className="bg-white border border-[#0A26191A] rounded-[24px] p-5 shadow-sm max-w-[820px] mx-auto">
-          <div className="flex items-start gap-4 mb-4">
-            <div className="mt-1">
-              <Info className="w-5 h-5 text-gray-400" />
-            </div>
-            <h5 className="text-[16px] font-bold text-[#0A2619]">Please note:</h5>
+        {/* Note List */}
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-2 text-[#1E3A2B] font-bold text-[14px] sm:text-[15px]">
+            <Info className="w-4 h-4 text-[#4A5548] shrink-0" />
+            <span>Please note:</span>
           </div>
 
-          <ul className="space-y-2 ml-7">
-            {[
-              "Vetting is based on the information you provide",
-              "It does not guarantee approval",
-              "It does not guarantee job leads or work",
-              "Additional information may be requested",
-            ].map((item, index) => (
-              <li key={index} className="text-[#0A2619CC] text-[13px] flex items-center gap-2">
-                <span className="w-1.5 h-1.5 bg-gray-300 rounded-full flex-shrink-0" />
-                {item}
-              </li>
-            ))}
+          <ul className="space-y-1.5 text-[13px] sm:text-[13.5px] text-[#4A5548] list-disc list-inside pl-1">
+            <li>Vetting is based on the information you provide</li>
+            <li>It does not guarantee approval</li>
+            <li>It does not guarantee job leads or work</li>
+            <li>Additional information may be requested</li>
           </ul>
         </div>
+
       </div>
     </section>
   );

@@ -58,7 +58,7 @@ const FairReviewsSection = () => {
             {/* CONTENT */}
             <div className="px-6 sm:px-7 xl:px-10 py-6">
               <p className="text-[#555555] text-[13px] sm:text-[14px] xl:text-[15px] leading-relaxed font-medium">
-                Occasionally, a trusted trader may receive a negative review. If
+                Occasionally, a tradesperson may receive a negative review. If
                 this happens, we encourage customers to speak directly with the
                 trader first and try to reach a mutually agreed outcome. As a
                 platform, we connect customers with traders but do not manage
@@ -84,8 +84,8 @@ const FairReviewsSection = () => {
 
             <p className="text-white/80 text-[13px] sm:text-[14px] xl:text-[15px] leading-relaxed font-medium">
               We act solely as a connection platform and are not responsible for
-              any work carried out by traders. However, if you are not
-              satisfied, please{" "}
+              any work carried out by traders. For any questions , concerns or support
+              please{" "}
               <Link
                 href="/contact"
                 className="text-white underline underline-offset-4 hover:text-white/95 transition-colors font-bold"

@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useRef } from 'react';
-import { MapPin, CloudUpload, Zap, ArrowRight, Trash2, ChevronDown, X, Megaphone } from 'lucide-react';
+import { MapPin, CloudUpload, Zap, ArrowRight, Trash2, ChevronDown, X, Megaphone, Check } from 'lucide-react';
 import { authApi } from '@/app/api/authApi';
 import api from '@/utils/api';
 import { getAccessToken } from '@/utils/auth';
@@ -33,7 +33,7 @@ const CustomDropdown = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const selectedOption = options.find((o) => o.id === value);
+  const selectedOption = options.find((o) => o.id === value || o.name === value);
 
   return (
     <div className="relative w-full" ref={dropdownRef}>
@@ -69,7 +69,7 @@ const CustomDropdown = ({
       {isOpen && !disabled && (
         <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white border border-[#E5E7EB] rounded-[12px] shadow-[0_8px_30px_rgb(0,0,0,0.08)] max-h-[260px] overflow-y-auto z-50 py-2 custom-scrollbar">
           {options.map((opt) => {
-            const isSelected = opt.id === value;
+            const isSelected = opt.id === value || opt.name === value;
             return (
               <div
                 key={opt.id}
@@ -597,22 +597,46 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
     <>
       {showSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-[24px] p-10 max-w-[400px] w-full shadow-2xl flex flex-col items-center text-center">
-            <div className="w-20 h-20 bg-[#E8F5E9] rounded-full flex items-center justify-center mb-6">
-              <Megaphone className="text-[#32C850]" size={36} fill="#32C850" />
+          <div className="bg-white rounded-[20px] p-7 sm:p-9 max-w-[460px] w-full shadow-2xl border border-[#E5E7EB] text-left">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-8 h-8 rounded-full border-[2px] border-[#1C361C] flex items-center justify-center shrink-0">
+                <Check size={18} className="text-[#1C361C] stroke-[2.5]" />
+              </div>
+              <h2 className="text-[20px] sm:text-[22px] font-bold text-[#111827]">
+                {isEdit ? "Thanks — your job has been updated!" : "Thanks — your job has been posted!"}
+              </h2>
             </div>
-            <h2 className="text-[22px] font-bold text-[#1C2C1C] mb-3">
-              {isEdit ? "Job Updated Successfully" : "Job Posted Successfully"}
-            </h2>
-            <p className="text-[#6B7280] text-[15px] mb-8">
-              {isEdit ? "Your job details have been updated." : "Traders in your area have been notified."}
+
+            <p className="text-[#374151] text-[14.5px] leading-relaxed mb-6">
+              {isEdit
+                ? "Your job details have been updated successfully."
+                : "Suitable tradespeople in your area have been notified."}
             </p>
-            <button
-              onClick={() => router.push('/customer-dashboard/jobs')}
-              className="w-full bg-[#0A2B14] hover:bg-[#144221] text-white font-bold py-3.5 rounded-[12px] transition-colors text-[15px]"
-            >
-              View Job
-            </button>
+
+            <div className="space-y-1.5 mb-5">
+              <h3 className="text-[14.5px] font-bold text-[#111827]">
+                What happens next?
+              </h3>
+              <div className="space-y-1 text-[13.5px] text-[#374151]">
+                <p>1.Tradespeople review your job</p>
+                <p>2.Interested tradespeople respond</p>
+                <p>3.You compare your options</p>
+                <p>4.Contact your chosen tradesperson directly</p>
+              </div>
+            </div>
+
+            <p className="text-[#374151] text-[13.5px] mb-7">
+              We’ll notify you when you receive a response.
+            </p>
+
+            <div className="flex justify-center w-full">
+              <button
+                onClick={() => router.push('/customer-dashboard/jobs')}
+                className="bg-[#15341C] hover:bg-[#0E2914] text-white font-bold py-2.5 px-10 rounded-[8px] transition-all text-[14px] shadow-sm cursor-pointer"
+              >
+                View Job
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -686,10 +710,10 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
           {/* Header */}
           <div className="mb-8">
             <h1 className="text-[28px] sm:text-[32px] font-bold text-[#243A24] mb-2" style={{ fontFamily: 'var(--font-bricolage)' }}>
-              {isEdit ? "Update Your Job Details" : "Post Your Job Details"}
+              {isEdit ? "Update Your Job Details" : "Tell Us What You Need​"}
             </h1>
             <p className="text-[#243A2499]/60 text-[14px] font-medium">
-              Tell us what you need and we'll find the perfect match.
+              Post your job for free and let suitable tradespeople come to you.
             </p>
           </div>
 
@@ -697,22 +721,22 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
             {/* Row 1: Category & Service Type */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col gap-2">
-                <label className="text-[12px] font-bold text-[#243A24]">Category *</label>
+                <label className="text-[12px] font-bold text-[#243A24]">What do you need help with?*​</label>
                 <MultiSelectDropdown
                   options={categories.map(c => ({ id: c.id || c._id, name: c.name }))}
                   value={categoryIds}
                   onChange={handleCategoryChange}
-                  placeholder="Select Categories.."
+                  placeholder="Select Trades.."
                 />
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className="text-[12px] font-bold text-[#243A24]">Service Type *</label>
+                <label className="text-[12px] font-bold text-[#243A24]">What service do you need?*​</label>
                 <GroupedMultiSelectDropdown
                   groups={skillServiceGroups}
                   value={skillServiceIds}
                   onChange={handleSkillChange}
-                  placeholder="Select Service Types.."
+                  placeholder="Select Services Types.."
                   disabled={categoryIds.length === 0}
                 />
               </div>
@@ -732,7 +756,7 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className="text-[12px] font-bold text-[#243A24]">Location / Postcode *</label>
+                <label className="text-[12px] font-bold text-[#243A24]">Where is the job? ​</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <MapPin size={16} className="text-[#6E9625]" />
@@ -742,7 +766,7 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
                     required
                     value={postcode}
                     onChange={(e) => setPostcode(e.target.value)}
-                    placeholder="e.g. DD4 X2K7"
+                    placeholder="Town / Postcode​"
                     className="h-[48px] w-full rounded-[12px] border border-[#E5E7EB] bg-[#F7F5F04D]/30 pl-10 pr-4 text-[14px] text-[#555555] outline-none focus:border-[#6E9625] transition-all"
                   />
                 </div>
@@ -766,7 +790,7 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
             {/* Row 4: Project Description */}
             <div className="flex flex-col gap-2">
               <div className="flex justify-between items-end">
-                <label className="text-[12px] font-bold text-[#243A24]">Project Description *</label>
+                <label className="text-[12px] font-bold text-[#243A24]">Job Description *</label>
                 <span className="text-[11px] text-[#555555]/60 font-medium">{description.length} / 2000 characters</span>
               </div>
               <textarea
@@ -774,7 +798,7 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 maxLength={2000}
-                placeholder="Describe the project in detail, including measurements and specific material preferences..."
+                placeholder="Describe the work you need and include any important details.​"
                 className="w-full rounded-[12px] border border-[#E5E7EB] bg-[#F7F5F04D]/30 p-4 text-[14px] text-[#555555] outline-none focus:border-[#6E9625] transition-all min-h-[160px] resize-none"
               ></textarea>
             </div>
@@ -782,7 +806,7 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
             {/* Row 5: Timescale & Budget */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col gap-2">
-                <label className="text-[12px] font-bold text-[#243A24]">Project Timescale *</label>
+                <label className="text-[12px] font-bold text-[#243A24]">When do you need the job done?​</label>
                 <CustomDropdown
                   options={[
                     { id: "FLEXIBLE", name: "Flexible / Planning stage" },
@@ -797,19 +821,16 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
                 />
               </div>
               <div className="flex flex-col gap-2">
-                <label className="text-[12px] font-bold text-[#243A24]">Project Budget</label>
+                <label className="text-[12px] font-bold text-[#243A24]">Do you have a budget in mind? (optional)​</label>
                 <CustomDropdown
                   options={[
-                    { id: "UNDER_100", name: "Under €100" },
-                    { id: "UNDER_250", name: "Under €250" },
-                    { id: "UNDER_500", name: "Under €500" },
-                    { id: "UNDER_1000", name: "Under €1,000" },
-                    { id: "UNDER_2000", name: "Under €2,000" },
-                    { id: "UNDER_4000", name: "Under €4,000" },
-                    { id: "UNDER_8000", name: "Under €8,000" },
-                    { id: "BETWEEN_10000_20000", name: "€10,000 - €20,000" },
-                    { id: "BETWEEN_20000_30000", name: "€20,000 - €30,000" },
-                    { id: "ABOVE_30000", name: "Above €30,000" }
+                    { id: "NOT_SURE", name: "Not sure" },
+                    { id: "UNDER_250", name: "Under 250" },
+                    { id: "UNDER_500", name: "Under 500" },
+                    { id: "BETWEEN_500_1000", name: "500 – 1000" },
+                    { id: "BETWEEN_1000_5000", name: "1000 – 5000" },
+                    { id: "ABOVE_5000", name: "5000 +" },
+                    { id: "PREFER_TO_DISCUSS", name: "Prefer to discuss" }
                   ]}
                   value={budgetRange}
                   onChange={setBudgetRange}
@@ -857,7 +878,7 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
                 <CloudUpload size={20} className="text-[#6E9625]" />
               </div>
               <h3 className="text-[15px] font-bold text-[#243A24] mb-1">
-                Upload project photos or plans
+                Upload photos/documents
               </h3>
               <p className="text-[13px] text-[#555555] font-medium mb-3">
                 Click to browse files
@@ -909,13 +930,13 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
             </div>
 
             {/* Submit Button */}
-            <div className="mt-4">
+            <div className="mt-8 flex justify-center w-full">
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-[#243A24] hover:bg-[#1a2b1a] text-white font-bold py-3.5 px-12 cursor-pointer rounded-[10px] text-[14px] transition-all flex items-center gap-2 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
+                className="bg-[#243A24] hover:bg-[#1a2b1a] text-white font-bold py-3.5 px-12 cursor-pointer rounded-[10px] text-[14px] transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? (isEdit ? 'Updating...' : 'Posting...') : (isEdit ? 'Update your job' : 'Post your job')} <ArrowRight size={16} />
+                {isSubmitting ? (isEdit ? 'Updating...' : 'Posting...') : (isEdit ? 'Update your job' : 'POST YOUR JOB -FREE')}
               </button>
             </div>
 

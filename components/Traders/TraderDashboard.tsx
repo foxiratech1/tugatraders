@@ -321,6 +321,7 @@ export default function TraderDashboard() {
   const strokeDashoffset = circumference - (displayPercentage / 100) * circumference;
 
   // New Jobs List (Fallback to mockup data if empty)
+  /*
   const defaultNewJobs: JobItem[] = [
     {
       id: "63d71eba-1a48-4b86-a4ab-346fda469260",
@@ -371,10 +372,11 @@ export default function TraderDashboard() {
       quotesCount: 1,
     },
   ];
+  */
 
   const rawNewJobs: JobItem[] = Array.isArray(rawData?.newJobs) && rawData.newJobs.length > 0
     ? rawData.newJobs
-    : defaultNewJobs;
+    : [];
 
   // Derive in-progress jobs from matchedJobs if not returned in dashboard payload
   const inProgressFromMatchedJobs: JobItem[] =

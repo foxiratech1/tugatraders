@@ -1,5 +1,6 @@
 import Hero from "@/components/HomePage/Hero";
 import TrustSection from "@/components/HomePage/TrustSection";
+import ConnectSelectSection from "@/components/HomePage/ConnectSelectSection";
 import CategorySection from "@/components/HomePage/CategorySection";
 import MapSearchSection from "@/components/HomePage/MapSearchSection";
 import HowItWorks from "@/components/HomePage/HowItWorks";
@@ -14,6 +15,10 @@ export default function Home() {
     <main className="min-h-screen bg-white">
       <Hero />
       <TrustSection />
+
+      <ConditionalSection hideForRole="trader">
+        <ConnectSelectSection />
+      </ConditionalSection>
       
       <ConditionalSection hideForRole="trader">
         <CategorySection />

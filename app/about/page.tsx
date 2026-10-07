@@ -1,5 +1,8 @@
 import React from 'react';
 import MissionSection from '@/components/About/MissionSection';
+import WhatIsTugaTrades from '@/components/About/WhatIsTugaTrades';
+import BuiltForPortugal from '@/components/About/BuiltForPortugal';
+import ApproachAndRole from '@/components/About/ApproachAndRole';
 import QuoteBanner from '@/components/About/QuoteBanner';
 import OurValues from '@/components/About/OurValues';
 import DashboardSection from '@/components/About/DashboardSection';
@@ -15,6 +18,9 @@ const AboutPage = () => {
   return (
     <main className="bg-[#FAFAF9]">
       <MissionSection />
+      <WhatIsTugaTrades />
+      <BuiltForPortugal />
+      <ApproachAndRole />
 
       <OurValues />
       <QuoteBanner />

@@ -555,7 +555,7 @@ export default function PublicTraderProfilePage() {
                   </div>
                   <div className="flex flex-col">
                     <span className="font-bold text-[#1C2C1C] text-[13px]">Individual Checks</span>
-                    <span className="text-gray-500 text-[11px] font-medium">{isVerified ? 'Verified' : 'Pending'}</span>
+                    <span className="text-gray-500 text-[11px] font-medium">{isVerified ? 'Vetted' : 'Pending'}</span>
                   </div>
                 </div>
 
@@ -566,7 +566,7 @@ export default function PublicTraderProfilePage() {
                   </div>
                   <div className="flex flex-col">
                     <span className="font-bold text-[#1C2C1C] text-[13px]">Trade Checks</span>
-                    <span className="text-gray-500 text-[11px] font-medium">{isVerified ? 'Verified' : 'Pending'}</span>
+                    <span className="text-gray-500 text-[11px] font-medium">{isVerified ? 'Vetted' : 'Pending'}</span>
                   </div>
                 </div>
 
@@ -576,7 +576,7 @@ export default function PublicTraderProfilePage() {
                     {isInsured ? <Shield size={16} className="text-[#6E9625]" strokeWidth={2.5} /> : <X size={16} className="text-gray-400" strokeWidth={3} />}
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-bold text-[#1C2C1C] text-[13px]">Insured</span>
+                    <span className="font-bold text-[#1C2C1C] text-[13px]">Insurance Documents​</span>
                     <span className="text-gray-500 text-[11px] font-medium">{isInsured ? 'Up to date' : 'Pending'}</span>
                   </div>
                 </div>

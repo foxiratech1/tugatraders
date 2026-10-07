@@ -3,7 +3,6 @@ import DirectoryHero from '@/components/DirectoryListing/DirectoryHero';
 import CategoryBrowse from '@/components/DirectoryListing/CategoryBrowse';
 import DirectoryListings from '@/components/DirectoryListing/DirectoryListings';
 import ActionCards from '@/components/DirectoryListing/ActionCards';
-import HowItWorks from '@/components/DirectoryListing/HowItWorks';
 
 const DirectoryListingPage = () => {
   return (
@@ -12,7 +11,6 @@ const DirectoryListingPage = () => {
       <CategoryBrowse />
       {/* <DirectoryListings /> */}
       <ActionCards />
-      <HowItWorks />
     </main>
   );
 };

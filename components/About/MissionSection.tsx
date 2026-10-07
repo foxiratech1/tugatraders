@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import Image from 'next/image';
-import { HelpCircle, Check } from 'lucide-react';
+import { Check } from 'lucide-react';
 import { scrollToTop } from '@/utils/scroll';
 
 const MissionSection = () => {
@@ -17,40 +17,37 @@ const MissionSection = () => {
         {/* LEFT CONTENT */}
         <div className="flex flex-col items-start">
 
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-[#6E962512] border border-[#6E962526] px-3.5 py-1.5 rounded-full mb-6">
-            <HelpCircle size={13} className="text-[#6E9625]" />
-
-            <span className="text-[#6E9625] text-[10px] font-bold uppercase tracking-[0.15em]">
-              Trusted Trades Platform
-            </span>
-          </div>
-
           {/* Heading */}
           <h1
-            className="text-[46px] sm:text-[56px] lg:text-[64px] font-bold text-[#243A24] leading-[0.95] tracking-[-0.03em] mb-7"
+            className="text-[44px] sm:text-[54px] lg:text-[62px] font-bold leading-[1.05] tracking-[-0.03em] mb-6"
             style={{ fontFamily: 'var(--font-bricolage)' }}
           >
-            <span className="text-[#6E9625]">Our</span> Mission
-            <br />
-            & Vision
+            <span className="text-[#6E9625]">About</span>{' '}
+            <span className="text-[#243A24]">TugaTrades</span>
           </h1>
 
+          {/* Subheading */}
+          <h2 className="text-[20px] sm:text-[23px] font-bold text-[#1C2C1C] leading-[1.3] mb-5">
+            Connecting Portugal with independent tradespeople
+          </h2>
+
           {/* Paragraphs */}
-          <div className="flex flex-col gap-7 max-w-[700px]">
-
-            <p className="text-[#555555] text-[15px] leading-[1.8] font-medium">
-              At TugaTrades, our vision is to strengthen communities by
-              transforming every job into a success story. We connect
-              homeowners and businesses with skilled, trusted
-              tradespeople who take pride in delivering exceptional work.
+          <div className="flex flex-col gap-4 max-w-[640px] text-[#4B5563] text-[15px] sm:text-[16px] leading-[1.75] font-normal">
+            <p>
+              TugaTrades makes it easier to find and connect with trusted local tradespeople across Portugal.
             </p>
 
-            <p className="text-[#555555] text-[14px] leading-[1.8] font-medium">
-              Our mission is to link people in need of services with reliable
-              experts, through quality, transparency, and trust.
+            <p>
+              Customers can browse profiles, compare reviews, post jobs and connect directly with professionals.
             </p>
 
+            <p>
+              Tradespeople can showcase their work, build their reputation and reach new customers.
+            </p>
+
+            <p className="font-bold text-[#1C2C1C] text-[16px] sm:text-[17px] pt-1">
+              Simple connections. Local professionals. Built for Portugal.
+            </p>
           </div>
         </div>
 

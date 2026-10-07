@@ -37,7 +37,7 @@ const CTASection = () => {
         className="text-[26px] sm:text-[34px] md:text-[48px] font-bold text-white mb-5 leading-tight max-w-[920px] tracking-tight relative z-10"
         style={{ fontFamily: 'var(--font-bricolage)' }}
       >
-        TugaTrades makes it simple to find reliable <span className="text-[#8FD14F]">tradespeople</span> in Portugal.
+        TugaTrades makes it simple to find local <span className="text-[#8FD14F]">tradespeople</span> in Portugal.
       </h2>
 
       {/* Subheading */}

@@ -375,7 +375,7 @@ function LoginContent({ role }: { role?: string }) {
                 </div>
               </div>
               {/* REMEMBER */}
-              {/* <div className="flex items-center gap-2.5 cursor-pointer select-none group mt-1" onClick={() => setRememberMe(!rememberMe)}>
+              <div className="flex items-center gap-2.5 cursor-pointer select-none group mt-1" onClick={() => setRememberMe(!rememberMe)}>
                 <div className={`w-[18px] h-[18px] rounded border flex items-center justify-center flex-shrink-0 transition-all ${rememberMe ? "bg-[#1C2C1C] border-[#1C2C1C]" : "border-[#243A2429] bg-white group-hover:border-[#1C2C1C]/60"}`}>
                   {rememberMe && (
                     <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
@@ -384,7 +384,7 @@ function LoginContent({ role }: { role?: string }) {
                   )}
                 </div>
                 <span className="text-[12px] text-[#1C2C1C]/70 font-extrabold">Remember me</span>
-              </div> */}
+              </div>
               {/* SUBMIT */}
               <button
                 type="submit"
@@ -419,7 +419,7 @@ function LoginContent({ role }: { role?: string }) {
                 Don&#39;t have an account?
               </p>
               <Link href="/auth/signup" className="inline-block w-full text-center py-2.5 rounded-xl border border-[#243A24]/20 text-[13px] font-extrabold text-[#1C2C1C] hover:bg-[#F4F7F1] transition-colors">
-                Sign Up as Customer
+                Create homeowner account
               </Link>
               <div className="flex items-center gap-3 my-2.5">
                 <div className="flex-1 h-px bg-[#1C2C1C]/10" />
@@ -427,7 +427,7 @@ function LoginContent({ role }: { role?: string }) {
                 <div className="flex-1 h-px bg-[#1C2C1C]/10" />
               </div>
               <Link href="/auth/trader-signup" className="inline-block w-full text-center py-2.5 rounded-xl border border-[#243A24]/20 text-[13px] font-extrabold text-[#1C2C1C] hover:bg-[#F4F7F1] transition-colors">
-                Sign Up as Trader
+                Join as a tradesperson
               </Link>
             </div>
           </div>

@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
-import { Search, Clock, ArrowRight, LogIn } from 'lucide-react';
+import React, { useState } from 'react';
+import { Hourglass, Clock, ArrowRight, LogIn } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { authApi } from '@/app/api/authApi';
@@ -129,65 +129,7 @@ const LoginModal = ({
 
 const HowToLeaveReview = () => {
   const [showLogin, setShowLogin] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
-  const [dropdownResults, setDropdownResults] = useState<any[]>([]);
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [isDropdownLoading, setIsDropdownLoading] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-
-  useEffect(() => {
-    const fetchDropdownResults = async () => {
-      if (searchQuery.trim().length > 1) {
-        setIsDropdownLoading(true);
-        setShowDropdown(true);
-        try {
-          const res = await authApi.searchTraders({ search: searchQuery });
-          const results = Array.isArray(res) ? res : res?.data || [];
-          setDropdownResults(results);
-        } catch (err) {
-          console.error('Failed to fetch dropdown traders', err);
-          setDropdownResults([]);
-        } finally {
-          setIsDropdownLoading(false);
-        }
-      } else {
-        setDropdownResults([]);
-        setShowDropdown(false);
-      }
-    };
-
-    const timeoutId = setTimeout(fetchDropdownResults, 300);
-    return () => clearTimeout(timeoutId);
-  }, [searchQuery]);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDropdown(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleSearch = async () => {
-    setIsSearching(true);
-    try {
-      const params = searchQuery ? { query: searchQuery } : {};
-      await authApi.searchTraders(params);
-
-      const queryString = searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : '';
-      router.push(`/directory-listing/search${queryString}`);
-    } catch (error) {
-      console.error("Search failed:", error);
-      const queryString = searchQuery ? `?search=${encodeURIComponent(searchQuery)}` : '';
-      router.push(`/directory-listing/search${queryString}`);
-    } finally {
-      setIsSearching(false);
-    }
-  };
 
   const handleLoginSuccess = () => {
     setShowLogin(false);
@@ -204,93 +146,10 @@ const HowToLeaveReview = () => {
       <section className="bg-[#F8F9F5] pt-4 lg:pt-8 pb-16 lg:pb-24 px-4 sm:px-6 lg:px-20 overflow-hidden">
         <div className="max-w-[1200px] mx-auto w-full">
 
-          {/* Search Bar Container */}
-          <div
-            ref={dropdownRef}
-            className="max-w-[1050px] mx-auto bg-white rounded-[28px] sm:rounded-[34px] shadow-[0_18px_50px_rgba(0,0,0,0.05)] border-2 border-[#243A24] px-4 sm:px-5 py-4 flex flex-col sm:flex-row items-center mb-6 gap-3 sm:gap-0 relative z-20"
-          >
-            <div className="flex-1 flex items-center gap-5 px-5 sm:px-8 py-4 sm:py-3 w-full">
-              <Search className="text-[#243A24] shrink-0" size={28} />
-
-              <div className="text-left w-full flex flex-col justify-center">
-                <span className="block text-[18px] sm:text-[20px] text-[#243A24] font-extrabold tracking-tight">
-                  Find Traders
-                </span>
-
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleSearch();
-                  }}
-                  placeholder="SEARCH BY TRADER'S NAME OR COMPANY..."
-                  className="block w-full text-[13px] tracking-[0.18em] uppercase font-semibold text-[#111111] placeholder-[#55555570] bg-transparent outline-none mt-1"
-                />
-              </div>
-            </div>
-
-            <button
-              onClick={handleSearch}
-              disabled={isSearching}
-              className="w-full sm:w-auto bg-[#243A24] hover:bg-[#152719] text-white px-10 sm:px-12 py-5 rounded-[20px] sm:rounded-[26px] flex items-center justify-center gap-2 font-bold text-[16px] transition-all shrink-0 cursor-pointer disabled:opacity-70">
-              {isSearching ? 'Searching...' : 'Find Tradesperson'}
-              <ArrowRight size={18} />
-            </button>
-
-            {/* Autocomplete Dropdown */}
-            {showDropdown && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-[#E5E5E5] rounded-[20px] shadow-2xl max-h-[300px] overflow-y-auto z-50 overflow-hidden">
-                {isDropdownLoading ? (
-                  <div className="px-6 py-6 text-center text-[14px] text-[#6B7280] font-medium flex items-center justify-center gap-2">
-                    <div className="w-4 h-4 border-2 border-[#6E9625] border-t-transparent rounded-full animate-spin"></div>
-                    Searching...
-                  </div>
-                ) : dropdownResults.length > 0 ? (
-                  dropdownResults.map((trader) => (
-                    <div
-                      key={trader.id}
-                      onClick={() => router.push(`/profile/${trader.id}`)}
-                      className="flex items-center gap-4 px-6 py-4 hover:bg-[#F3F8EC] transition-colors cursor-pointer border-b border-[#E5E5E5] last:border-b-0"
-                    >
-                      <div className="w-12 h-12 bg-gray-100 rounded-full overflow-hidden shrink-0">
-                        <img
-                          src={trader.profileImage || trader.logo || '/placeholder.png'}
-                          alt={trader.fullName}
-                          className="w-full h-full object-cover"
-                        />
-                      </div>
-                      <div>
-                        <h4 className="text-[15px] font-bold text-[#1F2937]">{trader.fullName}</h4>
-                        <p className="text-[13px] text-[#6B7280]">{trader.companyName || trader.location || 'Trader'}</p>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="px-6 py-8 text-center flex flex-col items-center justify-center">
-                    <div className="w-12 h-12 rounded-full bg-[#F3F8EC] flex items-center justify-center mb-3">
-                      <Search className="text-[#6E9625]" size={20} />
-                    </div>
-                    <p className="text-[15px] font-bold text-[#1F2937] mb-1">Trader not found</p>
-                    <p className="text-[13px] text-[#6B7280]">We couldn't find any tradesperson matching "{searchQuery}".</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Spelling Helper Text */}
-          <p className="text-center text-[13px] text-[#555555] mb-20 font-medium">
-            Can't find them?{" "}
-            <Link href="/directory-listing/search" className="text-[#243A24] font-semibold underline decoration-1 hover:text-[#5a7d1e] transition-colors">
-              browse categories
-            </Link>
-          </p>
-
           {/* Section Heading */}
           <div className="text-center mb-10 sm:mb-16">
             <h2 className="text-[28px] sm:text-[36px] md:text-[44px] font-bold text-[#243A24] mb-3 sm:mb-4 leading-tight" style={{ fontFamily: 'var(--font-bricolage)' }}>
-              How to leave a <span className="text-[#6E9625]">review</span>
+              How to Leave a <span className="text-[#6E9625]">Review</span>
             </h2>
             <p className="text-[#555555] text-[15px] md:text-[16px] font-medium mx-auto">
               Choose the method that matches how you connected with your tradesperson.
@@ -304,17 +163,17 @@ const HowToLeaveReview = () => {
             <div className="bg-[#D6DED0] rounded-[22px] p-5 sm:p-6 border border-[#C4CEBE] shadow-sm flex flex-col justify-between h-full min-h-[460px] w-full">
               <div>
                 {/* Title */}
-                <h3 className="text-[22px] sm:text-[25px] md:text-[28px] font-bold text-[#243A24] leading-snug mb-3 min-h-[72px]" style={{ fontFamily: 'var(--font-bricolage)' }}>
-                  Did you search & contact the trader directly?
+                <h3 className="text-[22px] sm:text-[25px] md:text-[28px] font-bold text-[#243A24] leading-snug mb-3 min-h-[70px]" style={{ fontFamily: 'var(--font-bricolage)' }}>
+                  Did you contact a tradesperson via the <span className="text-[#6E9625]">directory?</span>
                 </h3>
 
                 {/* Description */}
-                <p className="text-[#243A24B2] text-[14px] leading-relaxed mb-6 font-medium min-h-[120px]">
-                  If you found and contacted a trader through our directory and completed a job, revisit the trader's profile to leave a review and share your experience. Your feedback helps other customers discover trusted local tradespeople with confidence.
+                <p className="text-[#243A24B2] text-[14px] leading-relaxed mb-6 font-medium min-h-[75px]">
+                  Revisit the trader&apos;s profile to leave a review and share your experience.
                 </p>
 
                 {/* Stepper List (Vertical) */}
-                <div className="flex flex-col gap-3 mb-6 min-h-[120px]">
+                <div className="flex flex-col gap-3 mb-6">
                   {/* Step 1 */}
                   <div className="flex items-center gap-4">
                     <div className="w-8 h-8 bg-[#243A24] rounded-[8px] flex items-center justify-center text-[13px] font-bold text-white shrink-0">
@@ -362,17 +221,17 @@ const HowToLeaveReview = () => {
             <div className="bg-[#D6DED0] rounded-[22px] p-5 sm:p-6 border border-[#C4CEBE] shadow-sm flex flex-col justify-between h-full min-h-[460px] w-full">
               <div>
                 {/* Title */}
-                <h3 className="text-[22px] sm:text-[25px] md:text-[28px] font-bold text-[#243A24] leading-snug mb-3 min-h-[72px]" style={{ fontFamily: 'var(--font-bricolage)' }}>
-                  Did you post a job?
+                <h3 className="text-[22px] sm:text-[25px] md:text-[28px] font-bold text-[#243A24] leading-snug mb-3 min-h-[70px]" style={{ fontFamily: 'var(--font-bricolage)' }}>
+                  Did you <span className="text-[#6E9625]">post a job?</span>
                 </h3>
 
                 {/* Description */}
-                <p className="text-[#243A24B2] text-[14px] leading-relaxed mb-6 font-medium min-h-[120px]">
-                  Quotes don't need to be formally accepted, simply chat with one or more trusted traders who responded to your job. Once the job is complete, you'll be invited to leave a review based on your experience. To keep reviews fair, you can only review traders you've interacted with through the platform.
+                <p className="text-[#243A24B2] text-[14px] leading-relaxed mb-6 font-medium min-h-[75px]">
+                  No need to formally accept a quote. Simply chat with vetted traders and choose who to work with. Once job is complete leave a review based on your experience.
                 </p>
 
                 {/* Stepper List (Vertical) */}
-                <div className="flex flex-col gap-3 mb-6 min-h-[120px]">
+                <div className="flex flex-col gap-3 mb-6">
                   {/* Step 1 */}
                   <div className="flex items-center gap-4">
                     <div className="w-8 h-8 bg-[#6E9625] rounded-[8px] flex items-center justify-center text-[13px] font-bold text-white shrink-0">
@@ -422,17 +281,37 @@ const HowToLeaveReview = () => {
 
           </div>
 
-          {/* Notices Section */}
-          <div className="w-full">
-            {/* Important Notice Card */}
-            <div className="bg-[#FFFFFF66]/40 border-2 border-[#F2C94C4D] rounded-[16px] p-4 sm:p-6 flex flex-col sm:flex-row gap-4 items-start w-full shadow-[0_8px_30px_rgba(0,0,0,0.02)]">
-              <div className="w-10 h-10 bg-[#FACC15] rounded-full flex items-center justify-center text-white shrink-0 mt-0.5 shadow-sm">
-                <Clock size={20} className='text-white' />
+          {/* Quick Reminder Section */}
+          <div className="w-full pt-4 sm:pt-6 flex justify-center">
+            <div className="max-w-[720px] w-full flex items-start gap-3.5 sm:gap-4">
+              {/* Standalone Yellow Hourglass Icon */}
+              <div className="shrink-0 mt-0.5">
+                <svg
+                  className="w-7 h-7 sm:w-8 sm:h-8"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                >
+                  <path
+                    d="M6 2H18M6 22H18M7 2V6.5C7 7.8 7.6 9 8.5 9.8L12 13L15.5 9.8C16.4 9 17 7.8 17 6.5V2M7 22V17.5C7 16.2 7.6 15 8.5 14.2L12 11L15.5 14.2C16.4 15 17 16.2 17 17.5V22"
+                    stroke="#EAB308"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M8.5 19.5C8.5 18 10 16.5 12 16.5C14 16.5 15.5 18 15.5 19.5H8.5Z"
+                    fill="#EAB308"
+                  />
+                </svg>
               </div>
+
+              {/* Text content */}
               <div>
-                <h4 className="text-[15px] font-bold text-[#243A24] mb-2">Important Notice</h4>
-                <p className="text-[#555555] text-[13px] leading-relaxed font-medium">
-                  Remember: You can leave a review anytime within 6 months of your job being completed, so there's no rush to share your experience. After submitting your review, you'll have up to 48 hours to make any changes before it becomes final.
+                <h4 className="text-[17px] sm:text-[18px] font-bold text-[#1C2C1C] mb-1 tracking-tight">
+                  Quick reminder
+                </h4>
+                <p className="text-[#4A5548] text-[13.5px] sm:text-[14px] leading-relaxed font-normal">
+                  You can leave a review anytime within 6 months of your job being completed, so there&apos;s no rush to share your experience. After submitting your review, you&apos;ll have up to 48 hours to make any changes before it becomes final.
                 </p>
               </div>
             </div>

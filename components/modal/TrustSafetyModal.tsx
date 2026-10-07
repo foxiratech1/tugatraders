@@ -81,7 +81,7 @@ export default function TrustSafetyModal({ isOpen, onClose }: TrustSafetyModalPr
                   <p className="text-[14px] text-gray-600 mb-4">Before choosing a tradesperson, we recommend:</p>
                   <ul className="space-y-3">
                     {[
-                      "Get multiple quotes where possible",
+                      "Get multiple response where possible",
                       "Compare profiles, reviews, and experience",
                       "Check photos of previous work",
                       "Ask questions about their experience with similar jobs",
@@ -177,12 +177,22 @@ export default function TrustSafetyModal({ isOpen, onClose }: TrustSafetyModalPr
               </div>
 
               {/* Our Role */}
-              <div className="mt-6 border border-gray-100 rounded-[24px] p-5 shadow-[0_2px_12px_rgba(0,0,0,0.02)] bg-[#f4f7f2]/40">
-                <h3 className="text-[17px] font-semibold text-gray-800 mb-2">Our role</h3>
-                <p className="text-[14px] text-gray-600 leading-relaxed">
-                  TugaTrades is a connection platform. We do not carry out the work, manage payments, or guarantee outcomes.
-                  While we aim to provide useful information about traders, we always recommend carrying out your own checks before hiring.
-                </p>
+              <div className="mt-6 border border-gray-100 rounded-[24px] p-5 sm:p-6 shadow-[0_2px_12px_rgba(0,0,0,0.02)] bg-[#f4f7f2]/40">
+                <h3 className="text-[17px] font-bold text-gray-800 mb-3">Our role</h3>
+                <div className="space-y-3 text-[14px] text-gray-600 leading-relaxed">
+                  <p>
+                    <strong className="text-gray-800 font-bold">TugaTrades is a connection platform.</strong>
+                    <br />
+                    We help customers find and connect with independent tradespeople, but we are not involved in the work or the agreement between you.
+                  </p>
+                  <p>
+                    You and the tradesperson <strong className="text-gray-800 font-bold">agree the work, price, payment terms and schedule directly with each other.</strong>
+                    <br />
+                    TugaTrades does not process payments, manage projects or guarantee the work or its outcome.
+                    <br />
+                    We provide information to help you make an informed choice, but we always recommend carrying out your own checks before hiring.
+                  </p>
+                </div>
               </div>
             </div>
           </motion.div>

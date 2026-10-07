@@ -75,10 +75,10 @@ export default function Navbar() {
   };
 
   const navLinks = [
+    ...(isTrader ? [] : [{ href: "/directory-listing/search", label: "FIND A TRADESPERSON" }]),
     ...(isTrader ? [] : [{ href: "/post-job", label: "POST A JOB" }]),
-    ...(isTrader ? [] : [{ href: "/directory-listing/search", label: "FIND A TRADER" }]),
     ...(isCustomer || isTrader ? [] : [{ href: "/trader-signup", label: "JOIN AS A TRADESPERSON" }]),
-    ...(isTrader ? [] : [{ href: "/review", label: "LEAVE A REVIEW" }]),
+    ...(isTrader ? [] : [{ href: "/#how-it-works", label: "HOW IT WORKS" }]),
   ];
 
   // Build profile image URL — prefer API-fetched profile, then localStorage user

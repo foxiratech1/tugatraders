@@ -12,6 +12,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { getAccessToken, getUserRole, parseJwt, clearTokens } from '@/utils/auth';
 import { Role } from '@/utils/role';
+import HowItWorks from '@/components/DirectoryListing/HowItWorks';
 
 const FilterDropdown = ({ value, onChange, options, disabled, placeholder, icon: Icon }: any) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -606,7 +607,7 @@ const DirectorySearchResults = () => {
 
       const data = await authApi.searchTraders(params);
       let results = Array.isArray(data) ? data : data?.data || [];
-      
+
       try {
         const savedData = await authApi.getSavedTraders();
         const rawList = Array.isArray(savedData) ? savedData : savedData?.data || [];
@@ -614,7 +615,7 @@ const DirectorySearchResults = () => {
           const t = item.trader || item;
           return t.id;
         }));
-        
+
         results = results.map((t: any) => ({
           ...t,
           isSaved: savedIds.has(t.id)
@@ -969,28 +970,19 @@ const DirectorySearchResults = () => {
               ) : searchError ? (
                 <p className="text-red-600">{searchError}</p>
               ) : filteredResults.length === 0 && !searchLoading ? (
-                <div className="bg-white rounded-[24px] p-12 text-center shadow-sm border border-gray-100 flex flex-col items-center justify-center min-h-[400px]">
-                  <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6">
-                    <Search size={32} className="text-gray-300" />
-                  </div>
-                  <h3 className="text-xl font-bold text-[#1C2C1C] mb-2">No professionals found</h3>
-                  <p className="text-[#4B5563] text-[14px] max-w-md mx-auto">
-                    Try adjusting your filters, expanding your work radius, or searching in a different category to find what you&apos;re looking for.
+                <div className="bg-white rounded-xl p-12 text-center shadow-sm border border-gray-200 flex flex-col items-center justify-center min-h-[400px]">
+                  <h3 className="text-[22px] font-bold text-[#1C2C1C] mb-4 max-w-sm mx-auto leading-tight">
+                    Can&apos;t find the professional you&apos;re<br className="hidden sm:block" /> looking for?
+                  </h3>
+                  <p className="text-[#1C2C1C] text-[16px] mb-8 max-w-sm mx-auto leading-snug">
+                    Post your job for free and let suitable<br className="hidden sm:block" /> trades people come to you.
                   </p>
-                  <button
-                    onClick={() => {
-                      setSelectedCategory('');
-                      setSelectedSkill('');
-                      setSelectedSubCategory('');
-                      setWorkRadius(20);
-                      setMinRating(null);
-                      setAppliedMinRating(null);
-                      fetchTraders(true);
-                    }}
-                    className="mt-8 bg-white border border-[#243A24] text-[#243A24] px-6 py-2.5 rounded-xl font-bold hover:bg-gray-50 transition-colors cursor-pointer"
+                  <Link
+                    href="/post-job"
+                    className="bg-[#85A642] hover:bg-[#76943a] text-white px-8 py-3 rounded-lg font-bold text-[14px] transition-colors inline-block"
                   >
-                    Clear all filters
-                  </button>
+                    POST YOUR JOB - FREE
+                  </Link>
                 </div>
               ) : (
                 <div className="flex flex-col gap-3">
@@ -1112,11 +1104,9 @@ const DirectorySearchResults = () => {
                           </div>
                         </div>
 
-                        {/* Checks */}
-                        <div className="flex flex-wrap gap-1.5 mb-2">
-                          <span className="flex items-center gap-0.5 text-[11px] font-medium text-gray-500"><CheckCircle size={12} className="text-[#6E9625]" /> ID Check</span>
-                          <span className="flex items-center gap-0.5 text-[11px] font-medium text-gray-500"><CheckCircle size={12} className="text-[#6E9625]" /> Trade Check</span>
-                          <span className="flex items-center gap-0.5 text-[11px] font-medium text-gray-500"><CheckCircle size={12} className="text-[#6E9625]" /> Insurance Verified</span>
+                        <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#4B5563] mb-2">
+                          <MapPin size={13} className="text-[#6E9625] shrink-0" />
+                          <span className="truncate">{trader.location}</span>
                         </div>
 
                         {/* Categories / Skills */}
@@ -1163,12 +1153,18 @@ const DirectorySearchResults = () => {
                         </p>
 
                         {/* Location */}
-                        {trader.location && (
+                        {/* {trader.location && (
                           <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#4B5563] mt-auto">
                             <MapPin size={13} className="text-[#6E9625] shrink-0" />
                             <span className="truncate">{trader.location}</span>
                           </div>
-                        )}
+                        )} */}
+
+                        <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#4B5563] mt-auto">
+                          <span className="flex items-center gap-0.5 text-[11px] font-medium text-gray-500"><CheckCircle size={12} className="text-[#6E9625]" /> ID Check</span>
+                          <span className="flex items-center gap-0.5 text-[11px] font-medium text-gray-500"><CheckCircle size={12} className="text-[#6E9625]" /> Trade Check</span>
+                          <span className="flex items-center gap-0.5 text-[11px] font-medium text-gray-500"><CheckCircle size={12} className="text-[#6E9625]" /> Insurance Verified</span>
+                        </div>
 
                         {/* <div className="mt-auto">
                        
@@ -1285,6 +1281,9 @@ const DirectorySearchResults = () => {
           </div>
         </div>
       </section>
+
+      {/* How our directory review system works */}
+      <HowItWorks />
 
       <LoginModal
         isOpen={showLoginModal}
