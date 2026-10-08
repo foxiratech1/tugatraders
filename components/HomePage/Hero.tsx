@@ -151,7 +151,7 @@ export default function Hero() {
 
             {/* SUBTITLE */}
             <p className="text-[15px] sm:text-[17px] md:text-[18px] text-gray-700 font-medium leading-relaxed mb-7 sm:mb-8 max-w-[500px]">
-              Post your job, receive <span className="text-red-500">responses </span> and choose the professional that&apos;s right for you.
+              Post your job, receive <span className="text-[#C60C03]">responses </span> and choose the professional that&apos;s right for you.
             </p>
 
             {/* CTA BUTTONS */}
