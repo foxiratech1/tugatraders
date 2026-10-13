@@ -57,9 +57,9 @@ export default function VettingModal({ isOpen, onClose }: VettingModalProps) {
               </button>
 
               <div className="absolute bottom-0 left-0 p-6 md:p-8 text-white z-10 w-full">
-                <h2 className="text-[26px] md:text-[32px] font-bold mb-1.5 tracking-tight">Vetting & badges explained</h2>
+                <h2 className="text-[26px] md:text-[32px] font-bold mb-1.5 tracking-tight">Customer Vetting & Trust</h2>
                 <p className="text-white/80 text-[14px] md:text-[15px] font-light">
-                  Our commitment to trust and quality
+                  Our Commitment to Trust and Quality
                 </p>
               </div>
             </div>
@@ -68,30 +68,20 @@ export default function VettingModal({ isOpen, onClose }: VettingModalProps) {
             <div ref={scrollRef} className="p-6 md:p-8 bg-white overflow-y-auto flex flex-col gap-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
 
               <section>
-                <h3 className="text-[18px] font-bold text-gray-900 mb-1">Customer Vetting & Trust Statement</h3>
-                <p className="text-[14px] text-gray-500 mb-4">Our commitment to trust and quality</p>
+                <h3 className="text-[18px] font-bold text-gray-900 mb-1">Our Commitment to Trust and Quality</h3>
 
-                <div className="space-y-3 text-[14px] text-gray-600 leading-relaxed">
+                <div className="space-y-3 text-[14px] text-gray-600 leading-relaxed mt-3">
                   <p>
-                    We take steps to verify the tradespeople on our platform, which may include checks on identity, business
-                    information, relevant qualifications, insurance, and customer feedback where available.
+                    TugaTrades takes steps to review information provided by tradespeople, which may include identity, business details, qualifications, insurance and customer feedback, where available.
                   </p>
                   <p>
-                    These checks are designed to promote a higher standard of professionalism and help you make informed
-                    decisions when choosing a tradesperson.
+                    These checks aim to promote professionalism and help customers make informed decisions. However, they do not guarantee the quality, safety or outcome of any work.
                   </p>
                   <p>
-                    However, while we aim to provide a trusted community of professionals, we do not guarantee or warrant the
-                    quality, safety, or outcome of any work carried out.
+                    Customers are responsible for carrying out their own checks, confirming qualifications and insurance, and agreeing on terms directly with their chosen tradesperson before work begins.
                   </p>
                   <p>
-                    All work is carried out directly between you and the tradesperson you choose. It is your responsibility to carry
-                    out your own due diligence, including confirming suitability, qualifications, and agreeing terms before work
-                    begins.
-                  </p>
-                  <p>
-                    We are not a party to any agreement between customers and tradespeople and accept no liability for the
-                    services provided.
+                    TugaTrades acts as a connection platform and is not a party to agreements between customers and tradespeople.
                   </p>
                 </div>
               </section>
@@ -106,23 +96,21 @@ export default function VettingModal({ isOpen, onClose }: VettingModalProps) {
 
                 <div className="space-y-3 text-[14px] text-gray-600 leading-relaxed mb-5">
                   <p>
-                    Badges displayed on Trader profiles (including "Insured", "Vetted", or similar indicators) are based on
-                    information provided by the Trader and reviewed at a specific point in time.
+                    Badges displayed on trader profiles, including &ldquo;Vetted&rdquo;, &ldquo;Insurance Documents&rdquo; or similar indicators, are intended to help customers understand the information reviewed or provided in relation to a trader.
                   </p>
                   <p>
-                    These badges are for informational purposes only and do not constitute endorsement, certification,
-                    or a guarantee of:
+                    These badges reflect information supplied by the trader and/or reviewed by TugaTrades at a particular point in time, as applicable. They should not be interpreted as an endorsement, certification or guarantee of:
                   </p>
-                  <ul className="list-disc pl-5 space-y-1">
-                    <li>Quality of work</li>
-                    <li>Reliability or performance</li>
-                    <li>Ongoing validity of insurance or credentials</li>
+                  <ul className="list-disc pl-5 space-y-1.5">
+                    <li>The quality or standard of work.</li>
+                    <li>The trader&apos;s reliability, conduct or performance.</li>
+                    <li>The current validity of insurance, qualifications or other credentials.</li>
+                    <li>The safety, suitability or successful completion of any project.</li>
                   </ul>
                 </div>
 
-                <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm text-[13px] text-gray-600">
-                  <span className="text-red-500 font-medium">Important:</span> Customers should carry out their own checks and request up-to-date documentation directly
-                  from the Trader before proceeding with any work.
+                <div className="bg-white rounded-xl p-4 border border-gray-100 shadow-sm text-[13px] text-gray-600 leading-relaxed">
+                  <strong>Before proceeding with any work, customers should carry out their own checks and request current supporting documentation directly from the trader.</strong> The presence of a badge does not replace these checks or remove the need to make an informed decision.
                 </div>
               </section>
 

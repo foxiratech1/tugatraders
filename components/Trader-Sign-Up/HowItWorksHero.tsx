@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { traderRegister } from "@/app/api/authApi";
@@ -10,6 +10,7 @@ import "react-international-phone/style.css";
 import { AnimatedEye } from "@/app/ui/AnimatedEye";
 import Link from "next/link";
 import { getFcmToken } from "@/utils/firebase";
+import PlacesAutocompleteInput from "@/components/common/PlacesAutocompleteInput";
 
 const getPasswordError = (pass: string) => {
   const missing = [];
@@ -52,6 +53,28 @@ const HowItWorksHero = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [location, setLocation] = useState<{
+    latitude: number | null;
+    longitude: number | null;
+  }>({
+    latitude: null,
+    longitude: null,
+  });
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        setLocation({
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        });
+      },
+      (error) => {
+        console.warn("Location permission denied:", error);
+      }
+    );
+  }, []);
 
   const [errors, setErrors] = useState<{
     workRadius?: string;
@@ -174,8 +197,8 @@ const HowItWorksHero = () => {
         password: formData.password,
         confirmPassword: formData.confirmPassword,
         workRadius: Number(formData.workRadius) || 25,
-        latitude: 22.553,
-        longitude: 75.7569,
+        latitude: location.latitude || 38.7223,
+        longitude: location.longitude || -9.1393,
         isCheckedTermsCondition: formData.agreeTerms,
         contactNumber: formData.contactNumber,
         location: formData.baseLocation,
@@ -240,10 +263,9 @@ const HowItWorksHero = () => {
   };
 
   const inputCls = (err?: string) =>
-    `h-[44px] w-full rounded-[8px] border bg-[#F9FAFB] px-3.5 text-[13.5px] text-[#1C2C1C] placeholder-[#1C2C1C]/35 outline-none transition-all font-semibold ${
-      err
-        ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-400"
-        : "border-[#E5E7EB] focus:border-[#6E9625] focus:ring-1 focus:ring-[#6E9625] hover:border-[#D1D5DB]"
+    `h-[44px] w-full rounded-[8px] border bg-[#F9FAFB] px-3.5 text-[13.5px] text-[#1C2C1C] placeholder-[#1C2C1C]/35 outline-none transition-all font-semibold ${err
+      ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-400"
+      : "border-[#E5E7EB] focus:border-[#6E9625] focus:ring-1 focus:ring-[#6E9625] hover:border-[#D1D5DB]"
     }`;
 
   const steps = [
@@ -276,7 +298,7 @@ const HowItWorksHero = () => {
   return (
     <section className="bg-white pt-28 sm:pt-36 pb-20 px-4 sm:px-6 lg:px-12 min-h-screen relative overflow-hidden">
       <div className="max-w-[1300px] mx-auto relative">
-        
+
         {/* DIAGONAL CORNER RIBBON - Below the navbar, inside the content area */}
         <div className="hidden lg:block absolute -top-4 -right-8 xl:-right-4 z-20 pointer-events-none">
           <div className="bg-[#78A128] text-[#142617] py-3.5 px-12 xl:px-16 shadow-lg transform rotate-[25deg] flex flex-col items-center text-center rounded-[4px] border-y border-[#8EBE2E]">
@@ -311,11 +333,11 @@ const HowItWorksHero = () => {
 
         {/* MAIN GRID: FORM (LEFT) + STEPPER TIMELINE (RIGHT) */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-stretch">
-          
+
           {/* LEFT: FORM CARD */}
           <div className="lg:col-span-6 w-full max-w-[420px] flex flex-col h-full">
             <div className="bg-white rounded-[20px] p-6 sm:p-7 border border-[#E5E7EB] shadow-[0_4px_25px_rgba(0,0,0,0.04)] flex flex-col gap-4 flex-1 h-full">
-              
+
               <div>
                 <h2 className="text-[22px] sm:text-[24px] font-bold text-[#1C2C1C] tracking-tight leading-tight mb-1">
                   Create Your Account
@@ -326,7 +348,7 @@ const HowItWorksHero = () => {
               </div>
 
               <form onSubmit={handleSubmit} className="flex flex-col gap-3.5 flex-1 justify-between">
-                
+
                 {/* Full Name */}
                 <div className="flex flex-col gap-1">
                   <label className="text-[10.5px] font-bold text-[#1C2C1C]/75 uppercase tracking-wider">
@@ -375,11 +397,10 @@ const HowItWorksHero = () => {
                       buttonClassName:
                         "!h-[44px] !rounded-l-[8px] !border-[#243A241F] !bg-[#F9FAFB] !px-3 hover:!bg-[#F5F5F5]",
                     }}
-                    className={`w-full rounded-[8px] border transition-all ${
-                      errors.contactNumber
-                        ? "border-red-400 focus-within:border-red-500 focus-within:ring-1 focus-within:ring-red-400"
-                        : "border-[#E5E7EB] focus-within:border-[#6E9625] focus-within:ring-1 focus-within:ring-[#6E9625]"
-                    }`}
+                    className={`w-full rounded-[8px] border transition-all ${errors.contactNumber
+                      ? "border-red-400 focus-within:border-red-500 focus-within:ring-1 focus-within:ring-red-400"
+                      : "border-[#E5E7EB] focus-within:border-[#6E9625] focus-within:ring-1 focus-within:ring-[#6E9625]"
+                      }`}
                   />
                   {errors.contactNumber && (
                     <p className="text-red-500 text-[11px] font-medium">
@@ -393,12 +414,20 @@ const HowItWorksHero = () => {
                   <label className="text-[10.5px] font-bold text-[#1C2C1C]/75 uppercase tracking-wider">
                     LOCATION
                   </label>
-                  <input
-                    type="text"
+                  <PlacesAutocompleteInput
                     placeholder="Town / Postcode"
                     value={formData.baseLocation}
-                    onChange={(e) => field("baseLocation", e.target.value)}
-                    className={`${inputCls(errors.baseLocation)} max-w-[200px]`}
+                    onChange={(val) => field("baseLocation", val)}
+                    onPlaceSelect={(place) => {
+                      if (place?.latitude && place?.longitude) {
+                        setLocation({
+                          latitude: place.latitude,
+                          longitude: place.longitude,
+                        });
+                      }
+                    }}
+                    className="w-full max-w-[200px]"
+                    inputClassName={inputCls(errors.baseLocation)}
                   />
                   {errors.baseLocation && (
                     <p className="text-red-500 text-[11px] font-medium">{errors.baseLocation}</p>
@@ -459,13 +488,12 @@ const HowItWorksHero = () => {
                   onClick={() => field("agreeTerms", !formData.agreeTerms)}
                 >
                   <div
-                    className={`mt-0.5 w-[15px] h-[15px] rounded-[3px] border flex items-center justify-center flex-shrink-0 transition-all ${
-                      formData.agreeTerms
-                        ? "bg-[#1C2C1C] border-[#1C2C1C]"
-                        : errors.agreeTerms
+                    className={`mt-0.5 w-[15px] h-[15px] rounded-[3px] border flex items-center justify-center flex-shrink-0 transition-all ${formData.agreeTerms
+                      ? "bg-[#1C2C1C] border-[#1C2C1C]"
+                      : errors.agreeTerms
                         ? "border-red-400 bg-red-50"
                         : "border-[#243A2429] bg-white group-hover:border-[#1C2C1C]/60"
-                    }`}
+                      }`}
                   >
                     {formData.agreeTerms && (
                       <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
@@ -500,7 +528,7 @@ const HowItWorksHero = () => {
           {/* RIGHT: STEPPER TIMELINE */}
           <div className="lg:col-span-6 w-full max-w-[420px] flex flex-col h-full">
             <div className="bg-[#F8FAF7] rounded-[24px] p-6 sm:p-8 border border-[#E6EDE2] relative flex-1 h-full flex flex-col justify-between">
-              
+
               {/* Connecting Line */}
               <div className="absolute left-[46px] sm:left-[56px] -translate-x-1/2 top-[50px] sm:top-[58px] bottom-[50px] sm:bottom-[58px] w-[1.5px] bg-[#E0E5DC]" />
 
@@ -511,11 +539,10 @@ const HowItWorksHero = () => {
                     <div key={step.id} className="flex items-start gap-4 sm:gap-5 group">
                       {/* Step Circle */}
                       <div
-                        className={`relative z-10 w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-bold text-[16px] sm:text-[17px] transition-all duration-300 shadow-sm shrink-0 ${
-                          isActive
-                            ? "bg-[#182C1F] text-white shadow-md ring-4 ring-white"
-                            : "bg-white border-2 border-[#E5E7EB] text-[#9CA3AF]"
-                        }`}
+                        className={`relative z-10 w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-bold text-[16px] sm:text-[17px] transition-all duration-300 shadow-sm shrink-0 ${isActive
+                          ? "bg-[#182C1F] text-white shadow-md ring-4 ring-white"
+                          : "bg-white border-2 border-[#E5E7EB] text-[#9CA3AF]"
+                          }`}
                       >
                         {step.id}
                       </div>
@@ -523,16 +550,14 @@ const HowItWorksHero = () => {
                       {/* Step Content */}
                       <div className="flex flex-col gap-0.5 pt-0.5">
                         <h3
-                          className={`text-[16px] sm:text-[17px] font-bold transition-all ${
-                            isActive ? "text-[#182C1F]" : "text-[#7B8B9B]"
-                          }`}
+                          className={`text-[16px] sm:text-[17px] font-bold transition-all ${isActive ? "text-[#182C1F]" : "text-[#7B8B9B]"
+                            }`}
                         >
                           {step.title}
                         </h3>
                         <p
-                          className={`text-[12px] sm:text-[12.5px] font-medium leading-snug ${
-                            isActive ? "text-[#4A5548]" : "text-[#9CA3AF]"
-                          }`}
+                          className={`text-[12px] sm:text-[12.5px] font-medium leading-snug ${isActive ? "text-[#4A5548]" : "text-[#9CA3AF]"
+                            }`}
                         >
                           {step.description}
                         </p>

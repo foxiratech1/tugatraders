@@ -15,7 +15,8 @@ import {
   Trash2,
   Paperclip,
   Loader2,
-  Calendar
+  Calendar,
+  ChevronDown
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { useSocket } from "@/hooks/useSocket";
@@ -38,6 +39,7 @@ interface Quote {
   jobTitle?: string;
   jobPostcode?: string;
   estimatedDays?: number | string;
+  estimatedDuration?: string;
   availability?: string;
   message?: string;
   attachments?: any[];
@@ -407,11 +409,6 @@ export default function TraderQuotesComponent() {
       return;
     }
 
-    if (!estimatedDays.trim()) {
-      toast.error("Please select an estimated duration");
-      return;
-    }
-
     if (!availability.trim()) {
       toast.error("Please enter your availability");
       return;
@@ -745,20 +742,19 @@ export default function TraderQuotesComponent() {
                   </div>
                 </div>
 
-                {/* Estimated Days */}
+                {/* Estimated Duration */}
                 <div>
                   <label className="block text-[12px] font-semibold text-[#1C2C1C] mb-1.5">
-                    Estimated Duration
+                    Estimated Duration <span className="text-gray-400 font-normal">(optional)</span>
                   </label>
                   <div className="relative">
                     <Clock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                     <select
-                      required
                       value={estimatedDays}
                       onChange={(e) => setEstimatedDays(e.target.value)}
                       className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] bg-white focus:outline-none focus:border-[#C8D9A8] focus:ring-2 focus:ring-[#C8D9A8]/20 transition-all cursor-pointer appearance-none"
                     >
-                      <option value="">Select duration</option>
+                      <option value="">Select duration (optional)</option>
                       <option value="Few Hours">Few Hours</option>
                       <option value="Half day">Half day</option>
                       <option value="1 day">1 day</option>
@@ -769,6 +765,7 @@ export default function TraderQuotesComponent() {
                       <option value="3 – 4 weeks">3 – 4 weeks</option>
                       <option value="1 month +">1 month +</option>
                     </select>
+                    <ChevronDown size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                   </div>
                 </div>
 
@@ -965,8 +962,14 @@ export default function TraderQuotesComponent() {
                     <QuoteStatusBadge status={viewQuoteDetails?.status || viewingQuote.status || "PENDING"} />
                   </div>
                   <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
-                    <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Estimated Days</span>
-                    <span className="text-[14px] font-bold text-[#1C2C1C]">{viewQuoteDetails?.estimatedDays || viewingQuote.estimatedDays || "—"} {(viewQuoteDetails?.estimatedDays || viewingQuote.estimatedDays) ? 'days' : ''}</span>
+                    <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Estimated Duration</span>
+                    <span className="text-[14px] font-bold text-[#1C2C1C]">
+                      {viewQuoteDetails?.estimatedDuration ||
+                        (viewQuoteDetails?.estimatedDays ? (isNaN(Number(viewQuoteDetails.estimatedDays)) ? viewQuoteDetails.estimatedDays : `${viewQuoteDetails.estimatedDays} days`) : "") ||
+                        viewingQuote.estimatedDuration ||
+                        (viewingQuote.estimatedDays ? (isNaN(Number(viewingQuote.estimatedDays)) ? viewingQuote.estimatedDays : `${viewingQuote.estimatedDays} days`) : "") ||
+                        "—"}
+                    </span>
                   </div>
                   <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
                     <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Availability</span>

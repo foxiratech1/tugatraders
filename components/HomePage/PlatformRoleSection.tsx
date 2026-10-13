@@ -100,7 +100,7 @@ const PlatformRoleSection = () => {
               <p className="text-[#4A5548]">
                 For more info visit our{" "}
                 <Link
-                  href="/terms?tab=trust"
+                  href="/trust-and-safety"
                   className="underline font-semibold text-[#1E3A2B] hover:text-[#6E9625] transition-colors"
                 >
                   'Trust & Safety'

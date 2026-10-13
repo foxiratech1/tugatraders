@@ -12,6 +12,7 @@ import PublicGuard from "@/components/Guards/PublicGuard";
 import { PhoneInput } from "react-international-phone";
 import "react-international-phone/style.css";
 import { getFcmToken, prefetchFcmToken } from "@/utils/firebase";
+import PlacesAutocompleteInput from "@/components/common/PlacesAutocompleteInput";
 
 // ─── Trade Categories (COMMENTED OUT) ────────────────────────────────────────
 // // Trade categories will be loaded from the API
@@ -69,12 +70,11 @@ const getPasswordError = (pass: string) => {
 export default function TraderSignupPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
-    // tradeCategories: [] as string[],
-    workRadius: "",
-    baseLocation: "",
     fullName: "",
     businessEmail: "",
     contactNumber: "",
+    location: "",
+    workRadius: "25",
     password: "",
     confirmPassword: "",
     agreeTerms: false,
@@ -117,38 +117,11 @@ export default function TraderSignupPage() {
     prefetchFcmToken();
   }, []);
 
-  // useEffect(() => {
-  //   const loadCategories = async () => {
-  //     try {
-  //       const data = await authApi.getCategories();
-  //
-  //       console.log("Categories API Response:", data);
-  //
-  //       if (Array.isArray(data)) {
-  //         console.log("Categories Array:", data);
-  //         setCategories(data);
-  //       } else if (data?.data && Array.isArray(data.data)) {
-  //         console.log("Categories Data Array:", data.data);
-  //         setCategories(data.data);
-  //       } else {
-  //         console.log("Unexpected Response Format:", data);
-  //         setCategories([]);
-  //       }
-  //     } catch (err) {
-  //       console.error("Categories API Error:", err);
-  //       toast.error("Unable to load trade categories");
-  //     }
-  //   };
-  //
-  //   loadCategories();
-  // }, []);
   const [errors, setErrors] = useState<{
-    // tradeCategories?: string;
-    workRadius?: string;
-    baseLocation?: string;
     fullName?: string;
     businessEmail?: string;
     contactNumber?: string;
+    location?: string;
     password?: string;
     confirmPassword?: string;
     agreeTerms?: string;
@@ -205,7 +178,6 @@ export default function TraderSignupPage() {
   // ── Validation & Submit ─────────────────────────────────────────────────────
   const validate = () => {
     const e: typeof errors = {};
-    // if (formData.tradeCategories.length === 0) e.tradeCategories = "Please select at least one trade category";
     if (!formData.fullName.trim()) e.fullName = "Full name is required";
     if (!formData.businessEmail) e.businessEmail = "Business email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.businessEmail))
@@ -216,6 +188,7 @@ export default function TraderSignupPage() {
     } else if (phoneDigits.length < 7 || phoneDigits.length > 15) {
       e.contactNumber = "Please enter a valid contact number";
     }
+    if (!formData.location.trim()) e.location = "Location is required";
     if (!formData.password) {
       e.password = "Password is required";
     } else {
@@ -228,19 +201,6 @@ export default function TraderSignupPage() {
     } else if (formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword) {
       e.confirmPassword = "Passwords do not match";
     }
-    // if (!formData.address.trim()) e.address = "Address is required";
-    // if (!formData.city.trim()) e.city = "City is required";
-    const radiusVal = Number(formData.workRadius);
-    if (!formData.workRadius) {
-      e.workRadius = "Work radius is required";
-    } else if (isNaN(radiusVal) || radiusVal <= 0 || radiusVal > 500) {
-      e.workRadius = "Radius must be between 1 and 500";
-    }
-    if (!formData.baseLocation) e.baseLocation = "Location is required";
-    // if (!formData.address.trim()) e.address = "Address is required";
-    // if (!formData.city.trim()) e.city = "City is required";
-    // if (!formData.state.trim()) e.state = "State is required";
-    // if (!formData.country.trim()) e.country = "Country is required";
     if (!formData.agreeTerms) e.agreeTerms = "You must agree to the Terms of Service";
     return e;
   };
@@ -276,12 +236,10 @@ export default function TraderSignupPage() {
   };
 
   const isFormFilled =
-    // formData.tradeCategories.length > 0 &&
-    Boolean(formData.workRadius.trim()) &&
-    Boolean(formData.baseLocation.trim()) &&
     Boolean(formData.fullName.trim()) &&
     Boolean(formData.businessEmail.trim()) &&
     Boolean(formData.contactNumber.trim()) &&
+    Boolean(formData.location.trim()) &&
     Boolean(formData.password) &&
     Boolean(formData.confirmPassword) &&
     Boolean(formData.agreeTerms);
@@ -310,18 +268,12 @@ export default function TraderSignupPage() {
         email: formData.businessEmail,
         password: formData.password,
         confirmPassword: formData.confirmPassword,
-        // tradeCategories: formData.tradeCategories,
-        workRadius: Number(formData.workRadius),
-        // addressLine: formData.address,
-        // city: formData.city,
-        // state: formData.state,
-        // country: formData.country,
-        // postalCode: formData.postalCode,
-        latitude: 22.5530,
-        longitude: 75.7569,
+        workRadius: Number(formData.workRadius) || 25,
+        latitude: location.latitude || 38.7223,
+        longitude: location.longitude || -9.1393,
         isCheckedTermsCondition: formData.agreeTerms,
         contactNumber: formData.contactNumber,
-        location: formData.baseLocation,
+        location: formData.location,
         ...(fcmToken ? { fcmToken } : {}),
       };
       console.log('Submitting payload:', payload);
@@ -353,27 +305,19 @@ export default function TraderSignupPage() {
       }
 
       // Deduplicate repeating error messages joined by comma
-      if (typeof msg === 'string') {
-        msg = Array.from(new Set(msg.split(/,\s*(?=[A-Z])/))).join(', ');
-      }
-
-      setErrors({});
-      if (msg.toLowerCase().includes("email already exists") || msg.toLowerCase().includes("email is already registered") || msg.toLowerCase().includes("already in use")) {
-        toast.error("This email is already registered. Please log in.", { id: 'auth-error' });
-      } else {
-        toast.error(msg, { id: 'auth-error' });
-      }
+      const parts = msg.split(", ");
+      const unique = Array.from(new Set(parts)).join(", ");
+      toast.error(unique || msg);
     } finally {
       setLoading(false);
-      isSubmitting.current = false;
     }
   };
 
   // ── Input class helper ──────────────────────────────────────────────────────
   const inputCls = (err?: string) =>
-    `h-[44px] w-full rounded-[12px] border bg-white px-4 text-[14px] text-[#1C2C1C] placeholder-[#1C2C1C]/30 outline-none transition-all font-medium ${err
+    `h-[44px] w-full rounded-[10px] border bg-[#FAFAFA] sm:bg-white px-3.5 text-[14px] text-[#1C2C1C] placeholder-[#9CA3AF] outline-none transition-all font-normal ${err
       ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-400"
-      : "border-[#243A241F] focus:border-[#6E9625] focus:ring-1 focus:ring-[#6E9625]"
+      : "border-[#E5E7EB] focus:border-[#6E9625] focus:bg-white focus:ring-1 focus:ring-[#6E9625]"
     }`;
 
   return (
@@ -385,149 +329,35 @@ export default function TraderSignupPage() {
           <div className="flex flex-1 flex-col justify-center items-center px-4 py-10 sm:px-8 xl:px-16 bg-[#F0EDE8] z-10 relative">
 
             {/* Card */}
-            <div className="mx-auto w-full max-w-[480px] bg-white rounded-[28px] p-7 sm:p-9 shadow-[0_12px_48px_rgba(36,58,36,0.07)] border border-[#243A240A] flex flex-col gap-[18px]">
+            <div className="mx-auto w-full max-w-[460px] bg-white rounded-[24px] p-6 sm:p-8 shadow-[0_12px_48px_rgba(36,58,36,0.06)] border border-[#E5E7EB] flex flex-col gap-4">
 
               {/* Logo */}
-              <Link href="/">
-                <Image src="/TugaLogo.png" alt="TugaTrades Logo" width={177} height={40} className="object-contain" />
-              </Link>
+              <div className="mb-1">
+                <Link href="/" className="inline-block">
+                  <Image src="/TugaLogo.png" alt="TugaTrades Logo" width={170} height={38} className="object-contain" />
+                </Link>
+              </div>
 
               {/* Headings */}
               <div>
                 <h1
-                  className="text-[24px] sm:text-[26px] font-bold text-[#1C2C1C] tracking-tight leading-tight mb-1"
+                  className="text-[23px] sm:text-[25px] font-bold text-[#1C2C1C] tracking-tight leading-tight mb-1"
                   style={{ fontFamily: "var(--font-bricolage), sans-serif" }}
                 >
                   Trader Registration
                 </h1>
-                <p className="text-[13px] text-[#1C2C1C]/55 font-medium">
-                  Join our network of certified premium tradespeople.
+                <p className="text-[13px] sm:text-[13.5px] text-[#6B7280] font-normal">
+                  Join our network of vetted tradespeople
                 </p>
               </div>
 
               {/* Form */}
-              <form onSubmit={handleSubmit} className="flex flex-col gap-[14px]">
+              <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
 
-                {/* Trade Category (COMMENTED OUT)
-                <div className="flex flex-col gap-1.5" ref={categoryDropdownRef}>
-                  <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">
-                    Trade Categories
-                  </label>
-                  <div className="relative">
-                    <div
-                      onClick={() => setIsCategoryDropdownOpen(!isCategoryDropdownOpen)}
-                      className={`${inputCls(errors.tradeCategories)} cursor-pointer flex items-center min-h-[44px] h-auto py-2`}
-                    >
-                      {formData.tradeCategories.length === 0 ? (
-                        <span className="text-[#1C2C1C]/30">Select Trade Categories</span>
-                      ) : (
-                        <div className="flex flex-wrap gap-1.5 w-[calc(100%-24px)]">
-                          {formData.tradeCategories.map(catId => {
-                            const cat = categories.find(c => c.id === catId);
-                            return (
-                              <span key={catId} className="bg-[#6E9625]/10 text-[#6E9625] px-2 py-0.5 rounded-[6px] text-[12px] font-bold flex items-center gap-1 mt-0.5 mb-0.5">
-                                {cat?.name}
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    field("tradeCategories", formData.tradeCategories.filter(id => id !== catId));
-                                  }}
-                                  className="text-[#6E9625] hover:text-[#243A24]"
-                                >
-                                  &times;
-                                </button>
-                              </span>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                    <span className="pointer-events-none absolute right-3 top-[22px] -translate-y-1/2 text-[#1C2C1C]/40">
-                      <ChevronDown />
-                    </span>
-
-                    {isCategoryDropdownOpen && (
-                      <div className="absolute top-[calc(100%+4px)] left-0 right-0 bg-white border border-[#243A241F] rounded-[12px] shadow-[0_12px_48px_rgba(36,58,36,0.12)] max-h-[220px] overflow-y-auto z-[60] py-1">
-                        {categories.map((cat) => (
-                          <div
-                            key={cat.id}
-                            onClick={() => {
-                              const isSelected = formData.tradeCategories.includes(cat.id);
-                              if (isSelected) {
-                                field("tradeCategories", formData.tradeCategories.filter(id => id !== cat.id));
-                              } else {
-                                field("tradeCategories", [...formData.tradeCategories, cat.id]);
-                              }
-                            }}
-                            className={`px-4 py-2.5 text-[14px] font-medium cursor-pointer hover:bg-[#F8F9F8] flex items-center gap-3 transition-colors ${formData.tradeCategories.includes(cat.id) ? "text-[#1C2C1C]" : "text-[#1C2C1C]/80"}`}
-                          >
-                            <div className={`w-4 h-4 rounded-[4px] border flex items-center justify-center flex-shrink-0 transition-colors ${formData.tradeCategories.includes(cat.id) ? "bg-[#1C2C1C] border-[#1C2C1C]" : "border-[#1C2C1C]/25"}`}>
-                              {formData.tradeCategories.includes(cat.id) && (
-                                <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
-                                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                                </svg>
-                              )}
-                            </div>
-                            {cat.name}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  {errors.tradeCategories && (
-                    <p className="text-red-500 text-[11px] font-medium">{errors.tradeCategories}</p>
-                  )}
-                </div>
-                */}
-
-                {/* Work Radius + Base Location */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">Work Radius (KM)</label>
-                    <input
-                      type="number"
-                      placeholder="e.g. 25"
-                      value={formData.workRadius}
-                      onChange={(e) => field("workRadius", e.target.value)}
-                      className={inputCls(errors.workRadius)}
-                    />
-                    {errors.workRadius && (
-                      <p className="text-red-500 text-[11px] font-medium">{errors.workRadius}</p>
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">Location/Region</label>
-                    <input
-                      type="text"
-                      placeholder="Enter your location"
-                      value={formData.baseLocation}
-                      onChange={(e) => field("baseLocation", e.target.value)}
-                      className={inputCls(errors.baseLocation)}
-                    />
-                    {errors.baseLocation && (
-                      <p className="text-red-500 text-[11px] font-medium">{errors.baseLocation}</p>
-                    )}
-                  </div>
-                </div>
-                {/* <div className="flex flex-col gap-1.5">
- <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">
- Base Location / Postcode
- </label>
- <input
- type="text"
- placeholder="AS2001"
- value={formData.postalCode}
- onChange={(e) => field("postalCode", e.target.value)}
- className={inputCls(errors.postalCode)}
- />
- </div> */}
-
-
-                {/* Full Name */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">
-                    Full Name
+                {/* 1. Full Name */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] font-bold text-[#6B7280] uppercase tracking-wider mb-1">
+                    FULL NAME
                   </label>
                   <input
                     type="text"
@@ -541,10 +371,10 @@ export default function TraderSignupPage() {
                   )}
                 </div>
 
-                {/* Business Email */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">
-                    Business Email Address
+                {/* 2. Business Email */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] font-bold text-[#6B7280] uppercase tracking-wider mb-1">
+                    BUSINESS EMAIL ADDRESS
                   </label>
                   <input
                     type="email"
@@ -558,127 +388,25 @@ export default function TraderSignupPage() {
                   )}
                 </div>
 
-                {/* Password & Confirm Password */}
-                <div className="grid grid-cols-2 gap-3 relative">
-                  <div className="flex flex-col gap-1.5 relative">
-                    <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">Password</label>
-                    <input
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      value={formData.password}
-                      onChange={(e) => field("password", e.target.value)}
-                      className={inputCls(errors.password)}
-                    />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-[46px] -translate-y-1/2 z-10">
-                      <AnimatedEye show={showPassword} isBlinking={false} mouseOffset={{ x: 0, y: 0 }} />
-                    </button>
-                    {errors.password && (
-                      <p className="text-red-500 text-[11px] font-medium">{errors.password}</p>
-                    )}
-                  </div>
-                  <div className="flex flex-col gap-1.5 relative">
-                    <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">Confirm Password</label>
-                    <input
-                      type={showConfirmPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      value={formData.confirmPassword}
-                      onChange={(e) => field("confirmPassword", e.target.value)}
-                      className={inputCls(errors.confirmPassword)}
-                    />
-                    <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-[46px] -translate-y-1/2 z-10">
-                      <AnimatedEye show={showConfirmPassword} isBlinking={false} mouseOffset={{ x: 0, y: 0 }} />
-                    </button>
-                    {errors.confirmPassword && (
-                      <p className="text-red-500 text-[11px] font-medium">{errors.confirmPassword}</p>
-                    )}
-                  </div>
-
-                </div>
-
-                {/* <div className="grid grid-cols-2 gap-3 mt-3">
- 
- <div className="flex flex-col gap-1.5">
- <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">Address</label>
- <input
- type="text"
- placeholder="Address"
- value={formData.address}
- onChange={(e) => field("address", e.target.value)}
- className={inputCls(errors.address)}
- />
- {errors.address && (
- <p className="text-red-500 text-[11px] font-medium">{errors.address}</p>
- )}
- </div>
- 
- <div className="flex flex-col gap-1.5">
- <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">City</label>
- <input
- type="text"
- placeholder="City"
- value={formData.city}
- onChange={(e) => field("city", e.target.value)}
- className={inputCls(errors.city)}
- />
- {errors.city && (
- <p className="text-red-500 text-[11px] font-medium">{errors.city}</p>
- )}
- </div>
- </div> */}
-
-                {/* <div className="grid grid-cols-2 gap-3 mt-3">
- 
- <div className="flex flex-col gap-1.5">
- <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">
- State
- </label>
- <input
- type="text"
- placeholder="State"
- value={formData.state}
- onChange={(e) => field("state", e.target.value)}
- className={inputCls(errors.state)}
- />
- {errors.state && (
- <p className="text-red-500 text-[11px] font-medium">{errors.state}</p>
- )}
- </div>
- 
- <div className="flex flex-col gap-1.5">
- <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">
- Country
- </label>
- <input
- type="text"
- placeholder="Country"
- value={formData.country}
- onChange={(e) => field("country", e.target.value)}
- className={inputCls(errors.country)}
- />
- {errors.country && (
- <p className="text-red-500 text-[11px] font-medium">{errors.country}</p>
- )}
- </div>
- </div> */}
-
-                {/* Contact Number */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[11.5px] font-extrabold text-[#1C2C1C]/70 uppercase tracking-wider">
-                    Contact Number
+                {/* 3. Contact Number */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] font-bold text-[#6B7280] uppercase tracking-wider mb-1">
+                    CONTACT NUMBER
                   </label>
 
                   <PhoneInput
                     defaultCountry="pt"
                     value={formData.contactNumber}
                     onChange={(phone) => field("contactNumber", phone)}
-                    inputClassName="!h-[44px] !w-full !rounded-r-[12px] !border-l-0 !text-[14px] !text-[#1C2C1C] !font-medium !placeholder-[#1C2C1C]/30 !outline-none !bg-white"
+                    inputClassName="!h-[44px] !w-full !rounded-r-[10px] !border-l-0 !text-[14px] !text-[#1C2C1C] !font-normal !placeholder-[#9CA3AF] !outline-none !bg-white"
                     countrySelectorStyleProps={{
-                      buttonClassName: "!h-[44px] !rounded-l-[12px] !border-[#243A241F] !bg-white !px-3 hover:!bg-[#F5F5F5]",
+                      buttonClassName: "!h-[44px] !rounded-l-[10px] !border-[#E5E7EB] !bg-white !px-3 hover:!bg-[#F9FAFB]",
                     }}
-                    className={`w-full rounded-[12px] border transition-all ${errors.contactNumber
-                      ? "border-red-400 focus-within:border-red-500 focus-within:ring-1 focus-within:ring-red-400"
-                      : "border-[#243A241F] focus-within:border-[#6E9625] focus-within:ring-1 focus-within:ring-[#6E9625]"
-                      }`}
+                    className={`w-full rounded-[10px] border transition-all ${
+                      errors.contactNumber
+                        ? "border-red-400 focus-within:border-red-500 focus-within:ring-1 focus-within:ring-red-400"
+                        : "border-[#E5E7EB] focus-within:border-[#6E9625] focus-within:ring-1 focus-within:ring-[#6E9625]"
+                    }`}
                   />
 
                   {errors.contactNumber && (
@@ -688,18 +416,109 @@ export default function TraderSignupPage() {
                   )}
                 </div>
 
-                {/* Terms */}
+                {/* 4. Location */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[11px] font-bold text-[#6B7280] uppercase tracking-wider mb-1">
+                    LOCATION
+                  </label>
+                  <PlacesAutocompleteInput
+                    placeholder="Town / Postcode"
+                    value={formData.location}
+                    onChange={(val) => field("location", val)}
+                    onPlaceSelect={(place) => {
+                      if (place?.latitude && place?.longitude) {
+                        setLocation({
+                          latitude: place.latitude,
+                          longitude: place.longitude,
+                        });
+                      }
+                    }}
+                    className="w-full sm:w-[50%] max-w-[220px]"
+                    inputClassName={`h-[44px] w-full rounded-[10px] border bg-[#FAFAFA] sm:bg-white px-3.5 text-[14px] text-[#1C2C1C] placeholder-[#9CA3AF] outline-none transition-all font-normal ${
+                      errors.location
+                        ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-400"
+                        : "border-[#E5E7EB] focus:border-[#6E9625] focus:bg-white focus:ring-1 focus:ring-[#6E9625]"
+                    }`}
+                  />
+                  {errors.location && (
+                    <p className="text-red-500 text-[11px] font-medium">{errors.location}</p>
+                  )}
+                </div>
+
+                {/* 5. Password & Confirm Password */}
+                <div className="grid grid-cols-2 gap-3 relative">
+                  <div className="flex flex-col gap-1 relative">
+                    <label className="text-[11px] font-bold text-[#6B7280] uppercase tracking-wider mb-1">
+                      PASSWORD
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={formData.password}
+                        onChange={(e) => field("password", e.target.value)}
+                        className={`h-[44px] w-full rounded-[10px] border bg-[#FAFAFA] sm:bg-white pl-3.5 pr-10 text-[14px] text-[#1C2C1C] placeholder-[#9CA3AF] outline-none transition-all font-normal ${
+                          errors.password
+                            ? "border-red-400 focus:border-red-500"
+                            : "border-[#E5E7EB] focus:border-[#6E9625] focus:bg-white"
+                        }`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 z-10 text-[#9CA3AF] hover:text-[#1C2C1C]"
+                      >
+                        <AnimatedEye show={showPassword} isBlinking={false} mouseOffset={{ x: 0, y: 0 }} />
+                      </button>
+                    </div>
+                    {errors.password && (
+                      <p className="text-red-500 text-[11px] font-medium">{errors.password}</p>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col gap-1 relative">
+                    <label className="text-[11px] font-bold text-[#6B7280] uppercase tracking-wider mb-1">
+                      CONFIRM PASSWORD
+                    </label>
+                    <div className="relative">
+                      <input
+                        type={showConfirmPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={formData.confirmPassword}
+                        onChange={(e) => field("confirmPassword", e.target.value)}
+                        className={`h-[44px] w-full rounded-[10px] border bg-[#FAFAFA] sm:bg-white pl-3.5 pr-10 text-[14px] text-[#1C2C1C] placeholder-[#9CA3AF] outline-none transition-all font-normal ${
+                          errors.confirmPassword
+                            ? "border-red-400 focus:border-red-500"
+                            : "border-[#E5E7EB] focus:border-[#6E9625] focus:bg-white"
+                        }`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 z-10 text-[#9CA3AF] hover:text-[#1C2C1C]"
+                      >
+                        <AnimatedEye show={showConfirmPassword} isBlinking={false} mouseOffset={{ x: 0, y: 0 }} />
+                      </button>
+                    </div>
+                    {errors.confirmPassword && (
+                      <p className="text-red-500 text-[11px] font-medium">{errors.confirmPassword}</p>
+                    )}
+                  </div>
+                </div>
+
+                {/* 6. Terms */}
                 <div
-                  className="flex items-start gap-2.5 cursor-pointer select-none group mt-0.5"
+                  className="flex items-center gap-2.5 cursor-pointer select-none group mt-1"
                   onClick={() => field("agreeTerms", !formData.agreeTerms)}
                 >
                   <div
-                    className={`mt-0.5 w-[17px] h-[17px] rounded border flex items-center justify-center flex-shrink-0 transition-all ${formData.agreeTerms
-                      ? "bg-[#1C2C1C] border-[#1C2C1C]"
-                      : errors.agreeTerms
-                        ? "border-red-400 bg-red-50"
-                        : "border-[#243A2429] bg-white group-hover:border-[#1C2C1C]/60"
-                      }`}
+                    className={`w-[17px] h-[17px] rounded-[4px] border flex items-center justify-center flex-shrink-0 transition-all ${
+                      formData.agreeTerms
+                        ? "bg-[#1C2C1C] border-[#1C2C1C]"
+                        : errors.agreeTerms
+                          ? "border-red-400 bg-red-50"
+                          : "border-[#D1D5DB] bg-white group-hover:border-[#1C2C1C]"
+                    }`}
                   >
                     {formData.agreeTerms && (
                       <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={4}>
@@ -707,29 +526,37 @@ export default function TraderSignupPage() {
                       </svg>
                     )}
                   </div>
-                  <p className="text-[11.5px] text-[#1C2C1C]/65 font-medium leading-tight">
+                  <p className="text-[12px] text-[#4B5563] font-normal leading-tight">
                     I agree to the{" "}
-                    <span className="text-[#1C2C1C] font-bold hover:underline"><a href="/terms">Terms of Service</a></span>{" "}
+                    <Link href="/terms" className="font-bold text-[#1C2C1C] hover:underline" onClick={(e) => e.stopPropagation()}>
+                      Terms of Service
+                    </Link>{" "}
                     and{" "}
-                    <span className="text-[#1C2C1C] font-bold hover:underline"><a href="/terms?tab=cookies">Privacy Policy</a></span>
+                    <Link href="/terms?tab=cookies" className="font-bold text-[#1C2C1C] hover:underline" onClick={(e) => e.stopPropagation()}>
+                      Privacy Policy
+                    </Link>
                   </p>
                 </div>
 
-                {/* Submit */}
+                {/* 7. Submit */}
                 <button
                   type="submit"
                   disabled={loading || !isFormFilled}
-                  className="h-[48px] w-full rounded-[12px] bg-[#1C2C1C] text-[15px] font-bold text-white shadow-sm transition-all hover:bg-[#2C4A2C] hover:shadow-md cursor-pointer mt-1 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#1C2C1C]"
+                  className={`h-[46px] w-full rounded-[10px] text-[15px] font-bold transition-all mt-2 cursor-pointer ${
+                    isFormFilled
+                      ? "bg-[#1C2C1C] hover:bg-[#2C4A2C] text-white shadow-sm"
+                      : "bg-[#B4BCB2] text-white cursor-not-allowed"
+                  }`}
                 >
                   {loading ? "Creating Account…" : "Create Account"}
                 </button>
               </form>
 
-              {/* Login link */}
-              <div className="text-center -mt-1">
-                <p className="text-[12.5px] text-[#1C2C1C]/55 font-medium">
+              {/* 8. Login link */}
+              <div className="text-center mt-1">
+                <p className="text-[12.5px] text-[#4B5563] font-normal">
                   Already have an account?{" "}
-                  <Link href="/auth/login" className="text-[#1C2C1C] font-extrabold hover:underline">
+                  <Link href="/auth/login" className="text-[#1C2C1C] font-bold hover:underline">
                     Log in
                   </Link>
                 </p>

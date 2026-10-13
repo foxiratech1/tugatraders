@@ -681,7 +681,40 @@ export default function JobsLeads() {
         }
       };
 
-      const mappedDays = Number(quoteForm.estimatedDays) > 0 ? Number(quoteForm.estimatedDays) : mapAvailabilityToDays(quoteForm.availability);
+      const mapDurationToDays = (duration?: string): number => {
+        if (!duration) return 1;
+        switch (duration) {
+          case "Few Hours":
+          case "Half day":
+          case "1 day":
+            return 1;
+          case "2–3 days":
+          case "2-3 days":
+            return 3;
+          case "Under a week":
+            return 7;
+          case "1 – 2 weeks":
+          case "1-2 weeks":
+            return 14;
+          case "2 – 3 weeks":
+          case "2-3 weeks":
+            return 21;
+          case "3 – 4 weeks":
+          case "3-4 weeks":
+            return 28;
+          case "1 month +":
+          case "1 month+":
+            return 30;
+          default: {
+            const num = parseInt(duration, 10);
+            return !isNaN(num) && num > 0 ? num : 1;
+          }
+        }
+      };
+
+      const mappedDays = quoteForm.estimatedDays
+        ? mapDurationToDays(quoteForm.estimatedDays)
+        : mapAvailabilityToDays(quoteForm.availability);
 
       if (editingQuoteId) {
         // Send JSON payload for updates (without attachments to avoid validation error)
@@ -1593,7 +1626,7 @@ export default function JobsLeads() {
                                       setIsStartingJob(false);
                                     }
                                   }}
-                                  className={`h-[42px] px-6 rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 transition-all ${isStartingJob || selectedJob.rawStatus === "IN_PROGRESS"
+                                  className={`h-[42px] w-[175px] rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 transition-all shrink-0 ${isStartingJob || selectedJob.rawStatus === "IN_PROGRESS"
                                     ? "bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300"
                                     : "bg-[#7CB342] hover:bg-[#689F38] text-white shadow-sm cursor-pointer active:scale-[0.98]"
                                     }`}
@@ -1620,7 +1653,9 @@ export default function JobsLeads() {
                                 </div>
                                 <div>
                                   <span className="text-[10px] font-bold text-[#6E9625] uppercase tracking-wider block leading-tight mb-1">ESTIMATED DURATION</span>
-                                  <span className="text-[18px] font-extrabold text-[#1C2C1C] leading-tight">{quoteDetails.estimatedDays} {quoteDetails.estimatedDays === 1 ? 'day' : 'days'}</span>
+                                  <span className="text-[18px] font-extrabold text-[#1C2C1C] leading-tight">
+                                    {quoteDetails.estimatedDuration || (quoteDetails.estimatedDays ? (isNaN(Number(quoteDetails.estimatedDays)) ? quoteDetails.estimatedDays : `${quoteDetails.estimatedDays} ${Number(quoteDetails.estimatedDays) === 1 ? 'day' : 'days'}`) : '—')}
+                                  </span>
                                 </div>
                               </div>
                               <button
@@ -1671,7 +1706,7 @@ export default function JobsLeads() {
                                     );
                                   }
                                 }}
-                                className="h-[42px] px-6 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-[#1C2C1C] text-[13px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98] shrink-0"
+                                className="h-[42px] w-[175px] rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-[#1C2C1C] text-[13px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98] shrink-0"
                               >
                                 <MessageCircle size={15} className="text-gray-400" />
                                 Contact Customer
@@ -1695,7 +1730,7 @@ export default function JobsLeads() {
                               {isManualDecline && (
                                 <button
                                   onClick={openRevokeQuoteModal}
-                                  className="h-[42px] px-6 rounded-xl bg-[#1C2C1C] hover:bg-[#1C2C1C] text-white text-[14px] font-bold flex items-center justify-center gap-2 transition-all shadow-sm cursor-pointer active:scale-[0.98]"
+                                  className="h-[42px] w-[175px] rounded-xl bg-[#1C2C1C] hover:bg-[#1C2C1C] text-white text-[14px] font-bold flex items-center justify-center gap-2 transition-all shadow-sm cursor-pointer active:scale-[0.98] shrink-0"
                                 >
                                   <RefreshCw size={15} />
                                   Revise Quote
@@ -1711,7 +1746,9 @@ export default function JobsLeads() {
                                 </div>
                                 <div>
                                   <span className="text-[10px] font-bold text-[#D32F2F] uppercase tracking-wider block leading-tight mb-1">ESTIMATED DURATION</span>
-                                  <span className="text-[18px] font-extrabold text-[#1C2C1C] leading-tight">{quoteDetails.estimatedDays} {quoteDetails.estimatedDays === 1 ? 'day' : 'days'}</span>
+                                  <span className="text-[18px] font-extrabold text-[#1C2C1C] leading-tight">
+                                    {quoteDetails.estimatedDuration || (quoteDetails.estimatedDays ? (isNaN(Number(quoteDetails.estimatedDays)) ? quoteDetails.estimatedDays : `${quoteDetails.estimatedDays} ${Number(quoteDetails.estimatedDays) === 1 ? 'day' : 'days'}`) : '—')}
+                                  </span>
                                 </div>
                               </div>
                               <button
@@ -1762,7 +1799,7 @@ export default function JobsLeads() {
                                     );
                                   }
                                 }}
-                                className="h-[42px] px-6 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-[#1C2C1C] text-[13px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98] shrink-0"
+                                className="h-[42px] w-[175px] rounded-xl bg-white border border-gray-200 hover:bg-gray-50 text-[#1C2C1C] text-[13px] font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98] shrink-0"
                               >
                                 <MessageCircle size={15} className="text-[#6E9625]" />
                                 Contact Customer
@@ -1909,22 +1946,32 @@ export default function JobsLeads() {
                 </div>
               </div>
 
-              {/* Estimated Days */}
+              {/* Estimated Duration */}
               <div>
                 <label className="block text-[12px] font-semibold text-[#1C2C1C] mb-1.5">
-                  Estimated Days
+                  Estimated Duration <span className="text-gray-400 font-normal">(optional)</span>
                 </label>
                 <div className="relative">
                   <Clock size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
-                  <input
-                    type="number"
-                    min={1}
-                    step={1}
-                    required
-                    placeholder="e.g. 3"
+                  <select
                     value={quoteForm.estimatedDays}
                     onChange={(e) => setQuoteForm((f) => ({ ...f, estimatedDays: e.target.value }))}
-                    className="w-full px-4 py-2.5 pl-9 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] bg-white focus:outline-none focus:border-[#8BC34A] focus:ring-2 focus:ring-[#8BC34A]/20 transition-all placeholder:text-gray-400"
+                    className="w-full px-4 py-2.5 pl-9 pr-8 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] bg-white focus:outline-none focus:border-[#8BC34A] focus:ring-2 focus:ring-[#8BC34A]/20 transition-all cursor-pointer appearance-none"
+                  >
+                    <option value="">Select duration (optional)</option>
+                    <option value="Few Hours">Few Hours</option>
+                    <option value="Half day">Half day</option>
+                    <option value="1 day">1 day</option>
+                    <option value="2–3 days">2–3 days</option>
+                    <option value="Under a week">Under a week</option>
+                    <option value="1 – 2 weeks">1 – 2 weeks</option>
+                    <option value="2 – 3 weeks">2 – 3 weeks</option>
+                    <option value="3 – 4 weeks">3 – 4 weeks</option>
+                    <option value="1 month +">1 month +</option>
+                  </select>
+                  <ChevronDown
+                    size={14}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                   />
                 </div>
               </div>

@@ -11,7 +11,8 @@ interface QuoteDetail {
   id: string;
   status: string;
   price?: string | number;
-  estimatedDays?: number;
+  estimatedDays?: number | string;
+  estimatedDuration?: string;
   message?: string;
   createdAt: string;
   updatedAt?: string;
@@ -126,9 +127,9 @@ export default function TraderQuoteDetailPage() {
             </div>
 
             <div>
-              <p className="text-sm text-gray-500">Estimated Days</p>
+              <p className="text-sm text-gray-500">Estimated Duration</p>
               <p className="font-medium">
-                {quote.estimatedDays ?? "—"} Days
+                {quote.estimatedDuration || (quote.estimatedDays ? (isNaN(Number(quote.estimatedDays)) ? quote.estimatedDays : `${quote.estimatedDays} days`) : "—")}
               </p>
             </div>
 

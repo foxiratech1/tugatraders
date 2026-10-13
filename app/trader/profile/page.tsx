@@ -19,6 +19,8 @@ import {
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
+import PlacesAutocompleteInput from "@/components/common/PlacesAutocompleteInput";
+import LocationMap from "@/components/common/LocationMap";
 
 const ThemeSwal = Swal.mixin({
   buttonsStyling: false,
@@ -258,6 +260,8 @@ interface PersonalForm {
   professionalTitle: string;
   workLocation: string;
   workRadius: string | number;
+  latitude?: number | null;
+  longitude?: number | null;
   bio: string;
   profileImage: string | null;
 }
@@ -387,6 +391,8 @@ export default function TraderProfilePage() {
           professionalTitle: tp?.professionalTitle || tp?.title || "",
           workLocation: tp?.location || tp?.workLocation || p?.city || "",
           workRadius: tp?.workRadius ?? "",
+          latitude: typeof tp?.latitude === "number" ? tp.latitude : typeof p?.latitude === "number" ? p.latitude : null,
+          longitude: typeof tp?.longitude === "number" ? tp.longitude : typeof p?.longitude === "number" ? p.longitude : null,
           bio: tp?.about || tp?.bio || tp?.description || "",
           profileImage: p?.profileImage || p?.avatar || tp?.logo || null,
         });
@@ -813,8 +819,8 @@ export default function TraderProfilePage() {
       fd.append("phone", personalForm.phone);
       // professionalTitle, workLocation, and bio are mapped to location and about fields
       // optional geographic fields – send empty if not applicable
-      fd.append("latitude", "22.5530");
-      fd.append("longitude", "75.7569");
+      fd.append("latitude", String(personalForm.latitude ?? 38.7223));
+      fd.append("longitude", String(personalForm.longitude ?? -9.1393));
       fd.append("companyName", businessForm.companyName);
       fd.append("displayName", businessForm.displayName);
       fd.append("companyType", businessForm.companyType);
@@ -1211,16 +1217,37 @@ export default function TraderProfilePage() {
                         <label className="block text-[12px] font-medium text-gray-500 mb-1">
                           Work Location
                         </label>
-                        <input
+                        <PlacesAutocompleteInput
                           id="tp-workLocation"
-                          type="text"
                           name="workLocation"
                           value={personalForm.workLocation}
-                          onChange={handlePersonalChange}
+                          onChange={(val) =>
+                            setPersonalForm((prev) => ({ ...prev, workLocation: val }))
+                          }
+                          onPlaceSelect={(place) => {
+                            setPersonalForm((prev) => ({
+                              ...prev,
+                              workLocation: place?.formattedAddress || prev.workLocation,
+                              latitude: place?.latitude ?? prev.latitude,
+                              longitude: place?.longitude ?? prev.longitude,
+                            }));
+                          }}
                           placeholder="Cascais, Portugal"
-                          className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
+                          inputClassName="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
                         />
                       </div>
+
+                      {typeof personalForm.latitude === "number" &&
+                        typeof personalForm.longitude === "number" && (
+                          <div className="col-span-full">
+                            <LocationMap
+                              latitude={personalForm.latitude}
+                              longitude={personalForm.longitude}
+                              title="Trader Work Location"
+                              className="h-[180px]"
+                            />
+                          </div>
+                        )}
 
                       {/* Work Radius */}
                       <div>

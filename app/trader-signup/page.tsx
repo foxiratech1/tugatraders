@@ -17,8 +17,8 @@ const TraderSignupPage = () => {
       <WhyJoinSection />
       <HowItWorksSteps />
       <VettingSection />
-      <JoinNetworkSection />
-      <SuccessSteps />
+      {/* <JoinNetworkSection /> */}
+      {/* <SuccessSteps /> */}
       <OrganisedConnected />
 
       <SecureJobsBanner />

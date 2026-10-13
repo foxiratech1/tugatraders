@@ -2,8 +2,11 @@
 
 import { useEffect, useState, useRef } from "react";
 import { authApi } from "@/app/api/authApi";
+import { paymentApi } from "@/app/api/paymentApi";
 import { FileText, CheckCircle2, Check, X, ChevronDown, Search, AlertCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import { SubscriptionCheckout } from "@/components/payment/SubscriptionCheckout";
+import { PaymentHistory } from "@/components/payment/PaymentHistory";
 
 // ─── MultiSelect Component ────────────────────────────────────────────────────
 interface MultiSelectProps {
@@ -143,6 +146,18 @@ export default function BillingPage() {
   const [subCategoriesMap, setSubCategoriesMap] = useState<Record<string, { id: string; name: string }[]>>({});
   const [isSavingCategories, setIsSavingCategories] = useState(false);
   const [traderId, setTraderId] = useState<string>("");
+
+  // Stripe Checkout states
+  const [stripeCheckoutData, setStripeCheckoutData] = useState<{
+    planId: string;
+    priceId: string;
+    planName?: string;
+    amount?: number;
+    currency?: string;
+    isUpgrade?: boolean;
+    billingCycle?: "MONTHLY" | "YEARLY";
+  } | null>(null);
+  const [isStripeModalOpen, setIsStripeModalOpen] = useState(false);
 
   const fetchPlans = async () => {
     setPlansLoading(true);
@@ -324,27 +339,104 @@ export default function BillingPage() {
       toast.error("Please select a plan.");
       return;
     }
+
+    const chosenPlan = plans.find(p => p.id === selectedPlanId);
+    const chosenPrice = chosenPlan?.prices?.find((p: any) => p.billingCycle === billingCycle);
+
     setIsChangingPlan(true);
     try {
-      await authApi.changePlan({ planId: selectedPlanId, billingCycle });
-      toast.success("Plan updated successfully! Now select your categories.");
+      // Endpoint 7: PATCH /api/subscriptions/change-plan
+      const changeRes = await paymentApi.changePlan({
+        planId: selectedPlanId,
+        billingCycle,
+      });
 
-      // Refresh subscription
-      const res = await authApi.getMySubscription();
-      setSubscriptionData(res?.data || res);
+      if (changeRes?.requiresPayment) {
+        // Scenario A: Upgrade requires payment via Stripe Elements (prorated amount)
+        setIsSwitchPlanModalOpen(false);
+        setStripeCheckoutData({
+          planId: changeRes.data?.planId || selectedPlanId,
+          priceId: changeRes.data?.priceId || chosenPrice?.id || '',
+          planName: changeRes.data?.targetPlan?.name || chosenPlan?.name,
+          amount: changeRes.data?.proratedAmount,
+          currency: changeRes.data?.currency || 'EUR',
+          isUpgrade: true,
+          billingCycle: (changeRes.data?.billingCycle as "MONTHLY" | "YEARLY") || billingCycle,
+        });
+        setIsStripeModalOpen(true);
+        return;
+      }
 
-      // Fetch categories and trader ID, then transition to category selection phase
-      await Promise.all([fetchCategories(), fetchTraderProfile()]);
+      // Scenario B & C: No immediate payment required (trial switch or scheduled downgrade)
+      if (changeRes?.data?.pendingPlan) {
+        toast.success(
+          changeRes.message || "Your downgrade will take effect from your next billing cycle.",
+          { duration: 5000 }
+        );
+      } else {
+        toast.success(changeRes.message || "Subscription updated successfully!");
+      }
 
-      // Reset category groups
+      setIsSwitchPlanModalOpen(false);
+      await Promise.all([fetchSubscription(), fetchCategories(), fetchTraderProfile()]);
       setCategoryGroups([]);
       setModalPhase("CATEGORIES");
+      setIsSwitchPlanModalOpen(true);
     } catch (error: any) {
-      console.error("Failed to change plan", error);
+      // Fallback: If PATCH /subscriptions/change-plan returns error, fallback to direct modal if different plan
+      console.warn("Change plan endpoint error, attempting fallback", error);
+      const currentPlanId = subscriptionData?.currentPlan?.id || subscriptionData?.planId;
+      if (chosenPlan && chosenPrice && (currentPlanId !== selectedPlanId || subscriptionData?.billingCycle !== billingCycle)) {
+        setIsSwitchPlanModalOpen(false);
+        setStripeCheckoutData({
+          planId: chosenPlan.id,
+          priceId: chosenPrice.id,
+          planName: chosenPlan.name,
+          isUpgrade: true,
+          billingCycle: billingCycle,
+        });
+        setIsStripeModalOpen(true);
+        return;
+      }
+
       toast.error(error?.response?.data?.message || "Failed to change plan.");
     } finally {
       setIsChangingPlan(false);
     }
+  };
+
+  const handlePaymentSuccess = async (res: any) => {
+    setIsStripeModalOpen(false);
+    const toastId = toast.loading("Updating your subscription plan...");
+
+    const targetPlanId = stripeCheckoutData?.planId || selectedPlanId;
+    const targetBillingCycle = stripeCheckoutData?.billingCycle || billingCycle;
+    const targetPaymentIntentId = res?.paymentIntentId || res?.payment?.transactionId || res?.transactionId;
+
+    try {
+      // Call changePlan API the 2nd time: after payment intent succeeds, finalize target plan
+      await paymentApi.changePlan({
+        planId: targetPlanId,
+        billingCycle: targetBillingCycle,
+        ...(targetPaymentIntentId ? { paymentIntentId: targetPaymentIntentId } : {}),
+      });
+    } catch (changeErr: any) {
+      console.warn("Change plan with paymentIntentId error, retrying without paymentIntentId:", changeErr);
+      try {
+        await paymentApi.changePlan({
+          planId: targetPlanId,
+          billingCycle: targetBillingCycle,
+        });
+      } catch (err2: any) {
+        console.error("Failed to apply plan change after payment:", err2);
+      }
+    }
+
+    toast.success("Payment succeeded! Subscription is now active.", { id: toastId });
+    await Promise.all([fetchSubscription(), fetchCategories(), fetchTraderProfile()]);
+    setCategoryGroups([]);
+    setModalPhase("CATEGORIES");
+    setIsSwitchPlanModalOpen(true);
   };
 
   const handleSaveCategories = async () => {
@@ -485,12 +577,25 @@ export default function BillingPage() {
               <div className="bg-[#2A3B2A] rounded-2xl p-6 sm:p-8 text-white relative overflow-hidden">
                 <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
                   <div>
-                    <h2 className="text-2xl sm:text-3xl font-bold uppercase">
-                      {subscriptionData?.currentPlan?.name ? `${subscriptionData.currentPlan.name} ${subscriptionData?.billingCycle || ''}` : "Pro Trader Monthly"}
-                    </h2>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-2xl sm:text-3xl font-bold uppercase">
+                        {subscriptionData?.currentPlan?.name ? `${subscriptionData.currentPlan.name} ${subscriptionData?.billingCycle || ''}` : "Pro Trader Monthly"}
+                      </h2>
+                      {subscriptionData?.trial && (
+                        <span className="bg-[#6E9625] text-white text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full">
+                          Free Trial
+                        </span>
+                      )}
+                    </div>
                     <p className="text-white/70 mt-1 text-sm">
                       {subscriptionData?.currentPeriodEnd ? `Renews on ${new Date(subscriptionData.currentPeriodEnd).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}` : "Renews on Oct 12, 2024"}
                     </p>
+                    {subscriptionData?.pendingPlan && (
+                      <div className="mt-2 inline-flex items-center gap-1.5 bg-amber-400/20 border border-amber-300/30 text-amber-200 px-3 py-1 rounded-lg text-xs font-medium">
+                        <AlertCircle size={13} className="text-amber-300" />
+                        <span>Downgrade to <strong>{subscriptionData.pendingPlan.name}</strong> scheduled for next cycle.</span>
+                      </div>
+                    )}
                   </div>
                   <div className="text-left sm:text-right">
                     <div className="text-2xl sm:text-3xl font-bold">
@@ -578,56 +683,8 @@ export default function BillingPage() {
                 )}
               </div>
 
-              {/* Billing History Card */}
-              <div className="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-gray-100">
-                <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-lg font-bold text-[#1C2C1C]">Billing History</h3>
-                  {/* <button className="text-sm font-semibold text-[#1C2C1C] underline">View All</button> */}
-                </div>
-
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse min-w-[600px]">
-                    <thead>
-                      <tr className="text-xs text-gray-400 uppercase tracking-wider border-b border-gray-100">
-                        <th className="pb-3 font-semibold">Date</th>
-                        <th className="pb-3 font-semibold">Description</th>
-                        <th className="pb-3 font-semibold">Amount</th>
-                        <th className="pb-3 font-semibold">Status</th>
-                        <th className="pb-3 font-semibold text-right">Invoice</th>
-                      </tr>
-                    </thead>
-                    <tbody className="text-sm">
-                      {subscriptionData?.history && subscriptionData.history.length > 0 ? (
-                        subscriptionData.history.map((item: any, index: number) => (
-                          <tr key={index} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
-                            <td className="py-4 text-[#1C2C1C]">
-                              {item.date ? new Date(item.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : "N/A"}
-                            </td>
-                            <td className="py-4 text-gray-600">{item.description || item.desc || "Subscription"}</td>
-                            <td className="py-4 font-medium text-[#1C2C1C]">€{item.amount || "0.00"}</td>
-                            <td className="py-4">
-                              <span className="bg-green-50 text-green-700 px-2.5 py-1 rounded-md text-xs font-semibold uppercase">
-                                {item.status || "Paid"}
-                              </span>
-                            </td>
-                            <td className="py-4 text-right">
-                              <button className="text-[#1C2C1C] hover:text-[#6E9625] transition-colors">
-                                <FileText size={18} className="ml-auto" />
-                              </button>
-                            </td>
-                          </tr>
-                        ))
-                      ) : (
-                        <tr>
-                          <td colSpan={5} className="py-8 text-center text-gray-500">
-                            No billing history available.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+              {/* Billing History Card with Stripe verification */}
+              <PaymentHistory />
             </div>
 
             {/* Right Column (Payment Methods & Upgrade) */}
@@ -793,7 +850,7 @@ export default function BillingPage() {
                   </button>
                   <button
                     onClick={handleChangePlan}
-                    disabled={isChangingPlan || !selectedPlanId || (subscriptionData?.planId === selectedPlanId && subscriptionData?.billingCycle === billingCycle)}
+                    disabled={isChangingPlan || !selectedPlanId || ((subscriptionData?.currentPlan?.id || subscriptionData?.planId) === selectedPlanId && subscriptionData?.billingCycle === billingCycle)}
                     className="bg-[#1C2C1C] text-white px-8 py-3 rounded-xl text-[14px] font-bold hover:bg-[#2C4A2C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
                     {isChangingPlan ? (
@@ -940,6 +997,20 @@ export default function BillingPage() {
             )}
           </div>
         </div>
+      )}
+      {/* Stripe Subscription Checkout Modal */}
+      {stripeCheckoutData && (
+        <SubscriptionCheckout
+          planId={stripeCheckoutData.planId}
+          priceId={stripeCheckoutData.priceId}
+          planName={stripeCheckoutData.planName}
+          amount={stripeCheckoutData.amount}
+          currency={stripeCheckoutData.currency}
+          isUpgrade={stripeCheckoutData.isUpgrade}
+          isOpen={isStripeModalOpen}
+          onClose={() => setIsStripeModalOpen(false)}
+          onPaymentSuccess={handlePaymentSuccess}
+        />
       )}
     </div>
   );

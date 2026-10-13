@@ -7,6 +7,7 @@ import { IoShieldHalfOutline } from "react-icons/io5";
 import { FaScrewdriverWrench, FaLocationDot, FaLayerGroup } from "react-icons/fa6";
 import { authApi } from '@/app/api/authApi';
 import { ChevronDown } from 'lucide-react';
+import PlacesAutocompleteInput from '@/components/common/PlacesAutocompleteInput';
 
 const CustomDropdown = ({ label, icon: Icon, value, onChange, options, disabled, placeholder }: any) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -204,13 +205,16 @@ const DirectoryHero = () => {
             <div className="flex-[0.8] flex items-center justify-start gap-3 lg:gap-4 px-4 lg:px-6 py-4 min-w-0">
               <FaLocationDot className="text-[#243A24] flex-shrink-0 w-5 h-5 lg:w-6 lg:h-6" />
               <div className="text-left min-w-0 flex-1">
-                <span className="block text-[10px] lg:text-[11px] text-[#9CA3AF] uppercase font-bold tracking-wider mb-1">Location</span>
-                <input
-                  type="text"
+                <PlacesAutocompleteInput
                   placeholder="Postcode/City"
                   value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  className="block w-full text-[13px] lg:text-[15px] font-bold text-[#243A24] placeholder-[#9CA3AF] bg-transparent outline-none truncate"
+                  onChange={setLocation}
+                  onPlaceSelect={(place) => {
+                    if (place?.formattedAddress) {
+                      setLocation(place.formattedAddress);
+                    }
+                  }}
+                  inputClassName="block w-full text-[13px] lg:text-[15px] font-bold text-[#243A24] placeholder-[#9CA3AF] bg-transparent outline-none truncate"
                 />
               </div>
             </div>

@@ -4,11 +4,11 @@ import ConnectSelectSection from "@/components/HomePage/ConnectSelectSection";
 import CategorySection from "@/components/HomePage/CategorySection";
 import MapSearchSection from "@/components/HomePage/MapSearchSection";
 import HowItWorks from "@/components/HomePage/HowItWorks";
-import SafetySection from "@/components/HomePage/SafetySection";
 import ReviewSection from "@/components/HomePage/ReviewSection";
 import PlatformRoleSection from "@/components/HomePage/PlatformRoleSection";
 import FinalCTASection from "@/components/HomePage/FinalCTASection";
 import ConditionalSection from "@/components/ConditionalSection";
+import CTASection from '@/components/About/CTASection';
 
 export default function Home() {
   return (
@@ -19,29 +19,30 @@ export default function Home() {
       <ConditionalSection hideForRole="trader">
         <ConnectSelectSection />
       </ConditionalSection>
-      
+
       <ConditionalSection hideForRole="trader">
         <CategorySection />
       </ConditionalSection>
-      
+
       <ConditionalSection hideForRole="trader">
         <HowItWorks />
       </ConditionalSection>
-      
-      <SafetySection />
+
       <PlatformRoleSection />
-      
+
       <ConditionalSection hideForRole="trader">
         <MapSearchSection />
       </ConditionalSection>
-      
+
       <ConditionalSection hideForRole="trader">
         <ReviewSection />
       </ConditionalSection>
-      
-      <ConditionalSection hideForRole="trader">
+
+      <CTASection />
+
+      {/* <ConditionalSection hideForRole="trader">
         <FinalCTASection />
-      </ConditionalSection>
+      </ConditionalSection> */}
     </main>
   );
 }

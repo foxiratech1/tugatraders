@@ -214,7 +214,7 @@ const MapSearchSection = () => {
         </div>
 
         {/* CTA */}
-        <motion.div
+        {/* <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, amount: 0.2 }}
@@ -235,10 +235,10 @@ const MapSearchSection = () => {
             <br />
             come to you.
           </h3>
-        </motion.div>
+        </motion.div> */}
 
         {/* Bottom Feature Box */}
-        <div className="mx-auto mt-12 w-full max-w-[1352px] rounded-[24px] border border-[#6E96251A] bg-[#F1F7E8] p-5 sm:mt-16 sm:rounded-[32px] sm:p-7 md:p-9 lg:mt-20 lg:rounded-[56px] lg:p-12">
+        {/* <div className="mx-auto mt-12 w-full max-w-[1352px] rounded-[24px] border border-[#6E96251A] bg-[#F1F7E8] p-5 sm:mt-16 sm:rounded-[32px] sm:p-7 md:p-9 lg:mt-20 lg:rounded-[56px] lg:p-12">
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-7 lg:grid-cols-4 lg:gap-8">
             {features.map((feature, index) => (
               <motion.div
@@ -259,7 +259,7 @@ const MapSearchSection = () => {
               </motion.div>
             ))}
           </div>
-        </div>
+        </div> */}
 
       </div>
     </section>

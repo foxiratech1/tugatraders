@@ -5,10 +5,10 @@ import Image from 'next/image';
 
 export default function BuiltForPortugal() {
   return (
-    <section className="bg-[#FAFAF9] py-16 md:py-24 px-4 sm:px-6 lg:px-20 overflow-hidden border-b border-[#EAECE6]">
-      <div className="max-w-[1200px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+    <section className="bg-[#FAFAF9] py-10 md:py-14 lg:py-16 px-4 sm:px-6 lg:px-20 overflow-hidden border-b border-[#EAECE6]">
+      <div className="max-w-[1200px] mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-center">
         {/* LEFT TEXT CONTENT */}
-        <div className="flex flex-col items-start max-w-[620px]">
+        <div className="flex flex-col items-start max-w-[600px]">
           <h2
             className="text-[34px] sm:text-[42px] md:text-[48px] font-bold text-[#1C2C1C] leading-[1.1] mb-6 tracking-tight"
             style={{ fontFamily: 'var(--font-bricolage)' }}
@@ -32,14 +32,13 @@ export default function BuiltForPortugal() {
         </div>
 
         {/* RIGHT MAP IMAGE */}
-        <div className="relative flex justify-center lg:justify-end w-full">
-          <div className="relative w-full max-w-[460px] h-[380px] sm:h-[460px] lg:h-[520px]">
+        <div className="relative flex justify-center lg:justify-center w-full">
+          <div className="relative w-full max-w-[500px] lg:max-w-[540px] h-[440px] sm:h-[520px] lg:h-[600px]">
             <Image
-              src="/maplogo.jfif"
+              src="/newMap.jpg"
               alt="Built for Portugal Map"
               fill
               className="object-contain"
-              unoptimized
               priority
             />
           </div>

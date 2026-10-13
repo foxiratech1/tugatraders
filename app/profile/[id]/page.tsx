@@ -11,6 +11,7 @@ import {
 import toast from "react-hot-toast";
 import Link from "next/link";
 import VettingModal from "@/components/modal/VettingModal";
+import LocationMap from "@/components/common/LocationMap";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://api.tugatraders.server24.in";
 function getImageUrl(path: any): string {
@@ -271,8 +272,8 @@ export default function PublicTraderProfilePage() {
       }
     }
 
-    const defaultLat = 22.5530;
-    const defaultLng = 75.7569;
+    const defaultLat = 38.7223;
+    const defaultLng = -9.1393;
 
     if (typeof window !== "undefined" && navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
@@ -525,6 +526,16 @@ export default function PublicTraderProfilePage() {
                     <span className="text-gray-500 font-medium text-[11px]">Location</span>
                     <span className="font-bold text-[#1C2C1C] text-[13px]">{location || '-'}</span>
                   </div>
+                  {typeof tp?.latitude === "number" && typeof tp?.longitude === "number" && (
+                    <div className="mt-1 w-full">
+                      <LocationMap
+                        latitude={tp.latitude}
+                        longitude={tp.longitude}
+                        title={`Location of ${fullName}`}
+                        className="h-[140px]"
+                      />
+                    </div>
+                  )}
                   {/* <div className="flex flex-col gap-1">
                     <span className="text-gray-500 font-medium text-[12px]">Jobs Completed</span>
                     <span className="font-bold text-[#1C2C1C] text-[14px]">{metrics?.completedJobs || 0}</span>
@@ -642,7 +653,7 @@ export default function PublicTraderProfilePage() {
                 </div>
 
                 {/* About Badges */}
-                <div className="flex flex-wrap items-center gap-4 border-t border-gray-100 pt-5">
+                {/* <div className="flex flex-wrap items-center gap-4 border-t border-gray-100 pt-5">
                   <div className="flex items-center gap-2">
                     <div className="flex flex-col">
                       <span className="font-bold text-[#1C2C1C] text-[12px]">10+</span>
@@ -661,7 +672,7 @@ export default function PublicTraderProfilePage() {
                       <span className="text-[11px] font-medium text-gray-500">Insured</span>
                     </div>
                   </div>
-                </div>
+                </div> */}
               </div>
 
               {/* Gallery */}

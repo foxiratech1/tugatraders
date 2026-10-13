@@ -50,7 +50,7 @@ const CategoryCard = ({ cat }: { cat: any }) => {
   return (
     <Link
       href={targetUrl}
-      className="group flex items-center justify-between rounded-[18px] bg-white px-5 py-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-gray-100 hover:shadow-md transition-all duration-300 w-[220px] md:w-[240px] shrink-0"
+      className="group flex items-center justify-between rounded-[10px] bg-white px-5 py-3.5 sm:py-4 shadow-[0_3px_10px_rgba(0,0,0,0.05)] border-2 border-gray-100/90 hover:border-[#6F9824]/40 hover:shadow-md transition-all duration-300 w-[220px] md:w-[240px] shrink-0"
     >
       {/* Icon & Name */}
       <div className="flex items-center gap-3">
@@ -106,42 +106,48 @@ export default function CategorySection() {
   const activeCats = categoriesList.length > 0 ? categoriesList : defaultCategories;
 
   return (
-    <section className="w-full pt-2 md:pt-4 pb-14 md:pb-20 bg-[#FBFBFB] overflow-hidden">
+    <section className="w-full bg-white overflow-hidden">
+      {/* LIGHT GREEN BACKGROUND STRIP */}
+      <div className="w-full bg-[#EDF3E6] py-7 sm:py-9 border-y border-[#E0EBD4]">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
+
+          {/* HEADER */}
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl sm:text-3xl md:text-[34px] font-bold text-[#1E3A2B] tracking-tight">
+              Explore Our <span className="text-[#6F9824]">Trades</span>
+            </h2>
+
+            <Link
+              href="/directory-listing/search"
+              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200/90 bg-white px-4 py-1.5 text-[12px] sm:text-[13px] font-semibold text-[#1E3A2B] hover:bg-gray-50 transition-all shadow-sm"
+            >
+              <span>View all</span>
+              <FiChevronRight size={14} className="text-gray-500" />
+            </Link>
+          </div>
+
+          {/* SINGLE ROW SMOOTH MARQUEE */}
+          <div className="w-full overflow-hidden relative py-1">
+            <motion.div
+              animate={{ x: ["0%", "-50%"] }}
+              transition={{ repeat: Infinity, ease: "linear", duration: 32 }}
+              className="flex gap-4 pr-4 w-max shrink-0"
+            >
+              {[...activeCats, ...activeCats].map((cat, index) => (
+                <CategoryCard key={`cat-${index}`} cat={cat} />
+              ))}
+            </motion.div>
+          </div>
+
+        </div>
+      </div>
+
+      {/* PROMO BANNER CARDS - MOVED SLIGHTLY LOWER */}
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
-
-        {/* HEADER */}
-        <div className="flex items-center justify-between mb-8">
-          <h2 className="text-2xl sm:text-3xl md:text-[34px] font-bold text-[#1E3A2B] tracking-tight">
-            Explore Our <span className="text-[#6F9824]">Trades</span>
-          </h2>
-
-          <Link
-            href="/directory-listing"
-            className="inline-flex items-center gap-1.5 rounded-full border border-gray-200/90 bg-white px-4 py-1.5 text-[12px] sm:text-[13px] font-semibold text-[#1E3A2B] hover:bg-gray-50 transition-all shadow-sm"
-          >
-            <span>View all</span>
-            <FiChevronRight size={14} className="text-gray-500" />
-          </Link>
-        </div>
-
-        {/* SINGLE ROW SMOOTH MARQUEE */}
-        <div className="w-full overflow-hidden relative py-1">
-          <motion.div
-            animate={{ x: ["0%", "-50%"] }}
-            transition={{ repeat: Infinity, ease: "linear", duration: 32 }}
-            className="flex gap-4 pr-4 w-max shrink-0"
-          >
-            {[...activeCats, ...activeCats].map((cat, index) => (
-              <CategoryCard key={`cat-${index}`} cat={cat} />
-            ))}
-          </motion.div>
-        </div>
-
-        {/* PROMO BANNER CARDS */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-12 pb-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-10 sm:mt-14 pb-8 sm:pb-12">
 
           {/* CARD 1: Need work done? */}
-          <div className="relative overflow-hidden rounded-[18px] bg-white shadow-sm h-[265px]">
+          <div className="relative overflow-hidden rounded-[18px] bg-white border border-gray-100 shadow-sm h-[265px]">
             {/* Full height image on left */}
             <div className="absolute left-0 top-0 bottom-0 w-[47%]">
               <Image
@@ -151,12 +157,12 @@ export default function CategorySection() {
                 className="object-cover object-left"
                 priority
               />
-              {/* Fade gradient from left to right */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-white" />
+              {/* Narrow fade gradient on right edge of image (less soft edge) */}
+              <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-r from-transparent to-white" />
             </div>
 
-            {/* Text on upper right */}
-            <div className="absolute top-5 right-5 left-[48%] flex flex-col justify-start z-10">
+            {/* Text on upper right - moved slightly to the right */}
+            <div className="absolute top-5 right-5 left-[52%] sm:left-[54%] flex flex-col justify-start z-10">
               <p className="text-[#1E3A2B] font-bold text-[14px] leading-tight mb-1">Need work done?</p>
               <h3 className="text-[#1E3A2B] font-extrabold text-[24px] sm:text-[26px] leading-tight mb-2">
                 Find a <br /> Tradesperson
@@ -169,7 +175,7 @@ export default function CategorySection() {
             {/* Bottom Buttons Row: Left button sits over photo, right button under text */}
             <div className="absolute bottom-4 left-4 right-4 flex gap-2.5 z-20">
               <Link
-                href="/directory-listing"
+                href="/directory-listing/search"
                 className="flex-1 bg-[#122C17] hover:bg-[#0a1c0d] text-white text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-2 rounded-[6px] transition-colors uppercase tracking-wider text-center shadow-sm flex items-center justify-center whitespace-nowrap"
               >
                 Find a Tradesperson
@@ -185,7 +191,7 @@ export default function CategorySection() {
 
           {/* CARD 2: Want more work? */}
           <div className="flex flex-col">
-            <div className="relative overflow-hidden rounded-[18px] bg-white shadow-sm h-[265px]">
+            <div className="relative overflow-hidden rounded-[18px] bg-white border border-gray-100 shadow-sm h-[265px]">
 
               {/* Content Left */}
               <div className="absolute top-5 left-5 bottom-4 w-[48%] flex flex-col justify-between z-20">
@@ -210,7 +216,7 @@ export default function CategorySection() {
                 </div>
               </div>
 
-              {/* Image Right: Phone mockup + Plumber */}
+              {/* Image Right: Phone mockup + Plumber with slight soft edge on left handside */}
               <div className="absolute right-0 top-0 bottom-0 w-[54%] z-10 pointer-events-none">
                 <Image
                   src="/Want more work.png"
@@ -219,6 +225,8 @@ export default function CategorySection() {
                   className="object-cover object-left"
                   priority
                 />
+                {/* Slight soft edge on left handside of image */}
+                <div className="absolute inset-y-0 left-0 w-14 bg-gradient-to-r from-white via-white/80 to-transparent pointer-events-none z-10" />
               </div>
             </div>
 

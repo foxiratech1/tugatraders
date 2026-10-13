@@ -25,6 +25,7 @@ export default function AccountSettingsPage() {
   const [newEmail, setNewEmail] = useState("");
   const [isUpdating, setIsUpdating] = useState(false);
 
+
   // Password state
   const [isEditingPassword, setIsEditingPassword] = useState(false);
   const [oldPassword, setOldPassword] = useState("");

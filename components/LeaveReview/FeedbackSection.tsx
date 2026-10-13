@@ -85,7 +85,7 @@ const FeedbackSection = () => {
   };
 
   return (
-    <section className="bg-[#FAFAF9] pt-24 pb-16 xl:pb-20 px-4 sm:px-6 xl:px-20 relative flex items-center">
+    <section className="bg-[#FAFAF9] pt-20 sm:pt-24 pb-8 sm:pb-10 xl:pb-12 px-4 sm:px-6 xl:px-20 relative flex items-center">
       <div className="max-w-[1200px] mx-auto w-full grid grid-cols-1 xl:grid-cols-12 gap-12 xl:gap-20 items-center">
 
         {/* Left Column (Content) */}
@@ -99,20 +99,20 @@ const FeedbackSection = () => {
             Reviews help customers make informed decisions and help good tradespeople build their reputation.
           </p>
 
-          <div className="mb-8 w-full">
+          <div className="mb-4 sm:mb-6 w-full">
             <h2 className="text-[18px] sm:text-[20px] font-bold text-[#1d3321] mb-1">Leave a Review</h2>
-            <p className="text-[#1d3321] text-[15px] sm:text-[16px] mb-5 font-medium">Have you recently used a TugaTrades professional?</p>
+            <p className="text-[#1d3321] text-[15px] sm:text-[16px] mb-6 sm:mb-7 font-medium">Have you recently used a TugaTrades professional?</p>
 
             {/* Search Bar Container */}
             <div
               ref={dropdownRef}
-              className="max-w-[760px] w-full bg-white rounded-[32px] sm:rounded-full border border-[#243A24] p-2 flex flex-col sm:flex-row items-center relative z-20 shadow-sm"
+              className="max-w-[760px] w-full bg-white rounded-[14px] sm:rounded-[16px] border border-[#243A24] p-2 flex flex-col sm:flex-row items-center relative z-20 shadow-sm"
             >
-              <div className="flex-1 flex items-center gap-5 px-4 sm:pl-8 sm:pr-4 py-3 sm:py-0 w-full min-h-[64px] sm:h-[68px]">
-                <Search className="text-[#243A24] shrink-0" size={28} strokeWidth={1.5} />
+              <div className="flex-1 flex items-center gap-4 sm:gap-5 px-4 sm:pl-7 sm:pr-4 py-3 sm:py-0 w-full min-h-[60px] sm:h-[66px]">
+                <Search className="text-[#243A24] shrink-0" size={26} strokeWidth={1.5} />
 
                 <div className="text-left w-full flex flex-col justify-center">
-                  <span className="block text-[18px] sm:text-[20px] text-[#243A24] font-extrabold tracking-tight leading-tight mb-0.5">
+                  <span className="block text-[17px] sm:text-[19px] text-[#243A24] font-extrabold tracking-tight leading-tight mb-0.5">
                     Find Traders
                   </span>
 
@@ -124,7 +124,7 @@ const FeedbackSection = () => {
                       if (e.key === 'Enter') handleSearch();
                     }}
                     placeholder="SEARCH BY TRADER'S NAME OR COMPANY..."
-                    className="block w-full text-[11px] sm:text-[12px] tracking-[0.18em] uppercase font-bold text-[#A3A3A3] placeholder-[#A3A3A3] bg-transparent outline-none"
+                    className="block w-full text-[11px] sm:text-[12px] tracking-[0.16em] uppercase font-bold text-[#A3A3A3] placeholder-[#A3A3A3] bg-transparent outline-none"
                   />
                 </div>
               </div>
@@ -132,10 +132,10 @@ const FeedbackSection = () => {
               <button
                 onClick={handleSearch}
                 disabled={isSearching}
-                className="w-full sm:w-auto bg-[#243A24] hover:bg-[#1A2E1A] text-white px-8 sm:px-12 h-[56px] sm:h-[68px] rounded-[24px] sm:rounded-full flex items-center justify-center gap-2.5 font-bold text-[15px] sm:text-[16px] transition-all shrink-0 cursor-pointer disabled:opacity-70 mt-2 sm:mt-0"
+                className="w-full sm:w-auto bg-[#243A24] hover:bg-[#1A2E1A] text-white px-7 sm:px-10 h-[52px] sm:h-[62px] rounded-[10px] sm:rounded-[12px] flex items-center justify-center gap-2.5 font-bold text-[14.5px] sm:text-[15.5px] transition-all shrink-0 cursor-pointer disabled:opacity-70 mt-2 sm:mt-0"
               >
                 {isSearching ? 'Searching...' : 'Find Tradesperson'}
-                <ArrowRight size={20} strokeWidth={2} />
+                <ArrowRight size={19} strokeWidth={2} />
               </button>
 
               {/* Autocomplete Dropdown */}

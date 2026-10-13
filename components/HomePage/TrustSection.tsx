@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
 import { FiCheck } from "react-icons/fi";
 import { motion } from "framer-motion";
-import TrustSafetyModal from "@/components/modal/TrustSafetyModal";
 
 const transparencyFeatures = [
   {
@@ -25,11 +24,9 @@ const transparencyFeatures = [
 ];
 
 export default function TrustSection() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
   return (
-    <section className="w-full py-16 md:py-24 bg-white px-6">
-      <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-14 items-center">
+    <section className="w-full py-8 md:py-12 bg-white px-6">
+      <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
 
         {/* LEFT SPEECH BUBBLE CARD */}
         <motion.div
@@ -55,13 +52,12 @@ export default function TrustSection() {
 
             <p className="text-[13.5px] sm:text-[14px] text-white/90 leading-relaxed font-normal">
               For more info visit our{" "}
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(true)}
+              <Link
+                href="/trust-and-safety#hiring-safely"
                 className="text-[#84cc16] hover:text-[#9fe231] font-semibold underline underline-offset-2 transition-colors inline"
               >
                 Hiring Safely
-              </button>{" "}
+              </Link>{" "}
               guide for a safer hiring experience.
             </p>
           </div>
@@ -78,9 +74,9 @@ export default function TrustSection() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="lg:col-span-6 flex flex-col justify-center"
         >
-          {/* HEADING */}
-          <h2 className="text-[30px] sm:text-[36px] md:text-[40px] font-extrabold text-[#1E3A2B] leading-tight mb-7">
-            Built Around<br />Transparency.
+          {/* HEADING - ON ONE LINE */}
+          <h2 className="text-[26px] sm:text-[32px] md:text-[36px] lg:text-[40px] font-extrabold text-[#1E3A2B] leading-tight mb-6 whitespace-nowrap">
+            Built Around Transparency.
           </h2>
 
           {/* FEATURES LIST */}
@@ -104,9 +100,6 @@ export default function TrustSection() {
         </motion.div>
 
       </div>
-
-      {/* MODAL */}
-      <TrustSafetyModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </section>
   );
 }

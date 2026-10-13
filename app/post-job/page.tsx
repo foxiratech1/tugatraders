@@ -6,6 +6,11 @@ import api from '@/utils/api';
 import { getAccessToken } from '@/utils/auth';
 import toast from 'react-hot-toast';
 import { useRouter, usePathname } from 'next/navigation';
+import PlacesAutocompleteInput from '@/components/common/PlacesAutocompleteInput';
+import LocationMap from '@/components/common/LocationMap';
+
+// Existing coordinates sent when no place has been selected (kept for backend compatibility).
+const FALLBACK_JOB_COORDS = { latitude: 22.5630, longitude: 75.7669 };
 
 const CustomDropdown = ({
   options,
@@ -327,6 +332,32 @@ const GroupedMultiSelectDropdown = ({
   );
 };
 
+const VALID_BUDGET_RANGES = [
+  "UNDER_100",
+  "UNDER_250",
+  "UNDER_500",
+  "UNDER_1000",
+  "UNDER_2000",
+  "UNDER_4000",
+  "UNDER_8000",
+  "BETWEEN_10000_20000",
+  "BETWEEN_20000_30000",
+  "ABOVE_30000",
+];
+
+const BUDGET_OPTIONS = [
+  { id: "UNDER_100", name: "Under €100" },
+  { id: "UNDER_250", name: "Under €250" },
+  { id: "UNDER_500", name: "Under €500" },
+  { id: "UNDER_1000", name: "Under €1,000" },
+  { id: "UNDER_2000", name: "Under €2,000" },
+  { id: "UNDER_4000", name: "Under €4,000" },
+  { id: "UNDER_8000", name: "Under €8,000" },
+  { id: "BETWEEN_10000_20000", name: "€10,000 – €20,000" },
+  { id: "BETWEEN_20000_30000", name: "€20,000 – €30,000" },
+  { id: "ABOVE_30000", name: "Above €30,000" },
+];
+
 export default function PostJobPage({ isDashboard = false }: { isDashboard?: boolean } = {}) {
   const router = useRouter();
   const pathname = usePathname();
@@ -345,6 +376,7 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
   const [skillServiceIds, setSkillServiceIds] = useState<string[]>([]);
   const [subCategoryIds, setSubCategoryIds] = useState<string[]>([]);
   const [postcode, setPostcode] = useState("");
+  const [coords, setCoords] = useState<{ latitude: number | null; longitude: number | null }>({ latitude: null, longitude: null });
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [timescale, setTimescale] = useState("");
@@ -384,10 +416,13 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
           else if (parsed.subCategoryIds) setSubCategoryIds(parsed.subCategoryIds);
           else if (parsed.subCategory?.id || parsed.subCategory?._id) setSubCategoryIds([parsed.subCategory.id || parsed.subCategory._id]);
           if (parsed.postcode) setPostcode(parsed.postcode);
+          if (typeof parsed.latitude === 'number' && typeof parsed.longitude === 'number') {
+            setCoords({ latitude: parsed.latitude, longitude: parsed.longitude });
+          }
           if (parsed.title) setTitle(parsed.title);
           if (parsed.description) setDescription(parsed.description);
           if (parsed.timescale) setTimescale(parsed.timescale);
-          if (parsed.budgetRange) setBudgetRange(parsed.budgetRange);
+          if (parsed.budgetRange && VALID_BUDGET_RANGES.includes(parsed.budgetRange)) setBudgetRange(parsed.budgetRange);
           if (parsed.emergency !== undefined) setEmergency(parsed.emergency);
         } catch (e) {
           console.error('Failed to parse edit job data', e);
@@ -402,10 +437,11 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
           if (parsed.skillServiceIds) setSkillServiceIds(parsed.skillServiceIds);
           if (parsed.subCategoryIds) setSubCategoryIds(parsed.subCategoryIds);
           if (parsed.postcode) setPostcode(parsed.postcode);
+          if (parsed.coords) setCoords(parsed.coords);
           if (parsed.title) setTitle(parsed.title);
           if (parsed.description) setDescription(parsed.description);
           if (parsed.timescale) setTimescale(parsed.timescale);
-          if (parsed.budgetRange) setBudgetRange(parsed.budgetRange);
+          if (parsed.budgetRange && VALID_BUDGET_RANGES.includes(parsed.budgetRange)) setBudgetRange(parsed.budgetRange);
           if (parsed.emergency !== undefined) setEmergency(parsed.emergency);
 
           // Clear it so it doesn't persist on subsequent refreshes
@@ -564,10 +600,12 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
       formData.append('title', title);
       formData.append('description', description);
       formData.append('timescale', timescale);
-      formData.append('latitude', 22.5630.toString());
-      formData.append('longitude', 75.7669.toString());
+      formData.append('latitude', String(coords.latitude ?? FALLBACK_JOB_COORDS.latitude));
+      formData.append('longitude', String(coords.longitude ?? FALLBACK_JOB_COORDS.longitude));
       // formData.append('radiusKm', '9');
-      if (budgetRange) formData.append('budgetRange', budgetRange);
+      if (budgetRange && VALID_BUDGET_RANGES.includes(budgetRange)) {
+        formData.append('budgetRange', budgetRange);
+      }
       formData.append('emergency', String(emergency));
 
       files.forEach(file => {
@@ -602,8 +640,16 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
               <div className="w-8 h-8 rounded-full border-[2px] border-[#1C361C] flex items-center justify-center shrink-0">
                 <Check size={18} className="text-[#1C361C] stroke-[2.5]" />
               </div>
-              <h2 className="text-[20px] sm:text-[22px] font-bold text-[#111827]">
-                {isEdit ? "Thanks — your job has been updated!" : "Thanks — your job has been posted!"}
+              <h2 className="text-[20px] sm:text-[22px] font-bold text-[#111827] leading-tight">
+                {isEdit ? (
+                  <>
+                    Thanks —<br />your job has been updated!
+                  </>
+                ) : (
+                  <>
+                    Thanks —<br />your job has been posted!
+                  </>
+                )}
               </h2>
             </div>
 
@@ -618,10 +664,10 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
                 What happens next?
               </h3>
               <div className="space-y-1 text-[13.5px] text-[#374151]">
-                <p>1.Tradespeople review your job</p>
-                <p>2.Interested tradespeople respond</p>
-                <p>3.You compare your options</p>
-                <p>4.Contact your chosen tradesperson directly</p>
+                <p>1. Tradespeople review your job</p>
+                <p>2. Interested tradespeople respond</p>
+                <p>3. You compare your options</p>
+                <p>4. Contact your chosen tradesperson directly</p>
               </div>
             </div>
 
@@ -666,7 +712,7 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
                 type="button"
                 onClick={() => {
                   sessionStorage.setItem('pendingJobPost', JSON.stringify({
-                    categoryIds, skillServiceIds, subCategoryIds, postcode, title, description, timescale, budgetRange, emergency
+                    categoryIds, skillServiceIds, subCategoryIds, postcode, coords, title, description, timescale, budgetRange, emergency
                   }));
                   router.push('/auth/login?redirect=/post-job');
                 }}
@@ -678,7 +724,7 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
                 type="button"
                 onClick={() => {
                   sessionStorage.setItem('pendingJobPost', JSON.stringify({
-                    categoryIds, skillServiceIds, subCategoryIds, postcode, title, description, timescale, budgetRange, emergency
+                    categoryIds, skillServiceIds, subCategoryIds, postcode, coords, title, description, timescale, budgetRange, emergency
                   }));
                   router.push('/auth/signup?redirect=/post-job');
                 }}
@@ -757,21 +803,27 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
 
               <div className="flex flex-col gap-2">
                 <label className="text-[12px] font-bold text-[#243A24]">Where is the job? ​</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <MapPin size={16} className="text-[#6E9625]" />
-                  </div>
-                  <input
-                    type="text"
-                    required
-                    value={postcode}
-                    onChange={(e) => setPostcode(e.target.value)}
-                    placeholder="Town / Postcode​"
-                    className="h-[48px] w-full rounded-[12px] border border-[#E5E7EB] bg-[#F7F5F04D]/30 pl-10 pr-4 text-[14px] text-[#555555] outline-none focus:border-[#6E9625] transition-all"
-                  />
-                </div>
+                <PlacesAutocompleteInput
+                  required
+                  value={postcode}
+                  onChange={setPostcode}
+                  onPlaceSelect={(place) =>
+                    setCoords({ latitude: place?.latitude ?? null, longitude: place?.longitude ?? null })
+                  }
+                  placeholder="Town / Postcode"
+                  leftAdornment={
+                    <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                      <MapPin size={16} className="text-[#6E9625]" />
+                    </div>
+                  }
+                  inputClassName="h-[48px] w-full rounded-[12px] border border-[#E5E7EB] bg-[#F7F5F04D]/30 pl-10 pr-4 text-[14px] text-[#555555] outline-none focus:border-[#6E9625] transition-all"
+                />
               </div>
             </div>
+
+            {coords.latitude !== null && coords.longitude !== null && (
+              <LocationMap latitude={coords.latitude} longitude={coords.longitude} title="Job location" />
+            )}
 
             {/* Row 3: Job Title */}
             <div className="flex flex-col gap-2">
@@ -823,15 +875,7 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
               <div className="flex flex-col gap-2">
                 <label className="text-[12px] font-bold text-[#243A24]">Do you have a budget in mind? (optional)​</label>
                 <CustomDropdown
-                  options={[
-                    { id: "NOT_SURE", name: "Not sure" },
-                    { id: "UNDER_250", name: "Under 250" },
-                    { id: "UNDER_500", name: "Under 500" },
-                    { id: "BETWEEN_500_1000", name: "500 – 1000" },
-                    { id: "BETWEEN_1000_5000", name: "1000 – 5000" },
-                    { id: "ABOVE_5000", name: "5000 +" },
-                    { id: "PREFER_TO_DISCUSS", name: "Prefer to discuss" }
-                  ]}
+                  options={BUDGET_OPTIONS}
                   value={budgetRange}
                   onChange={setBudgetRange}
                   placeholder="Select Budget"
@@ -934,9 +978,9 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="bg-[#243A24] hover:bg-[#1a2b1a] text-white font-bold py-3.5 px-12 cursor-pointer rounded-[10px] text-[14px] transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
+                className="bg-[#6F9824] hover:bg-[#1a2b1a] text-white font-bold py-3.5 px-12 cursor-pointer rounded-[10px] text-[14px] transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? (isEdit ? 'Updating...' : 'Posting...') : (isEdit ? 'Update your job' : 'POST YOUR JOB -FREE')}
+                {isSubmitting ? (isEdit ? 'Updating...' : 'Posting...') : (isEdit ? 'Update your job' : 'POST  YOUR  JOB  -FREE')}
               </button>
             </div>
 

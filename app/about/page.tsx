@@ -22,11 +22,11 @@ const AboutPage = () => {
       <BuiltForPortugal />
       <ApproachAndRole />
 
-      <OurValues />
-      <QuoteBanner />
+      {/* <OurValues /> */}
+      {/* <QuoteBanner />
       <DashboardSection />
       <FeaturesGrid />
-      <CTASection />
+      <CTASection /> */}
     </main>
   );
 };

@@ -167,116 +167,120 @@ const isInProgressStatus = (norm: string) =>
   norm === "INPROGRESS" ||
   norm.includes("PROGRESS");
 
-const statusConfig: Record<string, { label: string; bg: string; text: string; dot: string }> = {
-  OPEN: { label: "Job Posted", bg: "bg-[#EFDB4B]", text: "text-[#8A5C05]", dot: "bg-[#8A5C05]" },
-  POSTED: { label: "Job Posted", bg: "bg-[#EFDB4B]", text: "text-[#8A5C05]", dot: "bg-[#8A5C05]" },
+const statusConfig: Record<string, { label: string; bg: string; text: string; dot: string; border?: string }> = {
+  OPEN: { label: "Job Posted", bg: "bg-[#EFDB4B]", text: "text-[#8A5C05]", dot: "bg-[#8A5C05]", border: "border-[#E0CC3B]" },
+  POSTED: { label: "Job Posted", bg: "bg-[#EFDB4B]", text: "text-[#8A5C05]", dot: "bg-[#8A5C05]", border: "border-[#E0CC3B]" },
   QUOTE_RECEIVED: {
     label: "Quote Received",
     bg: "bg-[#DCEAF7]",
     text: "text-[#156082]",
     dot: "bg-[#156082]",
+    border: "border-[#C2D9EE]",
   },
   QUOTES_RECEIVED: {
     label: "Quote Received",
     bg: "bg-[#DCEAF7]",
     text: "text-[#156082]",
     dot: "bg-[#156082]",
+    border: "border-[#C2D9EE]",
   },
   QUOTED: {
     label: "Quote Received",
     bg: "bg-[#DCEAF7]",
     text: "text-[#156082]",
     dot: "bg-[#156082]",
+    border: "border-[#C2D9EE]",
   },
   QUOTE_SENT: {
     label: "Quote Received",
     bg: "bg-[#DCEAF7]",
     text: "text-[#156082]",
     dot: "bg-[#156082]",
+    border: "border-[#C2D9EE]",
   },
   IN_PROGRESS: {
     label: "In Progress",
     bg: "bg-[#F1AA69]",
     text: "text-[#9C410F]",
     dot: "bg-[#9C410F]",
+    border: "border-[#E59850]",
   },
   "IN PROGRESS": {
     label: "In Progress",
     bg: "bg-[#F1AA69]",
     text: "text-[#9C410F]",
     dot: "bg-[#9C410F]",
+    border: "border-[#E59850]",
   },
   "IN-PROGRESS": {
     label: "In Progress",
     bg: "bg-[#F1AA69]",
     text: "text-[#9C410F]",
     dot: "bg-[#9C410F]",
+    border: "border-[#E59850]",
   },
   INPROGRESS: {
     label: "In Progress",
     bg: "bg-[#F1AA69]",
     text: "text-[#9C410F]",
     dot: "bg-[#9C410F]",
+    border: "border-[#E59850]",
   },
   STARTED: {
     label: "In Progress",
     bg: "bg-[#F1AA69]",
     text: "text-[#9C410F]",
     dot: "bg-[#9C410F]",
+    border: "border-[#E59850]",
   },
 
-  ASSIGNED: { label: "Contacted", bg: "bg-[#7DB0E3]", text: "text-[#103270]", dot: "bg-[#103270]" },
-  CONTACTED: { label: "Contacted", bg: "bg-[#7DB0E3]", text: "text-[#103270]", dot: "bg-[#103270]" },
-  QUOTE_ACCEPTED: { label: "Quote Accepted", bg: "bg-[#D9F2D0]", text: "text-[#1C6D26]", dot: "bg-[#1C6D26]" },
-  QUOTE_DECLINED: { label: "Quote Declined", bg: "bg-[#FF9797]", text: "text-[#E53935]", dot: "bg-[#E53935]" },
-  DECLINED: { label: "Quote Declined", bg: "bg-[#FF9797]", text: "text-[#E53935]", dot: "bg-[#E53935]" },
-  COMPLETED: { label: "Completed", bg: "bg-[#13501B]", text: "text-white", dot: "bg-white" },
-  CANCELLED: { label: "Closed", bg: "bg-[#A6A6A6]", text: "text-[#333333]", dot: "bg-[#333333]" },
-  CLOSED: { label: "Closed", bg: "bg-[#A6A6A6]", text: "text-[#333333]", dot: "bg-[#333333]" },
-  EXPIRED: { label: "Closed", bg: "bg-[#A6A6A6]", text: "text-[#333333]", dot: "bg-[#333333]" },
-  ACTIVE: { label: "Job Posted", bg: "bg-[#EFDB4B]", text: "text-[#8A5C05]", dot: "bg-[#8A5C05]" },
+  ASSIGNED: { label: "Connected", bg: "bg-[#7DB0E3]", text: "text-[#103270]", dot: "bg-[#103270]", border: "border-[#679FD8]" },
+  CONTACTED: { label: "Connected", bg: "bg-[#7DB0E3]", text: "text-[#103270]", dot: "bg-[#103270]", border: "border-[#679FD8]" },
+  QUOTE_ACCEPTED: { label: "Connected", bg: "bg-[#7DB0E3]", text: "text-[#103270]", dot: "bg-[#103270]", border: "border-[#679FD8]" },
+  QUOTE_DECLINED: { label: "Quote Declined", bg: "bg-[#FF9797]", text: "text-[#E53935]", dot: "bg-[#E53935]", border: "border-[#F08282]" },
+  DECLINED: { label: "Quote Declined", bg: "bg-[#FF9797]", text: "text-[#E53935]", dot: "bg-[#E53935]", border: "border-[#F08282]" },
+  COMPLETED: { label: "Completed", bg: "bg-[#13501B]", text: "text-white", dot: "bg-white", border: "border-[#0E3F15]" },
+  CANCELLED: { label: "Closed", bg: "bg-[#A6A6A6]", text: "text-[#333333]", dot: "bg-[#333333]", border: "border-[#8E8E8E]" },
+  CLOSED: { label: "Closed", bg: "bg-[#A6A6A6]", text: "text-[#333333]", dot: "bg-[#333333]", border: "border-[#8E8E8E]" },
+  EXPIRED: { label: "Closed", bg: "bg-[#A6A6A6]", text: "text-[#333333]", dot: "bg-[#333333]", border: "border-[#8E8E8E]" },
+  ACTIVE: { label: "Job Posted", bg: "bg-[#EFDB4B]", text: "text-[#8A5C05]", dot: "bg-[#8A5C05]", border: "border-[#E0CC3B]" },
 };
 
 function SidebarStatusBadge({ status, job }: { status: string; job?: Job }) {
   const norm = normalizeStatus(status);
   if (norm === "COMPLETED") {
     return (
-      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm bg-[#D8F3D7] text-[#2E7D32] text-[11px] font-semibold">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]" />
+      <div className="inline-flex items-center px-3 py-1 rounded-[4px] bg-[#13501B] border border-[#0E3F15] text-white text-[11px] font-bold">
         Completed
       </div>
     );
   }
   if (norm === "CLOSED" || norm === "CANCELLED" || norm === "EXPIRED") {
     return (
-      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm bg-[#E2E8F0] text-[#475569] text-[11px] font-semibold">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#64748B]" />
+      <div className="inline-flex items-center px-3 py-1 rounded-[4px] bg-[#A6A6A6] border border-[#8E8E8E] text-[#333333] text-[11px] font-bold">
         Closed
       </div>
     );
   }
   if (isInProgressStatus(norm)) {
     return (
-      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm bg-[#F1AA69] text-[#9C410F] text-[11px] font-bold">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#9C410F]" />
+      <div className="inline-flex items-center px-3 py-1 rounded-[4px] bg-[#F1AA69] border border-[#E59850] text-[#9C410F] text-[11px] font-bold">
         In Progress
       </div>
     );
   }
   if (norm === "ASSIGNED" || norm === "CONTACTED" || norm === "ACCEPTED" || norm === "QUOTE_ACCEPTED") {
     return (
-      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm bg-[#B6D5F4] text-[#1565C0] text-[11px] font-semibold">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#1565C0]" />
-        Contacted
+      <div className="inline-flex items-center px-3 py-1 rounded-[4px] bg-[#7DB0E3] border border-[#679FD8] text-[#103270] text-[11px] font-bold">
+        Connected
       </div>
     );
   }
   const hasAcceptedQuote = job && Array.isArray(job.quotes) && job.quotes.some((q: any) => q.status?.toUpperCase() === "ACCEPTED");
   if (hasAcceptedQuote) {
     return (
-      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm bg-[#B6D5F4] text-[#1565C0] text-[11px] font-semibold">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#1565C0]" />
-        Contacted
+      <div className="inline-flex items-center px-3 py-1 rounded-[4px] bg-[#7DB0E3] border border-[#679FD8] text-[#103270] text-[11px] font-bold">
+        Connected
       </div>
     );
   }
@@ -289,15 +293,13 @@ function SidebarStatusBadge({ status, job }: { status: string; job?: Job }) {
     ((norm === "OPEN" || norm === "POSTED" || norm === "ACTIVE") && quotes > 0)
   ) {
     return (
-      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm bg-[#DCEAF7] text-[#156082] text-[11px] font-semibold">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#156082]" />
+      <div className="inline-flex items-center px-3 py-1 rounded-[4px] bg-[#DCEAF7] border border-[#C2D9EE] text-[#156082] text-[11px] font-bold">
         Quote Received
       </div>
     );
   }
   return (
-    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-sm bg-[#EFDB4B] text-[#8A5C05] text-[11px] font-semibold">
-      <span className="w-1.5 h-1.5 rounded-full bg-[#8A5C05]" />
+    <div className="inline-flex items-center px-3 py-1 rounded-[4px] bg-[#EFDB4B] border border-[#E0CC3B] text-[#8A5C05] text-[11px] font-bold">
       Job Posted
     </div>
   );
@@ -307,42 +309,37 @@ function StatusBadge({ status, job, quotesCount }: { status: string; job?: Job; 
   const norm = normalizeStatus(status);
   if (norm === "COMPLETED") {
     return (
-      <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-sm bg-[#D8F3D7] text-[#2E7D32] text-[11px] font-semibold">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#2E7D32]" />
+      <div className="inline-flex items-center px-3 py-1 rounded-[4px] bg-[#13501B] border border-[#0E3F15] text-white text-[11px] font-bold">
         Completed
       </div>
     );
   }
   if (norm === "CLOSED" || norm === "CANCELLED" || norm === "EXPIRED") {
     return (
-      <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-sm bg-[#E2E8F0] text-[#475569] text-[11px] font-semibold">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#64748B]" />
+      <div className="inline-flex items-center px-3 py-1 rounded-[4px] bg-[#A6A6A6] border border-[#8E8E8E] text-[#333333] text-[11px] font-bold">
         Closed
       </div>
     );
   }
   if (isInProgressStatus(norm)) {
     return (
-      <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-sm bg-[#F1AA69] text-[#9C410F] text-[11px] font-bold">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#9C410F]" />
+      <div className="inline-flex items-center px-3 py-1 rounded-[4px] bg-[#F1AA69] border border-[#E59850] text-[#9C410F] text-[11px] font-bold">
         In Progress
       </div>
     );
   }
   if (norm === "ASSIGNED" || norm === "CONTACTED" || norm === "ACCEPTED" || norm === "QUOTE_ACCEPTED") {
     return (
-      <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-sm bg-[#B6D5F4] text-[#1565C0] text-[11px] font-semibold">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#1565C0]" />
-        Contacted
+      <div className="inline-flex items-center px-3 py-1 rounded-[4px] bg-[#7DB0E3] border border-[#679FD8] text-[#103270] text-[11px] font-bold">
+        Connected
       </div>
     );
   }
   const hasAcceptedQuote = job && Array.isArray(job.quotes) && job.quotes.some((q: any) => q.status?.toUpperCase() === "ACCEPTED");
   if (hasAcceptedQuote) {
     return (
-      <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-sm bg-[#B6D5F4] text-[#1565C0] text-[11px] font-semibold">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#1565C0]" />
-        Contacted
+      <div className="inline-flex items-center px-3 py-1 rounded-[4px] bg-[#7DB0E3] border border-[#679FD8] text-[#103270] text-[11px] font-bold">
+        Connected
       </div>
     );
   }
@@ -355,15 +352,13 @@ function StatusBadge({ status, job, quotesCount }: { status: string; job?: Job; 
     ((norm === "OPEN" || norm === "POSTED" || norm === "ACTIVE") && quotes > 0)
   ) {
     return (
-      <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-sm bg-[#DCEAF7] text-[#156082] text-[11px] font-semibold">
-        <span className="w-1.5 h-1.5 rounded-full bg-[#156082]" />
+      <div className="inline-flex items-center px-3 py-1 rounded-[4px] bg-[#DCEAF7] border border-[#C2D9EE] text-[#156082] text-[11px] font-bold">
         Quote Received
       </div>
     );
   }
   return (
-    <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-sm bg-[#EFDB4B] text-[#8A5C05] text-[11px] font-semibold">
-      <span className="w-1.5 h-1.5 rounded-full bg-[#8A5C05]" />
+    <div className="inline-flex items-center px-3 py-1 rounded-[4px] bg-[#EFDB4B] border border-[#E0CC3B] text-[#8A5C05] text-[11px] font-bold">
       Job Posted
     </div>
   );

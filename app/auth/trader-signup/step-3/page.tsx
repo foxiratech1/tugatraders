@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { Check, ShieldCheck, Lock, Clock, AlertCircle, X, ChevronDown, Plus, Search, Edit2 } from "lucide-react";
 import toast from "react-hot-toast";
 import { traderRegisterStep3, authApi, getRegistrationStatus } from "@/app/api/authApi";
+import { SubscriptionCheckout } from "@/components/payment/SubscriptionCheckout";
 
 interface Price {
     id: string;
@@ -238,6 +239,14 @@ export default function Step3Page() {
     // UI Phase State
     const [phase, setPhase] = useState<'PLAN' | 'CATEGORIES'>('PLAN');
 
+    // Stripe Checkout State
+    const [stripeCheckoutData, setStripeCheckoutData] = useState<{
+        planId: string;
+        priceId: string;
+        planName?: string;
+    } | null>(null);
+    const [isStripeModalOpen, setIsStripeModalOpen] = useState(false);
+
     // --- Category Selection State ---
     const [categoryGroups, setCategoryGroups] = useState<CategoryGroup[]>([]);
     const [allCategories, setAllCategories] = useState<{ id: string; name: string }[]>([]);
@@ -403,13 +412,17 @@ export default function Step3Page() {
                 subCategoryIds
             });
 
-            // 3. Finally, redirect to checkout if applicable
+            // 3. Finally, redirect to checkout session if URL exists, or open Stripe Elements modal
             const checkoutUrl = registerRes?.data?.url || registerRes?.url;
             if (checkoutUrl) {
                 window.location.href = checkoutUrl;
             } else {
-                toast.success("Registration completed successfully!");
-                router.replace("/trader/profile"); // or whatever the dashboard route is
+                setStripeCheckoutData({
+                    planId: selectedPlan.id,
+                    priceId: price.id,
+                    planName: selectedPlan.name,
+                });
+                setIsStripeModalOpen(true);
             }
         } catch (err: any) {
             toast.error("Payment processing failed.");
@@ -417,6 +430,12 @@ export default function Step3Page() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handlePaymentSuccess = () => {
+        toast.success("Registration & payment completed successfully!");
+        setIsStripeModalOpen(false);
+        router.replace("/trader/profile");
     };
 
     useEffect(() => {
@@ -886,6 +905,18 @@ export default function Step3Page() {
                     </div>
 
                 </div>
+            )}
+
+            {/* Stripe Subscription Checkout Modal */}
+            {stripeCheckoutData && (
+                <SubscriptionCheckout
+                    planId={stripeCheckoutData.planId}
+                    priceId={stripeCheckoutData.priceId}
+                    planName={stripeCheckoutData.planName}
+                    isOpen={isStripeModalOpen}
+                    onClose={() => setIsStripeModalOpen(false)}
+                    onPaymentSuccess={handlePaymentSuccess}
+                />
             )}
         </main>
     );

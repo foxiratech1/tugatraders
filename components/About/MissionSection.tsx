@@ -19,7 +19,7 @@ const MissionSection = () => {
 
           {/* Heading */}
           <h1
-            className="text-[44px] sm:text-[54px] lg:text-[62px] font-bold leading-[1.05] tracking-[-0.03em] mb-6"
+            className="text-[34px] sm:text-[42px] lg:text-[48px] font-bold leading-[1.1] tracking-[-0.02em] mb-4 sm:mb-5"
             style={{ fontFamily: 'var(--font-bricolage)' }}
           >
             <span className="text-[#6E9625]">About</span>{' '}
@@ -27,7 +27,7 @@ const MissionSection = () => {
           </h1>
 
           {/* Subheading */}
-          <h2 className="text-[20px] sm:text-[23px] font-bold text-[#1C2C1C] leading-[1.3] mb-5">
+          <h2 className="text-[17px] sm:text-[19px] lg:text-[21px] font-bold text-[#1C2C1C] leading-[1.3] mb-4 sm:mb-5 whitespace-normal sm:whitespace-nowrap">
             Connecting Portugal with independent tradespeople
           </h2>
 

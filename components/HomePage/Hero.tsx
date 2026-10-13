@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { Search, ChevronDown, Hammer } from "lucide-react";
 import { FaScrewdriverWrench, FaLocationDot } from "react-icons/fa6";
 import { authApi } from "@/app/api/authApi";
+import PlacesAutocompleteInput from "@/components/common/PlacesAutocompleteInput";
 
 // Default fallback categories if API is loading or empty
 const FALLBACK_CATEGORIES = [
@@ -127,7 +128,7 @@ export default function Hero() {
   const selectedSkillObj = skillServices.find((s) => (s.id || s._id) === selectedSkill);
 
   return (
-    <section className="relative z-20 w-full bg-white pt-28 sm:pt-32 md:pt-36 lg:pt-40 pb-16 sm:pb-20 lg:pb-28 px-4 sm:px-6 lg:px-8">
+    <section className="relative z-20 w-full bg-white pt-16 sm:pt-20 md:pt-24 lg:pt-28 pb-8 sm:pb-10 lg:pb-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-[1360px] mx-auto">
         {/* TOP ROW: Content on Left & Image on Right */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-4 items-center">
@@ -141,12 +142,11 @@ export default function Hero() {
           >
             {/* HEADLINE */}
             <h1
-              className="text-[36px] sm:text-[46px] md:text-[54px] lg:text-[56px] xl:text-[62px] font-extrabold text-[#183B22] tracking-tight leading-[1.08] mb-4 sm:mb-5"
+              className="text-[36px] sm:text-[46px] md:text-[54px] lg:text-[56px] xl:text-[62px] font-extrabold text-black tracking-tight leading-[1.08] mb-4 sm:mb-5"
               style={{ fontFamily: "var(--font-bricolage)" }}
             >
-              Find Trusted <br />
-              <span className="text-[#708A42]">Tradespeople</span> Across <br />
-              Portugal
+              Find Trusted Tradespeople <br />
+              Across Portugal
             </h1>
 
             {/* SUBTITLE */}
@@ -164,7 +164,7 @@ export default function Hero() {
               </Link>
               <Link
                 href="/post-job"
-                className="inline-flex items-center justify-center rounded-[14px] bg-[#708A42] hover:bg-[#607736] px-6 sm:px-8 py-3.5 sm:py-4 text-[13px] sm:text-[14px] font-bold text-white uppercase tracking-wider transition-all shadow-sm hover:shadow-md"
+                className="inline-flex items-center justify-center rounded-[14px] bg-[#6F9824] hover:bg-[#607736] px-6 sm:px-8 py-3.5 sm:py-4 text-[13px] sm:text-[14px] font-bold text-white uppercase tracking-wider transition-all shadow-sm hover:shadow-md"
               >
                 POST YOUR JOB - FREE
               </Link>
@@ -198,16 +198,16 @@ export default function Hero() {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.1 }}
-            className="lg:col-span-5 xl:col-span-6 relative w-full h-[320px] sm:h-[420px] lg:h-[480px] xl:h-[520px] flex items-center justify-center"
+            className="lg:col-span-5 xl:col-span-6 relative w-full h-[360px] sm:h-[460px] lg:h-[530px] xl:h-[570px] flex items-center justify-center"
           >
             {/* Masked image container */}
             <div
               className="relative w-full h-full"
               style={{
                 WebkitMaskImage:
-                  "radial-gradient(ellipse 92% 88% at 65% 50%, black 50%, transparent 95%)",
+                  "radial-gradient(ellipse 96% 94% at 65% 50%, black 72%, transparent 100%)",
                 maskImage:
-                  "radial-gradient(ellipse 92% 88% at 65% 50%, black 50%, transparent 95%)",
+                  "radial-gradient(ellipse 96% 94% at 65% 50%, black 72%, transparent 100%)",
               }}
             >
               <Image
@@ -219,11 +219,11 @@ export default function Hero() {
                 className="object-cover object-center"
               />
 
-              {/* Edge gradients to ensure smooth blending with the white background */}
-              <div className="absolute inset-y-0 left-0 w-28 sm:w-40 bg-gradient-to-r from-white via-white/70 to-transparent pointer-events-none" />
-              <div className="absolute inset-x-0 bottom-0 h-24 sm:h-32 bg-gradient-to-t from-white via-white/70 to-transparent pointer-events-none" />
-              <div className="absolute inset-x-0 top-0 h-16 bg-gradient-to-b from-white/70 to-transparent pointer-events-none" />
-              <div className="absolute inset-y-0 right-0 w-20 bg-gradient-to-l from-white/60 to-transparent pointer-events-none" />
+              {/* Edge gradients with less soft edges */}
+              <div className="absolute inset-y-0 left-0 w-16 sm:w-24 bg-gradient-to-r from-white via-white/50 to-transparent pointer-events-none" />
+              <div className="absolute inset-x-0 bottom-0 h-16 sm:h-20 bg-gradient-to-t from-white via-white/50 to-transparent pointer-events-none" />
+              <div className="absolute inset-x-0 top-0 h-10 bg-gradient-to-b from-white/50 to-transparent pointer-events-none" />
+              <div className="absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-white/40 to-transparent pointer-events-none" />
             </div>
           </motion.div>
         </div>
@@ -233,7 +233,7 @@ export default function Hero() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, delay: 0.2 }}
-          className="mt-8 sm:mt-10 lg:mt-12 w-full relative z-30"
+          className="mt-6 sm:mt-7 lg:mt-8 w-full relative z-30"
         >
           {/* SEARCH HEADING */}
           <h2
@@ -394,7 +394,7 @@ export default function Hero() {
               <div className="hidden lg:block w-[1px] h-9 bg-gray-200" />
 
               {/* LOCATION INPUT */}
-              <div className="flex-1 flex items-center justify-start gap-3.5 px-4 lg:px-5 py-3 lg:py-3.5">
+              <div className="flex-1 flex items-center justify-start gap-3.5 px-4 lg:px-5 py-3 lg:py-3.5 min-w-0">
                 <FaLocationDot className="text-gray-700 shrink-0 w-5 h-5 lg:w-5 lg:h-5" />
                 <div className="text-left min-w-0 flex-1">
                   <label
@@ -403,13 +403,18 @@ export default function Hero() {
                   >
                     LOCATION
                   </label>
-                  <input
+                  <PlacesAutocompleteInput
                     id="hero-location-input"
-                    type="text"
                     placeholder="Postcode/City"
                     value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    className="block w-full text-[14px] lg:text-[15px] font-bold text-[#183B22] placeholder:text-gray-400 placeholder:font-bold bg-transparent outline-none truncate"
+                    onChange={setLocation}
+                    onPlaceSelect={(place) => {
+                      if (place?.formattedAddress) {
+                        setLocation(place.formattedAddress);
+                      }
+                    }}
+                    className="w-full"
+                    inputClassName="block w-full text-[14px] lg:text-[15px] font-bold text-[#183B22] placeholder:text-gray-400 placeholder:font-bold bg-transparent outline-none truncate"
                   />
                 </div>
               </div>

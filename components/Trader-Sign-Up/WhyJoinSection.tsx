@@ -51,33 +51,34 @@ const WhyJoinSection = () => {
   ];
 
   return (
-    <section className="bg-white py-14 sm:py-18 lg:py-24 px-6 lg:px-12 xl:px-16 overflow-hidden">
-      <div className="max-w-[1240px] mx-auto">
+    <section className="bg-white py-8 sm:py-10 md:py-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <div className="max-w-[960px] mx-auto">
         {/* TOP HEADING */}
-        <div className="mb-8 sm:mb-10">
-          <h2 className="text-[28px] sm:text-[34px] lg:text-[38px] xl:text-[42px] font-extrabold text-[#1E3A2B] leading-tight tracking-tight">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-[26px] sm:text-[32px] md:text-[36px] font-extrabold text-[#1E3A2B] leading-tight tracking-tight">
             <span className="text-[#6E9625]">More Jobs.</span> Less Chasing.
           </h2>
         </div>
 
         {/* 3 COLUMNS: LEFT SEGMENTS | IMAGE | RIGHT SEGMENTS */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-6 xl:gap-10 items-stretch">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-7 lg:gap-6 xl:gap-8 items-center">
 
           {/* LEFT COLUMN: Segment 1 (Top), Segment 2 (Center), Segment 3 (Bottom) */}
-          <div className="lg:col-span-4 flex flex-col justify-between gap-7 sm:gap-8 lg:gap-0 lg:h-full py-0.5">
+          <div className="lg:col-span-4 flex flex-col justify-between gap-6 sm:gap-7 py-0.5">
             {leftFeatures.map((feature, idx) => (
               <div key={idx} className="flex items-start gap-3.5 group">
                 <div
-                  className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center shrink-0 mt-0.5 ${feature.isCircled ? "rounded-full bg-[#6E9625]/10" : ""
-                    }`}
+                  className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center shrink-0 mt-0.5 ${
+                    feature.isCircled ? "rounded-full bg-[#6E9625]/10" : ""
+                  }`}
                 >
                   {feature.icon}
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <h3 className="text-[16px] sm:text-[17px] font-bold text-[#1C2C1C] leading-snug">
+                  <h3 className="text-[15px] sm:text-[15.5px] font-bold text-[#1C2C1C] leading-snug">
                     {feature.title}
                   </h3>
-                  <p className="text-[13px] sm:text-[13.5px] text-[#334133]/85 font-medium leading-relaxed max-w-[340px]">
+                  <p className="text-[12.5px] sm:text-[13px] text-[#4A5548] font-normal leading-relaxed max-w-[280px]">
                     {feature.description}
                   </p>
                 </div>
@@ -87,33 +88,34 @@ const WhyJoinSection = () => {
 
           {/* CENTER COLUMN: Tradesperson & Client Image */}
           <div className="lg:col-span-4 flex justify-center items-center">
-            <div className="relative w-full max-w-[280px] sm:max-w-[305px] xl:max-w-[330px] aspect-[3/4] rounded-[20px] overflow-hidden shadow-sm">
+            <div className="relative w-full max-w-[260px] sm:max-w-[280px] aspect-[3/4] rounded-[18px] overflow-hidden shadow-sm">
               <Image
                 src="/couple.png"
                 alt="Tradesperson speaking with client"
                 fill
                 className="object-cover object-center"
-                sizes="(max-width: 768px) 100vw, 330px"
+                sizes="(max-width: 768px) 100vw, 280px"
                 priority
               />
             </div>
           </div>
 
           {/* RIGHT COLUMN: Segment 1 (Top), Segment 2 (Center), Segment 3 (Bottom) */}
-          <div className="lg:col-span-4 flex flex-col justify-between gap-7 sm:gap-8 lg:gap-0 lg:h-full py-0.5">
+          <div className="lg:col-span-4 flex flex-col justify-between gap-6 sm:gap-7 py-0.5">
             {rightFeatures.map((feature, idx) => (
               <div key={idx} className="flex items-start gap-3.5 group">
                 <div
-                  className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center shrink-0 mt-0.5 ${feature.isCircled ? "rounded-full bg-[#6E9625]/10" : ""
-                    }`}
+                  className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center shrink-0 mt-0.5 ${
+                    feature.isCircled ? "rounded-full bg-[#6E9625]/10" : ""
+                  }`}
                 >
                   {feature.icon}
                 </div>
                 <div className="flex flex-col gap-0.5">
-                  <h3 className="text-[16px] sm:text-[17px] font-bold text-[#1C2C1C] leading-snug">
+                  <h3 className="text-[15px] sm:text-[15.5px] font-bold text-[#1C2C1C] leading-snug">
                     {feature.title}
                   </h3>
-                  <p className="text-[13px] sm:text-[13.5px] text-[#334133]/85 font-medium leading-relaxed max-w-[340px]">
+                  <p className="text-[12.5px] sm:text-[13px] text-[#4A5548] font-normal leading-relaxed max-w-[280px]">
                     {feature.description}
                   </p>
                 </div>

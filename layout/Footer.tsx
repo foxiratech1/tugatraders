@@ -52,7 +52,7 @@ export default function Footer() {
 
           {/* BRAND COL */}
           <div className="lg:col-span-4">
-            <Link href="/" className="inline-block mb-8">
+            <Link href="/" className="inline-block mb-5">
               <div className="relative h-10 w-[200px]">
                 <Image
                   src="/TugaLogo.png"
@@ -62,10 +62,10 @@ export default function Footer() {
                 />
               </div>
             </Link>
-            <h2 className="text-[18px] lg:text-[20px] font-bold text-[#1d3321] leading-tight mb-4">
+            <h2 className="text-[18px] lg:text-[20px] font-bold text-[#1d3321] leading-tight mb-3">
               Connecting Customers With Independent<br /> Tradespeople Across Portugal
             </h2>
-            <p className="text-[16px] text-[#1d3321] mb-8">contact@tugatraders.com</p>
+            <p className="text-[15px] text-[#1d3321] mb-5">contact@tugatraders.com</p>
 
             {/* SOCIALS */}
             <div className="flex gap-4">
@@ -92,7 +92,7 @@ export default function Footer() {
                   <li><Link href="/directory-listing/search" onClick={() => scrollToTop()} className="text-[14px] font-medium text-[#1d3321] hover:text-[#4a8c3f] transition-colors">Find a Tradesperson</Link></li>
                   <li><Link href="/post-job" onClick={() => scrollToTop()} className="text-[14px] font-medium text-[#1d3321] hover:text-[#4a8c3f] transition-colors">Post a Job</Link></li>
                   <li><Link href="/review" onClick={() => scrollToTop()} className="text-[14px] font-medium text-[#1d3321] hover:text-[#4a8c3f] transition-colors">Leave a Review</Link></li>
-                  <li><Link href="/terms?tab=trust" onClick={() => scrollToTop()} className="text-[14px] font-medium text-[#1d3321] hover:text-[#4a8c3f] transition-colors">Trust & Safety</Link></li>
+                  <li><Link href="/trust-and-safety" onClick={() => scrollToTop()} className="text-[14px] font-medium text-[#1d3321] hover:text-[#4a8c3f] transition-colors">Trust & Safety</Link></li>
                   <li><Link href="/faq" onClick={() => scrollToTop()} className="text-[14px] font-medium text-[#1d3321] hover:text-[#4a8c3f] transition-colors">FAQs</Link></li>
                 </ul>
               </div>
@@ -107,17 +107,38 @@ export default function Footer() {
                     <li><Link href="/trader-signup" onClick={() => scrollToTop()} className="text-[14px] font-medium text-[#1d3321] hover:text-[#4a8c3f] transition-colors">Join TugaTrades</Link></li>
                   )}
                   <li>
-                    <Link href="/#how-it-works" scroll={true} onClick={(e) => {
-                      const el = document.getElementById('how-it-works');
-                      if (el) {
-                        e.preventDefault();
-                        const y = el.getBoundingClientRect().top + window.scrollY - 80;
-                        window.scrollTo({ top: y, behavior: 'smooth' });
-                      }
-                    }} className="text-[14px] font-medium text-[#1d3321] hover:text-[#4a8c3f] transition-colors">How It Works</Link>
+                    <Link
+                      href="/trader-signup#how-it-works"
+                      onClick={() => {
+                        if (pathname === "/trader-signup") {
+                          const el = document.getElementById('how-it-works');
+                          if (el) {
+                            const y = el.getBoundingClientRect().top + window.scrollY - 80;
+                            window.scrollTo({ top: y, behavior: 'smooth' });
+                          }
+                        }
+                      }}
+                      className="text-[14px] font-medium text-[#1d3321] hover:text-[#4a8c3f] transition-colors"
+                    >
+                      How It Works
+                    </Link>
                   </li>
                   <li>
-                    <button onClick={() => setIsVettingModalOpen(true)} className="text-[14px] font-medium text-[#1d3321] hover:text-[#4a8c3f] transition-colors text-left">Vetting Process</button>
+                    <Link
+                      href="/trader-signup#vetting-section"
+                      onClick={() => {
+                        if (pathname === "/trader-signup") {
+                          const el = document.getElementById('vetting-section');
+                          if (el) {
+                            const y = el.getBoundingClientRect().top + window.scrollY - 80;
+                            window.scrollTo({ top: y, behavior: 'smooth' });
+                          }
+                        }
+                      }}
+                      className="text-[14px] font-medium text-[#1d3321] hover:text-[#4a8c3f] transition-colors"
+                    >
+                      Vetting Process
+                    </Link>
                   </li>
                   <li><Link href="/terms?tab=traderAgreement" onClick={() => scrollToTop()} className="text-[14px] font-medium text-[#1d3321] hover:text-[#4a8c3f] transition-colors">Trader Agreement</Link></li>
                   <li><Link href="/faq?tab=traders" onClick={() => scrollToTop()} className="text-[14px] font-medium text-[#1d3321] hover:text-[#4a8c3f] transition-colors">FAQs</Link></li>
@@ -155,32 +176,15 @@ export default function Footer() {
         {/* BOTTOM LINKS */}
         <div className="flex flex-wrap items-center gap-x-6 gap-y-4 mb-8">
           {[
-            "Terms & Conditions",
-            "Privacy & Cookies",
             "Cookie Settings",
-            "Trust & Safety",
-            "Disputes",
-            "Content Moderation",
-            "Trader Agreement"
+            "Content Moderation"
           ].map((link, i, arr) => (
             <div key={link} className="flex items-center gap-6">
               <Link
                 href={
-                  link === "Terms & Conditions"
-                    ? "/terms"
-                    : link === "Privacy & Cookies"
-                      ? "/terms?tab=cookies"
-                      : link === "Cookie Settings"
-                        ? "/terms?tab=cookieSettings"
-                        : link === "Trust & Safety"
-                          ? "/terms?tab=trust"
-                          : link === "Disputes"
-                            ? "/terms?tab=disputes"
-                            : link === "Content Moderation"
-                              ? "/terms?tab=moderation"
-                              : link === "Trader Agreement"
-                                ? "/terms?tab=traderAgreement"
-                                : "#"
+                  link === "Cookie Settings"
+                    ? "/terms?tab=cookieSettings"
+                    : "/terms?tab=moderation"
                 }
                 scroll={false}
                 onClick={() => scrollToTop()}
@@ -194,8 +198,8 @@ export default function Footer() {
         </div>
 
         {/* DISCLAIMER */}
-        <p className="text-[13px] text-[#6F736C] font-normal leading-relaxed  mb-12">
-          TugaTrades connects clients with independent tradespeople. We do not employ or manage traders. All work, agreements, and payments are made directly between <br /> users. We are not responsible for services provided or agreements made.
+        <p className="text-[13px] text-[#6F736C] font-normal leading-relaxed mb-12">
+          TugaTrades connects clients with independent tradespeople. We do not employ or manage traders. All work, agreements, and payments are made directly between users. <br className="hidden sm:inline" />We are not responsible for services provided or agreements made.
         </p>
 
         {/* COPYRIGHT */}

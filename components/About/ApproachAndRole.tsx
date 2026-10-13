@@ -4,21 +4,21 @@ import React from 'react';
 
 export default function ApproachAndRole() {
   return (
-    <section className="bg-white py-12 md:py-16 px-4 sm:px-6 lg:px-20 overflow-hidden">
+    <section className="bg-white py-8 md:py-12 px-4 sm:px-6 lg:px-20 overflow-hidden">
       <div className="max-w-[1200px] mx-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 items-stretch">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 lg:gap-8 items-stretch">
           {/* CARD 1: OUR APPROACH */}
-          <div className="bg-[#E4ECE0] rounded-[24px] p-7 sm:p-9 lg:p-10 flex flex-col">
+          <div className="bg-[#E4ECD5] rounded-[18px] sm:rounded-[20px] p-6 sm:p-8 lg:p-9 flex flex-col">
             <h3
-              className="text-[24px] sm:text-[28px] font-bold text-[#1C2C1C] mb-6 tracking-tight"
+              className="text-[22px] sm:text-[26px] font-bold text-[#1C2C1C] mb-5 sm:mb-6 tracking-tight"
               style={{ fontFamily: 'var(--font-bricolage)' }}
             >
               Our Approach
             </h3>
 
-            <div className="flex flex-col gap-5 text-[#2A3B2A] text-[14.5px] sm:text-[15px] leading-relaxed">
+            <div className="flex flex-col gap-4 sm:gap-5 text-[#2C3B2D] text-[14px] sm:text-[14.5px] leading-[1.65]">
               <div>
-                <h4 className="font-bold text-[#1C2C1C] text-[15.5px] mb-1">
+                <h4 className="font-bold text-[#1C2C1C] text-[15px] sm:text-[15.5px] mb-1">
                   Local
                 </h4>
                 <p>
@@ -27,7 +27,7 @@ export default function ApproachAndRole() {
               </div>
 
               <div>
-                <h4 className="font-bold text-[#1C2C1C] text-[15.5px] mb-1">
+                <h4 className="font-bold text-[#1C2C1C] text-[15px] sm:text-[15.5px] mb-1">
                   Transparent
                 </h4>
                 <p>
@@ -36,7 +36,7 @@ export default function ApproachAndRole() {
               </div>
 
               <div>
-                <h4 className="font-bold text-[#1C2C1C] text-[15.5px] mb-1">
+                <h4 className="font-bold text-[#1C2C1C] text-[15px] sm:text-[15.5px] mb-1">
                   Direct
                 </h4>
                 <p>
@@ -45,7 +45,7 @@ export default function ApproachAndRole() {
               </div>
 
               <div>
-                <h4 className="font-bold text-[#1C2C1C] text-[15.5px] mb-1">
+                <h4 className="font-bold text-[#1C2C1C] text-[15px] sm:text-[15.5px] mb-1">
                   Community-focused
                 </h4>
                 <p>
@@ -56,21 +56,23 @@ export default function ApproachAndRole() {
           </div>
 
           {/* CARD 2: OUR ROLE */}
-          <div className="bg-[#E4ECE0] rounded-[24px] p-7 sm:p-9 lg:p-10 flex flex-col">
+          <div className="bg-[#E4ECD5] rounded-[18px] sm:rounded-[20px] p-6 sm:p-8 lg:p-9 flex flex-col">
             <h3
-              className="text-[24px] sm:text-[28px] font-bold text-[#1C2C1C] mb-6 tracking-tight"
+              className="text-[22px] sm:text-[26px] font-bold text-[#1C2C1C] mb-5 sm:mb-6 tracking-tight"
               style={{ fontFamily: 'var(--font-bricolage)' }}
             >
               Our Role
             </h3>
 
-            <div className="flex flex-col gap-5 text-[#2A3B2A] text-[14.5px] sm:text-[15px] leading-relaxed">
+            <div className="flex flex-col gap-4 sm:gap-5 text-[#2C3B2D] text-[14px] sm:text-[14.5px] leading-[1.65]">
               <p>
                 TugaTrades provides the platform that brings customers and independent tradespeople together.
               </p>
 
               <p>
-                We help customers <strong className="text-[#1C2C1C]">find, compare and connect</strong>. We do not employ the tradespeople listed on the platform, manage their work or guarantee the outcome of a project.
+                We help customers <strong className="font-bold text-[#1C2C1C]">find, compare and connect.</strong>
+                <br />
+                We do not employ the tradespeople listed on the platform, manage their work or guarantee the outcome of a project.
               </p>
 
               <p>

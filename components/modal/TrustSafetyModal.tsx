@@ -81,7 +81,7 @@ export default function TrustSafetyModal({ isOpen, onClose }: TrustSafetyModalPr
                   <p className="text-[14px] text-gray-600 mb-4">Before choosing a tradesperson, we recommend:</p>
                   <ul className="space-y-3">
                     {[
-                      "Get multiple response where possible",
+                      "Get multiple responses where possible",
                       "Compare profiles, reviews, and experience",
                       "Check photos of previous work",
                       "Ask questions about their experience with similar jobs",

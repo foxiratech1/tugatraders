@@ -63,6 +63,7 @@ export default function TraderNavbar() {
   const [userName, setUserName] = useState("Loading...");
   const [userRole, setUserRole] = useState("");
   const [userAvatar, setUserAvatar] = useState<string | undefined>(undefined);
+  const [avatarError, setAvatarError] = useState(false);
   const [traderStatus, setTraderStatus] = useState("PENDING");
 
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -224,12 +225,15 @@ export default function TraderNavbar() {
             : "Member"
         );
 
-        // Avatar – use trader logo or profile image
+        // Avatar – check profileImage, traderProfile image, avatar, or logo
         const avatar =
+          profile?.profileImage ||
+          profile?.traderProfile?.profileImage ||
+          profile?.avatar ||
+          profile?.traderProfile?.avatar ||
           profile?.traderProfile?.logo ||
           profile?.logo ||
-          profile?.avatar ||
-          profile?.profileImage;
+          profile?.image;
 
         if (avatar) {
           const getImageUrl = (path: string) => {
@@ -243,6 +247,24 @@ export default function TraderNavbar() {
 
           const imageUrl = getImageUrl(avatar);
           setUserAvatar(imageUrl);
+          setAvatarError(false);
+        } else {
+          try {
+            const localUser = JSON.parse(localStorage.getItem("user") || "{}");
+            const localAvatar =
+              localUser?.profileImage ||
+              localUser?.traderProfile?.profileImage ||
+              localUser?.avatar ||
+              localUser?.traderProfile?.logo ||
+              localUser?.logo;
+            if (localAvatar) {
+              const base = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
+              const cleanPath = localAvatar.replace(/^\/+/, "");
+              const localUrl = localAvatar.startsWith("http") ? localAvatar : `${base}/${cleanPath}`;
+              setUserAvatar(localUrl);
+              setAvatarError(false);
+            }
+          } catch (e) {}
         }
       } catch (err) {
         console.error("Failed to fetch profile", err);
@@ -483,13 +505,12 @@ export default function TraderNavbar() {
 
                 {/* Avatar */}
                 <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden border-2 border-[#6E9625] flex-shrink-0 bg-[#1C2C1C] flex items-center justify-center shadow-sm hover:rotate-6 transition-transform">
-                  {userAvatar ? (
-                    <Image
+                  {userAvatar && !avatarError ? (
+                    <img
                       src={userAvatar}
                       alt={userName}
-                      width={36}
-                      height={36}
                       className="object-cover w-full h-full"
+                      onError={() => setAvatarError(true)}
                     />
                   ) : (
                     <span className="text-white font-bold text-[13px] sm:text-[14px]">
@@ -589,13 +610,12 @@ export default function TraderNavbar() {
             <div className="p-4 bg-gray-50 border-b border-gray-100 flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-full overflow-hidden border-2 border-[#6E9625] flex-shrink-0 bg-[#1C2C1C] flex items-center justify-center shadow-sm">
-                  {userAvatar ? (
-                    <Image
+                  {userAvatar && !avatarError ? (
+                    <img
                       src={userAvatar}
                       alt={userName}
-                      width={40}
-                      height={40}
                       className="object-cover w-full h-full"
+                      onError={() => setAvatarError(true)}
                     />
                   ) : (
                     <span className="text-white font-bold text-[14px]">

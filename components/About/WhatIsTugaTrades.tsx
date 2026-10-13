@@ -8,16 +8,16 @@ export default function WhatIsTugaTrades() {
   return (
     <section className="bg-white py-16 md:py-20 px-4 sm:px-6 lg:px-20 overflow-hidden border-b border-[#F0F2EE]">
       <div className="max-w-[1200px] mx-auto">
-        {/* SECTION HEADER */}
-        <div className="mb-12 sm:mb-14">
+        {/* SECTION HEADER - Green Background Card */}
+        <div className="bg-[#F4F8F3] border border-[#DFE8DE] rounded-[18px] sm:rounded-[22px] p-6 sm:p-8 lg:p-10 mb-12 sm:mb-14 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">
           <h2
-            className="text-[34px] sm:text-[42px] md:text-[48px] font-bold text-[#1C2C1C] leading-[1.1] mb-5 tracking-tight"
+            className="text-[28px] sm:text-[36px] md:text-[42px] font-bold text-[#19331E] leading-[1.15] mb-4 tracking-tight"
             style={{ fontFamily: 'var(--font-bricolage)' }}
           >
             <span className="text-[#6E9625]">What</span> is TugaTrades?
           </h2>
 
-          <p className="text-[#4B5563] text-[15px] sm:text-[16px] leading-[1.8] font-normal max-w-[1020px]">
+          <p className="text-[#4E6252] text-[14px] sm:text-[15.5px] leading-[1.75] font-normal max-w-[1020px]">
             TugaTrades is an online marketplace connecting customers with independent tradespeople across Portugal. Whether you need a small repair, ongoing maintenance, a renovation or a larger project, TugaTrades makes it easier to find professionals offering the services you need in your area.
           </p>
         </div>
@@ -28,25 +28,25 @@ export default function WhatIsTugaTrades() {
             For Customers
           </h3>
 
-          {/* 3 Columns */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 mb-8 sm:mb-10">
-            <div>
-              <h4 className="font-bold text-[#6E9625] text-[17px] mb-2">Find.</h4>
-              <p className="text-[#4B5563] text-[14.5px] sm:text-[15px] leading-relaxed">
+          {/* 3 Styled Squares */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 sm:gap-6 mb-8 sm:mb-10 items-stretch">
+            <div className="bg-[#FAFAF9] border border-[#E5EBE0] rounded-[16px] p-5 sm:p-6 flex flex-col justify-start h-full shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+              <h4 className="font-extrabold text-[#6E9625] text-[17px] sm:text-[18px] mb-2">Find.</h4>
+              <p className="text-[#4B5563] text-[13.5px] sm:text-[14px] leading-relaxed font-normal">
                 Search for tradespeople by trade, service and location.
               </p>
             </div>
 
-            <div>
-              <h4 className="font-bold text-[#6E9625] text-[17px] mb-2">Connect.</h4>
-              <p className="text-[#4B5563] text-[14.5px] sm:text-[15px] leading-relaxed">
+            <div className="bg-[#FAFAF9] border border-[#E5EBE0] rounded-[16px] p-5 sm:p-6 flex flex-col justify-start h-full shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+              <h4 className="font-extrabold text-[#6E9625] text-[17px] sm:text-[18px] mb-2">Connect.</h4>
+              <p className="text-[#4B5563] text-[13.5px] sm:text-[14px] leading-relaxed font-normal">
                 Contact tradespeople directly to discuss your project, availability and pricing. You choose who you want to work with.
               </p>
             </div>
 
-            <div>
-              <h4 className="font-bold text-[#6E9625] text-[17px] mb-2">Compare.</h4>
-              <p className="text-[#4B5563] text-[14.5px] sm:text-[15px] leading-relaxed">
+            <div className="bg-[#FAFAF9] border border-[#E5EBE0] rounded-[16px] p-5 sm:p-6 flex flex-col justify-start h-full shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+              <h4 className="font-extrabold text-[#6E9625] text-[17px] sm:text-[18px] mb-2">Compare.</h4>
+              <p className="text-[#4B5563] text-[13.5px] sm:text-[14px] leading-relaxed font-normal">
                 View profiles, services, customer reviews and relevant information to help you make an informed decision.
               </p>
             </div>

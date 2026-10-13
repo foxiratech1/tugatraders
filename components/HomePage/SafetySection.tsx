@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   FiUserCheck,
   FiStar,
@@ -13,8 +15,6 @@ import { LuShieldAlert, LuShieldCheck } from "react-icons/lu";
 import { motion } from "framer-motion";
 import TrustSafetyModal from "@/components/modal/TrustSafetyModal";
 import VettingModal from "@/components/modal/VettingModal";
-import ReviewPolicyModal from "@/components/modal/ReviewPolicyModal";
-import DisputeModal from "@/components/modal/DisputeModal";
 
 const safetyFeatures = [
   {
@@ -45,16 +45,17 @@ const safetyFeatures = [
     title: "Profiles & badges explained",
     description: (
       <div className="space-y-3">
-        <p className="font-bold text-white text-[14px]">Trader profile badges</p>
+        <p className="font-bold text-white text-[14px]">Badge Disclaimer</p>
         <p>
-          You may see badges on trader profiles showing information that has been reviewed by TugaTrades, such as <strong>Individual checks</strong>, <strong>Trade checks</strong> or <strong>Insurance documents</strong>.
+          Badges displayed on trader profiles, including &ldquo;Vetted&rdquo;, &ldquo;Insurance Documents&rdquo; or similar indicators, are intended to help customers understand the information reviewed.
         </p>
         <p>
-          These badges are based on information provided by the trader and reviewed at a specific point in time. They help you understand the trader&apos;s profile and make a more informed choice.
+          These badges reflect information reviewed at a particular point in time and are not endorsements, certifications or guarantees.
         </p>
         <p>
-          <strong>Badges are not guarantees, certifications or endorsements.</strong> We recommend asking the trader for up-to-date documents where appropriate before starting any work.
+          Before proceeding with any work, customers should carry out their own checks and request current supporting documentation directly from the trader.
         </p>
+        <p>For more info click <span className="underline font-medium text-[#89b341]">here</span>.</p>
       </div>
     ),
     icon: <LuShieldCheck className="text-[#6E9625]" size={22} />,
@@ -71,7 +72,17 @@ const safetyFeatures = [
         </ul>
         <p>Honest feedback helps you choose the right trader.</p>
         <p>Reviews are opinions, not guarantees.</p>
-        <p>For more info click <span className="underline font-medium text-[#89b341]">here</span>.</p>
+        <p>
+          For more info click{" "}
+          <Link
+            href="/terms?tab=review"
+            onClick={(e) => e.stopPropagation()}
+            className="underline font-medium text-[#89b341] hover:text-[#a1ce4f]"
+          >
+            here
+          </Link>
+          .
+        </p>
       </div>
     ),
     icon: <FiStar className="text-[#6E9625]" size={22} />,
@@ -87,7 +98,23 @@ const safetyFeatures = [
           <li>Content moderation rights: We may remove fake, abusive, defamatory, or illegal content and suspend accounts where necessary.</li>
           <li>No guarantee on content accuracy: Reviews and profiles are user-generated and may not be fully verified; users should exercise their own judgment.</li>
         </ul>
-        <p>For more info click <span className="underline font-medium text-[#89b341]">here</span>.</p>
+        <p>
+          For more info click{" "}
+          <Link
+            href="/trust-and-safety#hiring-safely"
+            onClick={(e) => {
+              e.stopPropagation();
+              const el = document.getElementById("hiring-safely");
+              if (el) {
+                el.scrollIntoView({ behavior: "smooth" });
+              }
+            }}
+            className="underline font-medium text-[#89b341] hover:text-[#a1ce4f]"
+          >
+            here
+          </Link>
+          .
+        </p>
       </div>
     ),
     icon: <LuShieldAlert className="text-[#6E9625]" size={22} />,
@@ -163,7 +190,17 @@ const safetyFeatures = [
             <li>Taking action on accounts that breach our policies</li>
           </ul>
         </ul>
-        <p>For full details, see our <span className="underline font-medium text-[#89b341]">Dispute Resolution Policy</span>.</p>
+        <p>
+          For full details, see our{" "}
+          <Link
+            href="/terms?tab=disputes"
+            onClick={(e) => e.stopPropagation()}
+            className="underline font-medium text-[#89b341] hover:text-[#a1ce4f]"
+          >
+            Dispute Resolution Policy
+          </Link>
+          .
+        </p>
       </div>
     ),
     icon: <FiAlertTriangle className="text-[#6E9625]" size={22} />,
@@ -195,14 +232,17 @@ const safetyFeatures = [
   },
 ];
 
-export default function SafetySection() {
+interface SafetySectionProps {
+  className?: string;
+}
+
+export default function SafetySection({ className }: SafetySectionProps = {}) {
+  const router = useRouter();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isVettingModalOpen, setIsVettingModalOpen] = useState(false);
-  const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
-  const [isDisputeModalOpen, setIsDisputeModalOpen] = useState(false);
 
   return (
-    <section className="w-full py-16 md:py-24 bg-white px-6 md:px-12 overflow-hidden">
+    <section className={`w-full ${className || "py-16 md:py-24"} bg-white px-6 md:px-12 overflow-hidden`}>
       <div className="max-w-[1200px] mx-auto">
         {/* HEADER */}
         <motion.div
@@ -237,23 +277,25 @@ export default function SafetySection() {
               viewport={{ once: true, amount: 0.1 }}
               transition={{ duration: 0.4, delay: index * 0.04 }}
               onClick={() => {
-                if (
-                  feature.title === "How we vet traders" ||
-                  feature.title === "Profiles & badges explained"
-                ) {
+                if (feature.title === "Profiles & badges explained") {
                   setIsVettingModalOpen(true);
                 } else if (
                   feature.title === "Trusted reviews" ||
                   feature.title === "Reviews you can trust"
                 ) {
-                  setIsReviewModalOpen(true);
+                  router.push("/terms?tab=review");
                 } else if (feature.title === "Staying safe when hiring") {
-                  setIsModalOpen(true);
+                  const el = document.getElementById("hiring-safely");
+                  if (el) {
+                    el.scrollIntoView({ behavior: "smooth" });
+                  } else {
+                    router.push("/trust-and-safety#hiring-safely");
+                  }
                 } else if (
                   feature.title === "If issues arise" ||
                   feature.title === "If something goes wrong"
                 ) {
-                  setIsDisputeModalOpen(true);
+                  router.push("/terms?tab=disputes");
                 }
               }}
               className="group relative overflow-hidden bg-white border border-[#E2E6DE] rounded-[14px] p-3.5 sm:p-4 hover:bg-[#243A24] hover:-translate-y-1 hover:shadow-2xl hover:shadow-[#243A24]/10 transition-all duration-500 cursor-pointer flex flex-col justify-between"
@@ -291,8 +333,6 @@ export default function SafetySection() {
 
       <TrustSafetyModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
       <VettingModal isOpen={isVettingModalOpen} onClose={() => setIsVettingModalOpen(false)} />
-      <ReviewPolicyModal isOpen={isReviewModalOpen} onClose={() => setIsReviewModalOpen(false)} />
-      <DisputeModal isOpen={isDisputeModalOpen} onClose={() => setIsDisputeModalOpen(false)} />
     </section>
   );
 }

@@ -264,12 +264,12 @@ const PublicReviewsSection = () => {
   };
 
   return (
-    <section className="bg-[#F8F9F5] px-4 sm:px-6 lg:px-20 py-8 lg:py-12">
+    <section className="bg-[#F8F9F5] px-4 sm:px-6 lg:px-20 pt-2 sm:pt-4 pb-8 lg:pb-12">
       <div className="max-w-[1200px] mx-auto w-full">
         {/* Review Principles Section */}
-        <div className="mb-14 sm:mb-16">
+        <div className="mb-10 sm:mb-12">
           <h2
-            className="text-[24px] sm:text-[28px] md:text-[32px] font-bold text-[#243A24] mb-6 sm:mb-8"
+            className="text-[24px] sm:text-[28px] md:text-[32px] font-bold text-[#243A24] mb-5 sm:mb-6"
             style={{ fontFamily: "var(--font-bricolage)" }}
           >
             Review Principles
@@ -295,9 +295,7 @@ const PublicReviewsSection = () => {
             className="text-[26px] sm:text-[30px] md:text-[34px] font-bold text-[#243A24] leading-tight text-center mb-8 sm:mb-10"
             style={{ fontFamily: "var(--font-bricolage)" }}
           >
-            Customer
-            <br />
-            Reviews
+            Customer Reviews
           </h2>
 
           {loading ? (

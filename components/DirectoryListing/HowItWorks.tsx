@@ -6,126 +6,131 @@ import Link from "next/link";
 
 const HowItWorks = () => {
   return (
-    <section className="bg-[#F9FAFB] py-14 md:py-16 px-6 lg:px-20 overflow-hidden">
-      <div className="max-w-[1150px] mx-auto">
+    <section id="how-reviews-work" className="bg-white py-16 md:py-20 px-4 sm:px-6 lg:px-8 overflow-hidden scroll-mt-24">
+      <div className="max-w-[1020px] mx-auto">
 
-        {/* HEADER */}
-        <h2
-          className="text-center text-[32px] md:text-[42px] font-bold text-[#243A24] mb-12 leading-[1.1]"
-          style={{ fontFamily: "var(--font-bricolage)" }}
-        >
-          How our{" "}
-          <span className="text-[#6E9625]">directory review</span>
-          <br />
-          system works
-        </h2>
+        {/* HEADER - Left-aligned as per feedback */}
+        <div className="text-left mb-8 sm:mb-12">
+          <h2 className="text-[26px] sm:text-[32px] md:text-[36px] font-extrabold text-[#1E3A2B] leading-tight tracking-tight">
+            How Our <span className="text-[#6E9625]">Directory Reviews</span> Work
+          </h2>
+        </div>
 
-        {/* STEPS */}
-        <div className="flex flex-col gap-12 md:gap-16 relative max-w-[1040px] mx-auto">
+        {/* 3-COLUMN STAGGERED GRID ON DESKTOP, STACKED ON MOBILE */}
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_380px_280px] justify-center gap-6 lg:gap-8 items-center">
 
-          {/* STEP 1 */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 xl:gap-14 items-center text-center xl:text-left">
-            {/* IMAGE */}
-            <div className="relative w-full max-w-[400px] mx-auto aspect-square xl:max-w-none xl:aspect-auto xl:h-[360px]">
+          {/* ── ROW 1: Image 1 | Card 1 | Empty ── */}
+          <div className="flex justify-center lg:justify-start">
+            <div className="relative w-full max-w-[270px] sm:max-w-[280px] aspect-[1.16/1]">
               <Image
                 src="/system1.png"
                 alt="Find & Contact a Trader"
                 fill
-                className="object-contain xl:object-right"
-                unoptimized
+                className="object-contain"
+                priority
               />
             </div>
+          </div>
 
-            {/* CONTENT */}
-            <div className="flex flex-col items-center xl:items-start w-full max-w-[420px] mx-auto xl:mx-0">
-              <div className="flex flex-col xl:flex-row items-center gap-4 mb-3 xl:mb-4">
-                <div className="w-[46px] h-[46px] bg-[#243A24] rounded-[14px] flex items-center justify-center text-white text-[22px] font-bold shrink-0">
+          <div className="flex justify-center lg:justify-start">
+            <div className="bg-[#F8FAF7] border border-[#E9EFE8] rounded-[14px] p-5 sm:p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] w-full max-w-[380px]">
+              <div className="flex items-center gap-3 mb-2.5">
+                <div className="w-[26px] h-[26px] bg-[#1E3A2B] text-white rounded-[6px] font-bold text-[13px] flex items-center justify-center shrink-0">
                   1
                 </div>
-
-                <h3 className="text-[22px] sm:text-[24px] xl:text-[26px] font-bold text-[#000000] leading-tight">
+                <h3 className="text-[16px] sm:text-[17px] font-bold text-[#1E3A2B] leading-tight">
                   Find & Contact a Trader
                 </h3>
               </div>
-
-              <p className="text-[#000000] text-[15px] sm:text-[16px] xl:text-[17px] leading-relaxed">
-                Browse the directory, compare local tradespeople, and contact
-                the trader that best fits your job.
+              <p className="text-[12.5px] sm:text-[13px] text-[#4A5548] font-normal leading-relaxed">
+                Browse the directory, compare local tradespeople, and contact the trader that best fits your job.
               </p>
             </div>
           </div>
 
-          {/* STEP 2 */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 xl:gap-14 items-center text-center xl:text-left">
-            {/* IMAGE */}
-            <div className="order-1 xl:order-2 relative w-full max-w-[400px] mx-auto aspect-square xl:max-w-none xl:aspect-auto xl:h-[360px]">
+          <div className="hidden lg:block" aria-hidden="true" />
+
+
+          {/* ── ROW 2: Empty | Card 2 | Image 2 ── */}
+          <div className="hidden lg:block" aria-hidden="true" />
+
+          <div className="flex justify-center lg:justify-start order-2 lg:order-none">
+            <div className="bg-[#F8FAF7] border border-[#E9EFE8] rounded-[14px] p-5 sm:p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] w-full max-w-[380px]">
+              <div className="flex items-center gap-3 mb-2.5">
+                <div className="w-[26px] h-[26px] bg-[#1E3A2B] text-white rounded-[6px] font-bold text-[13px] flex items-center justify-center shrink-0">
+                  2
+                </div>
+                <h3 className="text-[16px] sm:text-[17px] font-bold text-[#1E3A2B] leading-tight">
+                  Job Complete
+                </h3>
+              </div>
+              <p className="text-[12.5px] sm:text-[13px] text-[#4A5548] font-normal leading-relaxed">
+                Agree the work directly with the trader and complete the job outside the platform.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-center lg:justify-start order-1 lg:order-none">
+            <div className="relative w-full max-w-[270px] sm:max-w-[280px] aspect-[1.16/1]">
               <Image
                 src="/system2.png"
                 alt="Job Complete"
                 fill
-                className="object-contain xl:object-left"
-                unoptimized
+                className="object-contain"
+                priority
               />
-            </div>
-
-            {/* CONTENT */}
-            <div className="order-2 xl:order-1 flex flex-col items-center xl:items-start w-full max-w-[420px] mx-auto xl:mx-0 xl:ml-auto">
-              <div className="flex flex-col xl:flex-row items-center gap-4 mb-3 xl:mb-4">
-                <div className="w-[46px] h-[46px] bg-[#243A24] rounded-[14px] flex items-center justify-center text-white text-[22px] font-bold shrink-0">
-                  2
-                </div>
-
-                <h3 className="text-[22px] sm:text-[24px] xl:text-[26px] font-bold text-[#000000] leading-tight">
-                  Job Complete
-                </h3>
-              </div>
-
-              <p className="text-[#1E1E1F] text-[15px] sm:text-[16px] xl:text-[17px] leading-relaxed">
-                Agree the work directly with the trader and complete the job
-                outside the platform.
-              </p>
             </div>
           </div>
 
-          {/* STEP 3 */}
-          <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 xl:gap-14 items-center text-center xl:text-left">
-            {/* IMAGE */}
-            <div className="relative w-full max-w-[400px] mx-auto aspect-square xl:max-w-none xl:aspect-auto xl:h-[360px]">
+
+          {/* ── ROW 3: Image 3 | Card 3 | Empty ── */}
+          <div className="flex justify-center lg:justify-start">
+            <div className="relative w-full max-w-[270px] sm:max-w-[280px] aspect-[1.16/1]">
               <Image
                 src="/system3.png"
                 alt="Leave a Verified Review"
                 fill
-                className="object-contain xl:object-right"
-                unoptimized
+                className="object-contain"
+                priority
               />
             </div>
+          </div>
 
-            {/* CONTENT */}
-            <div className="flex flex-col items-center xl:items-start w-full max-w-[420px] mx-auto xl:mx-0">
-              <div className="flex flex-col xl:flex-row items-center gap-4 mb-3 xl:mb-4">
-                <div className="w-[46px] h-[46px] bg-[#243A24] rounded-[14px] flex items-center justify-center text-white text-[22px] font-bold shrink-0">
+          <div className="flex justify-center lg:justify-start">
+            <div className="bg-[#F8FAF7] border border-[#E9EFE8] rounded-[14px] p-5 sm:p-6 shadow-[0_2px_10px_rgba(0,0,0,0.02)] w-full max-w-[380px]">
+              <div className="flex items-center gap-3 mb-2.5">
+                <div className="w-[26px] h-[26px] bg-[#1E3A2B] text-white rounded-[6px] font-bold text-[13px] flex items-center justify-center shrink-0">
                   3
                 </div>
-
-                <h3 className="text-[22px] sm:text-[24px] xl:text-[26px] font-bold text-[#1F1F1F] leading-tight">
+                <h3 className="text-[16px] sm:text-[17px] font-bold text-[#1E3A2B] leading-tight">
                   Leave a Verified Review
                 </h3>
               </div>
-
-              <p className="text-[#1E1E1F] text-[15px] sm:text-[16px] xl:text-[17px] leading-relaxed">
-                Search traders profile on TugaTrades and submit your review
-                with proof of work completed such as an invoice or job photos.
+              <p className="text-[12.5px] sm:text-[13px] text-[#4A5548] font-normal leading-relaxed">
+                Search traders profile on TugaTrades and submit your review with proof of work completed such as an invoice or job photos.
               </p>
             </div>
           </div>
+
+          <div className="hidden lg:block" aria-hidden="true" />
+
+
+          {/* ── ROW 4: Empty | Button | Empty ── */}
+          <div className="hidden lg:block" aria-hidden="true" />
+
+          <div className="flex justify-center pt-2 sm:pt-4">
+            <Link
+              href="/review"
+              className="bg-[#6E9625] hover:bg-[#5E831F] text-white font-bold py-2.5 sm:py-3 px-8 sm:px-10 rounded-[10px] text-[13.5px] sm:text-[14px] transition-all shadow-sm hover:shadow active:scale-[0.98] inline-block cursor-pointer"
+            >
+              Leave a Review
+            </Link>
+          </div>
+
+          <div className="hidden lg:block" aria-hidden="true" />
+
         </div>
 
-        {/* BUTTON */}
-        <div className="mt-12 flex justify-center relative z-10">
-          <Link href="/review" className="bg-[#6E9625] hover:bg-[#5a7d1e] text-white font-bold py-3.5 px-9 rounded-[12px] transition-all cursor-pointer inline-block">
-            Leave a Review
-          </Link>
-        </div>
       </div>
     </section>
   );

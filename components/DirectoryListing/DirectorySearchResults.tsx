@@ -13,6 +13,7 @@ import toast from 'react-hot-toast';
 import { getAccessToken, getUserRole, parseJwt, clearTokens } from '@/utils/auth';
 import { Role } from '@/utils/role';
 import HowItWorks from '@/components/DirectoryListing/HowItWorks';
+import PlacesAutocompleteInput from '@/components/common/PlacesAutocompleteInput';
 
 const FilterDropdown = ({ value, onChange, options, disabled, placeholder, icon: Icon }: any) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -602,6 +603,7 @@ const DirectorySearchResults = () => {
         if (selectedCategory) params.categoryId = selectedCategory;
         if (selectedSkill) params.skillService = selectedSkill;
         if (selectedSubCategory) params.subCategory = selectedSubCategory;
+        if (searchTerm) params.location = searchTerm;
         if (workRadius > 0) params.radius = workRadius;
       }
 
@@ -672,47 +674,45 @@ const DirectorySearchResults = () => {
       <section className="bg-[#F8F9F7] pt-3 sm:pt-5 pb-14 px-4 sm:px-6 lg:px-8 xl:px-12">
         <div className="max-w-[1400px] mx-auto">
           {/* Post a Job Banner Card */}
-          <div className="bg-[#F4F8F3] border border-[#DFE8DE] rounded-xl overflow-hidden mb-4 sm:mb-5 flex flex-col xl:flex-row items-stretch shadow-[0_2px_12px_rgba(0,0,0,0.03)] relative">
+          <div className="bg-[#F4F8F3] border border-[#DFE8DE] rounded-xl overflow-hidden mb-4 sm:mb-5 flex flex-col md:flex-row items-stretch shadow-[0_2px_12px_rgba(0,0,0,0.03)] relative">
 
-            {/* Left Video */}
-            <div className="hidden xl:block w-[240px] relative shrink-0 bg-[#F4F8F3]">
+            {/* Left Video - Bigger & Object Cover */}
+            <div className="hidden md:block w-[240px] lg:w-[280px] xl:w-[320px] relative shrink-0 bg-[#E8EFE8] overflow-hidden">
               <video
                 src="/postjob.mp4"
                 autoPlay
                 loop
                 muted
                 playsInline
-                className="absolute inset-0 w-full h-full object-contain"
+                className="w-full h-full object-cover"
               />
             </div>
 
             {/* Middle and Right Content Wrapper */}
-            <div className="flex-1 flex flex-col md:flex-row items-center justify-between p-4 sm:p-5 lg:px-7 lg:py-4 gap-3 lg:gap-6">
+            <div className="flex-1 flex flex-col md:flex-row items-center justify-between p-3 sm:p-3.5 lg:px-6 lg:py-2.5 gap-3 lg:gap-5">
               {/* Text Content */}
-              <div className="flex-1 max-w-[580px] text-left">
-                <h2 className="text-[17px] sm:text-[20px] lg:text-[22px] font-extrabold text-[#19331E] tracking-tight leading-[1.2] mb-1.5">
+              <div className="flex-1 max-w-[540px] text-left">
+                <h2 className="text-[16px] sm:text-[18px] lg:text-[19px] font-extrabold text-[#19331E] tracking-tight leading-snug mb-1">
                   Need a trader? Post a job instead.
                 </h2>
-                <p className="text-[#4E6252] text-[13px] leading-relaxed mb-3 font-medium">
-                  Add photos, more details and get tailored quotes from trusted tradespeople in your area &mdash; or browse the directory below.
+                <p className="text-[#4E6252] text-[12px] sm:text-[12.5px] leading-snug mb-2 font-medium">
+                  Add photos, more details and get tailored responses from trusted tradespeople in your area &mdash; or browse the directory below.
                 </p>
                 <div className="flex items-center gap-3 flex-wrap">
                   <Link
                     href="/post-job"
-                    className="inline-flex items-center gap-1.5 bg-[#447132] hover:bg-[#385E28] text-white font-bold text-[13px] px-4 py-2 rounded-lg transition-all shadow-sm hover:shadow active:scale-[0.98] cursor-pointer"
+                    className="inline-flex items-center gap-1.5 bg-[#447132] hover:bg-[#385E28] text-white font-bold text-[11.5px] sm:text-[12px] uppercase tracking-wider px-3.5 py-1.5 rounded-md transition-all shadow-xs hover:shadow active:scale-[0.98] cursor-pointer"
                   >
-                    <Plus size={15} strokeWidth={2.8} />
-                    <span>Post a job</span>
+                    <span>POST A JOB</span>
                   </Link>
-
                 </div>
               </div>
 
               {/* Right Side: Photo preview + annotations */}
-              <div className="relative shrink-0 flex flex-col items-center select-none pt-1 pb-0.5 pr-1 sm:pr-4">
+              <div className="relative shrink-0 flex flex-col items-center select-none pt-0.5 pb-0.5 pr-1 sm:pr-3">
                 {/* Radiating accent lines at top right of image */}
                 <div className="absolute -top-1 -right-0 sm:right-2 text-[#447132] pointer-events-none">
-                  <svg width="20" height="20" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+                  <svg width="18" height="18" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
                     <line x1="5" y1="17" x2="18" y2="6" />
                     <line x1="7" y1="21" x2="24" y2="20" />
                     <line x1="8" y1="25" x2="21" y2="31" />
@@ -720,7 +720,7 @@ const DirectorySearchResults = () => {
                 </div>
 
                 {/* Photo Collage Preview */}
-                <div className="relative w-[140px] sm:w-[170px] md:w-[190px] lg:w-[210px]">
+                <div className="relative w-[130px] sm:w-[155px] md:w-[170px] lg:w-[185px]">
                   <Image
                     src="/before.jfif"
                     alt="Post a job preview"
@@ -732,17 +732,17 @@ const DirectorySearchResults = () => {
                 </div>
 
                 {/* Annotation: Arrow + "Add photos and details" */}
-                <div className="flex items-center gap-1.5 -mt-1 self-center sm:self-end pr-1 sm:pr-4">
+                <div className="flex items-center gap-1.5 -mt-1 self-center sm:self-end pr-1 sm:pr-3">
                   {/* Curved Arrow pointing towards photos */}
-                  <div className="text-[#447132] -mt-2">
-                    <svg width="28" height="32" viewBox="0 0 38 44" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <div className="text-[#447132] -mt-1.5">
+                    <svg width="24" height="28" viewBox="0 0 38 44" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M 6 40 C 4 24 13 12 30 8" />
                       <path d="M 21 4 L 32 8 L 24 16" />
                     </svg>
                   </div>
 
                   {/* Handwritten script text */}
-                  <div className="font-[family-name:var(--font-caveat)] text-[#2B4725] text-[17px] sm:text-[19px] font-bold leading-[1.05] tracking-wide -rotate-2">
+                  <div className="font-[family-name:var(--font-caveat)] text-[#2B4725] text-[15px] sm:text-[17px] font-bold leading-[1.05] tracking-wide -rotate-2">
                     <span>Add photos</span>
                     <br />
                     <span>and details</span>
@@ -752,46 +752,15 @@ const DirectorySearchResults = () => {
             </div>
           </div>
 
-          {/* Header */}
-          <div id="directory-results" className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4">
-            <h2 className="text-[18px] sm:text-[22px] font-extrabold text-[#1C2C1C]">
-              {filteredResults.length} Professional{filteredResults.length !== 1 && 's'} found
-            </h2>
-            <div className="flex items-center gap-3 mt-2 sm:mt-0 text-[14px] w-full sm:w-auto">
-              <span className="text-[#4B5563] font-medium hidden sm:inline">Sort by:</span>
-              <div className="relative w-full sm:w-auto" ref={sortDropdownRef}>
-                <button
-                  onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
-                  className="bg-white border border-gray-200 hover:border-[#6E9625] px-3.5 py-2 rounded-xl font-bold text-[#243A24] flex items-center justify-between gap-3 min-w-[180px] w-full sm:w-auto shadow-xs transition-all cursor-pointer outline-none focus:ring-2 focus:ring-[#6E9625]/20 text-[13px]"
-                >
-                  <span className="truncate">{sortOption}</span>
-                  <ChevronDown size={14} className={`text-[#9CA3AF] transition-transform ${isSortDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-                {isSortDropdownOpen && (
-                  <div className="absolute right-0 sm:right-0 left-0 sm:left-auto top-full mt-1.5 w-full sm:w-48 bg-white rounded-xl shadow-[0_15px_60px_rgba(0,0,0,0.12)] border border-gray-100 z-50 py-1.5">
-                    {["Highest rated", "Most Relevant"].map(option => (
-                      <div
-                        key={option}
-                        onClick={() => {
-                          setSortOption(option);
-                          setIsSortDropdownOpen(false);
-                        }}
-                        className={`px-3.5 py-2 text-[12.5px] cursor-pointer transition-colors ${sortOption === option ? "bg-[#F4F7F1] text-[#6E9625] font-bold" : "text-[#4B5563] font-medium hover:bg-[#F4F7F1]"
-                          }`}
-                      >
-                        {option}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-
           <div className="flex flex-col lg:flex-row gap-6 xl:gap-8 items-start">
             {/* Left Sidebar (Filters) */}
             <div className="w-full lg:w-[270px] xl:w-[300px] shrink-0 lg:sticky lg:top-[85px]">
+              {/* Professional Count directly above filters */}
+              <div className="mb-3">
+                <h3 className="text-[17px] sm:text-[19px] font-extrabold text-[#1C2C1C]">
+                  Search for  Professionals
+                </h3>
+              </div>
               <div className="lg:hidden mb-3">
                 <button
                   onClick={() => setShowFiltersMobile(!showFiltersMobile)}
@@ -814,6 +783,7 @@ const DirectorySearchResults = () => {
                       setSelectedCategory('');
                       setSelectedSkill('');
                       setSelectedSubCategory('');
+                      setSearchTerm('');
                       setWorkRadius(20);
                       setMinRating(null);
                       setAppliedMinRating(null);
@@ -884,13 +854,22 @@ const DirectorySearchResults = () => {
                   <div>
                     <label className="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Location</label>
                     <div className="relative">
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none"><MapPin size={14} /></div>
-                      <input
-                        type="text"
+                      <PlacesAutocompleteInput
+                        value={searchTerm}
+                        onChange={setSearchTerm}
+                        onPlaceSelect={(place) => {
+                          if (place?.formattedAddress) {
+                            setSearchTerm(place.formattedAddress);
+                          }
+                        }}
                         placeholder="Enter Location"
-                        className="w-full bg-[#F3F4F6] text-[#1C2C1C] text-[13px] font-medium rounded-xl h-[38px] pl-9 pr-8 outline-none placeholder-[#9CA3AF] focus:ring-1 focus:ring-[#6E9625] focus:bg-white transition-all"
+                        leftAdornment={
+                          <div className="absolute left-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] pointer-events-none z-10">
+                            <MapPin size={14} />
+                          </div>
+                        }
+                        inputClassName="w-full bg-[#F3F4F6] text-[#1C2C1C] text-[13px] font-medium rounded-xl h-[38px] pl-9 pr-8 outline-none placeholder-[#9CA3AF] focus:ring-1 focus:ring-[#6E9625] focus:bg-white transition-all"
                       />
-                      <div className="absolute right-3 top-1/2 -translate-y-1/2 text-[#9CA3AF] cursor-pointer hover:text-[#6E9625] transition-colors"><Target size={14} /></div>
                     </div>
                   </div>
 
@@ -963,6 +942,47 @@ const DirectorySearchResults = () => {
             </div>
             {/* Right Content (Results) */}
             <div className="flex-1">
+
+              {/* Header: Title on Left, Sort by on Right */}
+              <div id="directory-results" className="flex flex-col sm:flex-row justify-between items-start sm:items-end mb-4 gap-2">
+                <div>
+                  <h2 className="text-[22px] sm:text-[26px] font-extrabold text-[#19331E] tracking-tight leading-tight">
+                    <span className="text-[#6E9625]">Find</span> a Tradesperson
+                  </h2>
+                  <p className="text-[13px] sm:text-[14px] text-[#4E6252] font-medium mt-0.5">
+                    What service do you need?
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2 text-[14px] w-full sm:w-auto self-end sm:self-auto">
+                  <span className="text-[#4B5563] font-medium hidden sm:inline">Sort by:</span>
+                  <div className="relative w-full sm:w-auto" ref={sortDropdownRef}>
+                    <button
+                      onClick={() => setIsSortDropdownOpen(!isSortDropdownOpen)}
+                      className="bg-white border border-gray-200 hover:border-[#6E9625] px-3.5 py-2 rounded-xl font-bold text-[#243A24] flex items-center justify-between gap-3 min-w-[170px] w-full sm:w-auto shadow-xs transition-all cursor-pointer outline-none focus:ring-2 focus:ring-[#6E9625]/20 text-[13px]"
+                    >
+                      <span className="truncate">{sortOption}</span>
+                      <ChevronDown size={14} className={`text-[#9CA3AF] transition-transform ${isSortDropdownOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                    {isSortDropdownOpen && (
+                      <div className="absolute right-0 sm:right-0 left-0 sm:left-auto top-full mt-1.5 w-full sm:w-48 bg-white rounded-xl shadow-[0_15px_60px_rgba(0,0,0,0.12)] border border-gray-100 z-50 py-1.5">
+                        {["Highest rated", "Most Relevant"].map(option => (
+                          <div
+                            key={option}
+                            onClick={() => {
+                              setSortOption(option);
+                              setIsSortDropdownOpen(false);
+                            }}
+                            className={`px-3.5 py-2 text-[12.5px] cursor-pointer transition-colors ${sortOption === option ? "bg-[#F4F7F1] text-[#6E9625] font-bold" : "text-[#4B5563] font-medium hover:bg-[#F4F7F1]"}`}
+                          >
+                            {option}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
 
               {/* List of Traders */}
               {searchLoading ? (
@@ -1084,11 +1104,11 @@ const DirectorySearchResults = () => {
                           <div>
                             <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 mb-1">
                               <h3 className="text-[15px] lg:text-[16px] xl:text-[17px] font-bold text-[#1C2C1C] leading-tight">{trader.fullName}</h3>
-                              {trader.isVerified && (
+                              {/* {trader.isVerified && (
                                 <span className="flex items-center gap-0.5 text-[#6E9625] bg-[#F4F7F1] border border-[#6E9625]/20 px-2 py-0.5 rounded-full text-[10px] font-bold w-fit">
                                   <CheckCircle size={11} /> Vetted Trader
                                 </span>
-                              )}
+                              )} */}
                             </div>
 
                             <div className="flex items-center gap-1 mb-2">
@@ -1102,11 +1122,6 @@ const DirectorySearchResults = () => {
                             </div>
 
                           </div>
-                        </div>
-
-                        <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#4B5563] mb-2">
-                          <MapPin size={13} className="text-[#6E9625] shrink-0" />
-                          <span className="truncate">{trader.location}</span>
                         </div>
 
                         {/* Categories / Skills */}
@@ -1145,6 +1160,11 @@ const DirectorySearchResults = () => {
                               </div>
                             );
                           })()}
+                        </div>
+
+                        <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#4B5563] mb-2">
+                          <MapPin size={13} className="text-[#6E9625] shrink-0" />
+                          <span className="truncate">{trader.location}</span>
                         </div>
 
                         {/* Bio */}

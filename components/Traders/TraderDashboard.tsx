@@ -57,6 +57,7 @@ interface JobItem {
   emergency?: boolean;
   isEmergency?: boolean;
   timescale?: string;
+  status?: string;
 }
 
 interface TraderDashboardData {
@@ -196,13 +197,13 @@ export default function TraderDashboard() {
         const arr = Array.isArray(res)
           ? res
           : Array.isArray(res?.data)
-          ? res.data
-          : Array.isArray(res?.categories)
-          ? res.categories
-          : [];
+            ? res.data
+            : Array.isArray(res?.categories)
+              ? res.categories
+              : [];
         if (arr.length > 0) setCategoriesList(arr);
       })
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   useEffect(() => {
@@ -231,8 +232,8 @@ export default function TraderDashboard() {
         const mJobs = Array.isArray(matchedJobsRes?.data)
           ? matchedJobsRes.data
           : Array.isArray(matchedJobsRes)
-          ? matchedJobsRes
-          : [];
+            ? matchedJobsRes
+            : [];
         setMatchedJobs(mJobs);
       } catch (err) {
         console.error("Failed to fetch dashboard data", err);
@@ -382,70 +383,71 @@ export default function TraderDashboard() {
   const inProgressFromMatchedJobs: JobItem[] =
     Array.isArray(matchedJobs) && matchedJobs.length > 0
       ? matchedJobs
-          .filter((item: any) => {
-            const rawStatus = (item.rawStatus || item.status || "").toUpperCase();
-            const matchStatus = (
-              item.matchStatus ||
-              item.match?.status ||
-              item.myMatch?.status ||
-              item.jobMatch?.status ||
-              (Array.isArray(item.matches)
-                ? item.matches.find(
-                    (m: any) =>
-                      m.traderId === item.traderId ||
-                      m.isQuoteSubmitted ||
-                      m.isSelected !== undefined
-                  )?.status || item.matches[0]?.status
-                : undefined) ||
-              item.quoteDetails?.status ||
-              item.myQuote?.status
-            )?.toUpperCase();
+        .filter((item: any) => {
+          const rawStatus = (item.rawStatus || item.status || "").toUpperCase();
+          const matchStatus = (
+            item.matchStatus ||
+            item.match?.status ||
+            item.myMatch?.status ||
+            item.jobMatch?.status ||
+            (Array.isArray(item.matches)
+              ? item.matches.find(
+                (m: any) =>
+                  m.traderId === item.traderId ||
+                  m.isQuoteSubmitted ||
+                  m.isSelected !== undefined
+              )?.status || item.matches[0]?.status
+              : undefined) ||
+            item.quoteDetails?.status ||
+            item.myQuote?.status
+          )?.toUpperCase();
 
-            const isThisTraderRejected =
-              matchStatus === "REJECTED" ||
-              matchStatus === "DECLINED" ||
-              item.status === "REJECTED" ||
-              item.rawStatus === "REJECTED" ||
-              item.status === "DECLINED" ||
-              item.rawStatus === "DECLINED";
+          const isThisTraderRejected =
+            matchStatus === "REJECTED" ||
+            matchStatus === "DECLINED" ||
+            item.status === "REJECTED" ||
+            item.rawStatus === "REJECTED" ||
+            item.status === "DECLINED" ||
+            item.rawStatus === "DECLINED";
 
-            const isAccepted = Boolean(
-              (item.isQuoteAccepted ||
-                matchStatus === "ACCEPTED" ||
-                (Array.isArray(item.quotes) &&
-                  item.quotes.some(
-                    (q: any) =>
-                      q.status?.toUpperCase() === "ACCEPTED" &&
-                      (q.traderId === item.traderId || q.isMyQuote)
-                  ))) &&
-                !isThisTraderRejected
-            );
+          const isAccepted = Boolean(
+            (item.isQuoteAccepted ||
+              matchStatus === "ACCEPTED" ||
+              (Array.isArray(item.quotes) &&
+                item.quotes.some(
+                  (q: any) =>
+                    q.status?.toUpperCase() === "ACCEPTED" &&
+                    (q.traderId === item.traderId || q.isMyQuote)
+                ))) &&
+            !isThisTraderRejected
+          );
 
-            return (
-              isAccepted ||
-              rawStatus === "IN_PROGRESS" ||
-              rawStatus === "ASSIGNED" ||
-              item.status === "In Progress"
-            );
+          return (
+            isAccepted ||
+            rawStatus === "IN_PROGRESS" ||
+            rawStatus === "ASSIGNED" ||
+            item.status === "In Progress"
+          );
+        })
+        .map(
+          (item: any): JobItem => ({
+            id: item.id || item.jobId,
+            title: item.title || "Job",
+            description:
+              item.description ||
+              item.projectDescription ||
+              item.details ||
+              "",
+            location: item.location || item.postcode || "Albufeira",
+            postcode: item.postcode || "",
+            imageUrl:
+              item.imageUrl ||
+              item.attachments?.[0]?.url ||
+              item.category?.image,
+            quotesCount: item.quotes?.length || item.quotesCount || 0,
+            status: item.status || item.rawStatus || "In Progress",
           })
-          .map(
-            (item: any): JobItem => ({
-              id: item.id || item.jobId,
-              title: item.title || "Job",
-              description:
-                item.description ||
-                item.projectDescription ||
-                item.details ||
-                "",
-              location: item.location || item.postcode || "Albufeira",
-              postcode: item.postcode || "",
-              imageUrl:
-                item.imageUrl ||
-                item.attachments?.[0]?.url ||
-                item.category?.image,
-              quotesCount: item.quotes?.length || item.quotesCount || 0,
-            })
-          )
+        )
       : [];
 
   // Working on / In progress jobs (Real API data only - no static data)
@@ -457,6 +459,50 @@ export default function TraderDashboard() {
         : inProgressFromMatchedJobs;
 
   // Helpers
+  const renderStatusBadge = (status?: string) => {
+    const s = status?.toUpperCase();
+    if (status === "Quote Accepted" || s === "QUOTE_ACCEPTED" || s === "ACCEPTED" || status === "Contacted" || s === "CONTACTED" || status === "Connected" || s === "CONNECTED") {
+      return (
+        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#7DB0E3] border border-[#679FD8] text-[#103270] text-[11px] font-bold">
+          Connected
+        </div>
+      );
+    }
+    if (status === "Quote Declined" || s === "QUOTE_DECLINED" || s === "DECLINED" || s === "REJECTED") {
+      return (
+        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#FF9797] border border-[#F08282] text-[#E53935] text-[11px] font-bold">
+          Quote Declined
+        </div>
+      );
+    }
+    if (status === "Quote Sent" || s === "QUOTE_SENT" || s === "QUOTED") {
+      return (
+        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#DCEAF7] border border-[#C2D9EE] text-[#156082] text-[11px] font-bold">
+          Quote Sent
+        </div>
+      );
+    }
+    if (status === "Completed" || s === "COMPLETED") {
+      return (
+        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#13501B] border border-[#0E3F15] text-white text-[11px] font-bold">
+          Completed
+        </div>
+      );
+    }
+    if (status === "Closed" || s === "CLOSED" || s === "CANCELLED" || s === "EXPIRED") {
+      return (
+        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#A6A6A6] border border-[#8E8E8E] text-[#333333] text-[11px] font-bold">
+          Closed
+        </div>
+      );
+    }
+    return (
+      <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#EBA75B] border border-[#E09D50] text-[#7A3E06] text-[11px] font-bold">
+        In Progress
+      </div>
+    );
+  };
+
   const formatBudget = (budget?: string | number) => {
     if (!budget) return "Under €500";
     const b = String(budget);
@@ -593,10 +639,39 @@ export default function TraderDashboard() {
             return 1;
         }
       };
-      const mappedDays =
-        Number(quoteForm.estimatedDays) > 0
-          ? Number(quoteForm.estimatedDays)
-          : mapAvailabilityToDays(quoteForm.availability);
+      const mapDurationToDays = (duration?: string): number => {
+        if (!duration) return 1;
+        switch (duration) {
+          case "Few Hours":
+          case "Half day":
+          case "1 day":
+            return 1;
+          case "2–3 days":
+          case "2-3 days":
+            return 3;
+          case "Under a week":
+            return 7;
+          case "1 – 2 weeks":
+          case "1-2 weeks":
+            return 14;
+          case "2 – 3 weeks":
+          case "2-3 weeks":
+            return 21;
+          case "3 – 4 weeks":
+          case "3-4 weeks":
+            return 28;
+          case "1 month +":
+          case "1 month+":
+            return 30;
+          default: {
+            const num = parseInt(duration, 10);
+            return !isNaN(num) && num > 0 ? num : 1;
+          }
+        }
+      };
+      const mappedDays = quoteForm.estimatedDays
+        ? mapDurationToDays(quoteForm.estimatedDays)
+        : mapAvailabilityToDays(quoteForm.availability);
 
       const formData = new FormData();
       formData.append("price", quoteForm.price);
@@ -626,89 +701,71 @@ export default function TraderDashboard() {
   return (
     <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 bg-[#F7F9F5] min-h-screen font-sans">
       {/* ── TOP WELCOME BAR ─────────────────────────────────── */}
-      <div className="bg-[#EFF5EB] rounded-[22px] border border-[#DFEBDD] overflow-hidden mb-7 flex flex-col lg:flex-row items-stretch justify-between shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-        {/* Left: Greeting */}
-        <div className="p-5 sm:p-6 lg:py-6 lg:px-8 flex items-center gap-4 flex-1">
-          <span className="text-[34px] leading-none select-none">👋</span>
+      <div className="bg-white rounded-[22px] border border-[#DFEBDD] overflow-hidden mb-7 flex flex-col sm:flex-row items-stretch shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+        {/* Left: Greeting (compact green section) */}
+        <div className="bg-[#EFF5EB] p-4 sm:py-5 sm:px-6 lg:px-7 flex items-center gap-3 sm:gap-3.5 shrink-0 border-b sm:border-b-0 sm:border-r border-[#DFEBDD]">
+          <span className="text-[28px] sm:text-[32px] leading-none select-none">👋</span>
           <div>
-            <h1 className="text-[22px] sm:text-[26px] font-black text-[#143118] leading-tight">
+            <h1 className="text-[19px] sm:text-[22px] lg:text-[24px] font-black text-[#143118] leading-tight whitespace-nowrap">
               Hello, {traderName}
             </h1>
-            <p className="text-[13.5px] text-[#556958] mt-1 font-medium">
-              Here&apos;s what&apos;s happening with your business today.
-            </p>
           </div>
         </div>
 
-        {/* Right: Quick stat mini-cards inside white box */}
-        <div className="bg-white px-6 sm:px-8 lg:px-10 py-5 sm:py-6 flex items-center justify-between sm:justify-end gap-6 sm:gap-10 lg:gap-12 shrink-0 border-t lg:border-t-0 lg:border-l border-[#DFEBDD] overflow-x-auto">
+        {/* Right: Quick stat mini-cards inside white box (moved closer to greeting) */}
+        <div className="bg-white px-5 sm:px-6 lg:px-8 py-4 sm:py-5 flex items-center gap-6 sm:gap-8 lg:gap-10 overflow-x-auto flex-wrap sm:flex-nowrap">
           {/* Card 1: In progress jobs */}
           <div
             onClick={() => router.push("/trader/jobs?tab=In Progress")}
-            className="flex flex-col cursor-pointer group shrink-0"
+            className="flex items-center gap-3.5 cursor-pointer group shrink-0 transition-opacity hover:opacity-80"
           >
-            <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-full bg-[#FFF4E6] text-[#EA580C] flex items-center justify-center shrink-0">
-                <Luggage size={18} strokeWidth={2.2} />
-              </div>
-              <div>
-                <span className="text-[20px] font-black text-[#143118] leading-tight block">
-                  {actionRequired?.inProgressJobsCount ?? rawWorkingOn.length}
-                </span>
-                <span className="text-[11.5px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
-                  In progress job
-                </span>
-              </div>
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#FFF4E6] text-[#EA580C] flex items-center justify-center shrink-0">
+              <Luggage size={18} strokeWidth={2.2} />
             </div>
-            <span className="text-[11.5px] font-bold text-[#44762A] flex items-center gap-1 group-hover:underline mt-2">
-              View jobs <ArrowRight size={11} strokeWidth={2.5} />
-            </span>
+            <div>
+              <span className="text-[19px] sm:text-[20px] font-black text-[#143118] leading-tight block">
+                {actionRequired?.inProgressJobsCount ?? rawWorkingOn.length}
+              </span>
+              <span className="text-[11.5px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
+                In progress job
+              </span>
+            </div>
           </div>
 
           {/* Card 2: Quotes awaiting response */}
           <div
             onClick={() => router.push("/trader/quote")}
-            className="flex flex-col cursor-pointer group shrink-0"
+            className="flex items-center gap-3.5 cursor-pointer group shrink-0 transition-opacity hover:opacity-80"
           >
-            <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0">
-                <MessageSquare size={18} strokeWidth={2.2} />
-              </div>
-              <div>
-                <span className="text-[20px] font-black text-[#143118] leading-tight block">
-                  {actionRequired?.quotesAwaitingResponseCount ?? 0}
-                </span>
-                <span className="text-[11.5px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
-                  Quotes awaiting response
-                </span>
-              </div>
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0">
+              <MessageSquare size={18} strokeWidth={2.2} />
             </div>
-            <span className="text-[11.5px] font-bold text-[#44762A] flex items-center gap-1 group-hover:underline mt-2">
-              View quotes <ArrowRight size={11} strokeWidth={2.5} />
-            </span>
+            <div>
+              <span className="text-[19px] sm:text-[20px] font-black text-[#143118] leading-tight block">
+                {actionRequired?.quotesAwaitingResponseCount ?? 0}
+              </span>
+              <span className="text-[11.5px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
+                Quotes awaiting response
+              </span>
+            </div>
           </div>
 
           {/* Card 3: Pending reviews */}
           <div
             onClick={() => router.push("/trader/reviews")}
-            className="flex flex-col cursor-pointer group shrink-0"
+            className="flex items-center gap-3.5 cursor-pointer group shrink-0 transition-opacity hover:opacity-80"
           >
-            <div className="flex items-center gap-3.5">
-              <div className="w-11 h-11 rounded-full bg-[#EBF4E7] text-[#2E7D32] flex items-center justify-center shrink-0">
-                <Star size={18} strokeWidth={2.2} />
-              </div>
-              <div>
-                <span className="text-[20px] font-black text-[#143118] leading-tight block">
-                  {actionRequired?.newReviewsCount ?? 0}
-                </span>
-                <span className="text-[11.5px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
-                  Pending Reviews
-                </span>
-              </div>
+            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#EBF4E7] text-[#2E7D32] flex items-center justify-center shrink-0">
+              <Star size={18} strokeWidth={2.2} />
             </div>
-            <span className="text-[11.5px] font-bold text-[#44762A] flex items-center gap-1 group-hover:underline mt-2">
-              View review <ArrowRight size={11} strokeWidth={2.5} />
-            </span>
+            <div>
+              <span className="text-[19px] sm:text-[20px] font-black text-[#143118] leading-tight block">
+                {actionRequired?.newReviewsCount ?? 0}
+              </span>
+              <span className="text-[11.5px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
+                Pending Reviews
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -740,11 +797,10 @@ export default function TraderDashboard() {
                       setCategoryDropdownOpen(false);
                       setTimescaleDropdownOpen(false);
                     }}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[12px] font-bold transition-colors cursor-pointer bg-white ${
-                      selectedEmergency !== "ALL"
-                        ? "border-[#2B5921] text-[#2B5921] bg-[#EFF5EB]"
-                        : "border-[#CFDCD0] text-[#1B311E] hover:bg-[#F4F8F3]"
-                    }`}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[12px] font-bold transition-colors cursor-pointer bg-white ${selectedEmergency !== "ALL"
+                      ? "border-[#2B5921] text-[#2B5921] bg-[#EFF5EB]"
+                      : "border-[#CFDCD0] text-[#1B311E] hover:bg-[#F4F8F3]"
+                      }`}
                   >
                     <Flame
                       size={13}
@@ -758,14 +814,13 @@ export default function TraderDashboard() {
                       {selectedEmergency === "EMERGENCY"
                         ? "Emergency Only"
                         : selectedEmergency === "STANDARD"
-                        ? "Standard Only"
-                        : "Emergency: All"}
+                          ? "Standard Only"
+                          : "Emergency: All"}
                     </span>
                     <ChevronDown
                       size={13}
-                      className={`text-[#768779] transition-transform ${
-                        emergencyDropdownOpen ? "rotate-180" : ""
-                      }`}
+                      className={`text-[#768779] transition-transform ${emergencyDropdownOpen ? "rotate-180" : ""
+                        }`}
                     />
                   </button>
 
@@ -778,11 +833,10 @@ export default function TraderDashboard() {
                             setSelectedEmergency(opt.id);
                             setEmergencyDropdownOpen(false);
                           }}
-                          className={`px-3 py-2 text-[12px] cursor-pointer flex items-center justify-between hover:bg-[#F4F8F3] ${
-                            selectedEmergency === opt.id
-                              ? "text-[#2B5921] font-bold bg-[#EFF5EB]"
-                              : "text-[#1B311E]"
-                          }`}
+                          className={`px-3 py-2 text-[12px] cursor-pointer flex items-center justify-between hover:bg-[#F4F8F3] ${selectedEmergency === opt.id
+                            ? "text-[#2B5921] font-bold bg-[#EFF5EB]"
+                            : "text-[#1B311E]"
+                            }`}
                         >
                           <span>{opt.name}</span>
                           {selectedEmergency === opt.id && <Check size={12} />}
@@ -801,18 +855,16 @@ export default function TraderDashboard() {
                       setEmergencyDropdownOpen(false);
                       setTimescaleDropdownOpen(false);
                     }}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[12px] font-bold transition-colors cursor-pointer bg-white ${
-                      selectedCategory !== "ALL"
-                        ? "border-[#2B5921] text-[#2B5921] bg-[#EFF5EB]"
-                        : "border-[#CFDCD0] text-[#1B311E] hover:bg-[#F4F8F3]"
-                    }`}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[12px] font-bold transition-colors cursor-pointer bg-white ${selectedCategory !== "ALL"
+                      ? "border-[#2B5921] text-[#2B5921] bg-[#EFF5EB]"
+                      : "border-[#CFDCD0] text-[#1B311E] hover:bg-[#F4F8F3]"
+                      }`}
                   >
                     <span>{selectedCategory === "ALL" ? "All Categories" : selectedCategory}</span>
                     <ChevronDown
                       size={13}
-                      className={`text-[#768779] transition-transform ${
-                        categoryDropdownOpen ? "rotate-180" : ""
-                      }`}
+                      className={`text-[#768779] transition-transform ${categoryDropdownOpen ? "rotate-180" : ""
+                        }`}
                     />
                   </button>
 
@@ -823,11 +875,10 @@ export default function TraderDashboard() {
                           setSelectedCategory("ALL");
                           setCategoryDropdownOpen(false);
                         }}
-                        className={`px-3 py-2 text-[12px] cursor-pointer flex items-center justify-between hover:bg-[#F4F8F3] ${
-                          selectedCategory === "ALL"
-                            ? "text-[#2B5921] font-bold bg-[#EFF5EB]"
-                            : "text-[#1B311E]"
-                        }`}
+                        className={`px-3 py-2 text-[12px] cursor-pointer flex items-center justify-between hover:bg-[#F4F8F3] ${selectedCategory === "ALL"
+                          ? "text-[#2B5921] font-bold bg-[#EFF5EB]"
+                          : "text-[#1B311E]"
+                          }`}
                       >
                         <span>All Categories</span>
                         {selectedCategory === "ALL" && <Check size={12} />}
@@ -839,11 +890,10 @@ export default function TraderDashboard() {
                             setSelectedCategory(catName);
                             setCategoryDropdownOpen(false);
                           }}
-                          className={`px-3 py-2 text-[12px] cursor-pointer flex items-center justify-between hover:bg-[#F4F8F3] ${
-                            selectedCategory.toLowerCase() === catName.toLowerCase()
-                              ? "text-[#2B5921] font-bold bg-[#EFF5EB]"
-                              : "text-[#1B311E]"
-                          }`}
+                          className={`px-3 py-2 text-[12px] cursor-pointer flex items-center justify-between hover:bg-[#F4F8F3] ${selectedCategory.toLowerCase() === catName.toLowerCase()
+                            ? "text-[#2B5921] font-bold bg-[#EFF5EB]"
+                            : "text-[#1B311E]"
+                            }`}
                         >
                           <span>{catName}</span>
                           {selectedCategory.toLowerCase() === catName.toLowerCase() && (
@@ -864,11 +914,10 @@ export default function TraderDashboard() {
                       setEmergencyDropdownOpen(false);
                       setCategoryDropdownOpen(false);
                     }}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[12px] font-bold transition-colors cursor-pointer bg-white ${
-                      selectedTimescale !== "ALL"
-                        ? "border-[#2B5921] text-[#2B5921] bg-[#EFF5EB]"
-                        : "border-[#CFDCD0] text-[#1B311E] hover:bg-[#F4F8F3]"
-                    }`}
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border text-[12px] font-bold transition-colors cursor-pointer bg-white ${selectedTimescale !== "ALL"
+                      ? "border-[#2B5921] text-[#2B5921] bg-[#EFF5EB]"
+                      : "border-[#CFDCD0] text-[#1B311E] hover:bg-[#F4F8F3]"
+                      }`}
                   >
                     <span>
                       {selectedTimescale === "ALL"
@@ -877,9 +926,8 @@ export default function TraderDashboard() {
                     </span>
                     <ChevronDown
                       size={13}
-                      className={`text-[#768779] transition-transform ${
-                        timescaleDropdownOpen ? "rotate-180" : ""
-                      }`}
+                      className={`text-[#768779] transition-transform ${timescaleDropdownOpen ? "rotate-180" : ""
+                        }`}
                     />
                   </button>
 
@@ -892,11 +940,10 @@ export default function TraderDashboard() {
                             setSelectedTimescale(opt.id);
                             setTimescaleDropdownOpen(false);
                           }}
-                          className={`px-3 py-2 text-[12px] cursor-pointer flex items-center justify-between hover:bg-[#F4F8F3] ${
-                            selectedTimescale === opt.id
-                              ? "text-[#2B5921] font-bold bg-[#EFF5EB]"
-                              : "text-[#1B311E]"
-                          }`}
+                          className={`px-3 py-2 text-[12px] cursor-pointer flex items-center justify-between hover:bg-[#F4F8F3] ${selectedTimescale === opt.id
+                            ? "text-[#2B5921] font-bold bg-[#EFF5EB]"
+                            : "text-[#1B311E]"
+                            }`}
                         >
                           <span>{opt.name}</span>
                           {selectedTimescale === opt.id && <Check size={12} />}
@@ -910,18 +957,18 @@ export default function TraderDashboard() {
                 {(selectedEmergency !== "ALL" ||
                   selectedCategory !== "ALL" ||
                   selectedTimescale !== "ALL") && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedEmergency("ALL");
-                      setSelectedCategory("ALL");
-                      setSelectedTimescale("ALL");
-                    }}
-                    className="text-[11px] font-bold text-gray-400 hover:text-red-500 transition-colors ml-1 cursor-pointer"
-                  >
-                    Reset
-                  </button>
-                )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedEmergency("ALL");
+                        setSelectedCategory("ALL");
+                        setSelectedTimescale("ALL");
+                      }}
+                      className="text-[11px] font-bold text-gray-400 hover:text-red-500 transition-colors ml-1 cursor-pointer"
+                    >
+                      Reset
+                    </button>
+                  )}
               </div>
             </div>
 
@@ -932,7 +979,7 @@ export default function TraderDashboard() {
                   const locationString = (job.location || "Albufeira").trim();
                   const postcodeString =
                     job.postcode &&
-                    !locationString.toLowerCase().includes(job.postcode.toLowerCase())
+                      !locationString.toLowerCase().includes(job.postcode.toLowerCase())
                       ? ` • ${job.postcode.trim()}`
                       : "";
                   const distanceString = job.distanceText || job.distance || "1.5 km";
@@ -1158,9 +1205,7 @@ export default function TraderDashboard() {
                         <span className="bg-[#F1F4F1] text-[#7C8B7F] text-[9.5px] font-bold px-2 py-0.5 rounded tracking-wider uppercase mb-1.5">
                           STATUS
                         </span>
-                        <span className="bg-[#DE9B52] text-[#5A2C00] font-bold text-[13px] px-5 py-2 rounded-xl whitespace-nowrap shadow-2xs inline-block text-center">
-                          In Progress
-                        </span>
+                        {renderStatusBadge(job.status || "In Progress")}
                       </div>
 
                       {/* Col 4: View Job Button */}
@@ -1392,14 +1437,14 @@ export default function TraderDashboard() {
             </div>
 
             {/* Link */}
-            <button
+            {/* <button
               type="button"
               onClick={() => router.push("/trader/reports")}
               className="text-[12px] font-bold text-[#2B5921] hover:underline flex items-center gap-1 cursor-pointer pt-1"
             >
               <span>View full performance</span>
               <ArrowRight size={12} />
-            </button>
+            </button> */}
           </div>
         </div>
       </div>
@@ -1477,27 +1522,37 @@ export default function TraderDashboard() {
                 </div>
               </div>
 
-              {/* Estimated Days */}
+              {/* Estimated Duration */}
               <div>
                 <label className="block text-[12px] font-semibold text-[#1C2C1C] mb-1.5">
-                  Estimated Days <span className="text-red-500">*</span>
+                  Estimated Duration <span className="text-gray-400 font-normal">(optional)</span>
                 </label>
                 <div className="relative">
                   <Clock
                     size={15}
                     className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                   />
-                  <input
-                    type="number"
-                    step="1"
-                    min={1}
-                    required
-                    placeholder="e.g. 3"
+                  <select
                     value={quoteForm.estimatedDays}
                     onChange={(e) =>
                       setQuoteForm((f) => ({ ...f, estimatedDays: e.target.value }))
                     }
-                    className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] placeholder:text-gray-400 focus:outline-none focus:border-[#6E9625] focus:ring-2 focus:ring-[#6E9625]/20 transition-all"
+                    className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] bg-white placeholder:text-gray-400 focus:outline-none focus:border-[#6E9625] focus:ring-2 focus:ring-[#6E9625]/20 transition-all cursor-pointer appearance-none"
+                  >
+                    <option value="">Select duration (optional)</option>
+                    <option value="Few Hours">Few Hours</option>
+                    <option value="Half day">Half day</option>
+                    <option value="1 day">1 day</option>
+                    <option value="2–3 days">2–3 days</option>
+                    <option value="Under a week">Under a week</option>
+                    <option value="1 – 2 weeks">1 – 2 weeks</option>
+                    <option value="2 – 3 weeks">2 – 3 weeks</option>
+                    <option value="3 – 4 weeks">3 – 4 weeks</option>
+                    <option value="1 month +">1 month +</option>
+                  </select>
+                  <ChevronDown
+                    size={14}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                   />
                 </div>
               </div>
