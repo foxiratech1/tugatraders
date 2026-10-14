@@ -148,8 +148,8 @@ export default function MessageList({
             disabled={!canScrollUp}
             title="Scroll up (Double-click to go to top)"
             className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all ${canScrollUp
-                ? "text-[#1C2C1C] hover:bg-gray-100 hover:text-[#6E9625] active:scale-95 cursor-pointer shadow-2xs"
-                : "text-gray-300 cursor-not-allowed opacity-40"
+              ? "text-[#1C2C1C] hover:bg-gray-100 hover:text-[#6E9625] active:scale-95 cursor-pointer shadow-2xs"
+              : "text-gray-300 cursor-not-allowed opacity-40"
               }`}
           >
             <ChevronUp size={16} />
@@ -162,8 +162,8 @@ export default function MessageList({
             disabled={!canScrollDown}
             title="Scroll down (Double-click to go to bottom)"
             className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all ${canScrollDown
-                ? "text-[#1C2C1C] hover:bg-gray-100 hover:text-[#6E9625] active:scale-95 cursor-pointer shadow-2xs"
-                : "text-gray-300 cursor-not-allowed opacity-40"
+              ? "text-[#1C2C1C] hover:bg-gray-100 hover:text-[#6E9625] active:scale-95 cursor-pointer shadow-2xs"
+              : "text-gray-300 cursor-not-allowed opacity-40"
               }`}
           >
             <ChevronDown size={16} />

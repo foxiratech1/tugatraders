@@ -112,6 +112,10 @@ interface UnreviewedJob {
   } | null;
   selectedTraderId?: string;
   traderId?: string;
+  quotes?: any[];
+  hasReviewed?: boolean;
+  isDirectJob?: boolean;
+  directJobId?: string;
 }
 
 function TraderAvatar({ trader }: { trader: any }) {
@@ -257,10 +261,17 @@ export default function CustomerReviews() {
       job.traderId ||
       "";
     const params = new URLSearchParams();
-    if (job.id) params.set("jobId", job.id);
-    if (traderId) params.set("traderId", traderId);
-    params.set("reviewType", "JOB");
-    params.set("workCarriedOut", "true");
+    if (job.isDirectJob || job.directJobId) {
+      params.set("directJobId", job.directJobId || job.id);
+      if (traderId) params.set("traderId", traderId);
+      params.set("reviewType", "DIRECTORY");
+      params.set("workCarriedOut", "true");
+    } else {
+      if (job.id) params.set("jobId", job.id);
+      if (traderId) params.set("traderId", traderId);
+      params.set("reviewType", "JOB");
+      params.set("workCarriedOut", "true");
+    }
 
     router.push(`/customer-dashboard/leave-review?${params.toString()}`);
   };
@@ -290,7 +301,7 @@ export default function CustomerReviews() {
     const fetchAllData = async () => {
       setLoading(true);
       try {
-        const [reviewsRes, unreviewedRes] = await Promise.all([
+        const [reviewsRes, unreviewedRes, myJobsRes, convsRes] = await Promise.all([
           authApi.getMyReviews().catch((err) => {
             console.error("Failed to load submitted reviews:", err);
             return [];
@@ -299,12 +310,28 @@ export default function CustomerReviews() {
             console.error("Failed to load unreviewed completed jobs:", err);
             return [];
           }),
+          authApi.getMyJobs(1, 100).catch((err) => {
+            console.error("Failed to load my jobs for unreviewed check:", err);
+            return [];
+          }),
+          authApi.getConversations().catch((err) => {
+            console.error("Failed to load conversations for direct jobs check:", err);
+            return [];
+          }),
         ]);
 
         const parsedReviews = Array.isArray(reviewsRes)
           ? reviewsRes
           : reviewsRes?.data || [];
         setReviews(parsedReviews);
+
+        const reviewedJobIds = new Set<string>();
+        parsedReviews.forEach((r: any) => {
+          if (r.jobId) reviewedJobIds.add(String(r.jobId));
+          if (r.job?.id) reviewedJobIds.add(String(r.job.id));
+          if (r.directJobId) reviewedJobIds.add(String(r.directJobId));
+          if (r.directJob?.id) reviewedJobIds.add(String(r.directJob.id));
+        });
 
         const parsedUnreviewed: UnreviewedJob[] = Array.isArray(unreviewedRes)
           ? unreviewedRes
@@ -319,6 +346,93 @@ export default function CustomerReviews() {
                   : Array.isArray(unreviewedRes?.data?.unreviewedJobs)
                     ? unreviewedRes.data.unreviewedJobs
                     : [];
+
+        // Cross-reference all completed customer jobs from getMyJobs
+        const allJobs = Array.isArray(myJobsRes)
+          ? myJobsRes
+          : Array.isArray(myJobsRes?.data)
+            ? myJobsRes.data
+            : Array.isArray(myJobsRes?.jobs)
+              ? myJobsRes.jobs
+              : [];
+
+        allJobs.forEach((j: any) => {
+          const isCompleted = j.status?.toUpperCase() === "COMPLETED" || j.rawStatus?.toUpperCase() === "COMPLETED";
+          const isReviewed = j.hasReviewed || reviewedJobIds.has(String(j.id));
+          if (isCompleted && !isReviewed) {
+            const alreadyExists = parsedUnreviewed.some((uj) => String(uj.id) === String(j.id));
+            if (!alreadyExists) {
+              const acceptedTrader = j.selectedTrader || (Array.isArray(j.quotes) ? j.quotes.find((q: any) => q.status?.toUpperCase() === "ACCEPTED")?.trader : null);
+              parsedUnreviewed.push({
+                id: j.id,
+                title: j.title,
+                description: j.description,
+                category: j.category || (Array.isArray(j.categories) ? j.categories[0] : undefined),
+                postcode: j.postcode,
+                completedAt: j.completedAt || j.updatedAt || j.createdAt,
+                createdAt: j.createdAt,
+                updatedAt: j.updatedAt,
+                status: j.status || "COMPLETED",
+                selectedTrader: acceptedTrader,
+                trader: acceptedTrader,
+                budgetRange: j.budgetRange,
+                quotes: j.quotes,
+                hasReviewed: false,
+              });
+            }
+          }
+        });
+
+        // Cross-reference completed direct jobs from conversations (started from Directory search / Inbox)
+        const convList = Array.isArray(convsRes) ? convsRes : (convsRes?.data || []);
+        if (Array.isArray(convList) && convList.length > 0) {
+          const directJobPromises = convList
+            .filter((c: any) => !c.jobId)
+            .map((c: any) =>
+              authApi
+                .getDirectJobForConversation(c.id || c._id)
+                .then((djRes: any) => ({
+                  conv: c,
+                  directJob: djRes?.data || djRes,
+                }))
+                .catch(() => null)
+            );
+
+          const directJobResults = await Promise.all(directJobPromises);
+          directJobResults.forEach((item: any) => {
+            if (!item || !item.directJob) return;
+            const dj = item.directJob;
+            const isCompleted = dj.status === "COMPLETED" || dj.status === "CONFIRMED";
+            const hasReviews = Array.isArray(dj.reviews) && dj.reviews.length > 0;
+            const isReviewed = hasReviews || reviewedJobIds.has(String(dj.id || dj._id));
+            if (isCompleted && !isReviewed) {
+              const alreadyExists = parsedUnreviewed.some((uj) => String(uj.id) === String(dj.id || dj._id));
+              if (!alreadyExists) {
+                const traderObj = item.conv.trader || {
+                  id: dj.traderId,
+                  fullName: item.conv.trader?.fullName || "Trader",
+                  profileImage: item.conv.trader?.profileImage,
+                };
+                parsedUnreviewed.push({
+                  id: dj.id || dj._id,
+                  title: dj.title || `Direct Job with ${traderObj.fullName || "Trader"}`,
+                  description: dj.description || "",
+                  status: "COMPLETED",
+                  completedAt: dj.confirmedAt || dj.completedAt || dj.updatedAt || dj.createdAt,
+                  createdAt: dj.createdAt,
+                  updatedAt: dj.updatedAt,
+                  selectedTrader: traderObj,
+                  trader: traderObj,
+                  budgetRange: dj.agreedPrice ? `€${dj.agreedPrice}` : undefined,
+                  hasReviewed: false,
+                  isDirectJob: true,
+                  directJobId: dj.id || dj._id,
+                });
+              }
+            }
+          });
+        }
+
         setUnreviewedJobs(parsedUnreviewed);
 
         // If no explicit tab query param, smart default based on whether pending reviews exist
@@ -479,7 +593,9 @@ export default function CustomerReviews() {
                             <span className="inline-block bg-[#13501B] border border-[#0E3F15] text-white font-bold text-[10px] px-2.5 py-0.5 rounded-sm">
                               Completed
                             </span>
-
+                            <span className="inline-block bg-[#EFDB4B] border border-[#E0CC3B] text-[#8A5C05] font-bold text-[10px] px-2.5 py-0.5 rounded-sm">
+                              Pending Review
+                            </span>
                           </div>
 
                           {/* Job Title */}

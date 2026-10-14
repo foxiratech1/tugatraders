@@ -100,7 +100,7 @@ export default function HowItWorks() {
             return (
               <div key={step.num} className="flex flex-col">
                 {/* Badge & Icon */}
-                <div className="flex items-center gap-3 mb-3">
+                <div className="flex items-center gap-3 mb-4 sm:mb-5">
                   <div className="w-7 h-7 rounded-[6px] bg-[#6E9625] text-white font-extrabold text-[13px] flex items-center justify-center shrink-0">
                     {step.num}
                   </div>
@@ -108,7 +108,7 @@ export default function HowItWorks() {
                 </div>
 
                 {/* Title */}
-                <h3 className="text-[16px] sm:text-[17px] font-extrabold text-[#1E3A2B] leading-snug mb-1.5">
+                <h3 className="text-[16px] sm:text-[17px] font-extrabold text-[#1E3A2B] leading-snug mb-2">
                   {step.title}
                 </h3>
 
@@ -141,7 +141,7 @@ export default function HowItWorks() {
                         </div>
                         <Icon className="text-[#1A3326] w-7 h-7 sm:w-8 sm:h-8" strokeWidth={2} />
                       </div>
-                      <span className="text-[15px] sm:text-[16px] font-extrabold text-[#1A3326] mt-2.5">
+                      <span className="text-[15px] sm:text-[16px] font-extrabold text-[#1A3326] mt-4 sm:mt-5">
                         {step.label}
                       </span>
                     </div>

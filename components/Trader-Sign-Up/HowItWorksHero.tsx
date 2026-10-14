@@ -9,6 +9,7 @@ import { PhoneInput } from "react-international-phone";
 import "react-international-phone/style.css";
 import { AnimatedEye } from "@/app/ui/AnimatedEye";
 import Link from "next/link";
+import { Check } from "lucide-react";
 import { getFcmToken } from "@/utils/firebase";
 import PlacesAutocompleteInput from "@/components/common/PlacesAutocompleteInput";
 
@@ -295,51 +296,91 @@ const HowItWorksHero = () => {
     },
   ];
 
-  return (
-    <section className="bg-white pt-28 sm:pt-36 pb-20 px-4 sm:px-6 lg:px-12 min-h-screen relative overflow-hidden">
-      <div className="max-w-[1300px] mx-auto relative">
+  const benefitsLeft = [
+    {
+      bold: "Exclusive membership",
+      text: " – Join a select network of professionals.",
+    },
+    {
+      bold: "Personal company profile",
+      text: " – Highlight your skills and experience.",
+    },
+    {
+      bold: "Job portfolio",
+      text: " – Display images & videos of your completed work.",
+    },
+    {
+      bold: "Quality leads",
+      text: " – Receive relevant customer enquiries from clients across Portugal.",
+    },
+    {
+      bold: "Flexible membership options",
+      text: " – First 3 months FREE! Choose a monthly or yearly plan after your free period.",
+    },
+  ];
 
-        {/* DIAGONAL CORNER RIBBON - Below the navbar, inside the content area */}
-        <div className="hidden lg:block absolute -top-4 -right-8 xl:-right-4 z-20 pointer-events-none">
-          <div className="bg-[#78A128] text-[#142617] py-3.5 px-12 xl:px-16 shadow-lg transform rotate-[25deg] flex flex-col items-center text-center rounded-[4px] border-y border-[#8EBE2E]">
-            <span className="font-extrabold text-[15px] xl:text-[16px] tracking-tight leading-tight">
-              No commission on your jobs
+  const benefitsRight = [
+    {
+      bold: "No commission fees",
+      text: " – Never pay for the leads you receive.",
+    },
+    {
+      bold: "Client reviews",
+      text: " – Showcase genuine feedback from past verified clients.",
+    },
+    {
+      bold: "Be found on Google",
+      text: " – Boost your visibility and get discovered by more clients online.",
+    },
+    {
+      bold: "Flexible subscription tiers",
+      text: " – Choose from Bronze, Silver, or Gold plans.",
+    },
+  ];
+
+  return (
+    <section className="bg-white pt-24 sm:pt-28 lg:pt-32 pb-16 sm:pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+      <div className="max-w-[1100px] mx-auto relative">
+
+        {/* DIAGONAL CORNER RIBBON */}
+        <div className="hidden lg:block absolute -top-4 -right-6 xl:-right-2 z-20 pointer-events-none">
+          <div className="bg-[#78A128] text-[#142617] py-2.5 px-12 xl:px-14 shadow-md transform rotate-[25deg] flex flex-col items-center text-center rounded-[3px] border-y border-[#8EBE2E]">
+            <span className="font-extrabold text-[13px] xl:text-[14px] tracking-tight leading-tight">
+              No commission on your leads
             </span>
-            <span className="text-[12px] xl:text-[13px] font-medium leading-tight mt-0.5 opacity-90">
-              Keep 100% of what you agree with the customer.
+            <span className="text-[11px] xl:text-[11.5px] font-medium leading-tight mt-0.5 opacity-90">
+              Keep 100% of what you earn
             </span>
           </div>
         </div>
 
         {/* HEADER AREA */}
-        <div className="mb-8 max-w-[720px]">
-          <h1 className="text-[34px] sm:text-[44px] lg:text-[48px] font-extrabold text-[#1E3A2B] leading-[1.12] tracking-tight mb-3">
-            <span className="text-[#6E9625]">Grow</span> Your Business With
-            <br />
-            TugaTrades
+        <div className="mb-8 max-w-[800px]">
+          <h1 className="text-[28px] sm:text-[34px] md:text-[38px] font-extrabold text-[#1E3A2B] leading-tight tracking-tight mb-2">
+            <span className="text-[#6E9625]">Grow</span> Your Business With TugaTrades
           </h1>
 
-          <p className="text-[16px] sm:text-[17.5px] text-[#243A24] font-medium leading-snug">
+          <p className="text-[14px] sm:text-[15.5px] text-[#243A24] font-medium leading-snug mb-1">
             Get discovered by customers looking for your trade across Portugal.
           </p>
-          <p className="text-[16px] sm:text-[17.5px] text-[#243A24] font-bold leading-snug mb-3.5">
+          <p className="text-[14px] sm:text-[15.5px] text-[#243A24] font-bold leading-snug mb-1">
             First 3 months FREE*
           </p>
 
-          <p className="text-[14px] sm:text-[15px] text-[#4A5548] font-normal leading-relaxed">
+          <p className="text-[13px] sm:text-[14px] text-[#4A5548] font-normal leading-relaxed">
             Create your professional profile and start receiving relevant customer enquiries.
           </p>
         </div>
 
         {/* MAIN GRID: FORM (LEFT) + STEPPER TIMELINE (RIGHT) */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-stretch">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-14 items-start justify-between">
 
           {/* LEFT: FORM CARD */}
-          <div className="lg:col-span-6 w-full max-w-[420px] flex flex-col h-full">
-            <div className="bg-white rounded-[20px] p-6 sm:p-7 border border-[#E5E7EB] shadow-[0_4px_25px_rgba(0,0,0,0.04)] flex flex-col gap-4 flex-1 h-full">
+          <div className="w-full lg:w-[460px] shrink-0">
+            <div className="bg-white rounded-[20px] p-6 sm:p-7 border border-[#E5E7EB] shadow-[0_2px_18px_rgba(0,0,0,0.03)] flex flex-col gap-4">
 
               <div>
-                <h2 className="text-[22px] sm:text-[24px] font-bold text-[#1C2C1C] tracking-tight leading-tight mb-1">
+                <h2 className="text-[21px] sm:text-[23px] font-bold text-[#1C2C1C] tracking-tight leading-tight mb-0.5">
                   Create Your Account
                 </h2>
                 <p className="text-[12.5px] text-[#6B7280] font-medium">
@@ -347,7 +388,7 @@ const HowItWorksHero = () => {
                 </p>
               </div>
 
-              <form onSubmit={handleSubmit} className="flex flex-col gap-3.5 flex-1 justify-between">
+              <form onSubmit={handleSubmit} className="flex flex-col gap-3.5">
 
                 {/* Full Name */}
                 <div className="flex flex-col gap-1">
@@ -426,7 +467,7 @@ const HowItWorksHero = () => {
                         });
                       }
                     }}
-                    className="w-full max-w-[200px]"
+                    className="w-full max-w-[210px]"
                     inputClassName={inputCls(errors.baseLocation)}
                   />
                   {errors.baseLocation && (
@@ -526,20 +567,19 @@ const HowItWorksHero = () => {
           </div>
 
           {/* RIGHT: STEPPER TIMELINE */}
-          <div className="lg:col-span-6 w-full max-w-[420px] flex flex-col h-full">
-            <div className="bg-[#F8FAF7] rounded-[24px] p-6 sm:p-8 border border-[#E6EDE2] relative flex-1 h-full flex flex-col justify-between">
-
+          <div className="w-full lg:w-[420px] shrink-0">
+            <div className="bg-[#F8FAF7] rounded-[24px] p-6 sm:p-8 border border-[#E6EDE2] relative">
               {/* Connecting Line */}
-              <div className="absolute left-[46px] sm:left-[56px] -translate-x-1/2 top-[50px] sm:top-[58px] bottom-[50px] sm:bottom-[58px] w-[1.5px] bg-[#E0E5DC]" />
+              <div className="absolute left-[44px] sm:left-[52px] -translate-x-1/2 top-[50px] sm:top-[58px] bottom-[50px] sm:bottom-[58px] w-[1.5px] bg-[#E0E5DC]" />
 
-              <div className="flex flex-col justify-between flex-1 h-full py-1 gap-6 sm:gap-8 relative z-10">
+              <div className="flex flex-col py-1 gap-7 sm:gap-9 relative z-10">
                 {steps.map((step) => {
                   const isActive = step.status === "active";
                   return (
-                    <div key={step.id} className="flex items-start gap-4 sm:gap-5 group">
+                    <div key={step.id} className="flex items-start gap-4 sm:gap-4.5 group">
                       {/* Step Circle */}
                       <div
-                        className={`relative z-10 w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center font-bold text-[16px] sm:text-[17px] transition-all duration-300 shadow-sm shrink-0 ${isActive
+                        className={`relative z-10 w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center font-bold text-[15px] sm:text-[16px] transition-all duration-300 shadow-sm shrink-0 ${isActive
                           ? "bg-[#182C1F] text-white shadow-md ring-4 ring-white"
                           : "bg-white border-2 border-[#E5E7EB] text-[#9CA3AF]"
                           }`}
@@ -550,13 +590,13 @@ const HowItWorksHero = () => {
                       {/* Step Content */}
                       <div className="flex flex-col gap-0.5 pt-0.5">
                         <h3
-                          className={`text-[16px] sm:text-[17px] font-bold transition-all ${isActive ? "text-[#182C1F]" : "text-[#7B8B9B]"
+                          className={`text-[15px] sm:text-[16px] font-bold transition-all ${isActive ? "text-[#182C1F]" : "text-[#9CA3AF]"
                             }`}
                         >
                           {step.title}
                         </h3>
                         <p
-                          className={`text-[12px] sm:text-[12.5px] font-medium leading-snug ${isActive ? "text-[#4A5548]" : "text-[#9CA3AF]"
+                          className={`text-[11.5px] sm:text-[12px] font-medium leading-snug ${isActive ? "text-[#4A5548]" : "text-[#9CA3AF]"
                             }`}
                         >
                           {step.description}
@@ -569,6 +609,43 @@ const HowItWorksHero = () => {
             </div>
           </div>
 
+        </div>
+
+        {/* BOTTOM: BENEFITS BOX */}
+        <div className="mt-8 sm:mt-10 bg-[#F4F6F2] rounded-[20px] p-6 sm:p-8 border border-[#E6EDE2] shadow-[0_2px_15px_rgba(0,0,0,0.02)]">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 lg:gap-x-12 gap-y-3.5 sm:gap-y-4">
+
+            {/* Left Column */}
+            <div className="space-y-3.5 sm:space-y-4">
+              {benefitsLeft.map((item, index) => (
+                <div key={index} className="flex items-start gap-3">
+                  <div className="w-[20px] h-[20px] rounded-full bg-[#3B6622] flex items-center justify-center shrink-0 mt-[2px] shadow-xs">
+                    <Check className="w-3.5 h-3.5 text-white" strokeWidth={3.5} />
+                  </div>
+                  <p className="text-[13px] sm:text-[13.5px] text-[#4A5548] leading-[1.45]">
+                    <span className="font-bold text-[#1C2C1C]">{item.bold}</span>
+                    {item.text}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            {/* Right Column */}
+            <div className="space-y-3.5 sm:space-y-4">
+              {benefitsRight.map((item, index) => (
+                <div key={index} className="flex items-start gap-3">
+                  <div className="w-[20px] h-[20px] rounded-full bg-[#3B6622] flex items-center justify-center shrink-0 mt-[2px] shadow-xs">
+                    <Check className="w-3.5 h-3.5 text-white" strokeWidth={3.5} />
+                  </div>
+                  <p className="text-[13px] sm:text-[13.5px] text-[#4A5548] leading-[1.45]">
+                    <span className="font-bold text-[#1C2C1C]">{item.bold}</span>
+                    {item.text}
+                  </p>
+                </div>
+              ))}
+            </div>
+
+          </div>
         </div>
 
       </div>

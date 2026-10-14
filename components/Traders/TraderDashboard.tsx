@@ -463,41 +463,41 @@ export default function TraderDashboard() {
     const s = status?.toUpperCase();
     if (status === "Quote Accepted" || s === "QUOTE_ACCEPTED" || s === "ACCEPTED" || status === "Contacted" || s === "CONTACTED" || status === "Connected" || s === "CONNECTED") {
       return (
-        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#7DB0E3] border border-[#679FD8] text-[#103270] text-[11px] font-bold">
+        <div className="flex items-center px-3.5 py-1.5 rounded-lg bg-[#7DB0E3] border border-[#679FD8] text-[#103270] text-[11.5px] font-bold whitespace-nowrap shrink-0">
           Connected
         </div>
       );
     }
     if (status === "Quote Declined" || s === "QUOTE_DECLINED" || s === "DECLINED" || s === "REJECTED") {
       return (
-        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#FF9797] border border-[#F08282] text-[#E53935] text-[11px] font-bold">
+        <div className="flex items-center px-3.5 py-1.5 rounded-lg bg-[#FF9797] border border-[#F08282] text-[#E53935] text-[11.5px] font-bold whitespace-nowrap shrink-0">
           Quote Declined
         </div>
       );
     }
     if (status === "Quote Sent" || s === "QUOTE_SENT" || s === "QUOTED") {
       return (
-        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#DCEAF7] border border-[#C2D9EE] text-[#156082] text-[11px] font-bold">
+        <div className="flex items-center px-3.5 py-1.5 rounded-lg bg-[#DCEAF7] border border-[#C2D9EE] text-[#156082] text-[11.5px] font-bold whitespace-nowrap shrink-0">
           Quote Sent
         </div>
       );
     }
     if (status === "Completed" || s === "COMPLETED") {
       return (
-        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#13501B] border border-[#0E3F15] text-white text-[11px] font-bold">
+        <div className="flex items-center px-3.5 py-1.5 rounded-lg bg-[#13501B] border border-[#0E3F15] text-white text-[11.5px] font-bold whitespace-nowrap shrink-0">
           Completed
         </div>
       );
     }
     if (status === "Closed" || s === "CLOSED" || s === "CANCELLED" || s === "EXPIRED") {
       return (
-        <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#A6A6A6] border border-[#8E8E8E] text-[#333333] text-[11px] font-bold">
+        <div className="flex items-center px-3.5 py-1.5 rounded-lg bg-[#A6A6A6] border border-[#8E8E8E] text-[#333333] text-[11.5px] font-bold whitespace-nowrap shrink-0">
           Closed
         </div>
       );
     }
     return (
-      <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#EBA75B] border border-[#E09D50] text-[#7A3E06] text-[11px] font-bold">
+      <div className="flex items-center px-3.5 py-1.5 rounded-lg bg-[#EBA75B] border border-[#E09D50] text-[#7A3E06] text-[11.5px] font-bold whitespace-nowrap shrink-0">
         In Progress
       </div>
     );
@@ -506,6 +506,13 @@ export default function TraderDashboard() {
   const formatBudget = (budget?: string | number) => {
     if (!budget) return "Under €500";
     const b = String(budget);
+    if (b === "NOT_SURE") return "Not sure";
+    if (b === "PREFER_TO_DISCUSS") return "Prefer to discuss";
+    if (b === "ABOVE_5000") return "5000 +";
+    if (b === "UNDER_250") return "Under 250";
+    if (b === "UNDER_500") return "Under 500";
+    if (b === "BETWEEN_500_1000") return "500 – 1000";
+    if (b === "BETWEEN_1000_5000") return "1000 – 5000";
     if (b.startsWith("UNDER_")) return `Under €${b.replace("UNDER_", "").replace(/,/g, "")}`;
     if (b.startsWith("OVER_") || b.startsWith("ABOVE_")) return `Above €${b.replace(/(OVER_|ABOVE_)/, "")}`;
     if (b.startsWith("BETWEEN_")) {
@@ -523,9 +530,10 @@ export default function TraderDashboard() {
     const upper = t.toUpperCase().replace(/[-\s]+/g, "_");
     if (upper === "FLEXIBLE") return "Flexible";
     if (upper === "URGENT") return "Urgent";
+    if (upper === "ASAP") return "ASAP";
     if (upper === "WITHIN_3_DAYS") return "Within 3 days";
-    if (upper === "WITHIN_1_WEEK") return "Within 1 week";
-    if (upper === "WITHIN_1_MONTH") return "Within 1 month";
+    if (upper === "WITHIN_1_WEEK" || upper === "WITHIN_A_WEEK") return "Within a week";
+    if (upper === "WITHIN_1_MONTH" || upper === "WITHIN_A_MONTH") return "Within a month";
     return t.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   };
 
@@ -1200,16 +1208,9 @@ export default function TraderDashboard() {
                         </div>
                       </div>
 
-                      {/* Col 3: Status */}
-                      <div className="shrink-0 flex flex-col items-start md:items-center">
-                        <span className="bg-[#F1F4F1] text-[#7C8B7F] text-[9.5px] font-bold px-2 py-0.5 rounded tracking-wider uppercase mb-1.5">
-                          STATUS
-                        </span>
+                      {/* Col 3: Status & Action Button in line */}
+                      <div className="shrink-0 flex items-center gap-3">
                         {renderStatusBadge(job.status || "In Progress")}
-                      </div>
-
-                      {/* Col 4: View Job Button */}
-                      <div className="shrink-0 flex items-center md:justify-end">
                         <button
                           type="button"
                           onClick={() =>

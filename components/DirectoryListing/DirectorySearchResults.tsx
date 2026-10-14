@@ -5,7 +5,7 @@ import { authApi } from '@/app/api/authApi';
 import {
   Star, MapPin, Phone, ShieldCheck, BadgeCheck, Building,
   Wrench, List, ChevronDown, Check, ChevronRight, ChevronLeft, Filter, Search,
-  CheckCircle, Heart, Award, Briefcase, MessageSquare, Camera, LogIn, X, Target, Layers, Plus
+  CheckCircle, Heart, Award, Briefcase, MessageSquare, Camera, LogIn, X, Target, Layers, Plus, Globe
 } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -76,6 +76,7 @@ interface Trader {
   isVerified?: boolean;
   companyName?: string;
   location?: string;
+  languages?: any;
   phone?: string;
   logo?: string;
   averageRating?: number;
@@ -113,6 +114,35 @@ const getImageUrl = (path?: any) => {
   const imagePath = p.startsWith('/') ? p : `/${p}`;
 
   return `${baseUrl}${imagePath}`;
+};
+
+const parseTraderLanguages = (raw: any): string[] => {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw.filter(Boolean);
+  if (typeof raw === "string") {
+    let trimmed = raw.trim();
+    if (!trimmed || trimmed === "{}" || trimmed === "[]") return [];
+    if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+      trimmed = trimmed.slice(1, -1);
+    }
+    try {
+      const parsed = JSON.parse(trimmed.startsWith("[") ? trimmed : `[${trimmed}]`);
+      if (Array.isArray(parsed)) return parsed.filter(Boolean);
+    } catch {
+      // ignore
+    }
+    return trimmed
+      .split(",")
+      .map((s: string) => s.trim().replace(/^["'{}\[\]]+|["'{}\[\]]+$/g, ""))
+      .filter(Boolean);
+  }
+  return [];
+};
+
+const formatLanguageName = (lang: string) => {
+  if (!lang) return "";
+  const cleaned = lang.trim();
+  return cleaned.charAt(0).toUpperCase() + cleaned.slice(1).toLowerCase();
 };
 
 const LoginModal = ({
@@ -673,11 +703,11 @@ const DirectorySearchResults = () => {
     <>
       <section className="bg-[#F8F9F7] pt-3 sm:pt-5 pb-14 px-4 sm:px-6 lg:px-8 xl:px-12">
         <div className="max-w-[1400px] mx-auto">
-          {/* Post a Job Banner Card */}
-          <div className="bg-[#F4F8F3] border border-[#DFE8DE] rounded-xl overflow-hidden mb-4 sm:mb-5 flex flex-col md:flex-row items-stretch shadow-[0_2px_12px_rgba(0,0,0,0.03)] relative">
+          {/* Post a Job Banner Card - tighter width and compact layout */}
+          <div className="w-full max-w-[1020px] mx-auto bg-[#F4F8F3] border border-[#DFE8DE] rounded-xl overflow-hidden mb-5 sm:mb-6 flex flex-col md:flex-row items-stretch shadow-[0_2px_12px_rgba(0,0,0,0.03)] relative">
 
-            {/* Left Video - Bigger & Object Cover */}
-            <div className="hidden md:block w-[240px] lg:w-[280px] xl:w-[320px] relative shrink-0 bg-[#E8EFE8] overflow-hidden">
+            {/* Left Video - Compact & Object Cover */}
+            <div className="hidden md:block w-[200px] lg:w-[230px] xl:w-[250px] relative shrink-0 bg-[#E8EFE8] overflow-hidden">
               <video
                 src="/postjob.mp4"
                 autoPlay
@@ -689,10 +719,10 @@ const DirectorySearchResults = () => {
             </div>
 
             {/* Middle and Right Content Wrapper */}
-            <div className="flex-1 flex flex-col md:flex-row items-center justify-between p-3 sm:p-3.5 lg:px-6 lg:py-2.5 gap-3 lg:gap-5">
+            <div className="flex-1 flex flex-col md:flex-row items-center justify-between p-3 sm:py-3 sm:px-4 lg:px-5 lg:py-2.5 gap-3 lg:gap-4">
               {/* Text Content */}
-              <div className="flex-1 max-w-[540px] text-left">
-                <h2 className="text-[16px] sm:text-[18px] lg:text-[19px] font-extrabold text-[#19331E] tracking-tight leading-snug mb-1">
+              <div className="flex-1 max-w-[480px] text-left">
+                <h2 className="text-[15px] sm:text-[17px] lg:text-[18px] font-extrabold text-[#19331E] tracking-tight leading-snug mb-1">
                   Need a trader? Post a job instead.
                 </h2>
                 <p className="text-[#4E6252] text-[12px] sm:text-[12.5px] leading-snug mb-2 font-medium">
@@ -701,7 +731,7 @@ const DirectorySearchResults = () => {
                 <div className="flex items-center gap-3 flex-wrap">
                   <Link
                     href="/post-job"
-                    className="inline-flex items-center gap-1.5 bg-[#447132] hover:bg-[#385E28] text-white font-bold text-[11.5px] sm:text-[12px] uppercase tracking-wider px-3.5 py-1.5 rounded-md transition-all shadow-xs hover:shadow active:scale-[0.98] cursor-pointer"
+                    className="inline-flex items-center gap-1.5 bg-[#6E9625] hover:bg-[#5E821F] text-white font-bold text-[11px] sm:text-[11.5px] uppercase tracking-wider px-3.5 py-1.5 rounded-md transition-all shadow-xs hover:shadow active:scale-[0.98] cursor-pointer"
                   >
                     <span>POST A JOB</span>
                   </Link>
@@ -709,9 +739,9 @@ const DirectorySearchResults = () => {
               </div>
 
               {/* Right Side: Photo preview + annotations */}
-              <div className="relative shrink-0 flex flex-col items-center select-none pt-0.5 pb-0.5 pr-1 sm:pr-3">
+              <div className="relative shrink-0 flex flex-col items-center select-none pt-0.5 pb-0.5 pr-1 sm:pr-2">
                 {/* Radiating accent lines at top right of image */}
-                <div className="absolute -top-1 -right-0 sm:right-2 text-[#447132] pointer-events-none">
+                <div className="absolute -top-1 -right-0 sm:right-1 text-[#6E9625] pointer-events-none">
                   <svg width="18" height="18" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
                     <line x1="5" y1="17" x2="18" y2="6" />
                     <line x1="7" y1="21" x2="24" y2="20" />
@@ -720,7 +750,7 @@ const DirectorySearchResults = () => {
                 </div>
 
                 {/* Photo Collage Preview */}
-                <div className="relative w-[130px] sm:w-[155px] md:w-[170px] lg:w-[185px]">
+                <div className="relative w-[120px] sm:w-[140px] md:w-[155px] lg:w-[165px]">
                   <Image
                     src="/before.jfif"
                     alt="Post a job preview"
@@ -732,9 +762,9 @@ const DirectorySearchResults = () => {
                 </div>
 
                 {/* Annotation: Arrow + "Add photos and details" */}
-                <div className="flex items-center gap-1.5 -mt-1 self-center sm:self-end pr-1 sm:pr-3">
+                <div className="flex items-center gap-1.5 -mt-1 self-center sm:self-end pr-1 sm:pr-2">
                   {/* Curved Arrow pointing towards photos */}
-                  <div className="text-[#447132] -mt-1.5">
+                  <div className="text-[#6E9625] -mt-1.5">
                     <svg width="24" height="28" viewBox="0 0 38 44" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M 6 40 C 4 24 13 12 30 8" />
                       <path d="M 21 4 L 32 8 L 24 16" />
@@ -742,7 +772,7 @@ const DirectorySearchResults = () => {
                   </div>
 
                   {/* Handwritten script text */}
-                  <div className="font-[family-name:var(--font-caveat)] text-[#2B4725] text-[15px] sm:text-[17px] font-bold leading-[1.05] tracking-wide -rotate-2">
+                  <div className="font-[family-name:var(--font-caveat)] text-[#4F701B] text-[14px] sm:text-[16px] font-bold leading-[1.05] tracking-wide -rotate-2">
                     <span>Add photos</span>
                     <br />
                     <span>and details</span>
@@ -1162,10 +1192,27 @@ const DirectorySearchResults = () => {
                           })()}
                         </div>
 
-                        <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#4B5563] mb-2">
-                          <MapPin size={13} className="text-[#6E9625] shrink-0" />
-                          <span className="truncate">{trader.location}</span>
-                        </div>
+                        {(() => {
+                          const traderLangs = parseTraderLanguages(trader.languages || (trader as any)?.language);
+                          if (!trader.location && traderLangs.length === 0) return null;
+
+                          return (
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] font-medium text-[#4B5563] mb-2">
+                              {trader.location && (
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  <MapPin size={13} className="text-[#6E9625] shrink-0" />
+                                  <span className="truncate">{trader.location}</span>
+                                </div>
+                              )}
+                              {traderLangs.length > 0 && (
+                                <div className="flex items-center gap-1.5 shrink-0">
+                                  <Globe size={13} className="text-[#6E9625] shrink-0" />
+                                  <span>Languages: {traderLangs.map(formatLanguageName).filter(Boolean).join(" | ")}</span>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
 
                         {/* Bio */}
                         <p className="text-[#4B5563] text-[12px] leading-relaxed line-clamp-2 mb-2">

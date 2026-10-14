@@ -38,7 +38,18 @@ const CustomDropdown = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const selectedOption = options.find((o) => o.id === value || o.name === value);
+  const selectedOption = options.find(
+    (o) =>
+      o.id === value ||
+      o.name === value ||
+      (value === "URGENT" && o.name === "ASAP") ||
+      (value === "ASAP" && (o.id === "URGENT" || o.name === "ASAP")) ||
+      (value === "WITHIN_1_WEEK" && o.name === "Within a week") ||
+      (value === "WITHIN_A_WEEK" && o.name === "Within a week") ||
+      (value === "WITHIN_1_MONTH" && o.name === "Within a month") ||
+      (value === "WITHIN_A_MONTH" && o.name === "Within a month") ||
+      (BACKEND_TO_BUDGET_MAP[value] && o.id === BACKEND_TO_BUDGET_MAP[value])
+  );
 
   return (
     <div className="relative w-full" ref={dropdownRef}>
@@ -148,9 +159,12 @@ const MultiSelectDropdown = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const isValSelected = (id: string) =>
+    value.some(v => String(v).toUpperCase() === String(id).toUpperCase());
+
   const toggleOption = (id: string) => {
-    if (value.includes(id)) {
-      onChange(value.filter(v => v !== id));
+    if (isValSelected(id)) {
+      onChange(value.filter(v => String(v).toUpperCase() !== String(id).toUpperCase()));
     } else {
       onChange([...value, id]);
     }
@@ -158,10 +172,13 @@ const MultiSelectDropdown = ({
 
   const removeOption = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (!disabled) onChange(value.filter(v => v !== id));
+    if (!disabled) onChange(value.filter(v => String(v).toUpperCase() !== String(id).toUpperCase()));
   };
 
-  const selectedOptions = options.filter(o => value.includes(o.id));
+  const selectedOptions = value.map(id => {
+    const found = options.find(o => String(o.id).toUpperCase() === String(id).toUpperCase());
+    return found || { id, name: id.charAt(0).toUpperCase() + id.slice(1).toLowerCase() };
+  });
 
   return (
     <div className="relative w-full" ref={dropdownRef}>
@@ -188,7 +205,7 @@ const MultiSelectDropdown = ({
       {isOpen && !disabled && (
         <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white border border-[#E5E7EB] rounded-[12px] shadow-[0_8px_30px_rgb(0,0,0,0.08)] max-h-[260px] overflow-y-auto z-50 py-2 custom-scrollbar">
           {options.map((opt) => {
-            const isSelected = value.includes(opt.id);
+            const isSelected = isValSelected(opt.id);
             return (
               <div
                 key={opt.id}
@@ -332,7 +349,24 @@ const GroupedMultiSelectDropdown = ({
   );
 };
 
-const VALID_BUDGET_RANGES = [
+const BUDGET_OPTIONS = [
+  { id: "NOT_SURE", name: "Not sure" },
+  { id: "UNDER_250", name: "Under 250" },
+  { id: "UNDER_500", name: "Under 500" },
+  { id: "BETWEEN_500_1000", name: "500 – 1000" },
+  { id: "BETWEEN_1000_5000", name: "1000 – 5000" },
+  { id: "ABOVE_5000", name: "5000 +" },
+  { id: "PREFER_TO_DISCUSS", name: "Prefer to discuss" },
+];
+
+const TIMESCALE_OPTIONS = [
+  { id: "URGENT", name: "ASAP" },
+  { id: "WITHIN_1_WEEK", name: "Within a week" },
+  { id: "WITHIN_1_MONTH", name: "Within a month" },
+  { id: "FLEXIBLE", name: "Flexible" },
+];
+
+const BACKEND_ALLOWED_BUDGET_RANGES = [
   "UNDER_100",
   "UNDER_250",
   "UNDER_500",
@@ -345,17 +379,33 @@ const VALID_BUDGET_RANGES = [
   "ABOVE_30000",
 ];
 
-const BUDGET_OPTIONS = [
-  { id: "UNDER_100", name: "Under €100" },
-  { id: "UNDER_250", name: "Under €250" },
-  { id: "UNDER_500", name: "Under €500" },
-  { id: "UNDER_1000", name: "Under €1,000" },
-  { id: "UNDER_2000", name: "Under €2,000" },
-  { id: "UNDER_4000", name: "Under €4,000" },
-  { id: "UNDER_8000", name: "Under €8,000" },
-  { id: "BETWEEN_10000_20000", name: "€10,000 – €20,000" },
-  { id: "BETWEEN_20000_30000", name: "€20,000 – €30,000" },
-  { id: "ABOVE_30000", name: "Above €30,000" },
+const BUDGET_TO_BACKEND_MAP: Record<string, string> = {
+  UNDER_250: "UNDER_250",
+  UNDER_500: "UNDER_500",
+  BETWEEN_500_1000: "UNDER_1000",
+  BETWEEN_1000_5000: "UNDER_4000",
+  ABOVE_5000: "ABOVE_30000",
+};
+
+const BACKEND_TO_BUDGET_MAP: Record<string, string> = {
+  UNDER_100: "UNDER_250",
+  UNDER_250: "UNDER_250",
+  UNDER_500: "UNDER_500",
+  UNDER_1000: "BETWEEN_500_1000",
+  UNDER_2000: "BETWEEN_1000_5000",
+  UNDER_4000: "BETWEEN_1000_5000",
+  UNDER_8000: "ABOVE_5000",
+  BETWEEN_10000_20000: "ABOVE_5000",
+  BETWEEN_20000_30000: "ABOVE_5000",
+  ABOVE_30000: "ABOVE_5000",
+};
+
+const LANGUAGE_OPTIONS = [
+  { id: "PORTUGUESE", name: "Portuguese" },
+  { id: "ENGLISH", name: "English" },
+  { id: "SPANISH", name: "Spanish" },
+  { id: "FRENCH", name: "French" },
+  { id: "GERMAN", name: "German" },
 ];
 
 export default function PostJobPage({ isDashboard = false }: { isDashboard?: boolean } = {}) {
@@ -382,7 +432,9 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
   const [timescale, setTimescale] = useState("");
   const [budgetRange, setBudgetRange] = useState("");
   const [emergency, setEmergency] = useState(false);
+  const [languages, setLanguages] = useState<string[]>([]);
   const [files, setFiles] = useState<File[]>([]);
+  const [fileError, setFileError] = useState<string | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -422,8 +474,16 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
           if (parsed.title) setTitle(parsed.title);
           if (parsed.description) setDescription(parsed.description);
           if (parsed.timescale) setTimescale(parsed.timescale);
-          if (parsed.budgetRange && VALID_BUDGET_RANGES.includes(parsed.budgetRange)) setBudgetRange(parsed.budgetRange);
+          if (parsed.budgetRange) setBudgetRange(BACKEND_TO_BUDGET_MAP[parsed.budgetRange] || parsed.budgetRange);
           if (parsed.emergency !== undefined) setEmergency(parsed.emergency);
+          if (parsed.languages) {
+            const l = Array.isArray(parsed.languages)
+              ? parsed.languages
+              : typeof parsed.languages === 'string'
+                ? parsed.languages.split(',').map((s: string) => s.trim())
+                : [];
+            setLanguages(l.map((x: string) => x.toUpperCase()));
+          }
         } catch (e) {
           console.error('Failed to parse edit job data', e);
         }
@@ -441,8 +501,16 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
           if (parsed.title) setTitle(parsed.title);
           if (parsed.description) setDescription(parsed.description);
           if (parsed.timescale) setTimescale(parsed.timescale);
-          if (parsed.budgetRange && VALID_BUDGET_RANGES.includes(parsed.budgetRange)) setBudgetRange(parsed.budgetRange);
+          if (parsed.budgetRange) setBudgetRange(BACKEND_TO_BUDGET_MAP[parsed.budgetRange] || parsed.budgetRange);
           if (parsed.emergency !== undefined) setEmergency(parsed.emergency);
+          if (parsed.languages) {
+            const l = Array.isArray(parsed.languages)
+              ? parsed.languages
+              : typeof parsed.languages === 'string'
+                ? parsed.languages.split(',').map((s: string) => s.trim())
+                : [];
+            setLanguages(l.map((x: string) => x.toUpperCase()));
+          }
 
           // Clear it so it doesn't persist on subsequent refreshes
           sessionStorage.removeItem('pendingJobPost');
@@ -524,25 +592,42 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
     }
   }, [skillServiceIds]);
 
+  const validateAndAddFiles = (selectedFiles: File[]) => {
+    const validFiles: File[] = [];
+    const MAX_SIZE = 5 * 1024 * 1024; // 5MB
+    let hasError = false;
+
+    selectedFiles.forEach(file => {
+      const validTypes = ["image/jpeg", "image/jpg", "image/png"];
+      if (!validTypes.includes(file.type)) {
+        setFileError("MAX FILE SIZE 5MB • JPEG, PNG");
+        toast.error("MAX FILE SIZE 5MB • JPEG, PNG");
+        hasError = true;
+      } else if (file.size >= MAX_SIZE) {
+        setFileError("MAX FILE SIZE 5MB • JPEG, PNG");
+        toast.error("MAX FILE SIZE 5MB • JPEG, PNG");
+        hasError = true;
+      } else {
+        validFiles.push(file);
+      }
+    });
+
+    if (hasError) {
+      setFileError("MAX FILE SIZE 5MB • JPEG, PNG");
+    } else {
+      setFileError(null);
+    }
+
+    if (validFiles.length > 0) {
+      setFiles(prev => [...prev, ...validFiles]);
+    }
+  };
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const selectedFiles = Array.from(e.target.files);
-      const validFiles: File[] = [];
-      const MAX_SIZE = 5 * 1024 * 1024; // 5MB
-
-      selectedFiles.forEach(file => {
-        const validTypes = ["image/jpeg", "image/jpg", "image/png"];
-        if (!validTypes.includes(file.type)) {
-          toast.error(`${file.name} is not a valid format. Please upload JPG or PNG images only.`);
-        } else if (file.size >= MAX_SIZE) {
-          toast.error(`${file.name} is 5MB or larger. Please upload a smaller file.`);
-        } else {
-          validFiles.push(file);
-        }
-      });
-
-      if (validFiles.length > 0) {
-        setFiles(prev => [...prev, ...validFiles]);
+      validateAndAddFiles(Array.from(e.target.files));
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
       }
     }
   };
@@ -599,14 +684,28 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
       if (postcode) formData.append('postcode', postcode);
       formData.append('title', title);
       formData.append('description', description);
-      formData.append('timescale', timescale);
+      const backendTimescale =
+        timescale === "ASAP"
+          ? "URGENT"
+          : timescale === "WITHIN_A_WEEK"
+            ? "WITHIN_1_WEEK"
+            : timescale === "WITHIN_A_MONTH"
+              ? "WITHIN_1_MONTH"
+              : timescale;
+      formData.append('timescale', backendTimescale);
       formData.append('latitude', String(coords.latitude ?? FALLBACK_JOB_COORDS.latitude));
       formData.append('longitude', String(coords.longitude ?? FALLBACK_JOB_COORDS.longitude));
       // formData.append('radiusKm', '9');
-      if (budgetRange && VALID_BUDGET_RANGES.includes(budgetRange)) {
-        formData.append('budgetRange', budgetRange);
+      const backendBudget =
+        BUDGET_TO_BACKEND_MAP[budgetRange] ||
+        (BACKEND_ALLOWED_BUDGET_RANGES.includes(budgetRange) ? budgetRange : null);
+      if (backendBudget) {
+        formData.append('budgetRange', backendBudget);
       }
       formData.append('emergency', String(emergency));
+      if (languages.length > 0) {
+        languages.forEach(l => formData.append('languages', l));
+      }
 
       files.forEach(file => {
         formData.append('files', file);
@@ -636,22 +735,17 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
       {showSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
           <div className="bg-white rounded-[20px] p-7 sm:p-9 max-w-[460px] w-full shadow-2xl border border-[#E5E7EB] text-left">
-            <div className="flex items-center gap-3 mb-3">
+            <div className="flex items-center gap-3 mb-2">
               <div className="w-8 h-8 rounded-full border-[2px] border-[#1C361C] flex items-center justify-center shrink-0">
                 <Check size={18} className="text-[#1C361C] stroke-[2.5]" />
               </div>
               <h2 className="text-[20px] sm:text-[22px] font-bold text-[#111827] leading-tight">
-                {isEdit ? (
-                  <>
-                    Thanks —<br />your job has been updated!
-                  </>
-                ) : (
-                  <>
-                    Thanks —<br />your job has been posted!
-                  </>
-                )}
+                Thanks —
               </h2>
             </div>
+            <h2 className="text-[20px] sm:text-[22px] font-bold text-[#111827] leading-tight mb-3">
+              {isEdit ? "Your job has been updated!" : "Your job has been posted!"}
+            </h2>
 
             <p className="text-[#374151] text-[14.5px] leading-relaxed mb-6">
               {isEdit
@@ -663,11 +757,11 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
               <h3 className="text-[14.5px] font-bold text-[#111827]">
                 What happens next?
               </h3>
-              <div className="space-y-1 text-[13.5px] text-[#374151]">
-                <p>1. Tradespeople review your job</p>
-                <p>2. Interested tradespeople respond</p>
-                <p>3. You compare your options</p>
-                <p>4. Contact your chosen tradesperson directly</p>
+              <div className="space-y-2 text-[13.5px] text-[#374151]">
+                <p><span className="inline-block w-6 font-medium">1.</span>Tradespeople review your job</p>
+                <p><span className="inline-block w-6 font-medium">2.</span>Interested tradespeople respond</p>
+                <p><span className="inline-block w-6 font-medium">3.</span>You compare your options</p>
+                <p><span className="inline-block w-6 font-medium">4.</span>Contact your chosen tradesperson directly</p>
               </div>
             </div>
 
@@ -860,13 +954,7 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
               <div className="flex flex-col gap-2">
                 <label className="text-[12px] font-bold text-[#243A24]">When do you need the job done?​</label>
                 <CustomDropdown
-                  options={[
-                    { id: "FLEXIBLE", name: "Flexible / Planning stage" },
-                    { id: "URGENT", name: "Urgent" },
-                    { id: "WITHIN_3_DAYS", name: "Within 3 days" },
-                    { id: "WITHIN_1_WEEK", name: "Within 1 week" },
-                    { id: "WITHIN_1_MONTH", name: "Within 1 month" }
-                  ]}
+                  options={TIMESCALE_OPTIONS}
                   value={timescale}
                   onChange={setTimescale}
                   placeholder="Select Timescale"
@@ -879,6 +967,21 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
                   value={budgetRange}
                   onChange={setBudgetRange}
                   placeholder="Select Budget"
+                />
+              </div>
+            </div>
+
+            {/* Row 6: Languages */}
+            <div className="flex flex-col gap-2">
+              <label className="text-[12px] font-bold text-[#243A24]">
+                Languages (optional)
+              </label>
+              <div className="w-full md:w-[calc(50%-12px)]">
+                <MultiSelectDropdown
+                  options={LANGUAGE_OPTIONS}
+                  value={languages}
+                  onChange={setLanguages}
+                  placeholder="Select languages (e.g. Portuguese, English)"
                 />
               </div>
             </div>
@@ -908,7 +1011,14 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
             {/* File Upload Zone */}
             <div
               onClick={() => fileInputRef.current?.click()}
-              className="border-2 border-dashed border-[#6E96254D]/30 bg-[#6E96250D]/5 rounded-[16px] p-8 flex flex-col items-center justify-center text-center mt-2 cursor-pointer transition-colors hover:bg-[#6E96250D]/10"
+              onDragOver={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                if (e.dataTransfer.files) {
+                  validateAndAddFiles(Array.from(e.dataTransfer.files));
+                }
+              }}
+              className={`border-2 border-dashed ${fileError ? "border-red-400 bg-red-50/20" : "border-[#6E96254D]/30 bg-[#6E96250D]/5"} rounded-[16px] p-8 flex flex-col items-center justify-center text-center mt-2 cursor-pointer transition-colors hover:bg-[#6E96250D]/10`}
             >
               <input
                 type="file"
@@ -918,8 +1028,8 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
                 onChange={handleFileChange}
                 accept="image/jpeg,image/png"
               />
-              <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center mb-4 shadow-sm">
-                <CloudUpload size={20} className="text-[#6E9625]" />
+              <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-4 shadow-sm ${fileError ? "bg-red-50" : "bg-white"}`}>
+                <CloudUpload size={20} className={fileError ? "text-red-500" : "text-[#6E9625]"} />
               </div>
               <h3 className="text-[15px] font-bold text-[#243A24] mb-1">
                 Upload photos/documents
@@ -927,7 +1037,7 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
               <p className="text-[13px] text-[#555555] font-medium mb-3">
                 Click to browse files
               </p>
-              <p className="text-[10px] text-[#555555]/60 font-bold tracking-wider uppercase mb-2">
+              <p className={`text-[11px] font-bold tracking-wider uppercase mb-2 transition-all ${fileError ? "text-red-600 bg-red-50 border border-red-200 px-3 py-1.5 rounded-lg shadow-xs" : "text-[#555555]/60"}`}>
                 MAX FILE SIZE 5MB • JPEG, PNG
               </p>
               {files.length > 0 && (
@@ -980,7 +1090,7 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
                 disabled={isSubmitting}
                 className="bg-[#6F9824] hover:bg-[#1a2b1a] text-white font-bold py-3.5 px-12 cursor-pointer rounded-[10px] text-[14px] transition-all flex items-center justify-center gap-2 shadow-sm disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {isSubmitting ? (isEdit ? 'Updating...' : 'Posting...') : (isEdit ? 'Update your job' : 'POST  YOUR  JOB  -FREE')}
+                {isSubmitting ? (isEdit ? 'Updating...' : 'Posting...') : (isEdit ? 'Update your job' : 'POST YOUR JOB - FREE')}
               </button>
             </div>
 

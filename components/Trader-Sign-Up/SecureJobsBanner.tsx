@@ -5,19 +5,21 @@ import { UserPlus } from 'lucide-react';
 
 const SecureJobsBanner = () => {
   return (
-    <section className="relative w-full overflow-hidden py-12 sm:py-14 md:py-16 flex items-center">
-      {/* Background Image with Green Overlay */}
+    <section className="relative w-full overflow-hidden py-14 sm:py-16 md:py-20 flex items-center bg-[#0C2516]">
+      {/* Background Image with Lighter Green Overlay */}
       <div className="absolute inset-0 z-0">
-        <Image
-          src="/image2.png"
-          alt="Tradesperson in Portugal"
-          fill
-          className="object-cover object-right md:object-[75%_center]"
-          priority
-        />
-        {/* Dark forest green gradient: solid on the left for contrast, translucent on the right to reveal the electrician */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0C2516] via-[#0C2516]/90 to-[#0C2516]/45" />
-        <div className="absolute inset-0 bg-[#0E2A18]/35 mix-blend-multiply" />
+        {/* Right-aligned image container for natural zoomed-out context */}
+        <div className="absolute inset-y-0 right-0 w-full sm:w-[75%] md:w-[65%] lg:w-[58%]">
+          <Image
+            src="/image2.png"
+            alt="Tradesperson in Portugal"
+            fill
+            className="object-cover object-[70%_center]"
+            priority
+          />
+        </div>
+        {/* Lighter forest green gradient: solid on the left for contrast, clear and translucent on the right to reveal the electrician */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0C2516] via-[#0C2516]/85 md:via-[#0C2516]/55 to-[#0C2516]/20 pointer-events-none" />
       </div>
 
       {/* Content */}

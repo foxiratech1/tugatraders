@@ -15,7 +15,7 @@ interface JobLead {
   title: string;
   location: string;
   tag: string;
-  status: "New" | "Posted" | "Quote Sent" | "Connected" | "In Progress" | "Completed" | "Closed" | "Rejected" | "Declined";
+  status: "New" | "Posted" | "Quote Sent" | "Contacted" | "In Progress" | "Completed" | "Closed" | "Rejected" | "Declined";
   rawStatus?: string;
   matchStatus?: string;
   timeAgo: string;
@@ -57,8 +57,15 @@ const formatTimeAgo = (iso: string) => {
 
 const formatBudget = (budget?: string) => {
   if (!budget) return "Under €500";
-  if (budget.includes("UNDER_")) return "Under €500";
-  if (budget.includes("OVER_")) return "Over €50,000";
+  if (budget === "NOT_SURE") return "Not sure";
+  if (budget === "PREFER_TO_DISCUSS") return "Prefer to discuss";
+  if (budget === "ABOVE_5000") return "5000 +";
+  if (budget === "UNDER_250") return "Under 250";
+  if (budget === "UNDER_500") return "Under 500";
+  if (budget === "BETWEEN_500_1000") return "500 – 1000";
+  if (budget === "BETWEEN_1000_5000") return "1000 – 5000";
+  if (budget.includes("UNDER_")) return `Under €${budget.replace("UNDER_", "")}`;
+  if (budget.includes("OVER_") || budget.includes("ABOVE_")) return `Above €${budget.replace(/(OVER_|ABOVE_)/, "")}`;
   if (budget.startsWith("BETWEEN_")) {
     const parts = budget.replace("BETWEEN_", "").split("_");
     if (parts.length === 2) {
@@ -91,7 +98,29 @@ const formatPostedDate = (dateStr: string) => {
   });
 };
 
-function getUIStatus(item: any): "New" | "Posted" | "Quote Sent" | "Connected" | "In Progress" | "Completed" | "Closed" {
+const isJobInLocalStorage = (jobId?: string): boolean => {
+  if (typeof window === "undefined" || !jobId) return false;
+  try {
+    const list = JSON.parse(localStorage.getItem("trader_accepted_jobs") || "[]");
+    return Array.isArray(list) && list.includes(jobId);
+  } catch {
+    return false;
+  }
+};
+
+const markJobInLocalStorage = (jobId?: string) => {
+  if (typeof window === "undefined" || !jobId) return;
+  try {
+    const list = JSON.parse(localStorage.getItem("trader_accepted_jobs") || "[]");
+    const arr = Array.isArray(list) ? list : [];
+    if (!arr.includes(jobId)) {
+      arr.push(jobId);
+      localStorage.setItem("trader_accepted_jobs", JSON.stringify(arr));
+    }
+  } catch { }
+};
+
+function getUIStatus(item: any): "New" | "Posted" | "Quote Sent" | "Contacted" | "In Progress" | "Completed" | "Closed" {
   const rawStatus = (item.rawStatus || item.status || "").toUpperCase();
 
   if (rawStatus === "COMPLETED") return "Completed";
@@ -130,11 +159,22 @@ function getUIStatus(item: any): "New" | "Posted" | "Quote Sent" | "Connected" |
     !isThisTraderRejected
   );
 
+  const traderAccepted = Boolean(
+    item.traderStarted ||
+    item.traderAccepted ||
+    item.startedByTrader ||
+    item.isStarted ||
+    item.startedAt ||
+    (rawStatus === "STARTED") ||
+    isJobInLocalStorage(item.id)
+  );
+
   if (isAccepted) {
-    if (rawStatus === "IN_PROGRESS" || item.status === "In Progress" || item.traderStarted) {
+    if (traderAccepted) {
       return "In Progress";
     }
-    return "Connected";
+    // Once quote is accepted by customer it states 'Quote Sent' not 'In Progress' - only 'In Progress' once trader accepts
+    return "Quote Sent";
   }
 
   // Check if another trader's quote is accepted
@@ -148,7 +188,7 @@ function getUIStatus(item: any): "New" | "Posted" | "Quote Sent" | "Connected" |
     return "Closed";
   }
 
-  if (hasOtherTraderAccepted || rawStatus === "IN_PROGRESS" || rawStatus === "ASSIGNED") {
+  if (hasOtherTraderAccepted) {
     return "In Progress";
   }
 
@@ -164,7 +204,8 @@ function getUIStatus(item: any): "New" | "Posted" | "Quote Sent" | "Connected" |
     ))
   );
 
-  if (hasQuoted && !isAccepted && !hasOtherTraderAccepted) {
+  if (hasQuoted && !hasOtherTraderAccepted) {
+    if (traderAccepted) return "In Progress";
     return "Quote Sent";
   }
 
@@ -239,15 +280,26 @@ export default function JobsLeads() {
 
     const effectiveMatchStatus = isRejectedMatch ? (isDeclined ? "DECLINED" : "REJECTED") : extractedMatchStatus;
 
+    const isTraderStarted = Boolean(
+      item.traderStarted ||
+      item.traderAccepted ||
+      item.startedByTrader ||
+      item.isStarted ||
+      item.startedAt ||
+      item.status === "STARTED" ||
+      isJobInLocalStorage(item.id)
+    );
+
     return {
       id: item.id,
       jobId: item.id?.substring(0, 8).toUpperCase() || "",
       title: item.title || "",
       location: item.postcode || "No Location",
       tag: item.category?.name || "General",
-      status: getUIStatus({ ...item, matchStatus: effectiveMatchStatus }),
+      status: getUIStatus({ ...item, matchStatus: effectiveMatchStatus, traderStarted: isTraderStarted }),
       rawStatus: item.status,
       matchStatus: effectiveMatchStatus,
+      traderStarted: isTraderStarted,
       timeAgo: formatTimeAgo(item.createdAt),
       postedDate: formatPostedDate(item.createdAt),
       description: item.description || item.projectDescription || item.details || item.desc || "",
@@ -305,13 +357,13 @@ export default function JobsLeads() {
         setJobs((prev) =>
           prev.map((j) =>
             j.id === quoteJobId
-              ? { ...j, isQuoteAccepted: true, matchStatus: "ACCEPTED", status: "Connected" }
+              ? { ...j, isQuoteAccepted: true, matchStatus: "ACCEPTED", status: (j.traderStarted || isJobInLocalStorage(j.id)) ? "In Progress" : "Quote Sent" }
               : j
           )
         );
         setSelectedJob((prev) => {
           if (prev && prev.id === quoteJobId) {
-            return { ...prev, isQuoteAccepted: true, matchStatus: "ACCEPTED", status: "Connected" };
+            return { ...prev, isQuoteAccepted: true, matchStatus: "ACCEPTED", status: (prev.traderStarted || isJobInLocalStorage(prev.id)) ? "In Progress" : "Quote Sent" };
           }
           return prev;
         });
@@ -869,7 +921,7 @@ export default function JobsLeads() {
     setCurrentPage(1);
   }, [activeTab, searchQuery]);
 
-  const tabs = ["All", "New", "Quote Sent", "Connected", "In Progress", "Completed", "Closed"];
+  const tabs = ["All", "New", "Quote Sent", "Contacted", "In Progress", "Completed", "Closed"];
 
   // Helper to count jobs for tabs
   const getTabCount = (tab: string) => {
@@ -885,7 +937,7 @@ export default function JobsLeads() {
     if (status === "Quote Accepted" || s === "QUOTE_ACCEPTED" || s === "ACCEPTED" || status === "Contacted" || s === "CONTACTED" || status === "Connected" || s === "CONNECTED") {
       return (
         <div className="flex items-center px-3 py-1 rounded-[4px] bg-[#7DB0E3] border border-[#679FD8] text-[#103270] text-[11px] font-bold">
-          Connected
+          Contacted
         </div>
       );
     }
@@ -1168,11 +1220,16 @@ export default function JobsLeads() {
                           return renderStatusBadge("Completed");
                         }
 
+                        const traderAccepted = Boolean(
+                          selectedJob.traderStarted ||
+                          isJobInLocalStorage(selectedJob.id)
+                        );
+
                         if (isAccepted) {
-                          if (selectedJob.status === "In Progress" || selectedJob.rawStatus === "IN_PROGRESS" || selectedJob.traderStarted) {
+                          if (traderAccepted) {
                             return renderStatusBadge("In Progress");
                           }
-                          return renderStatusBadge("Connected");
+                          return renderStatusBadge("Quote Sent");
                         }
 
                         if (isQuoteOrMatchRejected) {
@@ -1182,8 +1239,16 @@ export default function JobsLeads() {
                           return renderStatusBadge(selectedJob.status || "Quote Sent");
                         }
 
+                        if (selectedJob.hasQuoted || quoteStatusUpper === "PENDING" || selectedJob.status === "Quote Sent") {
+                          if (traderAccepted) return renderStatusBadge("In Progress");
+                          return renderStatusBadge("Quote Sent");
+                        }
+
                         if (selectedJob.status === "In Progress" || selectedJob.rawStatus === "IN_PROGRESS" || jobRawUpper === "IN_PROGRESS") {
-                          return renderStatusBadge("In Progress");
+                          if (hasOtherTraderAccepted || traderAccepted) {
+                            return renderStatusBadge("In Progress");
+                          }
+                          return renderStatusBadge("Quote Sent");
                         }
                         if (
                           selectedJob.status === "Closed" ||
@@ -1192,9 +1257,6 @@ export default function JobsLeads() {
                           selectedJob.rawStatus === "EXPIRED"
                         ) {
                           return renderStatusBadge("Closed");
-                        }
-                        if (selectedJob.hasQuoted || quoteStatusUpper === "PENDING" || selectedJob.status === "Quote Sent") {
-                          return renderStatusBadge("Quote Sent");
                         }
                         return renderStatusBadge(selectedJob.status || "New");
                       })()}
@@ -1603,46 +1665,55 @@ export default function JobsLeads() {
                               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#E4F2CC] text-[#4E7519] text-[12px] font-bold whitespace-nowrap">
                                 <CheckCircle size={14} /> Quote Accepted
                               </span>
-                              {showStartJob && (
-                                <button
-                                  disabled={isStartingJob || selectedJob.rawStatus === "IN_PROGRESS"}
-                                  onClick={async () => {
-                                    try {
-                                      setIsStartingJob(true);
-                                      toast.loading("Starting job...", { id: "startJob" });
-                                      await authApi.startJob(selectedJob.id);
-                                      toast.success("Job started successfully!", { id: "startJob" });
+                              {showStartJob && (() => {
+                                const isJobStarted = Boolean(
+                                  selectedJob.traderStarted ||
+                                  isJobInLocalStorage(selectedJob.id)
+                                );
 
-                                      setJobs((prevJobs) =>
-                                        prevJobs.map((j) =>
-                                          j.id === selectedJob.id ? { ...j, status: "In Progress", rawStatus: "IN_PROGRESS", traderStarted: true } : j
-                                        )
-                                      );
-                                      setSelectedJob((prev) => (prev ? { ...prev, status: "In Progress", rawStatus: "IN_PROGRESS", traderStarted: true } : null));
-                                    } catch (error: any) {
-                                      console.error("Failed to start job", error);
-                                      toast.error(error?.response?.data?.message || "Failed to start job", { id: "startJob" });
-                                    } finally {
-                                      setIsStartingJob(false);
-                                    }
-                                  }}
-                                  className={`h-[42px] w-[175px] rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 transition-all shrink-0 ${isStartingJob || selectedJob.rawStatus === "IN_PROGRESS"
-                                    ? "bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300"
-                                    : "bg-[#7CB342] hover:bg-[#689F38] text-white shadow-sm cursor-pointer active:scale-[0.98]"
-                                    }`}
-                                >
-                                  {selectedJob.rawStatus === "IN_PROGRESS" ? (
-                                    "Job Started"
-                                  ) : isStartingJob ? (
-                                    "Starting..."
-                                  ) : (
-                                    <>
-                                      <Play size={15} className="fill-current" />
-                                      Start Job
-                                    </>
-                                  )}
-                                </button>
-                              )}
+                                return (
+                                  <button
+                                    disabled={isStartingJob || isJobStarted}
+                                    onClick={async () => {
+                                      try {
+                                        setIsStartingJob(true);
+                                        toast.loading("Accepting job...", { id: "startJob" });
+                                        await authApi.startJob(selectedJob.id);
+                                        toast.success("Job accepted successfully!", { id: "startJob" });
+
+                                        markJobInLocalStorage(selectedJob.id);
+
+                                        setJobs((prevJobs) =>
+                                          prevJobs.map((j) =>
+                                            j.id === selectedJob.id ? { ...j, status: "In Progress", rawStatus: "IN_PROGRESS", traderStarted: true } : j
+                                          )
+                                        );
+                                        setSelectedJob((prev) => (prev ? { ...prev, status: "In Progress", rawStatus: "IN_PROGRESS", traderStarted: true } : null));
+                                      } catch (error: any) {
+                                        console.error("Failed to start job", error);
+                                        toast.error(error?.response?.data?.message || "Failed to accept job", { id: "startJob" });
+                                      } finally {
+                                        setIsStartingJob(false);
+                                      }
+                                    }}
+                                    className={`h-[42px] px-5 rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 transition-all shrink-0 ${isStartingJob || isJobStarted
+                                      ? "bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300"
+                                      : "bg-[#7CB342] hover:bg-[#689F38] text-white shadow-sm cursor-pointer active:scale-[0.98]"
+                                      }`}
+                                  >
+                                    {isJobStarted ? (
+                                      "Job Accepted"
+                                    ) : isStartingJob ? (
+                                      "Accepting..."
+                                    ) : (
+                                      <>
+                                        <Check size={15} />
+                                        Accept Job
+                                      </>
+                                    )}
+                                  </button>
+                                );
+                              })()}
                             </div>
                             {/* Row 2: Price + Duration + Contact Customer */}
                             <div className="flex items-end justify-between gap-4">

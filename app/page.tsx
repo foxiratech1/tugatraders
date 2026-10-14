@@ -14,11 +14,6 @@ export default function Home() {
   return (
     <main className="min-h-screen bg-white">
       <Hero />
-      <TrustSection />
-
-      <ConditionalSection hideForRole="trader">
-        <ConnectSelectSection />
-      </ConditionalSection>
 
       <ConditionalSection hideForRole="trader">
         <CategorySection />
@@ -30,9 +25,23 @@ export default function Home() {
 
       <PlatformRoleSection />
 
+
+      <TrustSection />
+
+
       <ConditionalSection hideForRole="trader">
-        <MapSearchSection />
+        <ConnectSelectSection />
       </ConditionalSection>
+
+
+
+
+
+
+
+      {/* <ConditionalSection hideForRole="trader">
+        <MapSearchSection />
+      </ConditionalSection> */}
 
       <ConditionalSection hideForRole="trader">
         <ReviewSection />

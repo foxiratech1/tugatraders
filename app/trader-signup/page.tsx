@@ -13,7 +13,7 @@ const TraderSignupPage = () => {
   return (
     <main>
       <HowItWorksHero />
-      <TraderBenefitsSection />
+      {/* <TraderBenefitsSection /> */}
       <WhyJoinSection />
       <HowItWorksSteps />
       <VettingSection />

@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import React, { useState, useEffect } from "react";
 import { Star, MapPin, Calendar, DollarSign, Shield, ShieldCheck, Mail, Info, AlertTriangle, CheckCircle, Phone, X, Briefcase, Plus, Clock, Play, XCircle, Send } from "lucide-react";
 import MessageList from "./MessageList";
@@ -639,8 +640,12 @@ export default function ChatWindow({
     try {
       setIsSubmittingDirectJob(true);
       const res = await authApi.confirmDirectJob(directJob.id || directJob._id);
-      setDirectJob(res?.data || res);
+      const updatedJob = res?.data || res;
+      setDirectJob(updatedJob);
       toast.success("Job completion confirmed! You can now leave a review.");
+      if (!isActualTrader) {
+        setShowReviewModal(true);
+      }
     } catch (error: any) {
       toast.error(error?.message || "Failed to confirm completion");
     } finally {
@@ -873,22 +878,39 @@ export default function ChatWindow({
                   )
                 )}
 
-                {/* {directJob?.status === 'COMPLETED' && !isActualTrader && (
+                {directJob?.status === 'COMPLETED' && (
                   (!directJob.reviews || directJob.reviews.length === 0) ? (
-                    <button
-                      onClick={() => setShowReviewModal(true)}
-                      className="px-4 py-1.5 bg-[#16A34A] hover:bg-[#15803D] text-white rounded-xl text-[12px] font-bold shadow-sm transition-all flex items-center gap-1.5"
-                    >
-                      <Star size={14} fill="currentColor" />
-                      Leave a Review
-                    </button>
+                    !isActualTrader ? (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="px-2.5 py-1 bg-[#EFDB4B] border border-[#E0CC3B] text-[#8A5C05] rounded-lg text-[11px] font-bold">
+                          Pending Review
+                        </span>
+                        <button
+                          onClick={() => setShowReviewModal(true)}
+                          className="px-4 py-1.5 bg-[#6E9625] hover:bg-[#58791C] text-white rounded-xl text-[12px] font-bold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <Star size={14} fill="currentColor" />
+                          Leave a Review
+                        </button>
+                        <Link
+                          href={`/customer-dashboard/leave-review?directJobId=${directJob.id || directJob._id}&traderId=${directJob.traderId || partner?.id || ''}&reviewType=DIRECTORY&workCarriedOut=true`}
+                          className="text-[12px] text-[#6E9625] hover:underline font-bold"
+                        >
+                          Review Form
+                        </Link>
+                      </div>
+                    ) : (
+                      <span className="px-3 py-1 bg-[#EFDB4B]/20 text-[#8A5C05] border border-[#E0CC3B]/40 rounded-xl text-[12px] font-bold">
+                        Pending Customer Review
+                      </span>
+                    )
                   ) : (
                     <span className="px-4 py-1.5 bg-green-100 text-green-700 rounded-xl text-[12px] font-bold flex items-center gap-1.5">
                       <Star size={14} fill="currentColor" />
                       Reviewed
                     </span>
                   )
-                )} */}
+                )}
               </div>
             </div>
           )}

@@ -25,6 +25,7 @@ import {
   LayoutGrid,
   ArrowLeftRight,
   Euro,
+  Star,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -163,6 +164,7 @@ const statusConfig: Record<
   REJECTED: { label: "Quote Declined", bg: "bg-[#FF9797]", text: "text-[#E53935]", border: "border-[#F08282]" },
   IN_PROGRESS: { label: "In Progress", bg: "bg-[#F1AA69]", text: "text-[#9C410F]", border: "border-[#DDA066]" },
   COMPLETED: { label: "Completed", bg: "bg-[#13501B]", text: "text-white", border: "border-[#0E3F15]" },
+  PENDING_REVIEW: { label: "Pending Review", bg: "bg-[#EFDB4B]", text: "text-[#8A5C05]", border: "border-[#DFC736]" },
   CLOSED: { label: "Closed", bg: "bg-[#A6A6A6]", text: "text-white", border: "border-[#8E8E8E]" },
   CANCELLED: { label: "Closed", bg: "bg-[#A6A6A6]", text: "text-white", border: "border-[#8E8E8E]" },
   EXPIRED: { label: "Closed", bg: "bg-[#A6A6A6]", text: "text-white", border: "border-[#8E8E8E]" },
@@ -187,8 +189,12 @@ const FILTER_TABS = [
 
 // ─── StatusBadge ──────────────────────────────────────────────────────────────
 
-function StatusBadge({ status, job }: { status: string; job?: Job }) {
+function StatusBadge({ status, job, hasReviewed }: { status: string; job?: Job; hasReviewed?: boolean }) {
   let s = status?.toUpperCase() || "";
+  const isReviewed = hasReviewed ?? ((job as any)?.hasReviewed || false);
+  if (s === "COMPLETED" && !isReviewed) {
+    s = "PENDING_REVIEW";
+  }
   const quotes = job ? (job.quotesReceived ?? job.quotesCount ?? (job as any)._count?.quotes ?? (Array.isArray(job.quotes) ? job.quotes.length : 0)) : 0;
   if (
     s === "QUOTE_RECEIVED" ||
@@ -220,9 +226,11 @@ function StatusBadge({ status, job }: { status: string; job?: Job }) {
 function JobExpandedContent({
   job,
   onViewDashboard,
+  hasReviewed,
 }: {
   job: Job;
   onViewDashboard: () => void;
+  hasReviewed?: boolean;
 }) {
   const trader = (job as any).assignedTrader || job.selectedTrader;
   const quote = trader?.quote || (job as any).selectedQuote || (job as any).quote;
@@ -351,7 +359,16 @@ function JobExpandedContent({
           </div>
 
           {/* Bottom: Action Button */}
-          <div className="mt-auto flex justify-end">
+          <div className="mt-auto flex items-center justify-end gap-2.5 flex-wrap">
+            {job.status === "COMPLETED" && !hasReviewed && (
+              <Link
+                href={`/customer-dashboard/leave-review?jobId=${job.id}&traderId=${trader?.id || ''}&reviewType=JOB&workCarriedOut=true`}
+                className="flex items-center justify-center gap-1.5 px-4 py-2.5 bg-[#6E9625] text-white rounded-xl text-[13px] font-bold hover:bg-[#58791C] transition-colors cursor-pointer shadow-sm w-full md:w-auto"
+              >
+                <Star size={14} className="fill-current" />
+                Leave a Review
+              </Link>
+            )}
             <button
               onClick={onViewDashboard}
               className="flex items-center justify-center gap-2 px-5 py-2.5 bg-[#1C2C1C] text-white rounded-xl text-[13px] font-bold hover:bg-[#2c3e2c] transition-colors cursor-pointer shadow-sm w-full md:w-auto"
@@ -371,14 +388,16 @@ function JobExpandedContent({
 function ExpandedDetail({
   job,
   onViewDashboard,
+  hasReviewed,
 }: {
   job: Job;
   onViewDashboard: () => void;
+  hasReviewed?: boolean;
 }) {
   return (
     <tr>
       <td colSpan={7} className="px-0 py-0">
-        <JobExpandedContent job={job} onViewDashboard={onViewDashboard} />
+        <JobExpandedContent job={job} onViewDashboard={onViewDashboard} hasReviewed={hasReviewed} />
       </td>
     </tr>
   );
@@ -389,6 +408,7 @@ function ExpandedDetail({
 export default function CustomerJobHistory() {
   const router = useRouter();
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [reviewedJobIds, setReviewedJobIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState("JOB_POSTED");
@@ -409,13 +429,24 @@ export default function CustomerJobHistory() {
   useEffect(() => {
     async function fetchJobs() {
       try {
-        const res = await authApi.getMyJobs();
-        const arr: Job[] = Array.isArray(res)
-          ? res
-          : Array.isArray(res?.data)
-            ? res.data
+        const [jobsRes, reviewsRes] = await Promise.all([
+          authApi.getMyJobs().catch(() => []),
+          authApi.getMyReviews().catch(() => []),
+        ]);
+        const arr: Job[] = Array.isArray(jobsRes)
+          ? jobsRes
+          : Array.isArray(jobsRes?.data)
+            ? jobsRes.data
             : [];
         setJobs(arr);
+
+        const revArr = Array.isArray(reviewsRes) ? reviewsRes : Array.isArray(reviewsRes?.data) ? reviewsRes.data : [];
+        const rIds = new Set<string>();
+        revArr.forEach((r: any) => {
+          if (r.jobId) rIds.add(String(r.jobId));
+          if (r.job?.id) rIds.add(String(r.job.id));
+        });
+        setReviewedJobIds(rIds);
       } catch (e) {
         console.error("Failed to fetch customer jobs", e);
         toast.error("Failed to load job history");
@@ -735,7 +766,7 @@ export default function CustomerJobHistory() {
                               )}
                             </div>
                             <div className="flex-shrink-0">
-                              <StatusBadge status={job.status} job={job} />
+                              <StatusBadge status={job.status} job={job} hasReviewed={reviewedJobIds.has(String(job.id)) || (job as any).hasReviewed} />
                             </div>
                           </div>
 
@@ -803,6 +834,7 @@ export default function CustomerJobHistory() {
                           <div className="border-t border-gray-100">
                             <JobExpandedContent
                               job={job}
+                              hasReviewed={reviewedJobIds.has(String(job.id)) || (job as any).hasReviewed}
                               onViewDashboard={() =>
                                 router.push(`/customer-dashboard/jobs?jobId=${job.id}`)
                               }
@@ -907,7 +939,7 @@ export default function CustomerJobHistory() {
 
                             {/* Status */}
                             <td className="px-2.5 lg:px-4 py-3.5 lg:py-4 whitespace-nowrap">
-                              <StatusBadge status={job.status} job={job} />
+                              <StatusBadge status={job.status} job={job} hasReviewed={reviewedJobIds.has(String(job.id)) || (job as any).hasReviewed} />
                             </td>
 
                             {/* Date */}
@@ -997,6 +1029,7 @@ export default function CustomerJobHistory() {
                             <ExpandedDetail
                               key={`detail-${job.id}`}
                               job={job}
+                              hasReviewed={reviewedJobIds.has(String(job.id)) || (job as any).hasReviewed}
                               onViewDashboard={() =>
                                 router.push(`/customer-dashboard/jobs?jobId=${job.id}`)
                               }

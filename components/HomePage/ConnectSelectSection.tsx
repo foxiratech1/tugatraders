@@ -43,22 +43,24 @@ export default function ConnectSelectSection() {
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true, amount: 0.2 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="flex flex-col items-center md:items-start text-center md:text-left justify-center max-w-[460px] w-full"
+          className="flex flex-col items-center text-center justify-center max-w-[460px] w-full"
         >
           {/* Heading - All on one line */}
-          <div className="mb-3">
+          <div className="mb-3 text-center w-full">
             <h2 className="text-[28px] sm:text-[34px] md:text-[38px] lg:text-[40px] font-extrabold text-[#1E3A2B] leading-tight tracking-tight whitespace-nowrap">
-              We Connect. <span className="text-[#729B27]">You Select</span>
+              We Connect. <span className="text-[#729B27]">You</span> Select.
             </h2>
           </div>
 
           {/* Subtext */}
-          <p className="text-[15px] sm:text-[17px] font-semibold text-[#2D3748] mb-1 leading-snug">
-            Do you need a tradesperson?
-          </p>
-          <p className="text-[14px] sm:text-[15px] font-medium  text-[#4A5568] mb-6 leading-normal">
-            Post a job for free
-          </p>
+          <div className="flex flex-col items-center text-center mb-6 w-full">
+            <p className="text-[16px] sm:text-[18px] font-semibold text-[#1E293B] mb-1 leading-snug">
+              Do you need a tradesperson?
+            </p>
+            <p className="text-[14px] sm:text-[15px] font-medium text-[#64748B] leading-normal">
+              Post a job for free
+            </p>
+          </div>
 
           {/* Button */}
           <Link

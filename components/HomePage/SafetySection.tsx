@@ -45,17 +45,13 @@ const safetyFeatures = [
     title: "Profiles & badges explained",
     description: (
       <div className="space-y-3">
-        <p className="font-bold text-white text-[14px]">Badge Disclaimer</p>
+        <p className="font-bold text-white text-[14px]">Trader profile badges</p>
         <p>
-          Badges displayed on trader profiles, including &ldquo;Vetted&rdquo;, &ldquo;Insurance Documents&rdquo; or similar indicators, are intended to help customers understand the information reviewed.
+          You may see badges on trader profiles showing information that has been reviewed by TugaTrades, such as <strong>Individual checks, Trade checks or Insurance documents</strong>. These badges are based on information provided by the trader and reviewed at a specific point in time. They help you understand the trader&apos;s profile and make a more informed choice.
         </p>
         <p>
-          These badges reflect information reviewed at a particular point in time and are not endorsements, certifications or guarantees.
+          <strong>Badges are not guarantees, certifications or endorsements.</strong> We recommend asking the trader for up-to-date documents where appropriate before starting any work.
         </p>
-        <p>
-          Before proceeding with any work, customers should carry out their own checks and request current supporting documentation directly from the trader.
-        </p>
-        <p>For more info click <span className="underline font-medium text-[#89b341]">here</span>.</p>
       </div>
     ),
     icon: <LuShieldCheck className="text-[#6E9625]" size={22} />,
@@ -259,7 +255,7 @@ export default function SafetySection({ className }: SafetySectionProps = {}) {
             <span className="text-[#243A24]">matters</span>
           </h2>
 
-          <p className="max-w-[860px] text-[#6F736C] text-[16px] md:text-[17px] leading-[1.75] font-medium">
+          <p className="max-w-[1080px] text-[#6F736C] text-[16px] md:text-[17px] leading-[1.75] font-medium">
             TugaTrades is designed to help you find reliable tradespeople with
             confidence. While we connect you with independent professionals, we
             also put systems in place to make your experience safer, more

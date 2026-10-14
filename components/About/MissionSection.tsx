@@ -11,23 +11,23 @@ const MissionSection = () => {
   }, []);
 
   return (
-    <section className="bg-[#FAFAF9] pt-24 lg:pt-28 pb-16 lg:pb-20 px-4 sm:px-6 lg:px-20 overflow-hidden">
+    <section className="bg-[#FAFAF9] pt-24 lg:pt-28 pb-6 sm:pb-8 lg:pb-10 px-4 sm:px-6 lg:px-20 overflow-hidden">
       <div className="max-w-[1200px] mx-auto w-full grid grid-cols-1 xl:grid-cols-2 gap-14 xl:gap-20 items-center">
 
         {/* LEFT CONTENT */}
         <div className="flex flex-col items-start">
 
-          {/* Heading */}
+          {/* Heading - Font size one down */}
           <h1
-            className="text-[34px] sm:text-[42px] lg:text-[48px] font-bold leading-[1.1] tracking-[-0.02em] mb-4 sm:mb-5"
+            className="text-[28px] sm:text-[34px] lg:text-[40px] font-bold leading-[1.15] tracking-[-0.02em] mb-3 sm:mb-4"
             style={{ fontFamily: 'var(--font-bricolage)' }}
           >
             <span className="text-[#6E9625]">About</span>{' '}
             <span className="text-[#243A24]">TugaTrades</span>
           </h1>
 
-          {/* Subheading */}
-          <h2 className="text-[17px] sm:text-[19px] lg:text-[21px] font-bold text-[#1C2C1C] leading-[1.3] mb-4 sm:mb-5 whitespace-normal sm:whitespace-nowrap">
+          {/* Subheading - Text on one line */}
+          <h2 className="text-[15px] sm:text-[17px] lg:text-[18px] xl:text-[19px] font-bold text-[#1C2C1C] leading-[1.3] mb-4 sm:mb-5 whitespace-nowrap">
             Connecting Portugal with independent tradespeople
           </h2>
 

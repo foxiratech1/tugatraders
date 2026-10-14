@@ -71,11 +71,10 @@ export default function MessageItem({ message, currentUserId }: MessageItemProps
     <div className={`flex flex-col mb-4 ${isSender ? "items-end" : "items-start"}`}>
       {/* Bubble Container */}
       <div
-        className={`max-w-[70%] rounded-2xl px-4 py-3 shadow-sm ${
-          isSender
+        className={`max-w-[70%] rounded-2xl px-4 py-3 shadow-sm ${isSender
             ? "bg-[#1C2C1C] text-white rounded-tr-none"
             : "bg-white text-[#1C2C1C] border border-gray-100 rounded-tl-none"
-        }`}
+          }`}
       >
         {/* Sender Name (only for received messages) */}
         {!isSender && message.sender?.fullName && (
@@ -118,11 +117,10 @@ export default function MessageItem({ message, currentUserId }: MessageItemProps
                     href={fileUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`flex items-center gap-2 p-2.5 rounded-lg border text-[12px] font-medium transition-colors ${
-                      isSender
+                    className={`flex items-center gap-2 p-2.5 rounded-lg border text-[12px] font-medium transition-colors ${isSender
                         ? "bg-[#2A3C2A] border-[#3B4E3B] text-emerald-100 hover:bg-[#344934]"
                         : "bg-gray-50 border-gray-150 text-gray-700 hover:bg-gray-100"
-                    }`}
+                      }`}
                   >
                     <FileText size={16} />
                     <span className="truncate flex-1 max-w-[150px]">
@@ -152,14 +150,14 @@ export default function MessageItem({ message, currentUserId }: MessageItemProps
           </span>
         )}
       </div>
-      
+
       {/* Fullscreen Image Modal */}
       {fullscreenImage && (
-        <div 
+        <div
           className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
           onClick={() => setFullscreenImage(null)}
         >
-          <button 
+          <button
             className="absolute top-6 right-6 p-2 text-white bg-black/50 hover:bg-black/70 rounded-full transition-colors"
             onClick={(e) => {
               e.stopPropagation();

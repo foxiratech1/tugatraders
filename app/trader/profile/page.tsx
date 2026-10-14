@@ -90,9 +90,12 @@ const MultiSelect = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const isIdSelected = (id: string) =>
+    selectedIds.some((item) => String(item).toUpperCase() === String(id).toUpperCase());
+
   const toggleOption = (id: string) => {
-    if (selectedIds.includes(id)) {
-      onChange(selectedIds.filter((item) => item !== id));
+    if (isIdSelected(id)) {
+      onChange(selectedIds.filter((item) => String(item).toUpperCase() !== String(id).toUpperCase()));
     } else {
       onChange([...selectedIds, id]);
     }
@@ -100,14 +103,22 @@ const MultiSelect = ({
 
   const removeOption = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    onChange(selectedIds.filter((item) => item !== id));
+    onChange(selectedIds.filter((item) => String(item).toUpperCase() !== String(id).toUpperCase()));
   };
 
   const filteredOptions = options.filter((opt) =>
     opt.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const selectedLabels = options.filter((opt) => selectedIds.includes(opt.id));
+  const selectedLabels = selectedIds.map((id) => {
+    const found = options.find((opt) => String(opt.id).toUpperCase() === String(id).toUpperCase());
+    return (
+      found || {
+        id,
+        name: id.charAt(0).toUpperCase() + id.slice(1).toLowerCase(),
+      }
+    );
+  });
 
   return (
     <div className="relative w-full" ref={containerRef}>
@@ -142,9 +153,9 @@ const MultiSelect = ({
           )}
         </div>
         <div className="flex items-center gap-1 flex-shrink-0 text-gray-400">
-          {selectedIds.length > 0 && (
+          {selectedLabels.length > 0 && (
             <span className="text-[10px] font-bold bg-[#6E9625] text-white rounded-full px-1.5 py-0.5 min-w-[18px] text-center">
-              {selectedIds.length}
+              {selectedLabels.length}
             </span>
           )}
           <ChevronDown />
@@ -208,7 +219,7 @@ const MultiSelect = ({
               </div>
             ) : (
               filteredOptions.map((opt) => {
-                const isSelected = selectedIds.includes(opt.id);
+                const isSelected = isIdSelected(opt.id);
                 return (
                   <div
                     key={opt.id}
@@ -264,6 +275,7 @@ interface PersonalForm {
   longitude?: number | null;
   bio: string;
   profileImage: string | null;
+  languages: string[];
 }
 
 interface BusinessForm {
@@ -274,6 +286,14 @@ interface BusinessForm {
   primarySkills: string;
   planName: string;
 }
+
+const LANGUAGE_OPTIONS = [
+  { id: "Portuguese", name: "Portuguese" },
+  { id: "English", name: "English" },
+  { id: "Spanish", name: "Spanish" },
+  { id: "French", name: "French" },
+  { id: "German", name: "German" },
+];
 
 const COMPANY_TYPES = [
   "Sole Trader",
@@ -350,6 +370,7 @@ export default function TraderProfilePage() {
     workRadius: "",
     bio: "",
     profileImage: null,
+    languages: [],
   });
 
   const [businessForm, setBusinessForm] = useState<BusinessForm>({
@@ -384,6 +405,14 @@ export default function TraderProfilePage() {
         const p = (res?.data || res) as any;
         const tp = p?.traderProfile || {};
 
+        const rawLanguages = tp?.languages || tp?.language || p?.languages || p?.language || [];
+        const parsedLanguages = (Array.isArray(rawLanguages)
+          ? rawLanguages
+          : typeof rawLanguages === "string"
+            ? rawLanguages.split(",").map((s: string) => s.trim()).filter(Boolean)
+            : []
+        ).map((s: string) => s.toUpperCase());
+
         setPersonalForm({
           fullName: p?.fullName || "",
           email: p?.email || "",
@@ -395,6 +424,7 @@ export default function TraderProfilePage() {
           longitude: typeof tp?.longitude === "number" ? tp.longitude : typeof p?.longitude === "number" ? p.longitude : null,
           bio: tp?.about || tp?.bio || tp?.description || "",
           profileImage: p?.profileImage || p?.avatar || tp?.logo || null,
+          languages: parsedLanguages,
         });
 
         setBusinessForm({
@@ -817,6 +847,9 @@ export default function TraderProfilePage() {
       fd.append("fullName", personalForm.fullName);
       fd.append("email", personalForm.email);
       fd.append("phone", personalForm.phone);
+      if (personalForm.languages && personalForm.languages.length > 0) {
+        fd.append("languages", JSON.stringify(personalForm.languages));
+      }
       // professionalTitle, workLocation, and bio are mapped to location and about fields
       // optional geographic fields – send empty if not applicable
       fd.append("latitude", String(personalForm.latitude ?? 38.7223));
@@ -1237,18 +1270,6 @@ export default function TraderProfilePage() {
                         />
                       </div>
 
-                      {typeof personalForm.latitude === "number" &&
-                        typeof personalForm.longitude === "number" && (
-                          <div className="col-span-full">
-                            <LocationMap
-                              latitude={personalForm.latitude}
-                              longitude={personalForm.longitude}
-                              title="Trader Work Location"
-                              className="h-[180px]"
-                            />
-                          </div>
-                        )}
-
                       {/* Work Radius */}
                       <div>
                         <label className="block text-[12px] font-medium text-gray-500 mb-1">
@@ -1263,6 +1284,33 @@ export default function TraderProfilePage() {
                           placeholder="e.g. 50"
                           min="0"
                           className="w-full px-3 py-2 rounded-lg border border-[#E0E0E0] text-[13px] text-[#1C2C1C] placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-[#6E9625]/40 focus:border-[#6E9625] transition-all"
+                        />
+                      </div>
+
+                      {typeof personalForm.latitude === "number" &&
+                        typeof personalForm.longitude === "number" && (
+                          <div className="col-span-full">
+                            <LocationMap
+                              latitude={personalForm.latitude}
+                              longitude={personalForm.longitude}
+                              title="Trader Work Location"
+                              className="h-[180px]"
+                            />
+                          </div>
+                        )}
+
+                      {/* Languages */}
+                      <div>
+                        <label className="block text-[12px] font-medium text-gray-500 mb-1">
+                          Languages
+                        </label>
+                        <MultiSelect
+                          options={LANGUAGE_OPTIONS}
+                          selectedIds={personalForm.languages}
+                          onChange={(langs) =>
+                            setPersonalForm((prev) => ({ ...prev, languages: langs }))
+                          }
+                          placeholder="Select languages"
                         />
                       </div>
 

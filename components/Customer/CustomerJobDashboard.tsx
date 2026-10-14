@@ -272,7 +272,7 @@ function SidebarStatusBadge({ status, job }: { status: string; job?: Job }) {
   if (norm === "ASSIGNED" || norm === "CONTACTED" || norm === "ACCEPTED" || norm === "QUOTE_ACCEPTED") {
     return (
       <div className="inline-flex items-center px-3 py-1 rounded-[4px] bg-[#7DB0E3] border border-[#679FD8] text-[#103270] text-[11px] font-bold">
-        Connected
+        Contacted
       </div>
     );
   }
@@ -280,7 +280,7 @@ function SidebarStatusBadge({ status, job }: { status: string; job?: Job }) {
   if (hasAcceptedQuote) {
     return (
       <div className="inline-flex items-center px-3 py-1 rounded-[4px] bg-[#7DB0E3] border border-[#679FD8] text-[#103270] text-[11px] font-bold">
-        Connected
+        Contacted
       </div>
     );
   }
@@ -331,7 +331,7 @@ function StatusBadge({ status, job, quotesCount }: { status: string; job?: Job; 
   if (norm === "ASSIGNED" || norm === "CONTACTED" || norm === "ACCEPTED" || norm === "QUOTE_ACCEPTED") {
     return (
       <div className="inline-flex items-center px-3 py-1 rounded-[4px] bg-[#7DB0E3] border border-[#679FD8] text-[#103270] text-[11px] font-bold">
-        Connected
+        Contacted
       </div>
     );
   }
@@ -339,7 +339,7 @@ function StatusBadge({ status, job, quotesCount }: { status: string; job?: Job; 
   if (hasAcceptedQuote) {
     return (
       <div className="inline-flex items-center px-3 py-1 rounded-[4px] bg-[#7DB0E3] border border-[#679FD8] text-[#103270] text-[11px] font-bold">
-        Connected
+        Contacted
       </div>
     );
   }
@@ -1417,9 +1417,9 @@ export default function CustomerJobDashboard() {
   const renderJobHistory = () => (
     <div
       className={`${mobileTab === "history" ? "flex" : "hidden"
-        } lg:flex bg-white rounded-2xl p-4 border border-[#E2EED2] flex-col gap-3 lg:sticky lg:top-8 max-h-[calc(100vh-4rem)] overflow-y-auto custom-scrollbar`}
+        } lg:flex bg-white rounded-2xl p-4 border border-[#E2EED2] flex-col gap-3 lg:sticky lg:top-8 max-h-[calc(100vh-4rem)] overflow-hidden`}
     >
-      <div className="flex items-center justify-between mb-1">
+      <div className="flex items-center justify-between mb-1 shrink-0">
         <h2 className="text-[17px] sm:text-[18px] font-extrabold text-[#1C2C1C]">Job History</h2>
         <span className="text-[11px] font-bold text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
           {totalJobs || jobs.length}
@@ -1435,7 +1435,7 @@ export default function CustomerJobDashboard() {
       ) : jobs.length === 0 ? (
         <p className="text-[13px] text-gray-400 px-2 py-6 text-center">No jobs posted yet.</p>
       ) : (
-        <div className="space-y-3">
+        <div className="space-y-3 overflow-y-auto custom-scrollbar flex-1 pr-1.5 -mr-1">
           {jobs.map((job) => {
             const isSelected = selectedJob?.id === job.id;
             const isClosed =
@@ -1492,7 +1492,7 @@ export default function CustomerJobDashboard() {
 
       {/* Pagination Controls */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-3 mt-auto border-t border-[#E2EED2]">
+        <div className="flex items-center justify-between pt-3 mt-auto border-t border-[#E2EED2] shrink-0">
           <button
             onClick={() => {
               setCurrentPage((prev) => Math.max(prev - 1, 1));
@@ -1527,61 +1527,101 @@ export default function CustomerJobDashboard() {
     <div className="min-h-screen bg-[#F8F9F5]">
       <div className="max-w-[1400px] mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8">
 
-        {/* ── Page Header (Welcome Banner & Actions matching UI) ────────────── */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 mb-6 sm:mb-8">
-          {/* Welcome Banner */}
-          <div className="bg-[#EFF5EB] rounded-[18px] border border-[#DFEBDD] px-5 sm:px-7 py-3.5 sm:py-4.5 flex items-center gap-3">
-            <div>
-              <h1 className="text-[20px] sm:text-[23px] font-black text-[#1C2C1C] flex items-center gap-2">
-                Hello, {customerName} <span className="select-none">👋</span>
-              </h1>
-              <p className="text-[13px] sm:text-[14px] text-[#556958] mt-0.5 font-medium">
-                Here&apos;s your latest activity and updates.
-              </p>
-            </div>
+        {/* ── Page Header: Left ("Hello, Paul 👋") & Right (Stats + Actions Card) ────────────── */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6 mb-6 sm:mb-8">
+          {/* Welcome Text */}
+          <div>
+            <h1 className="text-[26px] sm:text-[30px] lg:text-[34px] font-black text-[#1C2C1C] flex items-center gap-2.5 tracking-tight">
+              Hello, {customerName} <span className="select-none inline-block">👋</span>
+            </h1>
           </div>
 
-          {/* Top Actions */}
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <Link href="/directory-listing/search">
-              <button className="flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-4.5 py-2 sm:py-2.5 rounded-[12px] border border-gray-200 cursor-pointer bg-white text-[13px] sm:text-[14px] font-bold text-[#1C2C1C] hover:bg-gray-50 transition-colors shadow-xs">
-                <Users size={16} />
-                Find a Trader
+          {/* Unified Stats & Action Buttons Card */}
+          <div className="bg-white rounded-[24px] sm:rounded-[26px] p-5 sm:p-6 border border-[#E2EED2] shadow-[0_2px_14px_rgba(0,0,0,0.03)] flex flex-col gap-5 sm:gap-6 w-full lg:w-auto lg:min-w-[640px]">
+            {/* Top: 3 Stat Counters */}
+            <div className="grid grid-cols-3 gap-3 sm:gap-6 items-center">
+              {/* Stat 1: Jobs Posted */}
+              <div
+                onClick={() => router.push('/customer-dashboard/job-history?tab=JOB_POSTED')}
+                className="flex items-center gap-3 sm:gap-3.5 cursor-pointer hover:opacity-80 transition-opacity"
+              >
+                <div className="w-[42px] h-[42px] sm:w-[46px] sm:h-[46px] rounded-full bg-[#FEF9C3] flex items-center justify-center flex-shrink-0">
+                  <Briefcase size={20} className="text-[#CA8A04]" strokeWidth={2.2} />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-[20px] sm:text-[23px] font-black text-[#1C2C1C] leading-none mb-1">
+                    {dashboardDetails?.actionRequired?.activeJobsCount ?? jobs.filter(j => ["OPEN", "POSTED", "ACTIVE", "ASSIGNED", "IN_PROGRESS", "STARTED"].includes(j.status?.toUpperCase())).length}
+                  </h4>
+                  <p className="text-[12px] sm:text-[13px] text-gray-500 font-medium truncate">Jobs Posted</p>
+                </div>
+              </div>
+
+              {/* Stat 2: Quotes Received */}
+              <div
+                onClick={() => router.push('/customer-dashboard/job-history?tab=QUOTE_RECEIVED')}
+                className="flex items-center gap-3 sm:gap-3.5 cursor-pointer hover:opacity-80 transition-opacity"
+              >
+                <div className="w-[42px] h-[42px] sm:w-[46px] sm:h-[46px] rounded-full bg-[#E3F2FD] flex items-center justify-center flex-shrink-0">
+                  <MessageSquare size={20} className="text-[#1565C0]" strokeWidth={2.2} />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-[20px] sm:text-[23px] font-black text-[#1C2C1C] leading-none mb-1">
+                    {dashboardDetails?.actionRequired?.quotesAwaitingResponseCount ?? 0}
+                  </h4>
+                  <p className="text-[12px] sm:text-[13px] text-gray-500 font-medium truncate">Quote Received</p>
+                </div>
+              </div>
+
+              {/* Stat 3: Reviews Outstanding */}
+              <div
+                onClick={handleActionRequiredLeaveReview}
+                className="flex items-center gap-3 sm:gap-3.5 cursor-pointer hover:opacity-80 transition-opacity"
+              >
+                <div className="w-[42px] h-[42px] sm:w-[46px] sm:h-[46px] rounded-full bg-[#F2F7EB] flex items-center justify-center flex-shrink-0">
+                  <Star size={20} className="text-[#6E9625]" strokeWidth={2.2} />
+                </div>
+                <div className="min-w-0">
+                  <h4 className="text-[20px] sm:text-[23px] font-black text-[#1C2C1C] leading-none mb-1">
+                    {dashboardDetails?.actionRequired?.unreviewedJobsCount ?? 0}
+                  </h4>
+                  <p className="text-[12px] sm:text-[13px] text-gray-500 font-medium truncate">Reviews Outstanding</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Bottom: Action Buttons */}
+            <div className="flex items-center justify-end gap-2.5 sm:gap-3 flex-wrap">
+              <Link href="/directory-listing/search">
+                <button className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 cursor-pointer bg-white text-[13px] font-bold text-[#1C2C1C] hover:bg-gray-50 hover:border-gray-300 transition-all shadow-xs">
+                  <Users size={16} />
+                  Find a Trader
+                </button>
+              </Link>
+              <button
+                onClick={() => {
+                  if (selectedJob && !reviewedJobIds.has(selectedJob.id) && selectedJob.status !== "EXPIRED") {
+                    handleNavigateToReview(selectedJob, selectedJob.selectedTrader);
+                  } else {
+                    handleActionRequiredLeaveReview();
+                  }
+                }}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white cursor-pointer text-[13px] font-bold text-[#1C2C1C] hover:bg-gray-50 hover:border-gray-300 transition-all shadow-xs"
+              >
+                <Star size={16} className={selectedJob?.status === "COMPLETED" ? "text-[#6E9625] fill-[#6E9625]" : ""} />
+                Leave Review
               </button>
-            </Link>
-            <button
-              onClick={() => {
-                if (selectedJob && !reviewedJobIds.has(selectedJob.id) && selectedJob.status !== "EXPIRED") {
-                  handleNavigateToReview(selectedJob, selectedJob.selectedTrader);
-                } else {
-                  handleActionRequiredLeaveReview();
-                }
-              }}
-              className="flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-4.5 py-2 sm:py-2.5 rounded-[12px] border border-gray-200 bg-white cursor-pointer text-[13px] sm:text-[14px] font-bold text-[#1C2C1C] hover:bg-gray-50 transition-colors shadow-xs"
-            >
-              <Star size={16} className={selectedJob?.status === "COMPLETED" ? "text-[#6E9625] fill-[#6E9625]" : ""} />
-              Leave Review
-            </button>
-            <Link href="/customer-dashboard/post-job">
-              <button className="flex items-center justify-center gap-1.5 sm:gap-2 px-3.5 sm:px-4.5 py-2 sm:py-2.5 rounded-[12px] bg-[#6E9625] text-white text-[13px] sm:text-[14px] cursor-pointer font-bold hover:bg-[#58791C] transition-colors shadow-xs">
-                <PlusCircle size={16} strokeWidth={2.2} />
-                Post a Job
-              </button>
-            </Link>
+              <Link href="/customer-dashboard/post-job">
+                <button className="flex items-center justify-center gap-2 px-4.5 py-2.5 rounded-xl bg-[#6E9625] text-white text-[13px] cursor-pointer font-bold hover:bg-[#58791C] transition-all shadow-xs">
+                  <PlusCircle size={16} strokeWidth={2.2} />
+                  Post a Job
+                </button>
+              </Link>
+            </div>
           </div>
         </div>
 
         {/* ── View Switcher for Mobile & Tablet (Visible only on < lg screens) ────────────────── */}
         <div className="lg:hidden flex items-center p-1 bg-gray-200/70 rounded-xl mb-5 max-w-md">
-          <button
-            onClick={() => setMobileTab("detail")}
-            className={`flex-1 py-2 px-3 text-[13px] sm:text-[14px] font-bold rounded-lg transition-all ${mobileTab === "detail"
-              ? "bg-white text-[#1C2C1C] shadow-xs"
-              : "text-gray-600 hover:text-gray-900"
-              }`}
-          >
-            Job Details
-          </button>
           <button
             onClick={() => setMobileTab("history")}
             className={`flex-1 py-2 px-3 text-[13px] sm:text-[14px] font-bold rounded-lg transition-all ${mobileTab === "history"
@@ -1591,87 +1631,28 @@ export default function CustomerJobDashboard() {
           >
             Job History ({totalJobs || jobs.length})
           </button>
+          <button
+            onClick={() => setMobileTab("detail")}
+            className={`flex-1 py-2 px-3 text-[13px] sm:text-[14px] font-bold rounded-lg transition-all ${mobileTab === "detail"
+              ? "bg-white text-[#1C2C1C] shadow-xs"
+              : "text-gray-600 hover:text-gray-900"
+              }`}
+          >
+            Job Details
+          </button>
         </div>
 
-        {/* ── Main Grid: left (1fr on lg+) + right (320px/360px on lg+) ───────────── */}
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] xl:grid-cols-[1fr_360px] gap-6 items-start relative">
+        {/* ── Main Grid: Left (Job History: 320px/360px on lg+) + Right (Selected Job Detail: 1fr) ───────────── */}
+        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] xl:grid-cols-[360px_1fr] gap-6 items-start relative">
 
-          {/* ── Left: Selected Job Detail & Dashboard (Hidden on mobile/tablet if viewing 'history' tab) ──────── */}
+          {/* ── Left: Job History ──────── */}
+          {renderJobHistory()}
+
+          {/* ── Right: Selected Job Detail (Hidden on mobile/tablet if viewing 'history' tab) ──────── */}
           <div
             className={`${mobileTab === "detail" ? "flex" : "hidden"
               } lg:flex flex-col gap-5 sm:gap-6 w-full min-w-0`}
           >
-
-            {/* Action Required Dashboard Box */}
-            <div className="bg-white rounded-[20px] sm:rounded-[24px] shadow-[0_4px_24px_rgba(0,0,0,0.04)] border border-[#E2EED2] overflow-hidden">
-              <div className="flex items-center gap-2 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-100/60">
-                <Zap size={17} className="text-[#6E9625]" fill="#6E9625" />
-                <h3 className="text-[14px] sm:text-[15px] font-bold text-[#1C2C1C]">Action Required</h3>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-100/60 p-2">
-
-                {/* Card 1 */}
-                <div
-                  onClick={() => router.push('/customer-dashboard/job-history?tab=JOB_POSTED')}
-                  className="px-4 sm:px-5 py-3.5 sm:py-4 flex items-center gap-3 sm:gap-4 hover:bg-gray-50/50 rounded-xl transition-colors cursor-pointer"
-                >
-                  <div className="w-[44px] h-[44px] sm:w-[48px] sm:h-[48px] md:w-[52px] md:h-[52px] rounded-full bg-[#FEF9C3] flex items-center justify-center flex-shrink-0">
-                    <Briefcase size={20} className="text-[#CA8A04]" strokeWidth={2.2} />
-                  </div>
-                  <div>
-                    <h4 className="text-[18px] sm:text-[20px] font-extrabold text-[#1C2C1C] leading-none mb-1">
-                      {dashboardDetails?.actionRequired?.activeJobsCount ?? jobs.filter(j => ["OPEN", "POSTED", "ACTIVE", "ASSIGNED", "IN_PROGRESS", "STARTED"].includes(j.status?.toUpperCase())).length}
-                    </h4>
-                    <p className="text-[12px] text-gray-500 font-medium mb-1">Jobs Posted</p>
-                    <button className="text-[12px] font-bold text-[#CA8A04] flex items-center gap-1 hover:underline">
-                      View jobs <ArrowRight size={13} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Card 2 */}
-                <div
-                  onClick={() => router.push('/customer-dashboard/job-history?tab=QUOTE_RECEIVED')}
-                  className="px-4 sm:px-5 py-3.5 sm:py-4 flex items-center gap-3 sm:gap-4 hover:bg-gray-50/50 rounded-xl transition-colors cursor-pointer"
-                >
-                  <div className="w-[44px] h-[44px] sm:w-[48px] sm:h-[48px] md:w-[52px] md:h-[52px] rounded-full bg-[#E3F2FD] flex items-center justify-center flex-shrink-0">
-                    <MessageSquare size={20} className="text-[#1565C0]" strokeWidth={2.2} />
-                  </div>
-                  <div>
-                    <h4 className="text-[18px] sm:text-[20px] font-extrabold text-[#1C2C1C] leading-none mb-1">
-                      {dashboardDetails?.actionRequired?.quotesAwaitingResponseCount ?? 0}
-                    </h4>
-                    <p className="text-[12px] text-gray-500 font-medium mb-1">Quotes Received</p>
-                    <button className="text-[12px] font-bold text-[#1565C0] flex items-center gap-1 hover:underline">
-                      View quotes <ArrowRight size={13} />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Card 3 */}
-                <div
-                  onClick={handleActionRequiredLeaveReview}
-                  className="px-4 sm:px-5 py-3.5 sm:py-4 flex items-center gap-3 sm:gap-4 hover:bg-gray-50/50 rounded-xl transition-colors cursor-pointer"
-                >
-                  <div className="w-[44px] h-[44px] sm:w-[48px] sm:h-[48px] md:w-[52px] md:h-[52px] rounded-full bg-[#F2F7EB] flex items-center justify-center flex-shrink-0">
-                    <Star size={20} className="text-[#6E9625]" strokeWidth={2.2} />
-                  </div>
-                  <div>
-                    <h4 className="text-[18px] sm:text-[20px] font-extrabold text-[#1C2C1C] leading-none mb-1">
-                      {dashboardDetails?.actionRequired?.unreviewedJobsCount ?? 0}
-                    </h4>
-                    <p className="text-[12px] text-gray-500 font-medium mb-1">Reviews Outstanding</p>
-                    <button
-                      onClick={handleActionRequiredLeaveReview}
-                      className="text-[12px] font-bold text-[#6E9625] flex items-center gap-1 hover:underline cursor-pointer"
-                    >
-                      Leave review <ArrowRight size={13} />
-                    </button>
-                  </div>
-                </div>
-
-              </div>
-            </div>
 
             {/* Quick-Job Switcher on Mobile & Tablet */}
             {jobs.length > 1 && (
@@ -1729,8 +1710,8 @@ export default function CustomerJobDashboard() {
                     </div>
                   </div>
 
-                  {/* More Options / Actions Dropdown */}
-                  <div className="relative flex items-center gap-1 flex-shrink-0">
+                  {/* Actions: Edit, Job complete, Close Job */}
+                  <div className="flex items-center gap-2 flex-wrap shrink-0">
                     {(() => {
                       const createdAt = new Date(selectedJob.createdAt).getTime();
                       const now = new Date().getTime();
@@ -1742,7 +1723,7 @@ export default function CustomerJobDashboard() {
                               sessionStorage.setItem('editJobData', JSON.stringify(selectedJob));
                               router.push(`/post-job?edit=true&jobId=${selectedJob.id}`);
                             }}
-                            className="w-8 h-8 flex items-center justify-center text-[#223321] hover:bg-gray-100 rounded-full transition-colors"
+                            className="p-2 text-[#223321] hover:bg-gray-100 rounded-xl transition-colors border border-gray-200 cursor-pointer"
                             title="Edit Job"
                           >
                             <Edit2 size={16} />
@@ -1753,36 +1734,18 @@ export default function CustomerJobDashboard() {
                     })()}
 
                     {selectedJob.status !== "CLOSED" && selectedJob.status !== "COMPLETED" && selectedJob.status !== "CANCELLED" && selectedJob.status !== "EXPIRED" && (
-                      <button
-                        onClick={() => setJobMenuOpen(!jobMenuOpen)}
-                        onBlur={() => setTimeout(() => setJobMenuOpen(false), 200)}
-                        className="w-8 h-8 flex items-center justify-center text-[#223321] hover:bg-gray-100 rounded-full transition-colors"
-                      >
-                        <MoreVertical size={20} />
-                      </button>
-                    )}
-
-                    {jobMenuOpen && (
-                      <div className="absolute right-0 top-full mt-1 w-[150px] bg-white rounded-xl shadow-[0_4px_24px_rgba(0,0,0,0.12)] border border-gray-100 p-3 z-20 flex flex-col gap-2">
+                      <div className="flex items-center gap-2">
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleCompleteJob();
-                            setJobMenuOpen(false);
-                          }}
-                          className="w-full text-center py-2 px-3 text-[13px] font-semibold rounded-lg bg-[#B2D8B2] hover:bg-[#a1cca1] cursor-pointer transition-colors text-[#001D3D]"
+                          onClick={handleCompleteJob}
+                          className="px-3.5 sm:px-4 py-2 text-[12px] sm:text-[13px] font-bold rounded-xl bg-[#1C2C1C] hover:bg-[#2b402b] text-white transition-colors cursor-pointer shadow-xs whitespace-nowrap"
                         >
                           Job complete
                         </button>
                         <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setIsCloseJobModalOpen(true);
-                            setJobMenuOpen(false);
-                          }}
-                          className="w-full text-center py-2 px-3 text-[13px] font-semibold bg-[#E8E8E8] rounded-lg hover:bg-[#d6d6d6] cursor-pointer transition-colors text-[#001D3D]"
+                          onClick={() => setIsCloseJobModalOpen(true)}
+                          className="px-3.5 sm:px-4 py-2 text-[12px] sm:text-[13px] font-bold rounded-xl bg-[#EFF2F5] hover:bg-gray-200 text-[#1C2C1C] border border-gray-200 transition-colors cursor-pointer shadow-xs whitespace-nowrap"
                         >
-                          Close job
+                          Close Job
                         </button>
                       </div>
                     )}
@@ -1950,9 +1913,6 @@ export default function CustomerJobDashboard() {
               </div>
             ) : null}
           </div>
-
-          {/* ── Right: Job History ──────── */}
-          {renderJobHistory()}
         </div>
       </div>
 

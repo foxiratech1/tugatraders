@@ -6,7 +6,7 @@ import { authApi } from "@/app/api/authApi";
 import { getAccessToken } from "@/utils/auth";
 import {
   Star, MapPin, Phone, Briefcase, Wrench, ShieldCheck,
-  Mail, ArrowLeft, CheckCircle, FileText, Check, Info, Image as ImageIcon, X, MessageSquare, Heart, ThumbsUp, Award, Shield, LogIn, ChevronLeft, ChevronRight
+  Mail, ArrowLeft, CheckCircle, FileText, Check, Info, Image as ImageIcon, X, MessageSquare, Heart, ThumbsUp, Award, Shield, LogIn, ChevronLeft, ChevronRight, Globe
 } from "lucide-react";
 import toast from "react-hot-toast";
 import Link from "next/link";
@@ -397,6 +397,36 @@ export default function PublicTraderProfilePage() {
   const certificates = tp?.certificates || [];
   const insuranceDocuments = tp?.insuranceDocuments || [];
 
+  const rawLanguages = profile?.languages || tp?.languages || profile?.language || tp?.language;
+  const parseLanguages = (raw: any): string[] => {
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw.filter(Boolean);
+    if (typeof raw === "string") {
+      let trimmed = raw.trim();
+      if (!trimmed || trimmed === "{}" || trimmed === "[]") return [];
+      if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+        trimmed = trimmed.slice(1, -1);
+      }
+      try {
+        const parsed = JSON.parse(trimmed.startsWith("[") ? trimmed : `[${trimmed}]`);
+        if (Array.isArray(parsed)) return parsed.filter(Boolean);
+      } catch {
+        // ignore
+      }
+      return trimmed
+        .split(",")
+        .map((s: string) => s.trim().replace(/^["'{}\[\]]+|["'{}\[\]]+$/g, ""))
+        .filter(Boolean);
+    }
+    return [];
+  };
+  const languages: string[] = parseLanguages(rawLanguages);
+
+  const formatLanguage = (lang: string) => {
+    if (!lang) return "";
+    return lang.charAt(0).toUpperCase() + lang.slice(1).toLowerCase();
+  };
+
   const isCurrentUserTrader = currentUser?.role === "TRADER" || currentUser?.role === "trader";
 
   return (
@@ -511,6 +541,26 @@ export default function PublicTraderProfilePage() {
                       <div>
                         <p className="text-[11px] text-gray-500 font-medium">Phone</p>
                         <a href={`tel:${phone}`} className="text-[13px] font-medium text-[#6E9625] hover:underline">{phone}</a>
+                      </div>
+                    </div>
+                  )}
+                  {languages && languages.length > 0 && (
+                    <div className="flex items-start gap-3">
+                      <div className="w-7 h-7 rounded-full bg-[#F4F7F1] flex items-center justify-center text-[#6E9625] flex-shrink-0">
+                        <Globe size={14} />
+                      </div>
+                      <div>
+                        <p className="text-[11px] text-gray-500 font-medium">Languages</p>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {languages.map((lang, idx) => (
+                            <span
+                              key={idx}
+                              className="inline-block bg-[#F4F7F1] text-[#243A24] border border-[#DFE8DE] px-2 py-0.5 rounded-md text-[12px] font-semibold"
+                            >
+                              {formatLanguage(lang)}
+                            </span>
+                          ))}
+                        </div>
                       </div>
                     </div>
                   )}

@@ -35,6 +35,7 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
   const searchParams = useSearchParams();
   const traderId = searchParams.get('traderId');
   const jobId = searchParams.get('jobId');
+  const directJobId = searchParams.get('directJobId');
   const editReviewId = searchParams.get('editReviewId');
   const reviewCreatedAt = searchParams.get("createdAt");
   const hideWorkCarriedOut = searchParams.get('hideWorkCarriedOut') === 'true';
@@ -402,6 +403,9 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
         const finalJobId = jobId || propJobId;
         if (finalJobId && isValidUUID(finalJobId)) {
           payload.append("jobId", finalJobId);
+        }
+        if (directJobId) {
+          payload.append("directJobId", directJobId);
         }
         if (reviewType) payload.append("reviewType", reviewType);
         if (interactionSource) payload.append("interactionSource", interactionSource);
