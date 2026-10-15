@@ -1677,9 +1677,9 @@ export default function JobsLeads() {
                                     onClick={async () => {
                                       try {
                                         setIsStartingJob(true);
-                                        toast.loading("Accepting job...", { id: "startJob" });
+                                        toast.loading("Starting job...", { id: "startJob" });
                                         await authApi.startJob(selectedJob.id);
-                                        toast.success("Job accepted successfully!", { id: "startJob" });
+                                        toast.success("Job started successfully!", { id: "startJob" });
 
                                         markJobInLocalStorage(selectedJob.id);
 
@@ -1691,24 +1691,24 @@ export default function JobsLeads() {
                                         setSelectedJob((prev) => (prev ? { ...prev, status: "In Progress", rawStatus: "IN_PROGRESS", traderStarted: true } : null));
                                       } catch (error: any) {
                                         console.error("Failed to start job", error);
-                                        toast.error(error?.response?.data?.message || "Failed to accept job", { id: "startJob" });
+                                        toast.error(error?.response?.data?.message || "Failed to start job", { id: "startJob" });
                                       } finally {
                                         setIsStartingJob(false);
                                       }
                                     }}
-                                    className={`h-[42px] px-5 rounded-xl text-[14px] font-bold flex items-center justify-center gap-2 transition-all shrink-0 ${isStartingJob || isJobStarted
+                                    className={`h-[42px] w-[175px] rounded-xl text-[13.5px] font-bold flex items-center justify-center gap-2 transition-all shrink-0 ${isStartingJob || isJobStarted
                                       ? "bg-gray-200 text-gray-500 cursor-not-allowed border border-gray-300"
                                       : "bg-[#7CB342] hover:bg-[#689F38] text-white shadow-sm cursor-pointer active:scale-[0.98]"
                                       }`}
                                   >
                                     {isJobStarted ? (
-                                      "Job Accepted"
+                                      "Job Started"
                                     ) : isStartingJob ? (
-                                      "Accepting..."
+                                      "Starting..."
                                     ) : (
                                       <>
-                                        <Check size={15} />
-                                        Accept Job
+                                        <Play size={14} className="fill-current" />
+                                        Start Job
                                       </>
                                     )}
                                   </button>
