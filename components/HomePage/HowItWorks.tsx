@@ -100,11 +100,11 @@ export default function HowItWorks() {
             return (
               <div key={step.num} className="flex flex-col">
                 {/* Badge & Icon */}
-                <div className="flex items-center gap-3 mb-4 sm:mb-5">
-                  <div className="w-7 h-7 rounded-[6px] bg-[#6E9625] text-white font-extrabold text-[13px] flex items-center justify-center shrink-0">
+                <div className="flex items-center gap-2.5 mb-4 sm:mb-5">
+                  <div className="w-[22px] h-[22px] sm:w-[24px] sm:h-[24px] rounded-[5px] bg-[#6E9625] text-white font-extrabold text-[11px] sm:text-[12px] flex items-center justify-center shrink-0">
                     {step.num}
                   </div>
-                  <Icon className="text-[#1E3A2B] w-7 h-7" strokeWidth={1.8} />
+                  <Icon className="text-[#1E3A2B] w-8 h-8 sm:w-9 sm:h-9" strokeWidth={1.8} />
                 </div>
 
                 {/* Title */}
@@ -135,11 +135,11 @@ export default function HowItWorks() {
                 return (
                   <React.Fragment key={step.num}>
                     <div className="flex flex-col items-center">
-                      <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-[8px] bg-[#1A3326] text-white text-[13px] sm:text-[14px] font-extrabold flex items-center justify-center shrink-0 shadow-sm">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-[22px] h-[22px] sm:w-[24px] sm:h-[24px] rounded-full bg-[#1A3326] text-white text-[11px] sm:text-[12px] font-extrabold flex items-center justify-center shrink-0 shadow-xs">
                           {step.num}
                         </div>
-                        <Icon className="text-[#1A3326] w-7 h-7 sm:w-8 sm:h-8" strokeWidth={2} />
+                        <Icon className="text-[#1A3326] w-8 h-8 sm:w-9 sm:h-9" strokeWidth={1.9} />
                       </div>
                       <span className="text-[15px] sm:text-[16px] font-extrabold text-[#1A3326] mt-4 sm:mt-5">
                         {step.label}

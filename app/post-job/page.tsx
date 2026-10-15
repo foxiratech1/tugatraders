@@ -400,13 +400,13 @@ const BACKEND_TO_BUDGET_MAP: Record<string, string> = {
   ABOVE_30000: "ABOVE_5000",
 };
 
-const LANGUAGE_OPTIONS = [
-  { id: "PORTUGUESE", name: "Portuguese" },
-  { id: "ENGLISH", name: "English" },
-  { id: "SPANISH", name: "Spanish" },
-  { id: "FRENCH", name: "French" },
-  { id: "GERMAN", name: "German" },
-];
+// const LANGUAGE_OPTIONS = [
+//   { id: "PORTUGUESE", name: "Portuguese" },
+//   { id: "ENGLISH", name: "English" },
+//   { id: "SPANISH", name: "Spanish" },
+//   { id: "FRENCH", name: "French" },
+//   { id: "GERMAN", name: "German" },
+// ];
 
 export default function PostJobPage({ isDashboard = false }: { isDashboard?: boolean } = {}) {
   const router = useRouter();
@@ -734,43 +734,64 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
     <>
       {showSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-[20px] p-7 sm:p-9 max-w-[460px] w-full shadow-2xl border border-[#E5E7EB] text-left">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-8 h-8 rounded-full border-[2px] border-[#1C361C] flex items-center justify-center shrink-0">
+          <div className="bg-white rounded-[20px] p-7 sm:p-9 max-w-[460px] w-full shadow-2xl border border-[#E5E7EB] text-left relative">
+            <button
+              type="button"
+              onClick={() => setShowSuccessModal(false)}
+              className="absolute top-4 right-4 sm:top-5 sm:right-5 w-8 h-8 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors cursor-pointer"
+              aria-label="Close"
+            >
+              <X size={18} />
+            </button>
+
+            {/* Header: Icon + Title aligned together */}
+            <div className="flex items-start gap-3.5 mb-3 pr-6">
+              <div className="w-8 h-8 rounded-full border-[2px] border-[#1C361C] flex items-center justify-center shrink-0 mt-0.5">
                 <Check size={18} className="text-[#1C361C] stroke-[2.5]" />
               </div>
               <h2 className="text-[20px] sm:text-[22px] font-bold text-[#111827] leading-tight">
-                Thanks —
+                Thanks —<br />
+                {isEdit ? "Your job has been updated!" : "Your job has been posted!"}
               </h2>
             </div>
-            <h2 className="text-[20px] sm:text-[22px] font-bold text-[#111827] leading-tight mb-3">
-              {isEdit ? "Your job has been updated!" : "Your job has been posted!"}
-            </h2>
 
-            <p className="text-[#374151] text-[14.5px] leading-relaxed mb-6">
+            <p className="text-[#4B5563] text-[14px] sm:text-[14.5px] leading-relaxed mb-6">
               {isEdit
                 ? "Your job details have been updated successfully."
                 : "Suitable tradespeople in your area have been notified."}
             </p>
 
-            <div className="space-y-1.5 mb-5">
+            <div className="space-y-2.5 mb-5">
               <h3 className="text-[14.5px] font-bold text-[#111827]">
                 What happens next?
               </h3>
-              <div className="space-y-2 text-[13.5px] text-[#374151]">
-                <p><span className="inline-block w-6 font-medium">1.</span>Tradespeople review your job</p>
-                <p><span className="inline-block w-6 font-medium">2.</span>Interested tradespeople respond</p>
-                <p><span className="inline-block w-6 font-medium">3.</span>You compare your options</p>
-                <p><span className="inline-block w-6 font-medium">4.</span>Contact your chosen tradesperson directly</p>
-              </div>
+              <ol className="space-y-2 text-[13.5px] text-[#374151]">
+                <li className="flex items-start gap-2.5">
+                  <span className="font-semibold text-[#111827] shrink-0 w-4">1.</span>
+                  <span>Tradespeople review your job</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="font-semibold text-[#111827] shrink-0 w-4">2.</span>
+                  <span>Interested tradespeople respond</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="font-semibold text-[#111827] shrink-0 w-4">3.</span>
+                  <span>You compare your options</span>
+                </li>
+                <li className="flex items-start gap-2.5">
+                  <span className="font-semibold text-[#111827] shrink-0 w-4">4.</span>
+                  <span>Contact your chosen tradesperson directly</span>
+                </li>
+              </ol>
             </div>
 
-            <p className="text-[#374151] text-[13.5px] mb-7">
+            <p className="text-[#4B5563] text-[13.5px] mb-7 leading-relaxed">
               We’ll notify you when you receive a response.
             </p>
 
             <div className="flex justify-center w-full">
               <button
+                type="button"
                 onClick={() => router.push('/customer-dashboard/jobs')}
                 className="bg-[#15341C] hover:bg-[#0E2914] text-white font-bold py-2.5 px-10 rounded-[8px] transition-all text-[14px] shadow-sm cursor-pointer"
               >
@@ -972,7 +993,7 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
             </div>
 
             {/* Row 6: Languages */}
-            <div className="flex flex-col gap-2">
+            {/* <div className="flex flex-col gap-2">
               <label className="text-[12px] font-bold text-[#243A24]">
                 Languages (optional)
               </label>
@@ -984,7 +1005,7 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
                   placeholder="Select languages (e.g. Portuguese, English)"
                 />
               </div>
-            </div>
+            </div> */}
 
             {/* Emergency Toggle */}
             <div className="bg-[#FAFAF9] border border-[#243A240A] rounded-[16px] p-4 flex items-center justify-between mt-2">

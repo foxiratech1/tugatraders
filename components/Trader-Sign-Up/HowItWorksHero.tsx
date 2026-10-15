@@ -340,15 +340,15 @@ const HowItWorksHero = () => {
 
   return (
     <section className="bg-white pt-24 sm:pt-28 lg:pt-32 pb-16 sm:pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
-      <div className="max-w-[1100px] mx-auto relative">
+      <div className="max-w-[1400px] mx-auto relative">
 
         {/* DIAGONAL CORNER RIBBON */}
-        <div className="hidden lg:block absolute -top-4 -right-6 xl:-right-2 z-20 pointer-events-none">
-          <div className="bg-[#78A128] text-[#142617] py-2.5 px-12 xl:px-14 shadow-md transform rotate-[25deg] flex flex-col items-center text-center rounded-[3px] border-y border-[#8EBE2E]">
-            <span className="font-extrabold text-[13px] xl:text-[14px] tracking-tight leading-tight">
+        <div className="hidden lg:block absolute -top-4 -right-2 xl:right-0 z-20 pointer-events-none">
+          <div className="bg-[#78A128] text-[#142617] py-2 px-10 xl:px-12 shadow-md transform rotate-[20deg] flex flex-col items-center text-center rounded-[3px] border-y border-[#8EBE2E]">
+            <span className="font-extrabold text-[13px] xl:text-[14px] tracking-tight leading-tight whitespace-nowrap">
               No commission on your leads
             </span>
-            <span className="text-[11px] xl:text-[11.5px] font-medium leading-tight mt-0.5 opacity-90">
+            <span className="text-[11px] xl:text-[11.5px] font-medium leading-tight mt-0.5 opacity-90 whitespace-nowrap">
               Keep 100% of what you earn
             </span>
           </div>

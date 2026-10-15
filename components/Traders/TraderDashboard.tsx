@@ -1144,6 +1144,26 @@ export default function TraderDashboard() {
               </Link>
             </div>
 
+            {/* Table Header Bar (Only once at top) */}
+            {rawWorkingOn && rawWorkingOn.length > 0 && (
+              <div className="hidden md:flex items-center justify-between gap-4 lg:gap-6 px-5 sm:px-6 py-2.5 bg-[#FAFBF9] border-b border-[#EEF3ED] text-[10px] font-bold text-[#8A978E] uppercase tracking-wider">
+                <div className="min-w-0 md:w-[210px] lg:w-[230px] xl:w-[240px] shrink-0">
+                  Job
+                </div>
+                <div className="flex-1 min-w-0">
+                  Job Description
+                </div>
+                <div className="shrink-0 flex items-center gap-3">
+                  <div className="w-[118px]">
+                    Status
+                  </div>
+                  <div className="w-[105px] text-center">
+                    Action
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* List */}
             <div className="divide-y divide-[#EEF3ED]">
               {rawWorkingOn && rawWorkingOn.length > 0 ? (
@@ -1200,7 +1220,7 @@ export default function TraderDashboard() {
 
                       {/* Col 2: Job Description */}
                       <div className="flex-1 min-w-0">
-                        <span className="text-[10px] font-bold text-[#8A978E] uppercase tracking-wider block mb-1.5">
+                        <span className="md:hidden text-[10px] font-bold text-[#8A978E] uppercase tracking-wider block mb-1.5">
                           JOB DESCRIPTION
                         </span>
                         <div className="bg-[#F8FAF8] rounded-xl px-4 py-2.5 text-[12.5px] text-[#4A5568] leading-relaxed line-clamp-2">
@@ -1210,7 +1230,9 @@ export default function TraderDashboard() {
 
                       {/* Col 3: Status & Action Button in line */}
                       <div className="shrink-0 flex items-center gap-3">
-                        {renderStatusBadge(job.status || "In Progress")}
+                        <div className="w-[118px] flex items-center">
+                          {renderStatusBadge(job.status || "In Progress")}
+                        </div>
                         <button
                           type="button"
                           onClick={() =>
@@ -1218,7 +1240,7 @@ export default function TraderDashboard() {
                               `/trader/jobs?jobId=${job.id || job.jobId}&tab=In Progress`
                             )
                           }
-                          className="px-6 py-2 rounded-xl border border-[#D5DDD4] bg-white hover:bg-gray-50 text-[#1B311E] text-[13px] font-bold transition-colors cursor-pointer shadow-2xs whitespace-nowrap"
+                          className="w-[105px] py-2 rounded-xl border border-[#D5DDD4] bg-white hover:bg-gray-50 text-[#1B311E] text-[13px] font-bold transition-colors cursor-pointer shadow-2xs whitespace-nowrap text-center flex items-center justify-center"
                         >
                           View Job
                         </button>
