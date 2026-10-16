@@ -44,8 +44,8 @@ export default function Footer() {
   }
 
   return (
-    <footer className="w-full bg-white pt-20 pb-12 px-6 lg:px-12 border-t border-gray-100">
-      <div className="max-w-[1400px] mx-auto">
+    <footer className="w-full bg-white pt-16 sm:pt-20 pb-12 px-4 sm:px-6 lg:px-8 xl:px-12 border-t border-gray-100">
+      <div className="w-full">
 
         {/* TOP SECTION */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 mb-20">
