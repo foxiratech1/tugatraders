@@ -26,7 +26,7 @@ const transparencyFeatures = [
 export default function TrustSection() {
   return (
     <section className="w-full py-8 md:py-12 bg-white px-6">
-      <div className="max-w-[1200px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+      <div className="max-w-[1340px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
 
         {/* LEFT SPEECH BUBBLE CARD */}
         <motion.div

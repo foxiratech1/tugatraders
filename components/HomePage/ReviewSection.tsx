@@ -132,7 +132,7 @@ export default function ReviewSection() {
 
   return (
     <section className="w-full py-16 md:py-24 bg-white px-4 sm:px-6 overflow-hidden">
-      <div className="max-w-[1200px] mx-auto">
+      <div className="max-w-[1340px] mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
 
           {/* LEFT: Heading, Description & Button */}

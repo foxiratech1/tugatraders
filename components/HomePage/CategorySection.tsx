@@ -106,10 +106,10 @@ export default function CategorySection() {
   const activeCats = categoriesList.length > 0 ? categoriesList : defaultCategories;
 
   return (
-    <section className="w-full bg-white overflow-hidden">
+    <section className="w-full bg-white overflow-hidden pt-10">
       {/* LIGHT GREEN BACKGROUND STRIP */}
-      <div className="w-full bg-[#EDF3E6] py-7 sm:py-9 border-y border-[#E0EBD4]">
-        <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
+      <div className="w-full bg-[#EDF3E6] pt-12 sm:pt-14 lg:pt-16 pb-8 sm:pb-10 border-y border-[#E0EBD4]">
+        <div className="max-w-[1340px] mx-auto px-4 sm:px-6 lg:px-8">
 
           {/* HEADER */}
           <div className="flex items-center justify-between mb-6">
@@ -143,7 +143,7 @@ export default function CategorySection() {
       </div>
 
       {/* PROMO BANNER CARDS - CENTERED BETWEEN SECTIONS */}
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
+      <div className="max-w-[1340px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-16 sm:pt-20 lg:pt-24 pb-14 sm:pb-18 lg:pb-20">
 
           {/* CARD 1: Need work done? */}

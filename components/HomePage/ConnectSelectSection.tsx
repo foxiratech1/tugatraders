@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 export default function ConnectSelectSection() {
   return (
     <section className="w-full py-6 md:py-10 bg-white px-4 sm:px-6 overflow-hidden">
-      <div className="max-w-[1100px] mx-auto flex flex-col md:flex-row items-center justify-center gap-8 md:gap-14">
+      <div className="max-w-[1340px] mx-auto flex flex-col md:flex-row items-center justify-center gap-8 md:gap-14">
 
         {/* LEFT: Tradespeople Image with soft feathered vignette (Bigger image) */}
         <motion.div

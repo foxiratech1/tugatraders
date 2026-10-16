@@ -8,7 +8,7 @@ import { motion } from "framer-motion";
 const PlatformRoleSection = () => {
   return (
     <section className="bg-white py-16 md:py-20 border-t border-gray-100">
-      <div className="mx-auto max-w-[1200px] px-4 sm:px-6">
+      <div className="mx-auto max-w-[1340px] px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 items-center">
 
           {/* Left Content */}

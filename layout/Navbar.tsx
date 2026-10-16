@@ -31,8 +31,20 @@ export default function Navbar() {
   const [signupOpen, setSignupOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [profile, setProfile] = useState<any>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
 
   const profileDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Track scroll position to toggle transparent vs white navbar
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollPosition = window.scrollY || document.documentElement.scrollTop;
+      setIsScrolled(scrollPosition > 20);
+    };
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Fetch profile when authenticated user visits public pages
   useEffect(() => {
@@ -88,9 +100,16 @@ export default function Navbar() {
     ? new URL(profileData.profileImage, process.env.NEXT_PUBLIC_API_URL).toString()
     : fallbackAvatar;
 
+  const showSolidNavbar = isScrolled || isOpen;
+
   return (
-    <nav className="fixed top-4 sm:top-6 left-0 right-0 z-50 flex justify-center px-4">
-      <div className="flex h-[64px] w-full max-w-[1400px] items-center justify-between rounded-md border border-[#E5E7EB] bg-white px-4 sm:px-6 md:px-8 py-2 backdrop-blur-md shadow-sm relative z-50">
+    <nav
+      className={`fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 ease-in-out border-b ${showSolidNavbar
+        ? "bg-white/95 backdrop-blur-md border-[#E5E7EB] shadow-xs"
+        : "bg-transparent border-transparent shadow-none"
+        }`}
+    >
+      <div className="w-full flex h-[68px] sm:h-[72px] items-center justify-between px-4 sm:px-6 lg:px-8 xl:px-12">
         {/* LOGO */}
         <Link
           href="/"
