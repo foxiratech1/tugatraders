@@ -49,8 +49,8 @@ const OrganisedConnected = () => {
   ];
 
   return (
-    <section className="bg-[#F9FAFB] pt-20 sm:pt-24 lg:pt-28 pb-20 lg:pb-28 px-6 lg:px-20 overflow-hidden">
-      <div className="max-w-[1400px] mx-auto">
+    <section className="bg-[#F9FAFB] pt-16 sm:pt-20 lg:pt-24 pb-16 lg:pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <div className="max-w-[1100px] mx-auto">
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-12 xl:gap-16 items-center">
 
           {/* Left Column - Text Content */}

@@ -1271,7 +1271,17 @@ export default function CustomerJobDashboard() {
               return { ...job, quotesReceived: rawCount, quotesCount: rawCount };
             }
             const norm = normalizeStatus(job.status);
-            if (norm === "OPEN" || norm === "POSTED" || norm === "ACTIVE") {
+            if (
+              norm === "OPEN" ||
+              norm === "POSTED" ||
+              norm === "ACTIVE" ||
+              norm === "ASSIGNED" ||
+              norm === "CONTACTED" ||
+              norm === "QUOTE_RECEIVED" ||
+              norm === "QUOTES_RECEIVED" ||
+              norm === "QUOTED" ||
+              norm === "QUOTE_ACCEPTED"
+            ) {
               try {
                 const qRes = await authApi.getJobQuotes(job.id);
                 const qArr = Array.isArray(qRes) ? qRes : Array.isArray(qRes?.data) ? qRes.data : [];
@@ -1414,6 +1424,32 @@ export default function CustomerJobDashboard() {
 
   const quotesCount = Math.max(quotes.length, selectedJob?.quotesReceived ?? 0, selectedJob?.quotesCount ?? 0);
 
+  // ── Stat calculations corresponding with actual jobs & quotes ──
+  const computedJobsPosted = jobs.filter((j) => {
+    const norm = normalizeStatus(j.status);
+    if (["COMPLETED", "CLOSED", "CANCELLED", "EXPIRED"].includes(norm)) return false;
+    if (isInProgressStatus(norm)) return false;
+    if (norm === "ASSIGNED" || norm === "CONTACTED" || norm === "ACCEPTED" || norm === "QUOTE_ACCEPTED") return false;
+    const hasAccepted = Array.isArray(j.quotes) && j.quotes.some((q: any) => q.status?.toUpperCase() === "ACCEPTED");
+    if (hasAccepted) return false;
+    const qCount = j.quotesReceived ?? j.quotesCount ?? (j as any)._count?.quotes ?? (Array.isArray(j.quotes) ? j.quotes.length : 0);
+    if (["QUOTE_RECEIVED", "QUOTES_RECEIVED", "QUOTED", "QUOTE_SENT"].includes(norm) || qCount > 0) return false;
+    return true;
+  }).length;
+  const jobsPostedCount = jobs.length > 0 ? computedJobsPosted : (dashboardDetails?.actionRequired?.activeJobsCount ?? 0);
+
+  const totalQuotesReceived = jobs.reduce((sum, j) => {
+    const qCount = j.quotesReceived ?? j.quotesCount ?? (j as any)._count?.quotes ?? (Array.isArray(j.quotes) ? j.quotes.length : 0);
+    return sum + qCount;
+  }, 0);
+  const quotesReceivedCount = jobs.length > 0 ? totalQuotesReceived : (dashboardDetails?.actionRequired?.quotesAwaitingResponseCount ?? 0);
+
+  const unreviewedCompletedJobsCount = jobs.filter((j) => {
+    const norm = normalizeStatus(j.status);
+    return norm === "COMPLETED" && !reviewedJobIds.has(j.id) && !j.hasReviewed;
+  }).length;
+  const reviewsOutstandingCount = dashboardDetails?.actionRequired?.unreviewedJobsCount ?? unreviewedCompletedJobsCount;
+
   const renderJobHistory = () => (
     <div
       className={`${mobileTab === "history" ? "flex" : "hidden"
@@ -1527,97 +1563,103 @@ export default function CustomerJobDashboard() {
     <div className="min-h-screen bg-[#F8F9F5]">
       <div className="max-w-[1400px] mx-auto px-3 sm:px-6 lg:px-8 py-5 sm:py-8">
 
-        {/* ── Page Header: Left ("Hello, Paul 👋") & Right (Stats + Actions Card) ────────────── */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-5 sm:gap-6 mb-6 sm:mb-8">
-          {/* Welcome Text */}
-          <div>
-            <h1 className="text-[26px] sm:text-[30px] lg:text-[34px] font-black text-[#1C2C1C] flex items-center gap-2.5 tracking-tight">
-              Hello, {customerName} <span className="select-none inline-block">👋</span>
-            </h1>
+        {/* ── TOP WELCOME BAR (matching Trader Account View) ─────────────────────────────────── */}
+        <div className="w-fit max-w-full bg-white rounded-[18px] sm:rounded-[20px] border border-[#DFEBDD] overflow-hidden mb-4 flex flex-col sm:flex-row items-stretch shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+          {/* Left: Greeting (compact green section) */}
+          <div className="bg-[#EFF5EB] py-2.5 sm:py-3 px-5 sm:px-7 flex items-center gap-3 sm:gap-3.5 shrink-0 border-b sm:border-b-0 sm:border-r border-[#DFEBDD]">
+            <span className="text-[20px] sm:text-[22px] leading-none select-none">👋</span>
+            <div>
+              <h1 className="text-[16px] sm:text-[18px] font-black text-[#143118] leading-tight whitespace-nowrap">
+                Hello, {customerName}
+              </h1>
+            </div>
           </div>
 
-          {/* Unified Stats & Action Buttons Card */}
-          <div className="bg-white rounded-[24px] sm:rounded-[26px] p-5 sm:p-6 border border-[#E2EED2] shadow-[0_2px_14px_rgba(0,0,0,0.03)] flex flex-col gap-5 sm:gap-6 w-full lg:w-auto lg:min-w-[640px]">
-            {/* Top: 3 Stat Counters */}
-            <div className="grid grid-cols-3 gap-3 sm:gap-6 items-center">
-              {/* Stat 1: Jobs Posted */}
-              <div
-                onClick={() => router.push('/customer-dashboard/job-history?tab=JOB_POSTED')}
-                className="flex items-center gap-3 sm:gap-3.5 cursor-pointer hover:opacity-80 transition-opacity"
-              >
-                <div className="w-[42px] h-[42px] sm:w-[46px] sm:h-[46px] rounded-full bg-[#FEF9C3] flex items-center justify-center flex-shrink-0">
-                  <Briefcase size={20} className="text-[#CA8A04]" strokeWidth={2.2} />
-                </div>
-                <div className="min-w-0">
-                  <h4 className="text-[20px] sm:text-[23px] font-black text-[#1C2C1C] leading-none mb-1">
-                    {dashboardDetails?.actionRequired?.activeJobsCount ?? jobs.filter(j => ["OPEN", "POSTED", "ACTIVE", "ASSIGNED", "IN_PROGRESS", "STARTED"].includes(j.status?.toUpperCase())).length}
-                  </h4>
-                  <p className="text-[12px] sm:text-[13px] text-gray-500 font-medium truncate">Jobs Posted</p>
-                </div>
+          {/* Right: 3 Stat Counters inside white box (comfortably spaced) */}
+          <div className="bg-white px-5 sm:px-7 lg:px-9 py-2.5 sm:py-3 flex items-center gap-7 sm:gap-9 lg:gap-11 overflow-x-auto flex-wrap sm:flex-nowrap shrink-0">
+            {/* Stat 1: Jobs Posted */}
+            <div
+              onClick={() => router.push('/customer-dashboard/job-history?tab=JOB_POSTED')}
+              className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group shrink-0 transition-opacity hover:opacity-80"
+            >
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#FEF9C3] text-[#CA8A04] flex items-center justify-center shrink-0">
+                <Briefcase size={16} strokeWidth={2.2} />
               </div>
-
-              {/* Stat 2: Quotes Received */}
-              <div
-                onClick={() => router.push('/customer-dashboard/job-history?tab=QUOTE_RECEIVED')}
-                className="flex items-center gap-3 sm:gap-3.5 cursor-pointer hover:opacity-80 transition-opacity"
-              >
-                <div className="w-[42px] h-[42px] sm:w-[46px] sm:h-[46px] rounded-full bg-[#E3F2FD] flex items-center justify-center flex-shrink-0">
-                  <MessageSquare size={20} className="text-[#1565C0]" strokeWidth={2.2} />
-                </div>
-                <div className="min-w-0">
-                  <h4 className="text-[20px] sm:text-[23px] font-black text-[#1C2C1C] leading-none mb-1">
-                    {dashboardDetails?.actionRequired?.quotesAwaitingResponseCount ?? 0}
-                  </h4>
-                  <p className="text-[12px] sm:text-[13px] text-gray-500 font-medium truncate">Quote Received</p>
-                </div>
-              </div>
-
-              {/* Stat 3: Reviews Outstanding */}
-              <div
-                onClick={handleActionRequiredLeaveReview}
-                className="flex items-center gap-3 sm:gap-3.5 cursor-pointer hover:opacity-80 transition-opacity"
-              >
-                <div className="w-[42px] h-[42px] sm:w-[46px] sm:h-[46px] rounded-full bg-[#F2F7EB] flex items-center justify-center flex-shrink-0">
-                  <Star size={20} className="text-[#6E9625]" strokeWidth={2.2} />
-                </div>
-                <div className="min-w-0">
-                  <h4 className="text-[20px] sm:text-[23px] font-black text-[#1C2C1C] leading-none mb-1">
-                    {dashboardDetails?.actionRequired?.unreviewedJobsCount ?? 0}
-                  </h4>
-                  <p className="text-[12px] sm:text-[13px] text-gray-500 font-medium truncate">Reviews Outstanding</p>
-                </div>
+              <div>
+                <span className="text-[16px] sm:text-[17px] font-black text-[#143118] leading-tight block">
+                  {jobsPostedCount}
+                </span>
+                <span className="text-[11px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
+                  Jobs Posted
+                </span>
               </div>
             </div>
 
-            {/* Bottom: Action Buttons */}
-            <div className="flex items-center justify-end gap-2.5 sm:gap-3 flex-wrap">
-              <Link href="/directory-listing/search">
-                <button className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 cursor-pointer bg-white text-[13px] font-bold text-[#1C2C1C] hover:bg-gray-50 hover:border-gray-300 transition-all shadow-xs">
-                  <Users size={16} />
-                  Find a Trader
-                </button>
-              </Link>
-              <button
-                onClick={() => {
-                  if (selectedJob && !reviewedJobIds.has(selectedJob.id) && selectedJob.status !== "EXPIRED") {
-                    handleNavigateToReview(selectedJob, selectedJob.selectedTrader);
-                  } else {
-                    handleActionRequiredLeaveReview();
-                  }
-                }}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white cursor-pointer text-[13px] font-bold text-[#1C2C1C] hover:bg-gray-50 hover:border-gray-300 transition-all shadow-xs"
-              >
-                <Star size={16} className={selectedJob?.status === "COMPLETED" ? "text-[#6E9625] fill-[#6E9625]" : ""} />
-                Leave Review
-              </button>
-              <Link href="/customer-dashboard/post-job">
-                <button className="flex items-center justify-center gap-2 px-4.5 py-2.5 rounded-xl bg-[#6E9625] text-white text-[13px] cursor-pointer font-bold hover:bg-[#58791C] transition-all shadow-xs">
-                  <PlusCircle size={16} strokeWidth={2.2} />
-                  Post a Job
-                </button>
-              </Link>
+            {/* Stat 2: Quotes Received */}
+            <div
+              onClick={() => router.push('/customer-dashboard/job-history?tab=QUOTE_RECEIVED')}
+              className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group shrink-0 transition-opacity hover:opacity-80"
+            >
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0">
+                <MessageSquare size={16} strokeWidth={2.2} />
+              </div>
+              <div>
+                <span className="text-[16px] sm:text-[17px] font-black text-[#143118] leading-tight block">
+                  {quotesReceivedCount}
+                </span>
+                <span className="text-[11px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
+                  {quotesReceivedCount === 1 ? "Quote Received" : "Quotes Received"}
+                </span>
+              </div>
+            </div>
+
+            {/* Stat 3: Reviews Outstanding */}
+            <div
+              onClick={handleActionRequiredLeaveReview}
+              className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group shrink-0 transition-opacity hover:opacity-80"
+            >
+              <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#EBF4E7] text-[#2E7D32] flex items-center justify-center shrink-0">
+                <Star size={16} strokeWidth={2.2} />
+              </div>
+              <div>
+                <span className="text-[16px] sm:text-[17px] font-black text-[#143118] leading-tight block">
+                  {reviewsOutstandingCount}
+                </span>
+                <span className="text-[11px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
+                  Reviews Outstanding
+                </span>
+              </div>
             </div>
           </div>
+        </div>
+
+        {/* ── Action Buttons sitting underneath separately ────────────── */}
+        <div className="flex items-center justify-end gap-2.5 sm:gap-3 flex-wrap mb-6 sm:mb-8">
+          <Link href="/directory-listing/search">
+            <button className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 rounded-xl border border-gray-200 cursor-pointer bg-white text-[13px] font-bold text-[#1C2C1C] hover:bg-gray-50 hover:border-gray-300 transition-all shadow-xs">
+              <Users size={16} />
+              Find a Trader
+            </button>
+          </Link>
+          <button
+            onClick={() => {
+              if (selectedJob && !reviewedJobIds.has(selectedJob.id) && selectedJob.status !== "EXPIRED") {
+                handleNavigateToReview(selectedJob, selectedJob.selectedTrader);
+              } else {
+                handleActionRequiredLeaveReview();
+              }
+            }}
+            className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 rounded-xl border border-gray-200 bg-white cursor-pointer text-[13px] font-bold text-[#1C2C1C] hover:bg-gray-50 hover:border-gray-300 transition-all shadow-xs"
+          >
+            <Star size={16} className={selectedJob?.status === "COMPLETED" ? "text-[#6E9625] fill-[#6E9625]" : ""} />
+            Leave Review
+          </button>
+          <Link href="/customer-dashboard/post-job">
+            <button className="flex items-center justify-center gap-2 px-4.5 py-2 sm:py-2.5 rounded-xl bg-[#6E9625] text-white text-[13px] cursor-pointer font-bold hover:bg-[#58791C] transition-all shadow-xs">
+              <PlusCircle size={16} strokeWidth={2.2} />
+              Post a Job
+            </button>
+          </Link>
         </div>
 
         {/* ── View Switcher for Mobile & Tablet (Visible only on < lg screens) ────────────────── */}

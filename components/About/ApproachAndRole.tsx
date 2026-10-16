@@ -4,7 +4,7 @@ import React from 'react';
 
 export default function ApproachAndRole() {
   return (
-    <section className="bg-white py-8 md:py-12 px-4 sm:px-6 lg:px-20 overflow-hidden">
+    <section className="bg-white pt-4 sm:pt-6 pb-12 sm:pb-16 px-4 sm:px-6 lg:px-20 overflow-hidden">
       <div className="max-w-[1200px] mx-auto">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 lg:gap-8 items-stretch">
           {/* CARD 1: OUR APPROACH */}

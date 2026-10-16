@@ -6,24 +6,25 @@ import { UserPlus } from 'lucide-react';
 const SecureJobsBanner = () => {
   return (
     <section className="relative w-full overflow-hidden py-14 sm:py-16 md:py-20 flex items-center bg-[#0C2516]">
-      {/* Background Image with Lighter Green Overlay */}
+      {/* Background Image Container */}
       <div className="absolute inset-0 z-0">
-        {/* Right-aligned image container for natural zoomed-out context */}
-        <div className="absolute inset-y-0 right-0 w-full sm:w-[75%] md:w-[65%] lg:w-[58%]">
+        {/* Right-aligned image container for natural context without over-zooming */}
+        <div className="absolute inset-y-0 right-0 w-full md:w-[62%] lg:w-[55%] xl:w-[50%]">
           <Image
             src="/image2.png"
             alt="Tradesperson in Portugal"
             fill
-            className="object-cover object-[70%_center]"
+            className="object-cover object-right"
             priority
+            unoptimized
           />
         </div>
-        {/* Lighter forest green gradient: solid on the left for contrast, clear and translucent on the right to reveal the electrician */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#0C2516] via-[#0C2516]/85 md:via-[#0C2516]/55 to-[#0C2516]/20 pointer-events-none" />
+        {/* Solid brand green on the left for text readability, fading completely to transparent before the electrician for crystal-clear image sharpness */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[#0C2516] from-35% via-[#0C2516]/95 via-48% to-transparent to-62% pointer-events-none" />
       </div>
 
       {/* Content */}
-      <div className="relative z-10 w-full max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 w-full max-w-[1100px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-start max-w-[580px]">
           {/* Headline */}
           <h2 className="text-[28px] sm:text-[34px] md:text-[40px] font-extrabold text-white leading-[1.15] tracking-tight mb-2 sm:mb-2.5">
@@ -52,4 +53,3 @@ const SecureJobsBanner = () => {
 };
 
 export default SecureJobsBanner;
-

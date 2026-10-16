@@ -25,8 +25,9 @@ export default function Home() {
 
       <PlatformRoleSection />
 
-
-      <TrustSection />
+      <ConditionalSection hideForRole="trader">
+        <TrustSection />
+      </ConditionalSection>
 
 
       <ConditionalSection hideForRole="trader">
@@ -47,7 +48,9 @@ export default function Home() {
         <ReviewSection />
       </ConditionalSection>
 
-      <CTASection />
+      <ConditionalSection hideForRole="trader">
+        <CTASection />
+      </ConditionalSection>
 
       {/* <ConditionalSection hideForRole="trader">
         <FinalCTASection />

@@ -3,9 +3,10 @@
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
-import { Star, MapPin, Calendar, DollarSign, Shield, ShieldCheck, Mail, Info, AlertTriangle, CheckCircle, Phone, X, Briefcase, Plus, Clock, Play, XCircle, Send } from "lucide-react";
+import { Star, MapPin, Calendar, DollarSign, Shield, ShieldCheck, Mail, Info, AlertTriangle, CheckCircle, Phone, X, Briefcase, Plus, Clock, Play, XCircle, Send, FileText } from "lucide-react";
 import MessageList from "./MessageList";
 import ChatInput from "./ChatInput";
+import JobDetailsModal from "./JobDetailsModal";
 import { authApi } from "@/app/api/authApi";
 import { useSocket } from "@/hooks/useSocket";
 import toast from "react-hot-toast";
@@ -49,6 +50,7 @@ interface Conversation {
     insuranceUploaded?: boolean;
   };
   jobId?: string | null;
+  jobTitle?: string;
   type?: string;
   job?: {
     id: string;
@@ -172,15 +174,29 @@ export default function ChatWindow({
   const [directJobPrice, setDirectJobPrice] = useState("");
   const [directJobNotes, setDirectJobNotes] = useState("");
   const [isSubmittingDirectJob, setIsSubmittingDirectJob] = useState(false);
-
-  // Review Modal state (for direct job review)
-  const [showReviewModal, setShowReviewModal] = useState(false);
-  const [reviewRating, setReviewRating] = useState(0);
-  const [reviewTitle, setReviewTitle] = useState("");
-  const [reviewComment, setReviewComment] = useState("");
-  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [showJobDetailsModal, setShowJobDetailsModal] = useState(false);
 
   const [jobStatus, setJobStatus] = useState<string | null>(job?.status || null);
+
+  const currentJobTitle =
+    directJob?.title ||
+    job?.title ||
+    conversation?.jobTitle ||
+    (conversation?.job as any)?.title ||
+    directJobTitle ||
+    "";
+
+  const currentActiveJob =
+    directJob ||
+    job ||
+    (conversation.jobId
+      ? {
+          id: conversation.jobId,
+          title: currentJobTitle,
+          status: jobStatus || "IN_PROGRESS",
+          trader: partner,
+        }
+      : null);
 
   useEffect(() => {
     console.log("Conversation", conversation);
@@ -595,13 +611,26 @@ export default function ChatWindow({
       setIsSubmittingDirectJob(true);
       const res = await authApi.startDirectJob({
         conversationId,
-        title: directJobTitle,
+        title: directJobTitle.trim(),
         agreedPrice: directJobPrice ? Number(directJobPrice) : undefined,
-        description: directJobNotes,
+        description: directJobNotes.trim(),
       });
-      setDirectJob(res?.data || res);
+      const created = res?.data || res;
+      const finalJob = {
+        ...created,
+        title: created?.title || directJobTitle.trim(),
+        agreedPrice: created?.agreedPrice ?? (directJobPrice ? Number(directJobPrice) : undefined),
+        description: created?.description || directJobNotes.trim(),
+        startedAt: created?.startedAt || new Date().toISOString(),
+        status: created?.status || "IN_PROGRESS",
+      };
+      setDirectJob(finalJob);
       setShowDirectStartModal(false);
       toast.success("Job started successfully");
+      setTimeout(() => {
+        loadMessageHistory();
+      }, 400);
+      if (onRefreshConversations) onRefreshConversations();
     } catch (error: any) {
       toast.error(error?.message || "Failed to start job");
     } finally {
@@ -644,45 +673,19 @@ export default function ChatWindow({
       setDirectJob(updatedJob);
       toast.success("Job completion confirmed! You can now leave a review.");
       if (!isActualTrader) {
-        setShowReviewModal(true);
+        const dJobId = updatedJob?.id || updatedJob?._id || directJob?.id || directJob?._id;
+        const tId = updatedJob?.traderId || directJob?.traderId || partner?.id || partnerId || '';
+        const params = new URLSearchParams();
+        if (dJobId) params.set("directJobId", dJobId);
+        if (tId) params.set("traderId", tId);
+        params.set("reviewType", "DIRECTORY");
+        params.set("workCarriedOut", "true");
+        router.push(`/customer-dashboard/leave-review?${params.toString()}`);
       }
     } catch (error: any) {
       toast.error(error?.message || "Failed to confirm completion");
     } finally {
       setIsSubmittingDirectJob(false);
-    }
-  };
-
-  const handleDirectJobReviewSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (reviewRating === 0) {
-      toast.error("Please select a rating");
-      return;
-    }
-    try {
-      setIsSubmittingReview(true);
-      const formData = new FormData();
-      formData.append('directJobId', directJob.id || directJob._id);
-      formData.append('traderId', directJob.traderId);
-      formData.append('reviewType', 'DIRECTORY');
-      formData.append('wasWorkCompleted', 'true');
-      formData.append('rating', String(reviewRating));
-      formData.append('title', reviewTitle);
-      formData.append('review', reviewComment);
-
-      // Use existing postReview which accepts FormData
-      const res = await authApi.postReview(formData);
-
-      setDirectJob((prev: any) => ({
-        ...prev,
-        reviews: [res?.data || res]
-      }));
-      setShowReviewModal(false);
-      toast.success("Review submitted successfully");
-    } catch (error: any) {
-      toast.error(error?.message || "Failed to submit review");
-    } finally {
-      setIsSubmittingReview(false);
     }
   };
 
@@ -726,6 +729,18 @@ export default function ChatWindow({
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2">
+              {currentActiveJob && (
+                <button
+                  type="button"
+                  onClick={() => setShowJobDetailsModal(true)}
+                  className="px-3 py-1.5 rounded-xl text-[12px] font-bold border border-gray-200 text-gray-700 hover:bg-gray-50 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  title="View Job Details"
+                >
+                  <FileText size={14} className="text-[#6E9625]" />
+                  <span className="hidden sm:inline">Job Details</span>
+                </button>
+              )}
+
               <button
                 onClick={() => setShowReportModal(true)}
                 disabled={isReported}
@@ -802,7 +817,7 @@ export default function ChatWindow({
           </div>
 
           {/* Direct Job Banner */}
-          {isDirectOrNoJob && !loadingDirectJob && (
+          {isDirectOrNoJob && !loadingDirectJob && ((directJob?.status && directJob.status !== 'CANCELLED') || (isTraderView || isActualTrader)) && (
             <div className={`p-4 border-b flex flex-col md:flex-row md:items-center justify-between gap-4 flex-shrink-0 ${directJob?.status === 'IN_PROGRESS' ? 'bg-[#FFFBEB] border-amber-200' :
               directJob?.status === 'AWAITING_CONFIRMATION' ? 'bg-[#EFF6FF] border-blue-200' :
                 directJob?.status === 'COMPLETED' ? 'bg-[#F0FDF4] border-green-200' :
@@ -835,6 +850,17 @@ export default function ChatWindow({
               </div>
 
               <div className="flex items-center gap-2">
+                {directJob?.status && directJob.status !== 'CANCELLED' && (
+                  <button
+                    type="button"
+                    onClick={() => setShowJobDetailsModal(true)}
+                    className="px-3 py-1.5 bg-white hover:bg-gray-50 border border-gray-200 text-[#1C2C1C] rounded-xl text-[12px] font-bold shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <FileText size={14} className="text-[#6E9625]" />
+                    <span>View Details</span>
+                  </button>
+                )}
+
                 {(!directJob?.status || directJob.status === 'CANCELLED') && isActualTrader && (
                   <button
                     onClick={() => setShowDirectStartModal(true)}
@@ -886,18 +912,23 @@ export default function ChatWindow({
                           Pending Review
                         </span>
                         <button
-                          onClick={() => setShowReviewModal(true)}
+                          onClick={() => {
+                            const dJobId = directJob?.id || directJob?._id;
+                            const tId = directJob?.traderId || partner?.id || partnerId || '';
+                            const rJobId = effectiveJobId || directJob?.jobId;
+                            const params = new URLSearchParams();
+                            if (dJobId) params.set("directJobId", dJobId);
+                            if (rJobId) params.set("jobId", rJobId);
+                            if (tId) params.set("traderId", tId);
+                            params.set("reviewType", dJobId ? "DIRECTORY" : (rJobId ? "JOB" : "DIRECTORY"));
+                            params.set("workCarriedOut", "true");
+                            router.push(`/customer-dashboard/leave-review?${params.toString()}`);
+                          }}
                           className="px-4 py-1.5 bg-[#6E9625] hover:bg-[#58791C] text-white rounded-xl text-[12px] font-bold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
                         >
                           <Star size={14} fill="currentColor" />
                           Leave a Review
                         </button>
-                        <Link
-                          href={`/customer-dashboard/leave-review?directJobId=${directJob.id || directJob._id}&traderId=${directJob.traderId || partner?.id || ''}&reviewType=DIRECTORY&workCarriedOut=true`}
-                          className="text-[12px] text-[#6E9625] hover:underline font-bold"
-                        >
-                          Review Form
-                        </Link>
                       </div>
                     ) : (
                       <span className="px-3 py-1 bg-[#EFDB4B]/20 text-[#8A5C05] border border-[#E0CC3B]/40 rounded-xl text-[12px] font-bold">
@@ -926,6 +957,8 @@ export default function ChatWindow({
               currentUserId={currentUserId}
               isTyping={isPartnerTyping}
               traderName={partner?.fullName}
+              jobTitle={currentJobTitle}
+              onViewJobDetails={() => setShowJobDetailsModal(true)}
             />
           )}
 
@@ -1328,62 +1361,17 @@ export default function ChatWindow({
         </div>
       )}
 
-      {showReviewModal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-xl">
-            <div className="flex justify-between items-center mb-5">
-              <h3 className="text-[18px] font-bold text-[#1C2C1C]">Leave a Review</h3>
-              <button onClick={() => setShowReviewModal(false)} className="text-gray-400 hover:text-gray-600">
-                <X size={20} />
-              </button>
-            </div>
-            <form onSubmit={handleDirectJobReviewSubmit} className="space-y-4">
-              <div>
-                <label className="block text-[12px] font-bold text-gray-500 mb-2 text-center">Rating</label>
-                <div className="flex justify-center gap-2">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
-                      key={star}
-                      size={32}
-                      className={`cursor-pointer ${reviewRating >= star ? "text-yellow-400 fill-yellow-400" : "text-gray-300"}`}
-                      onClick={() => setReviewRating(star)}
-                    />
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="block text-[12px] font-bold text-gray-500 mb-1">Review Title</label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Excellent service"
-                  value={reviewTitle}
-                  onChange={(e) => setReviewTitle(e.target.value)}
-                  className="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl px-4 py-2.5 text-[13px] focus:border-[#16A34A] outline-none"
-                />
-              </div>
-              <div>
-                <label className="block text-[12px] font-bold text-gray-500 mb-1">Comment</label>
-                <textarea
-                  required
-                  rows={4}
-                  placeholder="Describe your experience..."
-                  value={reviewComment}
-                  onChange={(e) => setReviewComment(e.target.value)}
-                  className="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl px-4 py-2.5 text-[13px] focus:border-[#16A34A] outline-none"
-                />
-              </div>
-              <button
-                type="submit"
-                disabled={isSubmittingReview}
-                className="w-full py-3 bg-[#16A34A] text-white rounded-xl font-bold hover:bg-[#15803D] transition-colors disabled:opacity-50"
-              >
-                {isSubmittingReview ? "Submitting..." : "Submit Review"}
-              </button>
-            </form>
-          </div>
-        </div>
-      )}
+      {/* Direct Job Details Modal */}
+      <JobDetailsModal
+        isOpen={showJobDetailsModal}
+        onClose={() => setShowJobDetailsModal(false)}
+        job={currentActiveJob}
+        partner={partner}
+        isTraderView={isTraderView}
+        isActualTrader={Boolean(isActualTrader)}
+        onConfirmCompletion={directJob?.status === 'AWAITING_CONFIRMATION' && !isActualTrader ? handleDirectJobConfirm : undefined}
+        isConfirming={isSubmittingDirectJob}
+      />
     </>
   );
 }

@@ -82,14 +82,14 @@ export default function HowItWorks() {
   return (
     <section
       id="how-it-works"
-      className="w-full py-10 md:py-14 bg-white px-4 sm:px-8 xl:px-12"
+      className="w-full pt-6 pb-12 sm:pt-8 sm:pb-16 md:pt-10 md:pb-20 bg-white px-4 sm:px-8 xl:px-12"
     >
       <div className="max-w-[1200px] mx-auto w-full">
         {/* TITLE */}
         <div className="text-center mb-10 md:mb-12">
           <h2 className="text-[34px] sm:text-[42px] md:text-[48px] font-extrabold leading-tight">
-            <span className="text-[#6E9625]">How It</span>{" "}
-            <span className="text-[#1E3A2B]">Works</span>
+            <span className="text-[#6E9625]">How</span>{" "}
+            <span className="text-[#1E3A2B]">It Works</span>
           </h2>
         </div>
 
@@ -123,36 +123,35 @@ export default function HowItWorks() {
 
         {/* BOTTOM SECTION: Or find a trader yourself */}
         <div className="mt-14 md:mt-16">
-          <h3 className="text-[20px] sm:text-[22px] font-extrabold text-[#1E3A2B] mb-8">
+          <h3 className="text-[20px] sm:text-[22px] font-extrabold text-[#1E3A2B] mb-8 text-left">
             Or <span className="underline underline-offset-4 decoration-2">find</span> a trader yourself
           </h3>
 
-          {/* 5-step horizontal flow */}
-          <div className="w-full overflow-x-auto no-scrollbar py-2">
-            <div className="flex items-center justify-between min-w-[720px] lg:min-w-0 w-full">
-              {selfSearchSteps.map((step, index) => {
-                const Icon = step.icon;
-                return (
-                  <React.Fragment key={step.num}>
-                    <div className="flex flex-col items-center">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-[22px] h-[22px] sm:w-[24px] sm:h-[24px] rounded-full bg-[#1A3326] text-white text-[11px] sm:text-[12px] font-extrabold flex items-center justify-center shrink-0 shadow-xs">
-                          {step.num}
-                        </div>
-                        <Icon className="text-[#1A3326] w-8 h-8 sm:w-9 sm:h-9" strokeWidth={1.9} />
-                      </div>
-                      <span className="text-[15px] sm:text-[16px] font-extrabold text-[#1A3326] mt-4 sm:mt-5">
-                        {step.label}
-                      </span>
+          {/* 5-step horizontal flow aligned identically with 5 columns above */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-6 items-start">
+            {selfSearchSteps.map((step, index) => {
+              const Icon = step.icon;
+              return (
+                <div key={step.num} className="relative flex flex-col items-start">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-[22px] h-[22px] sm:w-[24px] sm:h-[24px] rounded-[5px] bg-[#1A3326] text-white text-[11px] sm:text-[12px] font-extrabold flex items-center justify-center shrink-0 shadow-xs">
+                      {step.num}
                     </div>
+                    <Icon className="text-[#1A3326] w-8 h-8 sm:w-9 sm:h-9" strokeWidth={1.9} />
+                  </div>
+                  <span className="text-[15px] sm:text-[16px] font-extrabold text-[#1A3326] mt-4 sm:mt-5">
+                    {step.label}
+                  </span>
 
-                    {index < selfSearchSteps.length - 1 && (
-                      <FiArrowRight className="text-gray-400 shrink-0" size={22} />
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </div>
+                  {/* Connecting arrow for desktop, neatly centered in the gap between columns */}
+                  {index < selfSearchSteps.length - 1 && (
+                    <div className="hidden lg:flex absolute -right-3 xl:-right-3.5 top-1.5 text-gray-400 items-center justify-center pointer-events-none">
+                      <FiArrowRight size={20} className="text-gray-400" />
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

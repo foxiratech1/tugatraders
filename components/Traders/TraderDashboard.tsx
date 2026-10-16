@@ -709,32 +709,32 @@ export default function TraderDashboard() {
   return (
     <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 bg-[#F7F9F5] min-h-screen font-sans">
       {/* ── TOP WELCOME BAR ─────────────────────────────────── */}
-      <div className="bg-white rounded-[22px] border border-[#DFEBDD] overflow-hidden mb-7 flex flex-col sm:flex-row items-stretch shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+      <div className="w-fit max-w-full bg-white rounded-[18px] sm:rounded-[20px] border border-[#DFEBDD] overflow-hidden mb-5 sm:mb-6 flex flex-col sm:flex-row items-stretch shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
         {/* Left: Greeting (compact green section) */}
-        <div className="bg-[#EFF5EB] p-4 sm:py-5 sm:px-6 lg:px-7 flex items-center gap-3 sm:gap-3.5 shrink-0 border-b sm:border-b-0 sm:border-r border-[#DFEBDD]">
-          <span className="text-[28px] sm:text-[32px] leading-none select-none">👋</span>
+        <div className="bg-[#EFF5EB] py-2.5 sm:py-3 px-5 sm:px-7 flex items-center gap-3 sm:gap-3.5 shrink-0 border-b sm:border-b-0 sm:border-r border-[#DFEBDD]">
+          <span className="text-[20px] sm:text-[22px] leading-none select-none">👋</span>
           <div>
-            <h1 className="text-[19px] sm:text-[22px] lg:text-[24px] font-black text-[#143118] leading-tight whitespace-nowrap">
+            <h1 className="text-[16px] sm:text-[18px] font-black text-[#143118] leading-tight whitespace-nowrap">
               Hello, {traderName}
             </h1>
           </div>
         </div>
 
-        {/* Right: Quick stat mini-cards inside white box (moved closer to greeting) */}
-        <div className="bg-white px-5 sm:px-6 lg:px-8 py-4 sm:py-5 flex items-center gap-6 sm:gap-8 lg:gap-10 overflow-x-auto flex-wrap sm:flex-nowrap">
+        {/* Right: Quick stat mini-cards inside white box (comfortably spaced) */}
+        <div className="bg-white px-5 sm:px-7 lg:px-9 py-2.5 sm:py-3 flex items-center gap-7 sm:gap-9 lg:gap-11 overflow-x-auto flex-wrap sm:flex-nowrap shrink-0">
           {/* Card 1: In progress jobs */}
           <div
             onClick={() => router.push("/trader/jobs?tab=In Progress")}
-            className="flex items-center gap-3.5 cursor-pointer group shrink-0 transition-opacity hover:opacity-80"
+            className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group shrink-0 transition-opacity hover:opacity-80"
           >
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#FFF4E6] text-[#EA580C] flex items-center justify-center shrink-0">
-              <Luggage size={18} strokeWidth={2.2} />
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#FFF4E6] text-[#EA580C] flex items-center justify-center shrink-0">
+              <Luggage size={16} strokeWidth={2.2} />
             </div>
             <div>
-              <span className="text-[19px] sm:text-[20px] font-black text-[#143118] leading-tight block">
+              <span className="text-[16px] sm:text-[17px] font-black text-[#143118] leading-tight block">
                 {actionRequired?.inProgressJobsCount ?? rawWorkingOn.length}
               </span>
-              <span className="text-[11.5px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
+              <span className="text-[11px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
                 In progress job
               </span>
             </div>
@@ -743,16 +743,16 @@ export default function TraderDashboard() {
           {/* Card 2: Quotes awaiting response */}
           <div
             onClick={() => router.push("/trader/quote")}
-            className="flex items-center gap-3.5 cursor-pointer group shrink-0 transition-opacity hover:opacity-80"
+            className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group shrink-0 transition-opacity hover:opacity-80"
           >
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0">
-              <MessageSquare size={18} strokeWidth={2.2} />
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0">
+              <MessageSquare size={16} strokeWidth={2.2} />
             </div>
             <div>
-              <span className="text-[19px] sm:text-[20px] font-black text-[#143118] leading-tight block">
+              <span className="text-[16px] sm:text-[17px] font-black text-[#143118] leading-tight block">
                 {actionRequired?.quotesAwaitingResponseCount ?? 0}
               </span>
-              <span className="text-[11.5px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
+              <span className="text-[11px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
                 Quotes awaiting response
               </span>
             </div>
@@ -761,16 +761,16 @@ export default function TraderDashboard() {
           {/* Card 3: Pending reviews */}
           <div
             onClick={() => router.push("/trader/reviews")}
-            className="flex items-center gap-3.5 cursor-pointer group shrink-0 transition-opacity hover:opacity-80"
+            className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group shrink-0 transition-opacity hover:opacity-80"
           >
-            <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-[#EBF4E7] text-[#2E7D32] flex items-center justify-center shrink-0">
-              <Star size={18} strokeWidth={2.2} />
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#EBF4E7] text-[#2E7D32] flex items-center justify-center shrink-0">
+              <Star size={16} strokeWidth={2.2} />
             </div>
             <div>
-              <span className="text-[19px] sm:text-[20px] font-black text-[#143118] leading-tight block">
+              <span className="text-[16px] sm:text-[17px] font-black text-[#143118] leading-tight block">
                 {actionRequired?.newReviewsCount ?? 0}
               </span>
-              <span className="text-[11.5px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
+              <span className="text-[11px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
                 Pending Reviews
               </span>
             </div>

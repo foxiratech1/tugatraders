@@ -26,7 +26,7 @@ const WorkmanCTA = () => {
                 fontFamily: "var(--font-bricolage)",
               }}
             >
-              Get more <span className="text-[#8FD14F]">jobs, faster</span>
+              Get  <span className="text-[#8FD14F]">more </span>jobs, faster
             </h2>
 
             {/* Description */}
@@ -41,9 +41,9 @@ const WorkmanCTA = () => {
 
               <Link
                 href="/trader-signup"
-                className="bg-[#6E9625] hover:bg-[#5a7d1e] text-white font-bold py-3 px-5 sm:px-6 rounded-[5px] text-[14px] sm:text-[15px] transition-all hover:scale-[1.02] shadow-sm whitespace-nowrap cursor-pointer text-center"
+                className="bg-[#c60c03] hover:bg-[#c60c03] text-white font-bold py-3 px-5 sm:px-6 rounded-[5px] text-[14px] sm:text-[15px] transition-all hover:scale-[1.02] shadow-sm whitespace-nowrap cursor-pointer text-center"
               >
-                Join As a Tradesperson
+                Join as a Tradesperson
               </Link>
 
               <Link

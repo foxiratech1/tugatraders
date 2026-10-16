@@ -53,8 +53,8 @@ const HowItWorksSteps = () => {
   ];
 
   return (
-    <section id="how-it-works" className="bg-white py-8 sm:py-10 md:py-12 px-4 overflow-hidden">
-      <div className="max-w-[1400px] mx-auto">
+    <section id="how-it-works" className="bg-white py-8 sm:py-10 md:py-12 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <div className="max-w-[1100px] mx-auto">
 
         {/* Centered Heading */}
         <div className="text-center mb-8 sm:mb-10">

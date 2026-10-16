@@ -6,7 +6,7 @@ import { UserPlus } from 'lucide-react';
 
 export default function WhatIsTugaTrades() {
   return (
-    <section className="bg-white pt-4 sm:pt-6 md:pt-8 pb-16 md:pb-20 px-4 sm:px-6 lg:px-20 overflow-hidden border-b border-[#F0F2EE]">
+    <section className="bg-white pt-4 sm:pt-6 md:pt-8 pb-8 md:pb-10 px-4 sm:px-6 lg:px-20 overflow-hidden">
       <div className="max-w-[1200px] mx-auto">
         {/* SECTION HEADER - Green Background Card */}
         <div className="bg-[#F4F8F3] border border-[#DFE8DE] rounded-[18px] sm:rounded-[22px] p-6 sm:p-8 lg:p-10 mb-12 sm:mb-14 shadow-[0_2px_12px_rgba(0,0,0,0.02)]">

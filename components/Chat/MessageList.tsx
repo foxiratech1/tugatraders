@@ -23,6 +23,8 @@ interface MessageListProps {
   currentUserId: string;
   isTyping: boolean;
   traderName?: string;
+  jobTitle?: string;
+  onViewJobDetails?: () => void;
 }
 
 export default function MessageList({
@@ -30,6 +32,8 @@ export default function MessageList({
   currentUserId,
   isTyping,
   traderName = "Trader",
+  jobTitle,
+  onViewJobDetails,
 }: MessageListProps) {
   const bottomRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -114,6 +118,8 @@ export default function MessageList({
                 key={msg.id || msg._id || index}
                 message={msg}
                 currentUserId={currentUserId}
+                jobTitle={jobTitle}
+                onViewJobDetails={onViewJobDetails}
               />
             ))}
 

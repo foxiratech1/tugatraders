@@ -1,12 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Download, FileText, Check, CheckCheck, X } from "lucide-react";
-
-interface Attachment {
-  path: string;
-  name?: string;
-}
+import { Download, FileText, Check, CheckCheck, X, ExternalLink } from "lucide-react";
 
 interface Message {
   id?: string;
@@ -26,9 +21,16 @@ interface Message {
 interface MessageItemProps {
   message: Message;
   currentUserId: string;
+  jobTitle?: string;
+  onViewJobDetails?: () => void;
 }
 
-export default function MessageItem({ message, currentUserId }: MessageItemProps) {
+export default function MessageItem({
+  message,
+  currentUserId,
+  jobTitle,
+  onViewJobDetails,
+}: MessageItemProps) {
   const isSender = message.senderId === currentUserId;
   const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
 
@@ -43,7 +45,6 @@ export default function MessageItem({ message, currentUserId }: MessageItemProps
   const getAttachmentUrl = (path: string) => {
     if (path.startsWith("http")) return path;
     const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
-    // Avoid double slashes
     const cleanBaseUrl = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
     const cleanPath = path.startsWith("/") ? path : `/${path}`;
     return `${cleanBaseUrl}${cleanPath}`;
@@ -67,14 +68,47 @@ export default function MessageItem({ message, currentUserId }: MessageItemProps
     }
   };
 
+  // Inspect if this message is a Job Started system notification
+  const rawText = message.message || "";
+  const isJobStarted = /(?:📋\s*)?Job\b.*?\bstarted\s+by\b/i.test(rawText);
+  const isJobCompleteNotice = /(?:✅\s*)?.*?marked this job as complete/i.test(rawText);
+  const isJobRelatedSystemMessage = isJobStarted || isJobCompleteNotice;
+
+  // Format message text to dynamically include the job title if it's a job started message
+  let displayText = rawText;
+  if (isJobStarted && jobTitle && jobTitle.trim()) {
+    const cleanTitle = jobTitle.trim();
+    // Regex matches e.g. "Job started by...", "📋 Job started by...", "Job is started by..."
+    const regex = /^(\s*(?:📋\s*)?Job)\s+(?:(?:is\s+)?started\s+by\s+)(.+)$/i;
+    const match = rawText.match(regex);
+    if (match) {
+      const prefix = match[1];
+      const rest = match[2];
+      // Only inject if cleanTitle is not already in the message
+      if (!rawText.toLowerCase().includes(cleanTitle.toLowerCase())) {
+        displayText = `${prefix} ${cleanTitle} started by ${rest}`;
+      }
+    }
+  }
+
   return (
     <div className={`flex flex-col mb-4 ${isSender ? "items-end" : "items-start"}`}>
       {/* Bubble Container */}
       <div
-        className={`max-w-[70%] rounded-2xl px-4 py-3 shadow-sm ${isSender
+        onClick={() => {
+          if (isJobRelatedSystemMessage && onViewJobDetails) {
+            onViewJobDetails();
+          }
+        }}
+        className={`max-w-[70%] rounded-2xl px-4 py-3 shadow-xs transition-all ${
+          isSender
             ? "bg-[#1C2C1C] text-white rounded-tr-none"
             : "bg-white text-[#1C2C1C] border border-gray-100 rounded-tl-none"
-          }`}
+        } ${
+          isJobRelatedSystemMessage && onViewJobDetails
+            ? "cursor-pointer hover:shadow-md hover:ring-2 hover:ring-[#6E9625]/30 group"
+            : ""
+        }`}
       >
         {/* Sender Name (only for received messages) */}
         {!isSender && message.sender?.fullName && (
@@ -84,10 +118,32 @@ export default function MessageItem({ message, currentUserId }: MessageItemProps
         )}
 
         {/* Text Message */}
-        {message.message && (
+        {displayText && (
           <p className="text-[14px] leading-relaxed whitespace-pre-wrap break-words">
-            {message.message}
+            {displayText}
           </p>
+        )}
+
+        {/* Action Link for Job Related System Messages */}
+        {isJobRelatedSystemMessage && onViewJobDetails && (
+          <div className="mt-2 pt-1.5 border-t border-white/15 flex items-center justify-between gap-2">
+            <span
+              onClick={(e) => {
+                e.stopPropagation();
+                onViewJobDetails();
+              }}
+              className={`text-[11px] font-bold flex items-center gap-1 transition-colors ${
+                isSender
+                  ? "text-[#8FD14F] hover:text-white"
+                  : "text-[#6E9625] hover:text-[#55761B]"
+              }`}
+            >
+              <FileText size={12} />
+              View Job Details
+              <ExternalLink size={10} className="opacity-70" />
+            </span>
+            <span className="text-[10px] opacity-60">Click to view</span>
+          </div>
         )}
 
         {/* Attachments */}
@@ -101,10 +157,12 @@ export default function MessageItem({ message, currentUserId }: MessageItemProps
                     <img
                       src={fileUrl}
                       alt="Uploaded image"
-                      onClick={() => setFullscreenImage(fileUrl)}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setFullscreenImage(fileUrl);
+                      }}
                       className="max-w-full max-h-60 object-contain rounded-lg cursor-pointer hover:opacity-90 transition-opacity"
                       onError={(e) => {
-                        // fallback or hide image if error
                         (e.target as HTMLElement).style.display = "none";
                       }}
                     />
@@ -117,16 +175,18 @@ export default function MessageItem({ message, currentUserId }: MessageItemProps
                     href={fileUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`flex items-center gap-2 p-2.5 rounded-lg border text-[12px] font-medium transition-colors ${isSender
+                    onClick={(e) => e.stopPropagation()}
+                    className={`flex items-center gap-2 p-2.5 rounded-lg border text-[12px] font-medium transition-colors ${
+                      isSender
                         ? "bg-[#2A3C2A] border-[#3B4E3B] text-emerald-100 hover:bg-[#344934]"
                         : "bg-gray-50 border-gray-150 text-gray-700 hover:bg-gray-100"
-                      }`}
+                    }`}
                   >
                     <FileText size={16} />
                     <span className="truncate flex-1 max-w-[150px]">
                       {getFileName(filePath)}
                     </span>
-                    <Download size={14} className="flex-shrink-0" />
+                    <Download size={14} className="shrink-0" />
                   </a>
                 );
               }
@@ -154,11 +214,11 @@ export default function MessageItem({ message, currentUserId }: MessageItemProps
       {/* Fullscreen Image Modal */}
       {fullscreenImage && (
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-sm"
+          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-xs"
           onClick={() => setFullscreenImage(null)}
         >
           <button
-            className="absolute top-6 right-6 p-2 text-white bg-black/50 hover:bg-black/70 rounded-full transition-colors"
+            className="absolute top-6 right-6 p-2 text-white bg-black/50 hover:bg-black/70 rounded-full transition-colors cursor-pointer"
             onClick={(e) => {
               e.stopPropagation();
               setFullscreenImage(null);

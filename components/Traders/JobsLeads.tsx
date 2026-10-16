@@ -133,6 +133,10 @@ function getUIStatus(item: any): "New" | "Posted" | "Quote Sent" | "Contacted" |
     return "Closed";
   }
 
+  if (rawStatus === "IN_PROGRESS" || rawStatus === "STARTED" || item.status === "In Progress") {
+    return "In Progress";
+  }
+
   const matchStatus = (
     item.matchStatus ||
     item.match?.status ||
@@ -826,21 +830,74 @@ export default function JobsLeads() {
   useEffect(() => {
     const fetchJobs = async () => {
       try {
-        const res = await authApi.getMatchedJobs();
-        console.log("Matched Jobs Response:", res);
-        if (res && res.data && res.data.length > 0) {
-          const mappedJobs: JobLead[] = res.data.map((item: any) => mapJobLeadItem(item));
-          setJobs(mappedJobs);
+        const [matchedRes, dashboardRes] = await Promise.all([
+          authApi.getMatchedJobs().catch(() => null),
+          authApi.getTraderDashboard().catch(() => null),
+        ]);
 
-          if (initialJobId) {
-            const match = mappedJobs.find(j => j.id === initialJobId || j.jobId === initialJobId);
-            setSelectedJob(match || mappedJobs[0]);
+        const matchedList = matchedRes && matchedRes.data && Array.isArray(matchedRes.data) ? matchedRes.data : [];
+        const dashboardData = dashboardRes?.data || dashboardRes || {};
+        const inProgressList = Array.isArray(dashboardData.jobsWorkingOn) && dashboardData.jobsWorkingOn.length > 0
+          ? dashboardData.jobsWorkingOn
+          : Array.isArray(dashboardData.inProgressJobs) ? dashboardData.inProgressJobs : [];
+
+        // Combine matched jobs and in-progress jobs from dashboard (dedup by ID)
+        const combined = [...matchedList];
+        inProgressList.forEach((ipJob: any) => {
+          const ipId = ipJob.id || ipJob.jobId;
+          if (!combined.some((m: any) => (m.id === ipId || m.jobId === ipId))) {
+            combined.push({
+              ...ipJob,
+              id: ipId,
+              status: "IN_PROGRESS",
+              rawStatus: "IN_PROGRESS",
+              traderStarted: true,
+              isQuoteAccepted: true,
+            });
+          }
+        });
+
+        const mappedJobs: JobLead[] = combined.map((item: any) => mapJobLeadItem(item));
+        setJobs(mappedJobs);
+
+        const targetJobId = searchParams?.get("jobId");
+        if (targetJobId) {
+          const match = mappedJobs.find(
+            (j) =>
+              j.id === targetJobId ||
+              j.jobId === targetJobId ||
+              (j.id && j.id.toLowerCase() === targetJobId.toLowerCase())
+          );
+          if (match) {
+            setSelectedJob(match);
+            if (match.status) {
+              setActiveTab(match.status);
+            }
           } else {
-            setSelectedJob(mappedJobs[0]);
+            try {
+              const directRes = await authApi.getCustomerJobById(targetJobId);
+              const directData = directRes?.data || directRes;
+              if (directData && (directData.id || directData._id)) {
+                const directMapped = mapJobLeadItem({
+                  ...directData,
+                  id: directData.id || directData._id,
+                  status: directData.status || "IN_PROGRESS",
+                  rawStatus: directData.status || "IN_PROGRESS",
+                  traderStarted: true,
+                  isQuoteAccepted: true,
+                });
+                setJobs((prev) => [directMapped, ...prev.filter((p) => p.id !== directMapped.id)]);
+                setSelectedJob(directMapped);
+                setActiveTab(directMapped.status || "In Progress");
+              } else {
+                setSelectedJob(mappedJobs[0]);
+              }
+            } catch (e) {
+              setSelectedJob(mappedJobs[0]);
+            }
           }
         } else {
-          setJobs([]);
-          setSelectedJob(null);
+          setSelectedJob(mappedJobs[0]);
         }
       } catch (err) {
         console.error("Failed to fetch jobs", err);
@@ -854,13 +911,49 @@ export default function JobsLeads() {
     fetchJobs();
   }, []);
 
-  // Update tab if URL changes
+  // Update tab and selected job if URL changes
   useEffect(() => {
     const tabParam = searchParams?.get("tab");
     if (tabParam) {
       setActiveTab(tabParam);
     }
-  }, [searchParams]);
+    const targetJobId = searchParams?.get("jobId");
+    if (targetJobId && jobs.length > 0) {
+      const match = jobs.find(
+        (j) =>
+          j.id === targetJobId ||
+          j.jobId === targetJobId ||
+          (j.id && j.id.toLowerCase() === targetJobId.toLowerCase())
+      );
+      if (match) {
+        setSelectedJob(match);
+        if (tabParam) {
+          setActiveTab(tabParam);
+        } else if (match.status) {
+          setActiveTab(match.status);
+        }
+      } else {
+        authApi.getCustomerJobById(targetJobId).then((res) => {
+          const directData = res?.data || res;
+          if (directData && (directData.id || directData._id)) {
+            const directMapped = mapJobLeadItem({
+              ...directData,
+              id: directData.id || directData._id,
+              status: directData.status || "IN_PROGRESS",
+              rawStatus: directData.status || "IN_PROGRESS",
+              traderStarted: true,
+              isQuoteAccepted: true,
+            });
+            setJobs((prev) => [directMapped, ...prev.filter((p) => p.id !== directMapped.id)]);
+            setSelectedJob(directMapped);
+            if (tabParam) {
+              setActiveTab(tabParam);
+            }
+          }
+        }).catch(() => {});
+      }
+    }
+  }, [searchParams, jobs.length]);
 
   useEffect(() => {
     if (!selectedJob?.id) {
@@ -920,6 +1013,17 @@ export default function JobsLeads() {
   useEffect(() => {
     setCurrentPage(1);
   }, [activeTab, searchQuery]);
+
+  // Ensure the page of the selected job is visible
+  useEffect(() => {
+    if (selectedJob && filteredJobs.length > 0) {
+      const index = filteredJobs.findIndex((j) => j.id === selectedJob.id);
+      if (index !== -1) {
+        const page = Math.floor(index / ITEMS_PER_PAGE) + 1;
+        setCurrentPage(page);
+      }
+    }
+  }, [selectedJob?.id, filteredJobs]);
 
   const tabs = ["All", "New", "Quote Sent", "Contacted", "In Progress", "Completed", "Closed"];
 

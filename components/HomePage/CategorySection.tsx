@@ -142,9 +142,9 @@ export default function CategorySection() {
         </div>
       </div>
 
-      {/* PROMO BANNER CARDS - MOVED SLIGHTLY LOWER */}
+      {/* PROMO BANNER CARDS - CENTERED BETWEEN SECTIONS */}
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-10 sm:mt-14 pb-8 sm:pb-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-16 sm:pt-20 lg:pt-24 pb-14 sm:pb-18 lg:pb-20">
 
           {/* CARD 1: Need work done? */}
           <div className="relative overflow-hidden rounded-[18px] bg-white border border-gray-100 shadow-sm h-[265px]">
@@ -176,13 +176,13 @@ export default function CategorySection() {
             <div className="absolute bottom-4 left-4 right-4 flex gap-2.5 z-20">
               <Link
                 href="/directory-listing/search"
-                className="flex-1 bg-[#122C17] hover:bg-[#0a1c0d] text-white text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-2 rounded-[6px] transition-colors uppercase tracking-wider text-center shadow-sm flex items-center justify-center whitespace-nowrap"
+                className="flex-1 bg-[#122C17] hover:bg-[#0a1c0d] text-white text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-2 rounded-[6px] uppercase tracking-wider text-center shadow-sm flex items-center justify-center whitespace-nowrap animate-action-pulse cursor-pointer"
               >
                 Find a Tradesperson
               </Link>
               <Link
                 href="/post-job"
-                className="flex-1 bg-[#6F9824] hover:bg-[#5f831e] text-white text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-2 rounded-[6px] transition-colors uppercase tracking-wider text-center shadow-sm flex items-center justify-center whitespace-nowrap"
+                className="flex-1 bg-[#6F9824] hover:bg-[#5f831e] text-white text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-2 rounded-[6px] uppercase tracking-wider text-center shadow-sm flex items-center justify-center whitespace-nowrap animate-action-pulse cursor-pointer [animation-delay:0.5s]"
               >
                 Post your job - Free
               </Link>
@@ -208,7 +208,7 @@ export default function CategorySection() {
                 <div>
                   <Link
                     href="/trader-signup"
-                    className="inline-flex items-center gap-1.5 bg-[#BA1515] hover:bg-[#991111] text-white text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-3.5 rounded-[6px] transition-colors uppercase tracking-wider text-center shadow-sm whitespace-nowrap"
+                    className="inline-flex items-center gap-1.5 bg-[#BA1515] hover:bg-[#991111] text-white text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-3.5 rounded-[6px] uppercase tracking-wider text-center shadow-sm whitespace-nowrap animate-action-pulse cursor-pointer [animation-delay:1s]"
                   >
                     <FiUserPlus size={15} />
                     <span>Join as a Tradesperson</span>

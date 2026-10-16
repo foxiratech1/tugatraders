@@ -32,24 +32,24 @@ const VettingSection = () => {
   }, []);
 
   return (
-    <section id="vetting-section" className="bg-white py-8 sm:py-10 md:py-12 px-4 overflow-hidden">
-      <div className="max-w-[1400px] mx-auto">
+    <section id="vetting-section" className="bg-white py-10 sm:py-12 md:py-14 px-4 sm:px-6 lg:px-8 overflow-hidden">
+      <div className="max-w-[1100px] mx-auto">
 
         {/* Header */}
-        <div className="text-left mb-6 sm:mb-8">
+        <div className="text-left mb-6 sm:mb-7">
           <h2 className="text-[28px] sm:text-[34px] md:text-[38px] font-extrabold text-[#1E3A2B] leading-tight tracking-tight mb-2">
             <span className="text-[#6E9625]">Vetting</span> Process
           </h2>
-          <p className="text-[14px] sm:text-[15px] text-[#4A5548] leading-relaxed md:whitespace-nowrap">
+          <p className="text-[14px] sm:text-[15px] text-[#4A5548] leading-relaxed">
             To maintain quality on our platform, all traders go through a vetting process during signup and before their profile goes live.
           </p>
         </div>
 
-        {/* Unified 3-Item Vetting Box */}
-        <div className="border border-[#E2E8F0] rounded-[16px] py-8 sm:py-10 px-6 sm:px-12 mb-6 sm:mb-8 bg-white shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6 text-center items-center">
+        {/* Unified 3-Item Vetting Box - Compact and Tight */}
+        <div className="border border-[#E2E8F0] rounded-[16px] py-6 sm:py-8 px-6 sm:px-10 mb-6 bg-white shadow-xs">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 text-center items-center">
             {vettingSteps.map((step, index) => (
-              <div key={index} className="flex flex-col items-center justify-between min-h-[140px] gap-3">
+              <div key={index} className="flex flex-col items-center justify-between min-h-[130px] gap-2.5">
                 {/* Green Icon */}
                 <div className="flex items-center justify-center shrink-0">
                   {step.icon}
@@ -61,7 +61,7 @@ const VettingSection = () => {
                 </h3>
 
                 {/* Solid Green Checkmark Circle */}
-                <div className="w-7 h-7 rounded-full bg-[#6E9625] text-white flex items-center justify-center shrink-0 shadow-sm mt-1">
+                <div className="w-7 h-7 rounded-full bg-[#6E9625] text-white flex items-center justify-center shrink-0 shadow-sm mt-0.5">
                   <Check className="w-4 h-4 text-white" strokeWidth={3} />
                 </div>
               </div>

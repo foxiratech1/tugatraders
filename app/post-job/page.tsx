@@ -48,7 +48,8 @@ const CustomDropdown = ({
       (value === "WITHIN_A_WEEK" && o.name === "Within a week") ||
       (value === "WITHIN_1_MONTH" && o.name === "Within a month") ||
       (value === "WITHIN_A_MONTH" && o.name === "Within a month") ||
-      (BACKEND_TO_BUDGET_MAP[value] && o.id === BACKEND_TO_BUDGET_MAP[value])
+      (BACKEND_TO_BUDGET_MAP[value] && o.id === BACKEND_TO_BUDGET_MAP[value]) ||
+      (value && o.name.replace(/€/g, "").trim() === value.replace(/€/g, "").trim())
   );
 
   return (
@@ -351,11 +352,11 @@ const GroupedMultiSelectDropdown = ({
 
 const BUDGET_OPTIONS = [
   { id: "NOT_SURE", name: "Not sure" },
-  { id: "UNDER_250", name: "Under 250" },
-  { id: "UNDER_500", name: "Under 500" },
-  { id: "BETWEEN_500_1000", name: "500 – 1000" },
-  { id: "BETWEEN_1000_5000", name: "1000 – 5000" },
-  { id: "ABOVE_5000", name: "5000 +" },
+  { id: "UNDER_250", name: "Under €250" },
+  { id: "UNDER_500", name: "Under €500" },
+  { id: "BETWEEN_500_1000", name: "€500 – €1000" },
+  { id: "BETWEEN_1000_5000", name: "€1000 – €5000" },
+  { id: "ABOVE_5000", name: "€5000 +" },
   { id: "PREFER_TO_DISCUSS", name: "Prefer to discuss" },
 ];
 

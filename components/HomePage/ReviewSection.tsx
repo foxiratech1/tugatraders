@@ -144,9 +144,7 @@ export default function ReviewSection() {
             className="lg:col-span-5 flex flex-col items-start justify-center"
           >
             <h2 className="text-[30px] sm:text-[36px] md:text-[40px] font-bold text-[#1E3A2B] leading-[1.15] mb-3.5 tracking-tight">
-              Your <span className="text-[#6E9625]">Review</span>
-              <br />
-              Matters
+              Your <span className="text-[#6E9625]">Review</span> Matters
             </h2>
 
             <p className="text-[#4A5548] text-[14px] sm:text-[15px] leading-[1.55] font-normal mb-6 max-w-[480px]">
