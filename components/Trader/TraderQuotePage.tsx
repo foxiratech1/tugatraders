@@ -27,41 +27,52 @@ export const AVAILABILITY_OPTIONS = [
 ] as const;
 
 export const ESTIMATED_DURATION_OPTIONS = [
-  "Few Hours",
-  "Half day",
+  "A few hours / Half a day",
   "1 day",
-  "2–3 days",
-  "Under a week",
-  "1 – 2 weeks",
-  "2 – 3 weeks",
-  "3 – 4 weeks",
-  "1 month +",
+  "2 - 3 days",
+  "4 - 7 days",
+  "1 - 2 weeks",
+  "2 - 4 weeks",
+  "1 month or longer",
+  "Not sure yet",
 ] as const;
 
 export const mapDurationToDays = (duration?: string): number | undefined => {
   if (!duration) return undefined;
-  switch (duration) {
+  const normalized = duration.replace(/\s+/g, " ").trim();
+  switch (normalized) {
+    case "A few hours / Half a day":
     case "Few Hours":
     case "Half day":
     case "1 day":
       return 1;
+    case "2 - 3 days":
+    case "2 -  3 days":
     case "2–3 days":
     case "2-3 days":
       return 3;
+    case "4 - 7 days":
+    case "4-7 days":
     case "Under a week":
       return 7;
+    case "1 - 2 weeks":
     case "1 – 2 weeks":
     case "1-2 weeks":
       return 14;
+    case "2 - 4 weeks":
+    case "2 – 4 weeks":
+    case "2-4 weeks":
     case "2 – 3 weeks":
     case "2-3 weeks":
-      return 21;
     case "3 – 4 weeks":
     case "3-4 weeks":
       return 28;
+    case "1 month or longer":
     case "1 month +":
     case "1 month+":
       return 30;
+    case "Not sure yet":
+      return undefined;
     default: {
       const num = parseInt(duration, 10);
       return !isNaN(num) ? num : undefined;
@@ -71,18 +82,26 @@ export const mapDurationToDays = (duration?: string): number | undefined => {
 
 export const mapDaysToDuration = (days?: number | string): string => {
   if (!days && days !== 0) return "";
-  if (typeof days === "string" && ESTIMATED_DURATION_OPTIONS.includes(days as any)) {
-    return days;
+  if (typeof days === "string") {
+    const trimmed = days.replace(/\s+/g, " ").trim();
+    if (ESTIMATED_DURATION_OPTIONS.includes(trimmed as any)) {
+      return trimmed;
+    }
+    if (trimmed === "Few Hours" || trimmed === "Half day") return "A few hours / Half a day";
+    if (trimmed === "2–3 days" || trimmed === "2-3 days") return "2 - 3 days";
+    if (trimmed === "Under a week") return "4 - 7 days";
+    if (trimmed === "1 – 2 weeks" || trimmed === "1-2 weeks") return "1 - 2 weeks";
+    if (trimmed === "2 – 3 weeks" || trimmed === "2-3 weeks" || trimmed === "3 – 4 weeks" || trimmed === "3-4 weeks") return "2 - 4 weeks";
+    if (trimmed === "1 month +" || trimmed === "1 month+") return "1 month or longer";
   }
   const n = typeof days === "number" ? days : parseInt(String(days), 10);
   if (isNaN(n) || n <= 0) return "";
   if (n <= 1) return "1 day";
-  if (n <= 3) return "2–3 days";
-  if (n <= 7) return "Under a week";
-  if (n <= 14) return "1 – 2 weeks";
-  if (n <= 21) return "2 – 3 weeks";
-  if (n <= 28) return "3 – 4 weeks";
-  return "1 month +";
+  if (n <= 3) return "2 - 3 days";
+  if (n <= 7) return "4 - 7 days";
+  if (n <= 14) return "1 - 2 weeks";
+  if (n <= 28) return "2 - 4 weeks";
+  return "1 month or longer";
 };
 
 /**
@@ -315,7 +334,7 @@ export default function TraderQuotePage() {
     setEditPrice(quote.price ? String(quote.price) : "");
     setEditEstimatedDuration(
       quote.estimatedDuration ||
-        (quote.estimatedDays ? mapDaysToDuration(quote.estimatedDays) : "")
+      (quote.estimatedDays ? mapDaysToDuration(quote.estimatedDays) : "")
     );
     setEditAvailability(quote.availability || "");
     setEditMessage(quote.message || "");

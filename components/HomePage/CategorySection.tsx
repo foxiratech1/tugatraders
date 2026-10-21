@@ -106,14 +106,14 @@ export default function CategorySection() {
   const activeCats = categoriesList.length > 0 ? categoriesList : defaultCategories;
 
   return (
-    <section className="w-full bg-white overflow-hidden pt-10">
-      {/* LIGHT GREEN BACKGROUND STRIP */}
-      <div className="w-full bg-[#EDF3E6] pt-12 sm:pt-14 lg:pt-16 pb-8 sm:pb-10 border-y border-[#E0EBD4]">
-        <div className="max-w-[1340px] mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="w-full bg-white overflow-hidden pt-6 sm:pt-8">
+      {/* LIGHT GREEN BACKGROUND CONTAINER - CENTRALLY SITTING */}
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
+        <div className="w-full bg-[#EDF3E6] rounded-[24px] sm:rounded-[28px] border border-[#E0EBD4] p-6 sm:p-8 lg:p-10 shadow-xs">
 
           {/* HEADER */}
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl sm:text-3xl md:text-[34px] font-bold text-[#1E3A2B] tracking-tight">
+          <div className="flex items-center justify-between mb-5 sm:mb-6">
+            <h2 className="text-2xl sm:text-3xl md:text-[32px] font-bold text-[#1E3A2B] tracking-tight">
               Explore Our <span className="text-[#6F9824]">Trades</span>
             </h2>
 
@@ -143,8 +143,8 @@ export default function CategorySection() {
       </div>
 
       {/* PROMO BANNER CARDS - CENTERED BETWEEN SECTIONS */}
-      <div className="max-w-[1340px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-16 sm:pt-20 lg:pt-24 pb-14 sm:pb-18 lg:pb-20">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-14 sm:pt-18 lg:pt-20 pb-10 sm:pb-12 lg:pb-14">
 
           {/* CARD 1: Need work done? */}
           <div className="relative overflow-hidden rounded-[18px] bg-white border border-gray-100 shadow-sm h-[265px]">

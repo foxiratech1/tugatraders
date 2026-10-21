@@ -186,17 +186,21 @@ export default function ChatWindow({
     directJobTitle ||
     "";
 
-  const currentActiveJob =
-    directJob ||
-    job ||
-    (conversation.jobId
-      ? {
-          id: conversation.jobId,
-          title: currentJobTitle,
-          status: jobStatus || "IN_PROGRESS",
-          trader: partner,
-        }
-      : null);
+  const hasDirectJob = Boolean(directJob && directJob.status && directJob.status !== "CANCELLED");
+  const hasRegularJob = !isDirectOrNoJob && Boolean(conversation.jobId || job?.id || job?._id);
+  const hasCreatedJob = hasDirectJob || hasRegularJob;
+
+  const currentActiveJob = hasDirectJob
+    ? directJob
+    : hasRegularJob
+      ? (job || {
+        id: conversation.jobId || (job as any)?.id || (job as any)?._id,
+        title: currentJobTitle || (conversation as any)?.jobTitle || "Job",
+        status: jobStatus || (job as any)?.status || "POSTED",
+        trader: partner,
+        ...(conversation.job || {}),
+      })
+      : null;
 
   useEffect(() => {
     console.log("Conversation", conversation);
@@ -729,15 +733,28 @@ export default function ChatWindow({
 
             {/* Action Buttons */}
             <div className="flex items-center gap-2">
-              {currentActiveJob && (
+              {hasCreatedJob && (
                 <button
                   type="button"
                   onClick={() => setShowJobDetailsModal(true)}
-                  className="px-3 py-1.5 rounded-xl text-[12px] font-bold border border-gray-200 text-gray-700 hover:bg-gray-50 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                  className="px-3 py-1.5 rounded-xl text-[12px] font-bold border border-[#E0CC3B] bg-[#FEFCE8] text-[#8A5C05] hover:bg-[#EFDB4B]/20 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
                   title="View Job Details"
                 >
-                  <FileText size={14} className="text-[#6E9625]" />
+                  <FileText size={14} className="text-[#8A5C05]" />
                   <span className="hidden sm:inline">Job Details</span>
+                </button>
+              )}
+
+              {/* Start Job button for trader if no job has started yet in direct chat */}
+              {isDirectOrNoJob && isActualTrader && !hasCreatedJob && (
+                <button
+                  type="button"
+                  onClick={() => setShowDirectStartModal(true)}
+                  className="px-3.5 py-1.5 bg-[#EFDB4B] hover:bg-[#E0CC3B] text-[#8A5C05] rounded-xl text-[12px] font-bold border border-[#E0CC3B] shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
+                  title="Start Job"
+                >
+                  <Play size={13} fill="currentColor" />
+                  <span>Start Job</span>
                 </button>
               )}
 
@@ -816,133 +833,139 @@ export default function ChatWindow({
             </div>
           </div>
 
-          {/* Direct Job Banner */}
-          {isDirectOrNoJob && !loadingDirectJob && ((directJob?.status && directJob.status !== 'CANCELLED') || (isTraderView || isActualTrader)) && (
-            <div className={`p-4 border-b flex flex-col md:flex-row md:items-center justify-between gap-4 flex-shrink-0 ${directJob?.status === 'IN_PROGRESS' ? 'bg-[#FFFBEB] border-amber-200' :
-              directJob?.status === 'AWAITING_CONFIRMATION' ? 'bg-[#EFF6FF] border-blue-200' :
-                directJob?.status === 'COMPLETED' ? 'bg-[#F0FDF4] border-green-200' :
-                  'bg-[#FEFCE8] border-yellow-200'
-              }`}>
-              <div className="flex items-center gap-3">
-                {directJob?.status === 'COMPLETED' ? (
-                  <CheckCircle className="text-[#16A34A]" size={20} />
-                ) : directJob?.status === 'IN_PROGRESS' ? (
-                  <Clock className="text-[#F59E0B]" size={20} />
-                ) : directJob?.status === 'AWAITING_CONFIRMATION' ? (
-                  <Clock className="text-[#3B82F6]" size={20} />
-                ) : (
-                  <Info className="text-[#F59E0B]" size={20} />
-                )}
-                <div>
-                  <p className="text-[14px] font-bold text-gray-800">
-                    {directJob?.status === 'COMPLETED' ? 'Job Completed' :
-                      directJob?.status === 'AWAITING_CONFIRMATION' ? 'Job is Completed' :
-                        directJob?.status === 'IN_PROGRESS' ? 'Job in Progress' :
-                          'No job started from this conversation.'}
-                  </p>
-                  <p className="text-[12px] text-gray-600 mt-0.5">
-                    {directJob?.status === 'COMPLETED' ? `Completed on ${new Date(directJob.confirmedAt || directJob.completedAt).toLocaleDateString()}` :
-                      directJob?.status === 'AWAITING_CONFIRMATION' ? 'Trader marked this job as complete. Awaiting customer confirmation.' :
-                        directJob?.status === 'IN_PROGRESS' ? `Started on ${new Date(directJob.startedAt).toLocaleDateString()}` :
-                          'You can start a job to track progress, get a review and add it to the trader\'s profile.'}
+          {/* Job Details Banner Strip — only show when job has been created */}
+          {hasCreatedJob && !loadingDirectJob && (
+            <div className="p-3.5 sm:p-4 bg-[#FEFCE8] border-b border-[#FDE047] flex flex-col md:flex-row md:items-center justify-between gap-3 flex-shrink-0 transition-colors">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 rounded-xl bg-[#EFDB4B]/30 border border-[#E0CC3B]/60 flex items-center justify-center flex-shrink-0 text-[#8A5C05]">
+                  {hasDirectJob ? (
+                    directJob?.status === 'COMPLETED' ? (
+                      <CheckCircle size={20} className="text-[#8A5C05]" />
+                    ) : (
+                      <Clock size={20} className="text-[#8A5C05]" />
+                    )
+                  ) : (
+                    <Briefcase size={20} className="text-[#8A5C05]" />
+                  )}
+                </div>
+
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className="text-[14px] font-bold text-[#1C2C1C] truncate">
+                      {hasDirectJob
+                        ? (directJob?.title || (directJob?.status === 'COMPLETED' ? 'Job Completed' : directJob?.status === 'AWAITING_CONFIRMATION' ? 'Job is Completed' : 'Job in Progress'))
+                        : (currentJobTitle || 'Job Details')}
+                    </p>
+                    <span className="px-2.5 py-0.5 rounded-[6px] bg-[#EFDB4B] border border-[#E0CC3B] text-[#8A5C05] text-[11px] font-bold">
+                      {hasDirectJob
+                        ? (directJob?.status === 'COMPLETED'
+                          ? 'Completed'
+                          : directJob?.status === 'AWAITING_CONFIRMATION'
+                            ? 'Awaiting Confirmation'
+                            : 'In Progress')
+                        : (jobStatus?.toUpperCase() === 'COMPLETED'
+                          ? 'Completed'
+                          : jobStatus?.toUpperCase() === 'IN_PROGRESS'
+                            ? 'In Progress'
+                            : 'Job Posted')}
+                    </span>
+                  </div>
+
+                  <p className="text-[11px] text-[#7A3E06] mt-0.5 truncate">
+                    {hasDirectJob ? (
+                      directJob?.status === 'COMPLETED' ? (
+                        `Completed on ${new Date(directJob.confirmedAt || directJob.completedAt).toLocaleDateString()}`
+                      ) : directJob?.status === 'AWAITING_CONFIRMATION' ? (
+                        'Trader marked this job as complete. Awaiting customer confirmation.'
+                      ) : (
+                        `Started on ${new Date(directJob.startedAt).toLocaleDateString()}`
+                      )
+                    ) : (
+                      (conversation.job?.location || (conversation.job as any)?.budget) ? (
+                        `${conversation.job?.location ? `Location: ${conversation.job.location}` : ''}${conversation.job?.location && (conversation.job as any)?.budget ? ' • ' : ''}${(conversation.job as any)?.budget ? `Budget: ${(conversation.job as any).budget}` : ''}`
+                      ) : (
+                        'Active job linked to this conversation.'
+                      )
+                    )}
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                {directJob?.status && directJob.status !== 'CANCELLED' && (
-                  <button
-                    type="button"
-                    onClick={() => setShowJobDetailsModal(true)}
-                    className="px-3 py-1.5 bg-white hover:bg-gray-50 border border-gray-200 text-[#1C2C1C] rounded-xl text-[12px] font-bold shadow-2xs transition-all flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <FileText size={14} className="text-[#6E9625]" />
-                    <span>View Details</span>
-                  </button>
-                )}
+              {hasDirectJob && (
+                <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+                    {directJob?.status === 'IN_PROGRESS' && isActualTrader && (
+                      <button
+                        onClick={handleDirectJobClose}
+                        disabled={isSubmittingDirectJob}
+                        className="px-4 py-1.5 bg-[#EA580C] hover:bg-[#C2410C] text-white rounded-xl text-[12px] font-bold shadow-sm transition-all flex items-center gap-1.5"
+                      >
+                        <XCircle size={14} />
+                        Close Job
+                      </button>
+                    )}
 
-                {(!directJob?.status || directJob.status === 'CANCELLED') && isActualTrader && (
-                  <button
-                    onClick={() => setShowDirectStartModal(true)}
-                    className="px-4 py-1.5 bg-[#F59E0B] hover:bg-[#D97706] text-white rounded-xl text-[12px] font-bold shadow-sm transition-all flex items-center gap-1.5"
-                  >
-                    <Play size={14} fill="currentColor" />
-                    Start Job
-                  </button>
-                )}
-
-                {directJob?.status === 'IN_PROGRESS' && isActualTrader && (
-                  <button
-                    onClick={handleDirectJobClose}
-                    disabled={isSubmittingDirectJob}
-                    className="px-4 py-1.5 bg-[#EA580C] hover:bg-[#C2410C] text-white rounded-xl text-[12px] font-bold shadow-sm transition-all flex items-center gap-1.5"
-                  >
-                    <XCircle size={14} />
-                    Close Job
-                  </button>
-                )}
-
-                {directJob?.status === 'AWAITING_CONFIRMATION' && (
-                  isActualTrader ? (
-                    <button
-                      onClick={handleDirectJobRemind}
-                      disabled={isSubmittingDirectJob}
-                      className="px-4 py-1.5 border border-[#3B82F6] text-[#3B82F6] hover:bg-blue-50 rounded-xl text-[12px] font-bold transition-all flex items-center gap-1.5"
-                    >
-                      <Send size={14} />
-                      Remind Customer
-                    </button>
-                  ) : (
-                    <button
-                      onClick={handleDirectJobConfirm}
-                      disabled={isSubmittingDirectJob}
-                      className="px-4 py-1.5 bg-[#3B82F6] hover:bg-[#2563EB] text-white rounded-xl text-[12px] font-bold shadow-sm transition-all flex items-center gap-1.5"
-                    >
-                      <CheckCircle size={14} />
-                      Confirm Completion
-                    </button>
-                  )
-                )}
-
-                {directJob?.status === 'COMPLETED' && (
-                  (!directJob.reviews || directJob.reviews.length === 0) ? (
-                    !isActualTrader ? (
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="px-2.5 py-1 bg-[#EFDB4B] border border-[#E0CC3B] text-[#8A5C05] rounded-lg text-[11px] font-bold">
-                          Pending Review
-                        </span>
+                    {directJob?.status === 'AWAITING_CONFIRMATION' && (
+                      isActualTrader ? (
                         <button
-                          onClick={() => {
-                            const dJobId = directJob?.id || directJob?._id;
-                            const tId = directJob?.traderId || partner?.id || partnerId || '';
-                            const rJobId = effectiveJobId || directJob?.jobId;
-                            const params = new URLSearchParams();
-                            if (dJobId) params.set("directJobId", dJobId);
-                            if (rJobId) params.set("jobId", rJobId);
-                            if (tId) params.set("traderId", tId);
-                            params.set("reviewType", dJobId ? "DIRECTORY" : (rJobId ? "JOB" : "DIRECTORY"));
-                            params.set("workCarriedOut", "true");
-                            router.push(`/customer-dashboard/leave-review?${params.toString()}`);
-                          }}
-                          className="px-4 py-1.5 bg-[#6E9625] hover:bg-[#58791C] text-white rounded-xl text-[12px] font-bold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                          onClick={handleDirectJobRemind}
+                          disabled={isSubmittingDirectJob}
+                          className="px-4 py-1.5 border border-[#E0CC3B] bg-white text-[#8A5C05] hover:bg-[#FFFBEB] rounded-xl text-[12px] font-bold transition-all flex items-center gap-1.5"
                         >
-                          <Star size={14} fill="currentColor" />
-                          Leave a Review
+                          <Send size={14} />
+                          Remind Customer
                         </button>
-                      </div>
-                    ) : (
-                      <span className="px-3 py-1 bg-[#EFDB4B]/20 text-[#8A5C05] border border-[#E0CC3B]/40 rounded-xl text-[12px] font-bold">
-                        Pending Customer Review
-                      </span>
-                    )
-                  ) : (
-                    <span className="px-4 py-1.5 bg-green-100 text-green-700 rounded-xl text-[12px] font-bold flex items-center gap-1.5">
-                      <Star size={14} fill="currentColor" />
-                      Reviewed
-                    </span>
-                  )
-                )}
-              </div>
+                      ) : (
+                        <button
+                          onClick={handleDirectJobConfirm}
+                          disabled={isSubmittingDirectJob}
+                          className="px-4 py-1.5 bg-[#6E9625] hover:bg-[#58791C] text-white rounded-xl text-[12px] font-bold shadow-sm transition-all flex items-center gap-1.5"
+                        >
+                          <CheckCircle size={14} />
+                          Confirm Completion
+                        </button>
+                      )
+                    )}
+
+                    {directJob?.status === 'COMPLETED' && (
+                      (!directJob.reviews || directJob.reviews.length === 0) ? (
+                        !isActualTrader ? (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="px-2.5 py-1 bg-[#EFDB4B] border border-[#E0CC3B] text-[#8A5C05] rounded-lg text-[11px] font-bold">
+                              Pending Review
+                            </span>
+                            <button
+                              onClick={() => {
+                                const dJobId = directJob?.id || directJob?._id;
+                                const tId = directJob?.traderId || partner?.id || partnerId || '';
+                                const rJobId = effectiveJobId || directJob?.jobId;
+                                const params = new URLSearchParams();
+                                if (dJobId) params.set("directJobId", dJobId);
+                                if (rJobId) params.set("jobId", rJobId);
+                                if (tId) params.set("traderId", tId);
+                                params.set("reviewType", dJobId ? "DIRECTORY" : (rJobId ? "JOB" : "DIRECTORY"));
+                                params.set("workCarriedOut", "true");
+                                router.push(`/customer-dashboard/leave-review?${params.toString()}`);
+                              }}
+                              className="px-4 py-1.5 bg-[#6E9625] hover:bg-[#58791C] text-white rounded-xl text-[12px] font-bold shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
+                            >
+                              <Star size={14} fill="currentColor" />
+                              Leave a Review
+                            </button>
+                          </div>
+                        ) : (
+                          <span className="px-3 py-1 bg-[#EFDB4B] text-[#8A5C05] border border-[#E0CC3B] rounded-xl text-[12px] font-bold">
+                            Pending Customer Review
+                          </span>
+                        )
+                      ) : (
+                        <span className="px-4 py-1.5 bg-white border border-[#E0CC3B] text-[#8A5C05] rounded-xl text-[12px] font-bold flex items-center gap-1.5">
+                          <Star size={14} fill="currentColor" />
+                          Reviewed
+                        </span>
+                      )
+                    )}
+                </div>
+              )}
             </div>
           )}
 
@@ -958,7 +981,7 @@ export default function ChatWindow({
               isTyping={isPartnerTyping}
               traderName={partner?.fullName}
               jobTitle={currentJobTitle}
-              onViewJobDetails={() => setShowJobDetailsModal(true)}
+              onViewJobDetails={hasCreatedJob ? () => setShowJobDetailsModal(true) : undefined}
             />
           )}
 
@@ -1331,13 +1354,18 @@ export default function ChatWindow({
               </div>
               <div>
                 <label className="block text-[12px] font-bold text-gray-500 mb-1">Agreed Price (Optional)</label>
-                <input
-                  type="number"
-                  placeholder="e.g. 150"
-                  value={directJobPrice}
-                  onChange={(e) => setDirectJobPrice(e.target.value)}
-                  className="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl px-4 py-2.5 text-[13px] focus:border-[#F59E0B] outline-none"
-                />
+                <div className="relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-500 font-bold text-[14px] pointer-events-none">
+                    €
+                  </span>
+                  <input
+                    type="number"
+                    placeholder="e.g. 150"
+                    value={directJobPrice}
+                    onChange={(e) => setDirectJobPrice(e.target.value)}
+                    className="w-full bg-[#F9FAFB] border border-gray-200 rounded-xl pl-8 pr-4 py-2.5 text-[13px] focus:border-[#F59E0B] outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-[12px] font-bold text-gray-500 mb-1">Notes / Scope (Optional)</label>
@@ -1367,9 +1395,10 @@ export default function ChatWindow({
         onClose={() => setShowJobDetailsModal(false)}
         job={currentActiveJob}
         partner={partner}
+        trader={conversation?.trader}
         isTraderView={isTraderView}
         isActualTrader={Boolean(isActualTrader)}
-        onConfirmCompletion={directJob?.status === 'AWAITING_CONFIRMATION' && !isActualTrader ? handleDirectJobConfirm : undefined}
+        onConfirmCompletion={handleDirectJobConfirm}
         isConfirming={isSubmittingDirectJob}
       />
     </>

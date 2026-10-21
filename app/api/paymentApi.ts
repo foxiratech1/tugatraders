@@ -150,5 +150,11 @@ export const paymentApi = {
     const { data } = await api.patch('/api/subscriptions/change-plan', params);
     return data;
   },
+
+  // 8. Cancel pending scheduled subscription downgrade
+  cancelPendingDowngrade: async () => {
+    const { data } = await api.delete('/api/subscriptions/cancel-pending-downgrade');
+    return data;
+  },
 };
 

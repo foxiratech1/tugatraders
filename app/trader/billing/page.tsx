@@ -228,6 +228,25 @@ export default function BillingPage() {
     }
   };
 
+  // Cancel pending downgrade states & handler
+  const [isCancellingPendingDowngrade, setIsCancellingPendingDowngrade] = useState(false);
+  const [showCancelDowngradeModal, setShowCancelDowngradeModal] = useState(false);
+
+  const handleCancelPendingDowngrade = async () => {
+    setIsCancellingPendingDowngrade(true);
+    try {
+      await paymentApi.cancelPendingDowngrade();
+      toast.success("Scheduled downgrade cancelled successfully.");
+      setShowCancelDowngradeModal(false);
+      await fetchSubscription();
+    } catch (error: any) {
+      console.error("Failed to cancel pending downgrade", error);
+      toast.error(error?.response?.data?.message || "Failed to cancel pending downgrade.");
+    } finally {
+      setIsCancellingPendingDowngrade(false);
+    }
+  };
+
   const handleOpenCategoryModal = async () => {
     const currentPlanId = subscriptionData?.currentPlan?.id || subscriptionData?.planId;
     if (currentPlanId) {
@@ -527,6 +546,11 @@ export default function BillingPage() {
   const activePlan = plans.find(p => p.id === (selectedPlanId || subscriptionData?.currentPlan?.id || subscriptionData?.planId)) || subscriptionData?.currentPlan;
   const maxCats = activePlan?.unlimitedTrades ? 9999 : (activePlan?.maxTrades || 1);
 
+  const pendingDowngradeHistory = subscriptionData?.history?.find(
+    (h: any) => h.action === "DOWNGRADE_SCHEDULED"
+  );
+  const pendingEffectiveDate = pendingDowngradeHistory?.effectiveDate || subscriptionData?.currentPeriodEnd;
+
   return (
     <div className="min-h-screen bg-[#F8F9F5] font-sans">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
@@ -738,6 +762,66 @@ export default function BillingPage() {
                   Switch Plan
                 </button>
               </div>
+
+              {/* Pending Plan Card (Below Upgrade Card) */}
+              {subscriptionData?.pendingPlan && (
+                <div className="bg-white rounded-2xl p-6 shadow-sm border border-amber-200 relative overflow-hidden">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                      <AlertCircle size={13} className="text-amber-600" />
+                      Pending Downgrade
+                    </span>
+                    {pendingEffectiveDate && (
+                      <span className="text-xs text-gray-500 font-medium">
+                        Effective {new Date(pendingEffectiveDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                      </span>
+                    )}
+                  </div>
+
+                  <h3 className="text-lg font-bold text-[#1C2C1C] mb-1">
+                    {subscriptionData.pendingPlan.name} Plan
+                  </h3>
+                  <p className="text-xs text-gray-500 mb-4 leading-relaxed">
+                    {subscriptionData.pendingPlan.description || "Your subscription will downgrade to this plan at the end of the current billing cycle."}
+                  </p>
+
+                  <div className="bg-amber-50/60 rounded-xl p-3.5 mb-5 border border-amber-100/80 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-600">Max Trade Categories</span>
+                      <span className="font-bold text-[#1C2C1C]">
+                        {subscriptionData.pendingPlan.unlimitedTrades
+                          ? "Unlimited"
+                          : subscriptionData.pendingPlan.maxTrades || 1}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-600">Quotes Per Day</span>
+                      <span className="font-bold text-[#1C2C1C]">
+                        {subscriptionData.pendingPlan.maxQuotesPerDay || 3}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-gray-600">Portfolio Uploads</span>
+                      <span className="font-bold text-[#1C2C1C]">
+                        {subscriptionData.pendingPlan.maxPortfolioUploads || 5}
+                      </span>
+                    </div>
+                  </div>
+
+                  <p className="text-xs text-gray-400 mb-4 leading-relaxed">
+                    You can cancel this downgrade anytime before the effective date to stay on your <strong>{subscriptionData?.currentPlan?.name || "current"}</strong> plan.
+                  </p>
+
+                  <button
+                    type="button"
+                    onClick={() => setShowCancelDowngradeModal(true)}
+                    disabled={isCancellingPendingDowngrade}
+                    className="w-full py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold border border-red-200 text-red-600 bg-red-50/50 hover:bg-red-50 hover:border-red-300 transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-sm"
+                  >
+                    <span>Cancel Downgrade</span>
+                  </button>
+                </div>
+              )}
 
             </div>
           </div>
@@ -1011,6 +1095,42 @@ export default function BillingPage() {
           onClose={() => setIsStripeModalOpen(false)}
           onPaymentSuccess={handlePaymentSuccess}
         />
+      )}
+
+      {/* Cancel Pending Downgrade Confirmation Modal */}
+      {showCancelDowngradeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-7 w-full max-w-md shadow-2xl border border-gray-100">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0 text-amber-600">
+                <AlertCircle size={20} />
+              </div>
+              <h3 className="text-lg sm:text-xl font-bold text-[#1C2C1C]">Cancel Scheduled Downgrade?</h3>
+            </div>
+            <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+              Are you sure you want to cancel the scheduled downgrade to <strong>{subscriptionData?.pendingPlan?.name}</strong>? You will keep your current <strong>{subscriptionData?.currentPlan?.name}</strong> plan and its benefits.
+            </p>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={() => setShowCancelDowngradeModal(false)}
+                disabled={isCancellingPendingDowngrade}
+                className="px-5 py-2.5 rounded-xl font-bold text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Keep Downgrade
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelPendingDowngrade}
+                disabled={isCancellingPendingDowngrade}
+                className="px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-red-600 hover:bg-red-700 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
+              >
+                {isCancellingPendingDowngrade ? "Cancelling..." : "Confirm & Cancel"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

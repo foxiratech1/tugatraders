@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Shield, Bell } from "lucide-react";
+import { Shield, Bell, AlertTriangle, Eye, EyeOff } from "lucide-react";
 import { authApi } from "@/app/api/authApi";
+import { clearTokens } from "@/utils/auth";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
 
@@ -19,6 +20,14 @@ export default function TraderSettingsPage() {
   const router = useRouter();
   const [isDeactivating, setIsDeactivating] = useState(false);
   const [showDeactivateModal, setShowDeactivateModal] = useState(false);
+
+  // Delete Account state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleteReason, setDeleteReason] = useState("");
+  const [showDeletePassword, setShowDeletePassword] = useState(false);
+  const [deleteToggleChecked, setDeleteToggleChecked] = useState(false);
 
   // Email state
   const [email, setEmail] = useState("");
@@ -82,6 +91,46 @@ export default function TraderSettingsPage() {
       console.error("Deactivate failed", error);
       toast.error(error?.response?.data?.message || "Failed to deactivate account.");
       setIsDeactivating(false);
+    }
+  };
+
+  const closeDeleteModal = () => {
+    setShowDeleteModal(false);
+    setDeleteToggleChecked(false);
+    setDeletePassword("");
+    setDeleteReason("");
+    setShowDeletePassword(false);
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword.trim()) {
+      toast.error("Please enter your password to confirm.");
+      return;
+    }
+    try {
+      setIsDeletingAccount(true);
+      const payload: { password: string; reason?: string } = {
+        password: deletePassword,
+      };
+      if (deleteReason.trim()) {
+        payload.reason = deleteReason.trim();
+      }
+      await authApi.deleteAccount(payload);
+      toast.success("Account deleted successfully.");
+      closeDeleteModal();
+      clearTokens();
+      localStorage.removeItem("user");
+      if (router && typeof router.replace === "function") {
+        router.replace("/auth/login");
+      } else {
+        window.location.replace("/auth/login");
+      }
+    } catch (error: any) {
+      console.error("Delete account failed", error);
+      toast.error(error?.response?.data?.message || error?.message || "Failed to delete account.");
+      setDeleteToggleChecked(false);
+    } finally {
+      setIsDeletingAccount(false);
     }
   };
 
@@ -218,6 +267,42 @@ export default function TraderSettingsPage() {
                   </div>
                 </div>
               </div>
+
+              {/* Delete Account */}
+              <div className="flex flex-col pt-2 border-t border-gray-100 mt-4">
+                <div className="flex items-center justify-between mt-4">
+                  <div>
+                    <h3 className="text-red-600 font-bold text-[15px]">Delete Account</h3>
+                    <p className="text-gray-400 text-[14px] mt-1">Permanently remove your account and all data</p>
+                  </div>
+                  <div className="relative inline-block w-12 h-6 align-middle select-none transition duration-200 ease-in">
+                    <input
+                      type="checkbox"
+                      id="deleteToggle"
+                      checked={deleteToggleChecked}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setDeleteToggleChecked(true);
+                          setShowDeleteModal(true);
+                        } else {
+                          setDeleteToggleChecked(false);
+                        }
+                      }}
+                      disabled={isDeletingAccount}
+                      className="peer sr-only"
+                    />
+                    <label
+                      htmlFor="deleteToggle"
+                      className={`block overflow-hidden h-6 rounded-full cursor-pointer transition-colors ${deleteToggleChecked ? "bg-red-600" : "bg-gray-300"
+                        }`}
+                    ></label>
+                    <span
+                      className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 w-5 h-5 rounded-full transition-transform pointer-events-none ${deleteToggleChecked ? "translate-x-full border-white" : ""
+                        }`}
+                    ></span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -252,7 +337,7 @@ export default function TraderSettingsPage() {
                 </div>
                 <Toggle checked={jobsLeads} onChange={setJobsLeads} />
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-[#1C2C1C] font-bold text-[15px]">Billing & Payments</h3>
@@ -266,14 +351,14 @@ export default function TraderSettingsPage() {
                 </div>
                 <Toggle checked={messageNotif} onChange={setMessageNotif} />
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-[#1C2C1C] font-bold text-[15px]">SMS</h3>
                 </div>
                 <Toggle checked={sms} onChange={setSms} />
               </div>
-              
+
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-[#1C2C1C] font-bold text-[15px]">Marketing & Promotions</h3>
@@ -308,6 +393,79 @@ export default function TraderSettingsPage() {
                 className="px-5 py-2.5 rounded-xl font-bold text-[14px] text-white bg-red-600 hover:bg-red-700 transition-colors"
               >
                 Deactivate
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+          <div className="bg-white rounded-3xl p-6 sm:p-7 w-full max-w-md shadow-2xl border border-gray-100">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0 text-red-600">
+                <AlertTriangle size={20} />
+              </div>
+              <h3 className="text-[20px] font-bold text-[#1C2C1C]">Delete Account</h3>
+            </div>
+            <p className="text-gray-500 text-[14px] mb-5 leading-relaxed">
+              This action is permanent and cannot be undone. All your profile data, quotes, and messages will be permanently removed.
+            </p>
+
+            <div className="space-y-4 mb-6">
+              <div>
+                <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-1.5">
+                  Password <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <input
+                    type={showDeletePassword ? "text" : "password"}
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    placeholder="Enter your password"
+                    className="border border-gray-200 bg-white rounded-xl px-4 py-2.5 pr-10 text-[14px] w-full focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all text-[#1C2C1C]"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowDeletePassword(!showDeletePassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors cursor-pointer"
+                  >
+                    {showDeletePassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[13px] font-semibold text-[#1C2C1C] mb-1.5">
+                  Reason <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <textarea
+                  value={deleteReason}
+                  onChange={(e) => setDeleteReason(e.target.value)}
+                  placeholder="e.g. I no longer need this service"
+                  rows={3}
+                  className="border border-gray-200 bg-white rounded-xl px-4 py-2.5 text-[14px] w-full focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition-all resize-none text-[#1C2C1C]"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <button
+                type="button"
+                onClick={closeDeleteModal}
+                disabled={isDeletingAccount}
+                className="px-5 py-2.5 rounded-xl font-bold text-[14px] text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={isDeletingAccount || !deletePassword.trim()}
+                className="px-5 py-2.5 rounded-xl font-bold text-[14px] text-white bg-red-600 hover:bg-red-700 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isDeletingAccount ? "Deleting..." : "Delete Account"}
               </button>
             </div>
           </div>

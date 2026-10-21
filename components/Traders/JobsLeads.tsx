@@ -739,28 +739,40 @@ export default function JobsLeads() {
 
       const mapDurationToDays = (duration?: string): number => {
         if (!duration) return 1;
-        switch (duration) {
+        const normalized = duration.replace(/\s+/g, " ").trim();
+        switch (normalized) {
+          case "A few hours / Half a day":
           case "Few Hours":
           case "Half day":
           case "1 day":
             return 1;
+          case "2 - 3 days":
+          case "2 -  3 days":
           case "2–3 days":
           case "2-3 days":
             return 3;
+          case "4 - 7 days":
+          case "4-7 days":
           case "Under a week":
             return 7;
+          case "1 - 2 weeks":
           case "1 – 2 weeks":
           case "1-2 weeks":
             return 14;
+          case "2 - 4 weeks":
+          case "2 – 4 weeks":
+          case "2-4 weeks":
           case "2 – 3 weeks":
           case "2-3 weeks":
-            return 21;
           case "3 – 4 weeks":
           case "3-4 weeks":
             return 28;
+          case "1 month or longer":
           case "1 month +":
           case "1 month+":
             return 30;
+          case "Not sure yet":
+            return 1;
           default: {
             const num = parseInt(duration, 10);
             return !isNaN(num) && num > 0 ? num : 1;
@@ -2134,15 +2146,14 @@ export default function JobsLeads() {
                     className="w-full px-4 py-2.5 pl-9 pr-8 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] bg-white focus:outline-none focus:border-[#8BC34A] focus:ring-2 focus:ring-[#8BC34A]/20 transition-all cursor-pointer appearance-none"
                   >
                     <option value="">Select duration (optional)</option>
-                    <option value="Few Hours">Few Hours</option>
-                    <option value="Half day">Half day</option>
+                    <option value="A few hours / Half a day">A few hours / Half a day</option>
                     <option value="1 day">1 day</option>
-                    <option value="2–3 days">2–3 days</option>
-                    <option value="Under a week">Under a week</option>
-                    <option value="1 – 2 weeks">1 – 2 weeks</option>
-                    <option value="2 – 3 weeks">2 – 3 weeks</option>
-                    <option value="3 – 4 weeks">3 – 4 weeks</option>
-                    <option value="1 month +">1 month +</option>
+                    <option value="2 - 3 days">2 - 3 days</option>
+                    <option value="4 - 7 days">4 - 7 days</option>
+                    <option value="1 - 2 weeks">1 - 2 weeks</option>
+                    <option value="2 - 4 weeks">2 - 4 weeks</option>
+                    <option value="1 month or longer">1 month or longer</option>
+                    <option value="Not sure yet">Not sure yet</option>
                   </select>
                   <ChevronDown
                     size={14}

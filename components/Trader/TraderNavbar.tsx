@@ -392,13 +392,13 @@ export default function TraderNavbar() {
                   href={href}
                   onClick={(e) => handleRestrictedNav(e, label)}
                   className={`
-                    relative flex items-center gap-2 px-3 2xl:px-3.5 text-[15.5px] font-semibold
+                    relative flex items-center gap-2 px-3 2xl:px-3.5 text-[14px] font-semibold
                     transition-all duration-200 whitespace-nowrap h-full group
                     ${active ? "text-[#1C2C1C]" : "text-[#1C2C1C]/65 hover:text-[#1C2C1C] hover:scale-[1.02]"}
                     ${restricted ? "opacity-60 cursor-not-allowed" : ""}
                   `}
                 >
-                  <Icon size={17} className={`transition-all duration-200 ${active ? "text-[#6E9625] scale-110" : "text-current group-hover:text-[#6E9625]"}`} />
+                  <Icon size={16} className={`transition-all duration-200 ${active ? "text-[#6E9625] scale-110" : "text-current group-hover:text-[#6E9625]"}`} />
                   <div className="flex items-center gap-1.5 relative">
                     {label}
                     {label === "Inbox" && inboxUnread > 0 && !active && (
@@ -668,7 +668,7 @@ export default function TraderNavbar() {
                       }
                     }}
                     className={`
-                      flex items-center justify-between px-4 py-3 rounded-xl text-[15.5px] font-semibold transition-all
+                      flex items-center justify-between px-4 py-3 rounded-xl text-[14px] font-semibold transition-all
                       ${active
                         ? "bg-[#6E9625]/10 text-[#6E9625] shadow-xs"
                         : "text-[#1C2C1C]/80 hover:bg-gray-50 hover:text-[#1C2C1C]"

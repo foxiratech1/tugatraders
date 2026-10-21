@@ -132,6 +132,12 @@ export const authApi = {
     return data;
   },
 
+  // Cancel pending downgrade
+  cancelPendingDowngrade: async () => {
+    const { data } = await api.delete("/api/subscriptions/cancel-pending-downgrade");
+    return data;
+  },
+
   // Save trader's selected categories, skill services, and sub-categories
   saveTraderCategories: async (payload: {
     tradeCategories: string[];
@@ -468,6 +474,13 @@ export const authApi = {
   deactivateAccount: async () => {
     const url = `${process.env.NEXT_PUBLIC_API_URL}api/auth/deactivate`;
     return fetchWithAuth(url, { method: 'POST' });
+  },
+
+  deleteAccount: async (payload: { password: string; reason?: string }) => {
+    const { data } = await api.delete('/api/auth/delete-account', {
+      data: payload,
+    });
+    return data;
   },
 
   requestReactivation: async (payload: { email: string; name: string; message: string }) => {

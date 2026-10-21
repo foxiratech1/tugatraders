@@ -84,7 +84,7 @@ export default function HowItWorks() {
       id="how-it-works"
       className="w-full pt-6 pb-12 sm:pt-8 sm:pb-16 md:pt-10 md:pb-20 bg-white px-4 sm:px-6 lg:px-8"
     >
-      <div className="max-w-[1340px] mx-auto w-full">
+      <div className="max-w-[1200px] mx-auto w-full">
         {/* TITLE */}
         <div className="text-center mb-10 md:mb-12">
           <h2 className="text-[34px] sm:text-[42px] md:text-[48px] font-extrabold leading-tight">

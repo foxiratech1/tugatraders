@@ -10,6 +10,7 @@ import {
   isGoogleMapsConfigured,
   loadPlacesLibrary,
   parseAddressComponents,
+  resolveLocationDetails,
 } from "@/utils/googleMaps";
 
 interface Suggestion {
@@ -17,6 +18,9 @@ interface Suggestion {
   mainText: string;
   secondaryText: string;
   prediction: google.maps.places.PlacePrediction;
+  city?: string;
+  postalCode?: string;
+  area?: string;
 }
 
 export interface PlacesAutocompleteInputProps {
@@ -154,12 +158,20 @@ export default function PlacesAutocompleteInput({
         const mapped: Suggestion[] = raw
           .map((s) => s.placePrediction)
           .filter((p): p is google.maps.places.PlacePrediction => !!p)
-          .map((p) => ({
-            placeId: p.placeId,
-            mainText: p.mainText?.text || p.text.text,
-            secondaryText: p.secondaryText?.text || "",
-            prediction: p,
-          }));
+          .map((p) => {
+            const mainText = p.mainText?.text || p.text.text;
+            const secondaryText = p.secondaryText?.text || "";
+            const details = resolveLocationDetails(mainText, secondaryText);
+            return {
+              placeId: p.placeId,
+              mainText,
+              secondaryText,
+              prediction: p,
+              city: details.city || mainText,
+              postalCode: details.postalCode,
+              area: details.area,
+            };
+          });
 
         setSuggestions(mapped);
         setActiveIndex(-1);
@@ -209,26 +221,59 @@ export default function PlacesAutocompleteInput({
     setSuggestions([]);
     setStatus("idle");
     const fallbackText = s.secondaryText ? `${s.mainText}, ${s.secondaryText}` : s.mainText;
-    onChange(fallbackText);
     setResolving(true);
     try {
       const place = s.prediction.toPlace();
       await place.fetchFields({ fields: ["formattedAddress", "location", "addressComponents"] });
-      const formatted = place.formattedAddress || fallbackText;
+      const parsed = parseAddressComponents(place.addressComponents);
+
+      const city = parsed.city || s.city || s.mainText;
+      const postalCode = parsed.postalCode || s.postalCode;
+      const area = s.area || parsed.state;
+
+      let formatted = place.formattedAddress || fallbackText;
+      // Ensure the postal code is included alongside the city name if not already present
+      if (postalCode && !formatted.includes(postalCode)) {
+        if (city && formatted.includes(city)) {
+          formatted = formatted.replace(city, `${city}, ${postalCode}`);
+        } else {
+          formatted = `${formatted}, ${postalCode}`;
+        }
+      }
+
       const selected: SelectedPlace = {
         placeId: s.placeId,
         formattedAddress: formatted,
         latitude: place.location?.lat() ?? null,
         longitude: place.location?.lng() ?? null,
-        ...parseAddressComponents(place.addressComponents),
+        ...parsed,
+        city,
+        postalCode,
+        area,
       };
       onChange(formatted);
       hasSelectionRef.current = true;
       onPlaceSelect?.(selected);
     } catch (err) {
-      // Keep the typed text; coordinates are simply unavailable.
+      let formatted = fallbackText;
+      if (s.postalCode && !formatted.includes(s.postalCode)) {
+        if (s.city && formatted.includes(s.city)) {
+          formatted = formatted.replace(s.city, `${s.city}, ${s.postalCode}`);
+        } else {
+          formatted = `${formatted}, ${s.postalCode}`;
+        }
+      }
+      onChange(formatted);
       hasSelectionRef.current = true;
-      onPlaceSelect?.({ placeId: s.placeId, formattedAddress: fallbackText, latitude: null, longitude: null });
+      onPlaceSelect?.({
+        placeId: s.placeId,
+        formattedAddress: formatted,
+        latitude: null,
+        longitude: null,
+        city: s.city,
+        postalCode: s.postalCode,
+        area: s.area,
+      });
       if (process.env.NODE_ENV !== "production") {
         console.warn("[PlacesAutocomplete] place details failed:", (err as Error)?.name || "Error");
       }
@@ -325,17 +370,30 @@ export default function PlacesAutocompleteInput({
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => selectSuggestion(s)}
                   onMouseEnter={() => setActiveIndex(i)}
-                  className={`flex cursor-pointer items-start gap-2.5 px-4 py-2.5 transition-colors ${
-                    i === activeIndex ? "bg-[#F1F7E8]" : "hover:bg-[#F7F9F6]"
+                  className={`flex cursor-pointer items-start gap-3 px-4 py-2.5 transition-colors border-b border-[#F3F4F6] last:border-b-0 ${
+                    i === activeIndex ? "bg-[#F1F7E8]" : "hover:bg-[#F9FAF8]"
                   }`}
                 >
-                  <MapPin size={15} className="mt-0.5 flex-shrink-0 text-[#6E9625]" />
-                  <span className="min-w-0">
-                    <span className="block truncate text-[13.5px] font-semibold text-[#1C2C1C]">{s.mainText}</span>
-                    {s.secondaryText && (
-                      <span className="block truncate text-[12px] text-[#6B7280]">{s.secondaryText}</span>
+                  <div className="mt-0.5 flex-shrink-0 w-6 h-6 rounded-full bg-[#6E9625]/10 flex items-center justify-center text-[#6E9625]">
+                    <MapPin size={13} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-[13.5px] font-semibold text-[#1C2C1C]">
+                        {s.city || s.mainText}
+                      </span>
+                      {s.postalCode && (
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold bg-[#6E9625]/15 text-[#4E6E17] border border-[#6E9625]/25">
+                          {s.postalCode}
+                        </span>
+                      )}
+                    </div>
+                    {(s.area || s.secondaryText) && (
+                      <div className="text-[12px] text-[#6B7280] mt-0.5 truncate">
+                        {s.area || s.secondaryText}
+                      </div>
                     )}
-                  </span>
+                  </div>
                 </li>
               ))}
             {status === "ready" && (

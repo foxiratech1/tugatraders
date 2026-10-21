@@ -481,7 +481,18 @@ export default function TraderProfilePage() {
 
         sDetails.forEach((s: any) => {
           authApi.getSubCategories(s.id).then((res: any) => {
-            setSubCategoriesMap(m => ({ ...m, [s.id]: Array.isArray(res) ? res : res?.data || [] }));
+            const subs = Array.isArray(res) ? res : res?.data || res?.subCategories || [];
+            setSubCategoriesMap(m => ({ ...m, [s.id]: subs }));
+            const subIds = subs.map((sub: any) => sub.id);
+            if (subIds.length > 0) {
+              setCategoryGroups(prev => prev.map(g => {
+                if (!g.selectedSkillServices.includes(s.id)) return g;
+                return {
+                  ...g,
+                  selectedSubCategories: Array.from(new Set([...g.selectedSubCategories, ...subIds]))
+                };
+              }));
+            }
           }).catch(() => { });
         });
 
@@ -783,16 +794,46 @@ export default function TraderProfilePage() {
 
       if (field === 'selectedSkillServices') {
         const newSkills = value as string[];
-        newSkills.forEach(skillId => {
-          if (!subCategoriesMap[skillId]) {
-            authApi.getSubCategories(skillId).then(res => {
-              setSubCategoriesMap(m => ({ ...m, [skillId]: Array.isArray(res) ? res : res?.data || [] }));
-            });
+        const addedSkills = newSkills.filter(s => !g.selectedSkillServices.includes(s));
+        const removedSkills = g.selectedSkillServices.filter(s => !newSkills.includes(s));
+
+        let newSubCats = [...g.selectedSubCategories];
+
+        // Remove sub-categories of removed skill services
+        removedSkills.forEach(skillId => {
+          const subsToRemove = (subCategoriesMap[skillId] || []).map(sub => sub.id);
+          newSubCats = newSubCats.filter(sc => !subsToRemove.includes(sc));
+        });
+
+        // Add sub-categories from already cached skill services
+        addedSkills.forEach(skillId => {
+          if (subCategoriesMap[skillId]) {
+            const subsToAdd = subCategoriesMap[skillId].map(sub => sub.id);
+            newSubCats = Array.from(new Set([...newSubCats, ...subsToAdd]));
           }
         });
-        // Do NOT clear selected subcategories when they add/remove a skill service, 
-        // as this prevents selecting multiple skill services without losing subcategories!
-        return { ...g, selectedSkillServices: newSkills };
+
+        // Automatically fetch and add all associated sub-categories in the background
+        addedSkills.forEach(skillId => {
+          if (!subCategoriesMap[skillId]) {
+            authApi.getSubCategories(skillId).then(res => {
+              const subArray = Array.isArray(res) ? res : res?.data || res?.subCategories || [];
+              setSubCategoriesMap(prevMap => ({ ...prevMap, [skillId]: subArray }));
+              const subIds = subArray.map((s: any) => s.id);
+              if (subIds.length > 0) {
+                setCategoryGroups(prevGroups => prevGroups.map(grp => {
+                  if (grp.id !== groupId) return grp;
+                  return {
+                    ...grp,
+                    selectedSubCategories: Array.from(new Set([...grp.selectedSubCategories, ...subIds]))
+                  };
+                }));
+              }
+            }).catch(err => console.error(err));
+          }
+        });
+
+        return { ...g, selectedSkillServices: newSkills, selectedSubCategories: newSubCats };
       }
 
       return { ...g, [field]: value };
@@ -861,18 +902,18 @@ export default function TraderProfilePage() {
 
       const normalizeGroups = (groups: CategoryGroup[]) => {
         return groups
-          .filter(g => g.categoryId && g.selectedSkillServices.length > 0 /* && g.selectedSubCategories.length > 0 */)
+          .filter(g => g.categoryId && g.selectedSkillServices.length > 0)
           .map(g => ({
             categoryId: g.categoryId,
             selectedSkillServices: [...g.selectedSkillServices].sort(),
-            // selectedSubCategories: [...g.selectedSubCategories].sort()
+            selectedSubCategories: [...(g.selectedSubCategories || [])].sort()
           }))
           .sort((a, b) => a.categoryId.localeCompare(b.categoryId));
       };
 
       const getTradeCategoriesOnly = (groups: CategoryGroup[]) => {
         return groups
-          .filter(g => g.categoryId && g.selectedSkillServices.length > 0 /* && g.selectedSubCategories.length > 0 */)
+          .filter(g => g.categoryId && g.selectedSkillServices.length > 0)
           .map(g => g.categoryId)
           .sort((a, b) => a.localeCompare(b));
       };
@@ -880,12 +921,30 @@ export default function TraderProfilePage() {
       const categoriesChanged = JSON.stringify(normalizeGroups(categoryGroups)) !== JSON.stringify(normalizeGroups(initialCategoryGroups));
       const tradeCategoriesChanged = JSON.stringify(getTradeCategoriesOnly(categoryGroups)) !== JSON.stringify(getTradeCategoriesOnly(initialCategoryGroups));
 
-      if (traderStatus !== "MANUAL_CHECK" && categoriesChanged && !isCategoryChangePending) {
-        const validGroups = categoryGroups.filter(g => g.categoryId && g.selectedSkillServices.length > 0 /* && g.selectedSubCategories.length > 0 */);
+      if (traderStatus !== "MANUAL_CHECK" && (categoriesChanged || isCategoriesDirty) && !isCategoryChangePending) {
+        const validGroups = categoryGroups.filter(g => g.categoryId && g.selectedSkillServices.length > 0);
 
         const tradeCategories = validGroups.map(g => g.categoryId);
         const skillServiceIds = validGroups.flatMap(g => g.selectedSkillServices);
-        // const subCategoryIds = validGroups.flatMap(g => g.selectedSubCategories);
+
+        // Automatically resolve all associated sub-categories in the background
+        const subCatPromises = skillServiceIds.map(async (skillId) => {
+          if (subCategoriesMap[skillId] && subCategoriesMap[skillId].length > 0) {
+            return subCategoriesMap[skillId].map((s: any) => s.id);
+          }
+          try {
+            const res = await authApi.getSubCategories(skillId);
+            const subArray = Array.isArray(res) ? res : res?.data || res?.subCategories || [];
+            return subArray.map((s: any) => s.id);
+          } catch (e) {
+            return [];
+          }
+        });
+        const resolvedSubCatArrays = await Promise.all(subCatPromises);
+        const subCategoryIds = Array.from(new Set([
+          ...validGroups.flatMap(g => g.selectedSubCategories),
+          ...resolvedSubCatArrays.flat(),
+        ]));
 
         if (tradeCategoriesChanged && tradeCategories.length > 0) {
           fd.append("tradeCategories", JSON.stringify(tradeCategories));
@@ -893,9 +952,9 @@ export default function TraderProfilePage() {
         if (skillServiceIds.length > 0) {
           fd.append("skillsServices", JSON.stringify(skillServiceIds));
         }
-        // if (subCategoryIds.length > 0) {
-        //   fd.append("subCategories", JSON.stringify(subCategoryIds));
-        // }
+        if (subCategoryIds.length > 0) {
+          fd.append("subCategories", JSON.stringify(subCategoryIds));
+        }
       }
 
       const numericRadius = Number(personalForm.workRadius);

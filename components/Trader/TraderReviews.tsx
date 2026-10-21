@@ -313,9 +313,9 @@ export default function TraderReviews() {
             <h1 className="text-[28px] font-bold text-[#1C2C1C]">Reviews Dashboard</h1>
             <p className="text-gray-500 text-[14px] mt-1">Track your reputation and respond to customer feedback.</p>
           </div>
-          <div className="flex items-center gap-1.5 bg-[#E9F3DC] text-[#6E9625] px-4 py-2 rounded-lg font-semibold text-[13px]">
+          {/* <div className="flex items-center gap-1.5 bg-[#E9F3DC] text-[#6E9625] px-4 py-2 rounded-lg font-semibold text-[13px]">
             Top Rated Tradesperson <Award size={16} />
-          </div>
+          </div> */}
         </div>
 
         <div className="flex flex-col md:flex-row gap-6 items-start">

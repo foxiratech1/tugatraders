@@ -339,7 +339,7 @@ const HowItWorksHero = () => {
   ];
 
   return (
-    <section className="bg-white pt-24 sm:pt-28 lg:pt-32 pb-16 sm:pb-20 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <section className="bg-white pt-24 sm:pt-28 lg:pt-32 pb-6 sm:pb-8 px-4 sm:px-6 lg:px-8 relative overflow-hidden">
       <div className="max-w-[1100px] mx-auto relative">
 
         {/* DIAGONAL CORNER RIBBON */}

@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { useRouter, usePathname } from 'next/navigation';
 import PlacesAutocompleteInput from '@/components/common/PlacesAutocompleteInput';
 import LocationMap from '@/components/common/LocationMap';
+import { resolveLocationDetails, SelectedPlace } from '@/utils/googleMaps';
 
 // Existing coordinates sent when no place has been selected (kept for backend compatibility).
 const FALLBACK_JOB_COORDS = { latitude: 22.5630, longitude: 75.7669 };
@@ -428,6 +429,9 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
   const [subCategoryIds, setSubCategoryIds] = useState<string[]>([]);
   const [postcode, setPostcode] = useState("");
   const [coords, setCoords] = useState<{ latitude: number | null; longitude: number | null }>({ latitude: null, longitude: null });
+  const [selectedPlaceInfo, setSelectedPlaceInfo] = useState<{ city?: string; postalCode?: string; area?: string } | null>(null);
+
+  const activeLocationInfo = selectedPlaceInfo || (postcode ? resolveLocationDetails(postcode) : null);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [timescale, setTimescale] = useState("");
@@ -468,7 +472,13 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
           if (parsed.subCategories) setSubCategoryIds(parsed.subCategories.map((s: any) => s.id || s._id));
           else if (parsed.subCategoryIds) setSubCategoryIds(parsed.subCategoryIds);
           else if (parsed.subCategory?.id || parsed.subCategory?._id) setSubCategoryIds([parsed.subCategory.id || parsed.subCategory._id]);
-          if (parsed.postcode) setPostcode(parsed.postcode);
+          if (parsed.postcode) {
+            setPostcode(parsed.postcode);
+            const resolved = resolveLocationDetails(parsed.postcode);
+            if (resolved.city || resolved.postalCode) {
+              setSelectedPlaceInfo(resolved);
+            }
+          }
           if (typeof parsed.latitude === 'number' && typeof parsed.longitude === 'number') {
             setCoords({ latitude: parsed.latitude, longitude: parsed.longitude });
           }
@@ -497,7 +507,13 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
           if (parsed.categoryIds) setCategoryIds(parsed.categoryIds);
           if (parsed.skillServiceIds) setSkillServiceIds(parsed.skillServiceIds);
           if (parsed.subCategoryIds) setSubCategoryIds(parsed.subCategoryIds);
-          if (parsed.postcode) setPostcode(parsed.postcode);
+          if (parsed.postcode) {
+            setPostcode(parsed.postcode);
+            const resolved = resolveLocationDetails(parsed.postcode);
+            if (resolved.city || resolved.postalCode) {
+              setSelectedPlaceInfo(resolved);
+            }
+          }
           if (parsed.coords) setCoords(parsed.coords);
           if (parsed.title) setTitle(parsed.title);
           if (parsed.description) setDescription(parsed.description);
@@ -682,7 +698,15 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
       categoryIds.forEach(id => formData.append('categoryIds', id));
       skillServiceIds.forEach(id => formData.append('skillServiceIds', id));
       subCategoryIds.forEach(id => formData.append('subCategoryIds', id));
-      if (postcode) formData.append('postcode', postcode);
+      let finalPostcode = postcode;
+      if (activeLocationInfo?.postalCode && !finalPostcode.includes(activeLocationInfo.postalCode)) {
+        if (activeLocationInfo.city && finalPostcode.includes(activeLocationInfo.city)) {
+          finalPostcode = finalPostcode.replace(activeLocationInfo.city, `${activeLocationInfo.city}, ${activeLocationInfo.postalCode}`);
+        } else {
+          finalPostcode = `${finalPostcode}, ${activeLocationInfo.postalCode}`;
+        }
+      }
+      if (finalPostcode) formData.append('postcode', finalPostcode);
       formData.append('title', title);
       formData.append('description', description);
       const backendTimescale =
@@ -922,10 +946,25 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
                 <PlacesAutocompleteInput
                   required
                   value={postcode}
-                  onChange={setPostcode}
-                  onPlaceSelect={(place) =>
-                    setCoords({ latitude: place?.latitude ?? null, longitude: place?.longitude ?? null })
-                  }
+                  onChange={(val) => {
+                    setPostcode(val);
+                    if (selectedPlaceInfo) setSelectedPlaceInfo(null);
+                  }}
+                  onPlaceSelect={(place: SelectedPlace | null) => {
+                    setCoords({ latitude: place?.latitude ?? null, longitude: place?.longitude ?? null });
+                    if (place) {
+                      setSelectedPlaceInfo({
+                        city: place.city,
+                        postalCode: place.postalCode,
+                        area: place.area || place.state,
+                      });
+                      if (place.formattedAddress) {
+                        setPostcode(place.formattedAddress);
+                      }
+                    } else {
+                      setSelectedPlaceInfo(null);
+                    }
+                  }}
                   placeholder="Town / Postcode"
                   leftAdornment={
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
@@ -934,6 +973,31 @@ export default function PostJobPage({ isDashboard = false }: { isDashboard?: boo
                   }
                   inputClassName="h-[48px] w-full rounded-[12px] border border-[#E5E7EB] bg-[#F7F5F04D]/30 pl-10 pr-4 text-[14px] text-[#555555] outline-none focus:border-[#6E9625] transition-all"
                 />
+                {postcode && activeLocationInfo && (activeLocationInfo.city || activeLocationInfo.postalCode) && (
+                  <div className="flex items-center gap-2 flex-wrap px-3 py-2 bg-[#F7F9F5] rounded-[10px] border border-[#E5E7EB] text-[12px] mt-1">
+                    <MapPin size={13} className="text-[#6E9625] flex-shrink-0" />
+                    {activeLocationInfo.city && (
+                      <span className="flex items-center gap-1 text-[#243A24]">
+                        <span className="text-[#6B7280]">City:</span>
+                        <strong className="text-[#1C2C1C] font-semibold">{activeLocationInfo.city}</strong>
+                      </span>
+                    )}
+                    {activeLocationInfo.postalCode && (
+                      <span className="flex items-center gap-1 text-[#243A24]">
+                        <span className="text-[#6B7280]">Postal Code:</span>
+                        <span className="px-1.5 py-0.5 rounded bg-[#6E9625]/15 text-[#4E6E17] font-bold text-[11px] border border-[#6E9625]/25">
+                          {activeLocationInfo.postalCode}
+                        </span>
+                      </span>
+                    )}
+                    {activeLocationInfo.area && (
+                      <span className="flex items-center gap-1 text-[#6B7280]">
+                        <span>•</span>
+                        <span className="text-[#4B5563]">{activeLocationInfo.area}</span>
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 

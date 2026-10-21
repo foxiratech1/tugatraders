@@ -45,7 +45,7 @@ const WhyJoinSection = () => {
   ];
 
   return (
-    <section className="bg-white py-12 sm:py-16 md:py-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
+    <section className="bg-white pt-4 sm:pt-6 md:pt-8 pb-12 sm:pb-16 md:pb-20 px-4 sm:px-6 lg:px-8 overflow-hidden">
       <div className="max-w-[880px] mx-auto">
         {/* TOP HEADING */}
         <div className="mb-8 sm:mb-10 text-left">

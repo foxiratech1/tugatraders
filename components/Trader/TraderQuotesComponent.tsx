@@ -34,15 +34,40 @@ interface Quote {
     id: string;
     title: string;
     postcode?: string;
+    customerId?: string;
+    customer?: {
+      id?: string;
+      fullName?: string;
+      name?: string;
+      profileImage?: string;
+      avatar?: string;
+      phone?: string | null;
+      mobile?: string | null;
+    };
   };
   jobId?: string;
   jobTitle?: string;
   jobPostcode?: string;
+  customer?: {
+    id?: string;
+    fullName?: string;
+    name?: string;
+    profileImage?: string;
+    avatar?: string;
+  };
   estimatedDays?: number | string;
   estimatedDuration?: string;
   availability?: string;
   message?: string;
   attachments?: any[];
+}
+
+function getImageUrl(path: string | null | undefined): string | null {
+  if (!path) return null;
+  if (path.startsWith("http")) return path;
+  const base = (process.env.NEXT_PUBLIC_API_URL || "").replace(/\/+$/, "");
+  const cleanPath = path.replace(/^\/+/, "");
+  return `${base}/${cleanPath}`;
 }
 
 const getAvailabilityFromDays = (days: number) => {
@@ -91,6 +116,18 @@ const statusConfig: Record<
     bg: "bg-[#A6A6A6]",
     text: "text-[#333333]",
     icon: <Clock size={12} className="text-[#333333]" />,
+  },
+  IN_PROGRESS: {
+    label: "In Progress",
+    bg: "bg-[#FEF3C7]",
+    text: "text-[#92400E]",
+    icon: <Clock size={12} className="text-[#92400E]" />,
+  },
+  INPROGRESS: {
+    label: "In Progress",
+    bg: "bg-[#FEF3C7]",
+    text: "text-[#92400E]",
+    icon: <Clock size={12} className="text-[#92400E]" />,
   },
 };
 
@@ -147,6 +184,13 @@ function QuoteCard({
   isWithdrawing: boolean;
 }) {
   const jobTitle = quote.job?.title || quote.jobTitle || "Job Title";
+  const customer = quote.job?.customer || (quote as any).customer;
+  const customerName = customer?.fullName || customer?.name || "Customer";
+  const customerAvatar = getImageUrl(customer?.profileImage || customer?.avatar);
+
+  const normalizedStatus = (quote.status || "").toUpperCase().replace(/[\s_-]/g, "");
+  const normalizedJobStatus = ((quote.job as any)?.status || (quote as any).jobStatus || "").toUpperCase().replace(/[\s_-]/g, "");
+  const isInProgress = normalizedStatus === "INPROGRESS" || normalizedJobStatus === "INPROGRESS";
 
   return (
     <div
@@ -169,8 +213,34 @@ function QuoteCard({
           </span>
         </div>
 
-        {/* Middle Section: 3 Stat Boxes */}
+        {/* Middle Section: Stat Boxes */}
         <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap">
+          {/* Customer */}
+          <div className="bg-[#F8F9FA] rounded-xl px-4 py-3 min-w-[130px] sm:min-w-[140px] flex flex-col justify-center">
+            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+              CUSTOMER
+            </span>
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-6 h-6 rounded-full overflow-hidden bg-[#EBF4E7] border border-[#DFEBDD] shrink-0 flex items-center justify-center font-bold text-[#143118] text-[11px]">
+                {customerAvatar ? (
+                  <img
+                    src={customerAvatar}
+                    alt={customerName}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span>{customerName ? customerName.charAt(0).toUpperCase() : "C"}</span>
+                )}
+              </div>
+              <span
+                className="text-[13px] sm:text-[14px] font-bold text-[#1C2C1C] truncate max-w-[110px]"
+                title={customerName}
+              >
+                {customerName}
+              </span>
+            </div>
+          </div>
+
           {/* Estimated Days */}
           <div className="bg-[#F8F9FA] rounded-xl px-4 py-3 min-w-[120px] sm:min-w-[125px] flex flex-col justify-center">
             <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
@@ -212,19 +282,21 @@ function QuoteCard({
           </span>
 
           <div className="flex items-center gap-2">
-            {/* Trash Button */}
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onWithdraw(quote);
-              }}
-              disabled={isWithdrawing}
-              title="Withdraw Quote"
-              aria-label="Withdraw Quote"
-              className="inline-flex items-center justify-center p-1 text-red-400 hover:text-red-600 transition-colors cursor-pointer disabled:opacity-50"
-            >
-              <Trash2 size={16} strokeWidth={1.75} />
-            </button>
+            {/* Trash Button - hidden when status is InProgress */}
+            {!isInProgress && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onWithdraw(quote);
+                }}
+                disabled={isWithdrawing}
+                title="Withdraw Quote"
+                aria-label="Withdraw Quote"
+                className="inline-flex items-center justify-center p-1 text-red-400 hover:text-red-600 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <Trash2 size={16} strokeWidth={1.75} />
+              </button>
+            )}
 
             {/* Edit Button - only for pending */}
             {quote.status?.toUpperCase() === "PENDING" && (
@@ -755,15 +827,14 @@ export default function TraderQuotesComponent() {
                       className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] bg-white focus:outline-none focus:border-[#C8D9A8] focus:ring-2 focus:ring-[#C8D9A8]/20 transition-all cursor-pointer appearance-none"
                     >
                       <option value="">Select duration (optional)</option>
-                      <option value="Few Hours">Few Hours</option>
-                      <option value="Half day">Half day</option>
+                      <option value="A few hours / Half a day">A few hours / Half a day</option>
                       <option value="1 day">1 day</option>
-                      <option value="2–3 days">2–3 days</option>
-                      <option value="Under a week">Under a week</option>
-                      <option value="1 – 2 weeks">1 – 2 weeks</option>
-                      <option value="2 – 3 weeks">2 – 3 weeks</option>
-                      <option value="3 – 4 weeks">3 – 4 weeks</option>
-                      <option value="1 month +">1 month +</option>
+                      <option value="2 - 3 days">2 - 3 days</option>
+                      <option value="4 - 7 days">4 - 7 days</option>
+                      <option value="1 - 2 weeks">1 - 2 weeks</option>
+                      <option value="2 - 4 weeks">2 - 4 weeks</option>
+                      <option value="1 month or longer">1 month or longer</option>
+                      <option value="Not sure yet">Not sure yet</option>
                     </select>
                     <ChevronDown size={14} className="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
                   </div>
@@ -952,6 +1023,31 @@ export default function TraderQuotesComponent() {
               </div>
             ) : (
               <div className="flex flex-col gap-4">
+                {(() => {
+                  const viewCustomer = viewQuoteDetails?.job?.customer || viewingQuote.job?.customer || (viewQuoteDetails as any)?.customer || (viewingQuote as any).customer;
+                  const viewCustomerName = viewCustomer?.fullName || viewCustomer?.name || "Customer";
+                  const viewCustomerAvatar = getImageUrl(viewCustomer?.profileImage || viewCustomer?.avatar);
+                  return (
+                    <div className="bg-gray-50 p-3 rounded-xl border border-gray-100 flex items-center justify-between">
+                      <div>
+                        <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Customer</span>
+                        <div className="flex items-center gap-2.5">
+                          <div className="w-7 h-7 rounded-full overflow-hidden bg-[#EBF4E7] border border-[#DFEBDD] shrink-0 flex items-center justify-center font-bold text-[#143118] text-xs">
+                            {viewCustomerAvatar ? (
+                              <img src={viewCustomerAvatar} alt={viewCustomerName} className="w-full h-full object-cover" />
+                            ) : (
+                              <span>{viewCustomerName ? viewCustomerName.charAt(0).toUpperCase() : "C"}</span>
+                            )}
+                          </div>
+                          <span className="text-[14px] font-bold text-[#1C2C1C]">
+                            {viewCustomerName}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 <div className="grid grid-cols-2 gap-3">
                   <div className="bg-gray-50 p-3 rounded-xl border border-gray-100">
                     <span className="block text-[11px] font-semibold text-gray-400 uppercase mb-1">Price</span>
@@ -1016,15 +1112,21 @@ export default function TraderQuotesComponent() {
               </div>
             )}
             <div className="mt-6 flex gap-3">
-              {(viewingQuote.status?.toUpperCase() === "PENDING") && (
-                <button
-                  onClick={() => handleWithdrawClick(viewingQuote)}
-                  className="flex-1 h-[46px] rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 text-[14px] font-bold transition-colors cursor-pointer flex items-center justify-center gap-2"
-                >
-                  <Trash2 size={15} />
-                  Withdraw
-                </button>
-              )}
+              {(() => {
+                const currentStatus = (viewQuoteDetails?.status || viewingQuote.status || "").toUpperCase().replace(/[\s_-]/g, "");
+                const currentJobStatus = ((viewQuoteDetails?.job as any)?.status || (viewingQuote.job as any)?.status || "").toUpperCase().replace(/[\s_-]/g, "");
+                const isViewingInProgress = currentStatus === "INPROGRESS" || currentJobStatus === "INPROGRESS";
+
+                return viewingQuote.status?.toUpperCase() === "PENDING" && !isViewingInProgress ? (
+                  <button
+                    onClick={() => handleWithdrawClick(viewingQuote)}
+                    className="flex-1 h-[46px] rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 text-[14px] font-bold transition-colors cursor-pointer flex items-center justify-center gap-2"
+                  >
+                    <Trash2 size={15} />
+                    Withdraw
+                  </button>
+                ) : null;
+              })()}
               <button
                 onClick={() => setIsViewModalOpen(false)}
                 className="flex-1 h-[46px] rounded-xl bg-gray-100 hover:bg-gray-200 text-[#1C2C1C] text-[14px] font-bold transition-colors cursor-pointer"

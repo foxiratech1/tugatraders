@@ -143,6 +143,7 @@ export default function TraderDashboard() {
   const [regData, setRegData] = useState<RegistrationData | null>(null);
   const [imageErrors, setImageErrors] = useState<Record<string, boolean>>({});
   const [matchedJobs, setMatchedJobs] = useState<any[]>([]);
+  const [reviewsCount, setReviewsCount] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -220,11 +221,12 @@ export default function TraderDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [dashRes, myProfileRes, regRes, matchedJobsRes] = await Promise.all([
+        const [dashRes, myProfileRes, regRes, matchedJobsRes, reviewsRes] = await Promise.all([
           authApi.getTraderDashboard().catch(() => null),
           authApi.getMyProfile().catch(() => null),
           getRegistrationStatus().catch(() => null),
           authApi.getMatchedJobs().catch(() => null),
+          authApi.getOwnReviews(1, 1).catch(() => null),
         ]);
         setDashboardDetails(dashRes?.data || dashRes || {});
         setProfileData(myProfileRes?.data || myProfileRes || null);
@@ -235,6 +237,22 @@ export default function TraderDashboard() {
             ? matchedJobsRes
             : [];
         setMatchedJobs(mJobs);
+        const revData = reviewsRes?.data || reviewsRes;
+        const totalRev =
+          typeof revData?.pagination?.totalReviews === "number"
+            ? revData.pagination.totalReviews
+            : typeof revData?.pagination?.total === "number"
+              ? revData.pagination.total
+              : typeof revData?.total === "number"
+                ? revData.total
+                : Array.isArray(revData?.data)
+                  ? revData.data.length
+                  : Array.isArray(revData?.reviews)
+                    ? revData.reviews.length
+                    : null;
+        if (totalRev !== null) {
+          setReviewsCount(totalRev);
+        }
       } catch (err) {
         console.error("Failed to fetch dashboard data", err);
       } finally {
@@ -385,6 +403,7 @@ export default function TraderDashboard() {
       ? matchedJobs
         .filter((item: any) => {
           const rawStatus = (item.rawStatus || item.status || "").toUpperCase();
+          const jobStatus = (item.job?.status || item.jobStatus || "").toUpperCase();
           const matchStatus = (
             item.matchStatus ||
             item.match?.status ||
@@ -402,13 +421,29 @@ export default function TraderDashboard() {
             item.myQuote?.status
           )?.toUpperCase();
 
+          // Exclude any job that is finished, completed, closed, or cancelled
+          const isDoneOrClosed =
+            rawStatus === "COMPLETED" ||
+            rawStatus === "CLOSED" ||
+            rawStatus === "CANCELLED" ||
+            rawStatus === "EXPIRED" ||
+            jobStatus === "COMPLETED" ||
+            jobStatus === "CLOSED" ||
+            jobStatus === "CANCELLED" ||
+            jobStatus === "EXPIRED" ||
+            matchStatus === "COMPLETED" ||
+            matchStatus === "CLOSED" ||
+            matchStatus === "CANCELLED";
+
+          if (isDoneOrClosed) return false;
+
           const isThisTraderRejected =
             matchStatus === "REJECTED" ||
             matchStatus === "DECLINED" ||
-            item.status === "REJECTED" ||
-            item.rawStatus === "REJECTED" ||
-            item.status === "DECLINED" ||
-            item.rawStatus === "DECLINED";
+            rawStatus === "REJECTED" ||
+            rawStatus === "DECLINED";
+
+          if (isThisTraderRejected) return false;
 
           const isAccepted = Boolean(
             (item.isQuoteAccepted ||
@@ -418,8 +453,7 @@ export default function TraderDashboard() {
                   (q: any) =>
                     q.status?.toUpperCase() === "ACCEPTED" &&
                     (q.traderId === item.traderId || q.isMyQuote)
-                ))) &&
-            !isThisTraderRejected
+                )))
           );
 
           return (
@@ -432,7 +466,7 @@ export default function TraderDashboard() {
         .map(
           (item: any): JobItem => ({
             id: item.id || item.jobId,
-            title: item.title || "Job",
+            title: item.title || item.job?.title || "Job",
             description:
               item.description ||
               item.projectDescription ||
@@ -450,13 +484,25 @@ export default function TraderDashboard() {
         )
       : [];
 
-  // Working on / In progress jobs (Real API data only - no static data)
-  const rawWorkingOn: JobItem[] =
+  // Working on / In progress jobs (Real API data only - strictly exclude completed/closed jobs)
+  const candidateWorkingOn: JobItem[] =
     Array.isArray(rawData?.jobsWorkingOn) && rawData.jobsWorkingOn.length > 0
       ? rawData.jobsWorkingOn
       : Array.isArray(rawData?.inProgressJobs) && rawData.inProgressJobs.length > 0
         ? rawData.inProgressJobs
         : inProgressFromMatchedJobs;
+
+  const rawWorkingOn: JobItem[] = candidateWorkingOn.filter((j: JobItem) => {
+    const s = (j.status || "").toUpperCase();
+    return (
+      s !== "COMPLETED" &&
+      s !== "CLOSED" &&
+      s !== "CANCELLED" &&
+      s !== "EXPIRED" &&
+      s !== "DECLINED" &&
+      s !== "REJECTED"
+    );
+  });
 
   // Helpers
   const renderStatusBadge = (status?: string) => {
@@ -649,28 +695,40 @@ export default function TraderDashboard() {
       };
       const mapDurationToDays = (duration?: string): number => {
         if (!duration) return 1;
-        switch (duration) {
+        const normalized = duration.replace(/\s+/g, " ").trim();
+        switch (normalized) {
+          case "A few hours / Half a day":
           case "Few Hours":
           case "Half day":
           case "1 day":
             return 1;
+          case "2 - 3 days":
+          case "2 -  3 days":
           case "2–3 days":
           case "2-3 days":
             return 3;
+          case "4 - 7 days":
+          case "4-7 days":
           case "Under a week":
             return 7;
+          case "1 - 2 weeks":
           case "1 – 2 weeks":
           case "1-2 weeks":
             return 14;
+          case "2 - 4 weeks":
+          case "2 – 4 weeks":
+          case "2-4 weeks":
           case "2 – 3 weeks":
           case "2-3 weeks":
-            return 21;
           case "3 – 4 weeks":
           case "3-4 weeks":
             return 28;
+          case "1 month or longer":
           case "1 month +":
           case "1 month+":
             return 30;
+          case "Not sure yet":
+            return 1;
           default: {
             const num = parseInt(duration, 10);
             return !isNaN(num) && num > 0 ? num : 1;
@@ -708,80 +766,81 @@ export default function TraderDashboard() {
 
   return (
     <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 bg-[#F7F9F5] min-h-screen font-sans">
-      {/* ── TOP WELCOME BAR ─────────────────────────────────── */}
-      <div className="w-fit max-w-full bg-white rounded-[18px] sm:rounded-[20px] border border-[#DFEBDD] overflow-hidden mb-5 sm:mb-6 flex flex-col sm:flex-row items-stretch shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-        {/* Left: Greeting (compact green section) */}
-        <div className="bg-[#EFF5EB] py-2.5 sm:py-3 px-5 sm:px-7 flex items-center gap-3 sm:gap-3.5 shrink-0 border-b sm:border-b-0 sm:border-r border-[#DFEBDD]">
-          <span className="text-[20px] sm:text-[22px] leading-none select-none">👋</span>
-          <div>
-            <h1 className="text-[16px] sm:text-[18px] font-black text-[#143118] leading-tight whitespace-nowrap">
-              Hello, {traderName}
-            </h1>
-          </div>
-        </div>
-
-        {/* Right: Quick stat mini-cards inside white box (comfortably spaced) */}
-        <div className="bg-white px-5 sm:px-7 lg:px-9 py-2.5 sm:py-3 flex items-center gap-7 sm:gap-9 lg:gap-11 overflow-x-auto flex-wrap sm:flex-nowrap shrink-0">
-          {/* Card 1: In progress jobs */}
-          <div
-            onClick={() => router.push("/trader/jobs?tab=In Progress")}
-            className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group shrink-0 transition-opacity hover:opacity-80"
-          >
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#FFF4E6] text-[#EA580C] flex items-center justify-center shrink-0">
-              <Luggage size={16} strokeWidth={2.2} />
-            </div>
-            <div>
-              <span className="text-[16px] sm:text-[17px] font-black text-[#143118] leading-tight block">
-                {actionRequired?.inProgressJobsCount ?? rawWorkingOn.length}
-              </span>
-              <span className="text-[11px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
-                In progress job
-              </span>
-            </div>
-          </div>
-
-          {/* Card 2: Quotes awaiting response */}
-          <div
-            onClick={() => router.push("/trader/quote")}
-            className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group shrink-0 transition-opacity hover:opacity-80"
-          >
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0">
-              <MessageSquare size={16} strokeWidth={2.2} />
-            </div>
-            <div>
-              <span className="text-[16px] sm:text-[17px] font-black text-[#143118] leading-tight block">
-                {actionRequired?.quotesAwaitingResponseCount ?? 0}
-              </span>
-              <span className="text-[11px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
-                Quotes awaiting response
-              </span>
-            </div>
-          </div>
-
-          {/* Card 3: Pending reviews */}
-          <div
-            onClick={() => router.push("/trader/reviews")}
-            className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group shrink-0 transition-opacity hover:opacity-80"
-          >
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#EBF4E7] text-[#2E7D32] flex items-center justify-center shrink-0">
-              <Star size={16} strokeWidth={2.2} />
-            </div>
-            <div>
-              <span className="text-[16px] sm:text-[17px] font-black text-[#143118] leading-tight block">
-                {actionRequired?.newReviewsCount ?? 0}
-              </span>
-              <span className="text-[11px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
-                Pending Reviews
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* ── MAIN 2-COLUMN LAYOUT ────────────────────────────── */}
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_360px] gap-7 items-start">
         {/* ── LEFT COLUMN ───────────────────────────────────── */}
         <div className="flex flex-col gap-7 min-w-0 ">
+          {/* ── TOP WELCOME BAR ───────────────────────────────── */}
+          <div className="w-fit min-w-0 sm:min-w-[720px] xl:min-w-[800px] max-w-full bg-white rounded-[18px] sm:rounded-[20px] border border-[#DFEBDD] overflow-hidden flex flex-col sm:flex-row items-stretch shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+            {/* Left: Greeting (compact green section) */}
+            <div className="bg-[#EFF5EB] py-2.5 sm:py-3 px-5 sm:px-7 flex items-center gap-3 sm:gap-3.5 shrink-0 border-b sm:border-b-0 sm:border-r border-[#DFEBDD]">
+              <span className="text-[20px] sm:text-[22px] leading-none select-none">👋</span>
+              <div>
+                <h1 className="text-[16px] sm:text-[18px] font-black text-[#143118] leading-tight whitespace-nowrap">
+                  Hello, {traderName}
+                </h1>
+              </div>
+            </div>
+
+            {/* Right: Quick stat mini-cards inside white box (comfortably spaced) */}
+            <div className="bg-white flex-1 px-6 sm:px-8 lg:px-10 py-2.5 sm:py-3 flex items-center gap-7 sm:gap-9 lg:gap-11 overflow-x-auto flex-wrap sm:flex-nowrap">
+              {/* Card 1: In progress jobs */}
+              <div
+                onClick={() => router.push("/trader/jobs?tab=In Progress")}
+                className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group shrink-0 transition-opacity hover:opacity-80"
+              >
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#FFF4E6] text-[#EA580C] flex items-center justify-center shrink-0">
+                  <Luggage size={16} strokeWidth={2.2} />
+                </div>
+                <div>
+                  <span className="text-[16px] sm:text-[17px] font-black text-[#143118] leading-tight block">
+                    {actionRequired?.inProgressJobsCount ?? rawWorkingOn.length}
+                  </span>
+                  <span className="text-[11px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
+                    In progress job
+                  </span>
+                </div>
+              </div>
+
+              {/* Card 2: Quotes awaiting response */}
+              <div
+                onClick={() => router.push("/trader/jobs?tab=Quote Sent")}
+                className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group shrink-0 transition-opacity hover:opacity-80"
+              >
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0">
+                  <MessageSquare size={16} strokeWidth={2.2} />
+                </div>
+                <div>
+                  <span className="text-[16px] sm:text-[17px] font-black text-[#143118] leading-tight block">
+                    {actionRequired?.quotesAwaitingResponseCount ?? 0}
+                  </span>
+                  <span className="text-[11px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
+                    Quotes awaiting response
+                  </span>
+                </div>
+              </div>
+
+              {/* Card 3: New reviews */}
+              <div
+                onClick={() => router.push("/trader/reviews")}
+                className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group shrink-0 transition-opacity hover:opacity-80"
+                title="New reviews received from customers"
+              >
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#EBF4E7] text-[#2E7D32] flex items-center justify-center shrink-0">
+                  <Star size={16} strokeWidth={2.2} />
+                </div>
+                <div>
+                  <span className="text-[16px] sm:text-[17px] font-black text-[#143118] leading-tight block">
+                    {actionRequired?.newReviewsCount ?? reviewsCount ?? 0}
+                  </span>
+                  <span className="text-[11px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
+                    New Reviews
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Section 1: New Jobs */}
           <div className="bg-white rounded-[22px] shadow-xs border border-[#DFEBDD] overflow-hidden">
             {/* Header + Filter Bar */}
@@ -1250,7 +1309,7 @@ export default function TraderDashboard() {
                 })
               ) : (
                 <div className="p-8 text-center text-[#768779] text-[13px] font-medium">
-                  You have no jobs in progress at the moment.
+                  You currently have no active jobs in progress.
                 </div>
               )}
             </div>
@@ -1563,15 +1622,14 @@ export default function TraderDashboard() {
                     className="w-full pl-9 pr-8 py-2.5 rounded-xl border border-gray-200 text-[14px] text-[#1C2C1C] bg-white placeholder:text-gray-400 focus:outline-none focus:border-[#6E9625] focus:ring-2 focus:ring-[#6E9625]/20 transition-all cursor-pointer appearance-none"
                   >
                     <option value="">Select duration (optional)</option>
-                    <option value="Few Hours">Few Hours</option>
-                    <option value="Half day">Half day</option>
+                    <option value="A few hours / Half a day">A few hours / Half a day</option>
                     <option value="1 day">1 day</option>
-                    <option value="2–3 days">2–3 days</option>
-                    <option value="Under a week">Under a week</option>
-                    <option value="1 – 2 weeks">1 – 2 weeks</option>
-                    <option value="2 – 3 weeks">2 – 3 weeks</option>
-                    <option value="3 – 4 weeks">3 – 4 weeks</option>
-                    <option value="1 month +">1 month +</option>
+                    <option value="2 - 3 days">2 - 3 days</option>
+                    <option value="4 - 7 days">4 - 7 days</option>
+                    <option value="1 - 2 weeks">1 - 2 weeks</option>
+                    <option value="2 - 4 weeks">2 - 4 weeks</option>
+                    <option value="1 month or longer">1 month or longer</option>
+                    <option value="Not sure yet">Not sure yet</option>
                   </select>
                   <ChevronDown
                     size={14}
