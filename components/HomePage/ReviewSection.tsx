@@ -7,6 +7,7 @@ import { FiStar } from "react-icons/fi";
 import { FaQuoteRight } from "react-icons/fa";
 import { motion } from "framer-motion";
 import { authApi } from "@/app/api/authApi";
+import { useAuth } from "@/hooks/useAuth";
 
 function getImageUrl(path: string | null | undefined): string | null {
   if (!path || path === "null" || path === "undefined") return null;
@@ -17,6 +18,8 @@ function getImageUrl(path: string | null | undefined): string | null {
 }
 
 export default function ReviewSection() {
+  const { role } = useAuth();
+  const isTrader = role === "trader";
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -154,12 +157,23 @@ export default function ReviewSection() {
               experience.
             </p>
 
-            <Link
-              href="/review"
-              className="inline-flex items-center justify-center bg-[#132E1A] hover:bg-[#1C3E24] text-white px-6 sm:px-7 py-2.5 sm:py-3 rounded-[10px] font-bold text-[13px] sm:text-[14px] transition-all duration-200 shadow-sm hover:shadow-md active:scale-95"
-            >
-              Leave a Review
-            </Link>
+            {isTrader ? (
+              <button
+                type="button"
+                disabled
+                title="Disabled for tradespeople"
+                className="inline-flex items-center justify-center bg-[#132E1A]/40 text-white/70 px-6 sm:px-7 py-2.5 sm:py-3 rounded-[10px] font-bold text-[13px] sm:text-[14px] cursor-not-allowed shadow-none"
+              >
+                Leave a Review
+              </button>
+            ) : (
+              <Link
+                href="/review"
+                className="inline-flex items-center justify-center bg-[#132E1A] hover:bg-[#1C3E24] text-white px-6 sm:px-7 py-2.5 sm:py-3 rounded-[10px] font-bold text-[13px] sm:text-[14px] transition-all duration-200 shadow-sm hover:shadow-md active:scale-95 cursor-pointer"
+              >
+                Leave a Review
+              </Link>
+            )}
           </motion.div>
 
           {/* RIGHT: Overlapping Review Cluster or Empty State */}

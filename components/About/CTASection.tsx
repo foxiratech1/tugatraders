@@ -3,8 +3,12 @@
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useAuth } from '@/hooks/useAuth';
 
 const CTASection = () => {
+  const { role } = useAuth();
+  const isTrader = role === 'trader';
+
   return (
     <section className="w-full py-12 md:py-16 px-6 md:px-16 flex flex-col items-center justify-center text-center relative overflow-hidden min-h-[340px]">
       {/* Background Image */}
@@ -48,25 +52,58 @@ const CTASection = () => {
       {/* Buttons Container */}
       <div className="flex flex-col md:flex-row items-center justify-center gap-3 md:gap-4 relative z-10 w-full max-w-[860px]">
         {/* Post Job Button */}
-        <Link href="/post-job" className="w-full md:w-auto block">
-          <button className="bg-[#6E9625] hover:bg-[#5a7d1e] text-white font-bold py-4 px-8 rounded-[5px] text-[15px] md:text-[16px] transition-all hover:scale-[1.02] shadow-sm cursor-pointer whitespace-nowrap w-full min-w-[180px]">
+        {isTrader ? (
+          <button
+            type="button"
+            disabled
+            title="Disabled for tradespeople"
+            className="bg-[#6E9625]/40 text-white/70 font-bold py-4 px-8 rounded-[5px] text-[15px] md:text-[16px] cursor-not-allowed shadow-none whitespace-nowrap w-full md:w-auto min-w-[180px]"
+          >
             Post a Job
           </button>
-        </Link>
+        ) : (
+          <Link href="/post-job" className="w-full md:w-auto block">
+            <button className="bg-[#6E9625] hover:bg-[#5a7d1e] text-white font-bold py-4 px-8 rounded-[5px] text-[15px] md:text-[16px] transition-all hover:scale-[1.02] shadow-sm cursor-pointer whitespace-nowrap w-full min-w-[180px]">
+              Post a Job
+            </button>
+          </Link>
+        )}
 
         {/* Browse Tradespeople Button */}
-        <Link href="/directory-listing/search" className="w-full md:w-auto block">
-          <button className="bg-[#243A24] hover:bg-[#1a2b1a] text-white font-bold py-4 px-8 rounded-[5px] text-[15px] md:text-[16px] transition-all hover:scale-[1.02] shadow-sm cursor-pointer whitespace-nowrap w-full min-w-[180px] border border-white/10">
+        {isTrader ? (
+          <button
+            type="button"
+            disabled
+            title="Disabled for tradespeople"
+            className="bg-[#243A24]/40 text-white/70 font-bold py-4 px-8 rounded-[5px] text-[15px] md:text-[16px] cursor-not-allowed shadow-none whitespace-nowrap w-full md:w-auto min-w-[180px] border border-white/5"
+          >
             Browse Tradespeople
           </button>
-        </Link>
+        ) : (
+          <Link href="/directory-listing/search" className="w-full md:w-auto block">
+            <button className="bg-[#243A24] hover:bg-[#1a2b1a] text-white font-bold py-4 px-8 rounded-[5px] text-[15px] md:text-[16px] transition-all hover:scale-[1.02] shadow-sm cursor-pointer whitespace-nowrap w-full min-w-[180px] border border-white/10">
+              Browse Tradespeople
+            </button>
+          </Link>
+        )}
 
         {/* Join Button */}
-        <Link href="/trader-signup" className="w-full md:w-auto block">
-          <button className="bg-[#C60C03] hover:bg-[#A30A02] text-white font-bold py-4 px-8 rounded-[5px] text-[15px] md:text-[16px] transition-all hover:scale-[1.02] shadow-sm cursor-pointer whitespace-nowrap w-full min-w-[200px]">
+        {isTrader ? (
+          <button
+            type="button"
+            disabled
+            title="You are already registered as a tradesperson"
+            className="bg-[#C60C03]/40 text-white/70 font-bold py-4 px-8 rounded-[5px] text-[15px] md:text-[16px] cursor-not-allowed shadow-none whitespace-nowrap w-full md:w-auto min-w-[200px]"
+          >
             Join as a Tradesperson
           </button>
-        </Link>
+        ) : (
+          <Link href="/trader-signup" className="w-full md:w-auto block">
+            <button className="bg-[#C60C03] hover:bg-[#A30A02] text-white font-bold py-4 px-8 rounded-[5px] text-[15px] md:text-[16px] transition-all hover:scale-[1.02] shadow-sm cursor-pointer whitespace-nowrap w-full min-w-[200px]">
+              Join as a Tradesperson
+            </button>
+          </Link>
+        )}
       </div>
     </section>
   );
