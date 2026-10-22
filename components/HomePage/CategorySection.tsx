@@ -15,6 +15,7 @@ import {
 } from "react-icons/fa6";
 import { motion } from "framer-motion";
 import { authApi } from "@/app/api/authApi";
+import { useAuth } from "@/hooks/useAuth";
 
 const defaultCategories = [
   { name: "PLUMBER" },
@@ -39,13 +40,47 @@ const getCategoryIcon = (name: string) => {
   return FaWrench;
 };
 
-const CategoryCard = ({ cat }: { cat: any }) => {
+const CategoryCard = ({ cat, isTrader }: { cat: any; isTrader?: boolean }) => {
   const Icon = getCategoryIcon(cat.name || "");
   const name = cat.name || "Trade Service";
 
   const targetUrl = cat.id || cat._id
     ? `/directory-listing/search?categoryId=${cat.id || cat._id}`
     : `/directory-listing/search?categoryName=${encodeURIComponent(name)}`;
+
+  if (isTrader) {
+    return (
+      <div
+        title="Disabled for tradespeople"
+        className="flex items-center justify-between rounded-[10px] bg-white px-5 py-3.5 sm:py-4 shadow-xs border-2 border-gray-100/90 opacity-70 cursor-not-allowed w-[220px] md:w-[240px] shrink-0"
+      >
+        <div className="flex items-center gap-3">
+          <div className="text-[#1E3A2B]/70 flex items-center justify-center shrink-0">
+            {cat.image ? (
+              <img
+                src={
+                  cat.image.startsWith("http")
+                    ? cat.image
+                    : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "")}${cat.image.startsWith("/") ? cat.image : `/${cat.image}`}`
+                }
+                alt={name}
+                className="w-5 h-5 object-contain"
+                crossOrigin="anonymous"
+              />
+            ) : (
+              <Icon className="w-5 h-5" />
+            )}
+          </div>
+          <span className="text-[13px] md:text-[14px] font-bold tracking-[1.5px] text-[#1E3A2B]/70 uppercase">
+            {name}
+          </span>
+        </div>
+        <div className="text-gray-300">
+          <FiArrowRight size={15} />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <Link
@@ -84,6 +119,8 @@ const CategoryCard = ({ cat }: { cat: any }) => {
 };
 
 export default function CategorySection() {
+  const { role } = useAuth();
+  const isTrader = role === "trader";
   const [categoriesList, setCategoriesList] = useState<any[]>([]);
 
   useEffect(() => {
@@ -117,13 +154,25 @@ export default function CategorySection() {
               Explore Our <span className="text-[#6F9824]">Trades</span>
             </h2>
 
-            <Link
-              href="/directory-listing/search"
-              className="inline-flex items-center gap-1.5 rounded-full border border-gray-200/90 bg-white px-4 py-1.5 text-[12px] sm:text-[13px] font-semibold text-[#1E3A2B] hover:bg-gray-50 transition-all shadow-sm"
-            >
-              <span>View all</span>
-              <FiChevronRight size={14} className="text-gray-500" />
-            </Link>
+            {isTrader ? (
+              <button
+                type="button"
+                disabled
+                title="Disabled for tradespeople"
+                className="inline-flex items-center gap-1.5 rounded-full border border-gray-200/90 bg-white px-4 py-1.5 text-[12px] sm:text-[13px] font-semibold text-[#1E3A2B]/50 opacity-60 cursor-not-allowed shadow-none"
+              >
+                <span>View all</span>
+                <FiChevronRight size={14} className="text-gray-400" />
+              </button>
+            ) : (
+              <Link
+                href="/directory-listing/search"
+                className="inline-flex items-center gap-1.5 rounded-full border border-gray-200/90 bg-white px-4 py-1.5 text-[12px] sm:text-[13px] font-semibold text-[#1E3A2B] hover:bg-gray-50 transition-all shadow-sm"
+              >
+                <span>View all</span>
+                <FiChevronRight size={14} className="text-gray-500" />
+              </Link>
+            )}
           </div>
 
           {/* SINGLE ROW SMOOTH MARQUEE */}
@@ -134,7 +183,7 @@ export default function CategorySection() {
               className="flex gap-4 pr-4 w-max shrink-0"
             >
               {[...activeCats, ...activeCats].map((cat, index) => (
-                <CategoryCard key={`cat-${index}`} cat={cat} />
+                <CategoryCard key={`cat-${index}`} cat={cat} isTrader={isTrader} />
               ))}
             </motion.div>
           </div>
@@ -174,18 +223,41 @@ export default function CategorySection() {
 
             {/* Bottom Buttons Row: Left button sits over photo, right button under text */}
             <div className="absolute bottom-4 left-4 right-4 flex gap-2.5 z-20">
-              <Link
-                href="/directory-listing/search"
-                className="flex-1 bg-[#122C17] hover:bg-[#0a1c0d] text-white text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-2 rounded-[6px] uppercase tracking-wider text-center shadow-sm flex items-center justify-center whitespace-nowrap animate-action-pulse cursor-pointer"
-              >
-                Find a Tradesperson
-              </Link>
-              <Link
-                href="/post-job"
-                className="flex-1 bg-[#6F9824] hover:bg-[#5f831e] text-white text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-2 rounded-[6px] uppercase tracking-wider text-center shadow-sm flex items-center justify-center whitespace-nowrap animate-action-pulse cursor-pointer [animation-delay:0.5s]"
-              >
-                Post your job - Free
-              </Link>
+              {isTrader ? (
+                <>
+                  <button
+                    type="button"
+                    disabled
+                    title="Disabled for tradespeople"
+                    className="flex-1 bg-[#122C17]/40 text-white/70 text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-2 rounded-[6px] uppercase tracking-wider text-center shadow-none flex items-center justify-center whitespace-nowrap cursor-not-allowed"
+                  >
+                    Find a Tradesperson
+                  </button>
+                  <button
+                    type="button"
+                    disabled
+                    title="Disabled for tradespeople"
+                    className="flex-1 bg-[#6F9824]/40 text-white/70 text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-2 rounded-[6px] uppercase tracking-wider text-center shadow-none flex items-center justify-center whitespace-nowrap cursor-not-allowed"
+                  >
+                    Post your job - Free
+                  </button>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/directory-listing/search"
+                    className="flex-1 bg-[#122C17] hover:bg-[#0a1c0d] text-white text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-2 rounded-[6px] uppercase tracking-wider text-center shadow-sm flex items-center justify-center whitespace-nowrap animate-action-pulse cursor-pointer"
+                  >
+                    Find a Tradesperson
+                  </Link>
+                  <Link
+                    href="/post-job"
+                    className="flex-1 bg-[#6F9824] hover:bg-[#5f831e] text-white text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-2 rounded-[6px] uppercase tracking-wider text-center shadow-sm flex items-center justify-center whitespace-nowrap animate-action-pulse cursor-pointer [animation-delay:0.5s]"
+                  >
+                    Post your job - Free
+                  </Link>
+                </>
+              )}
             </div>
           </div>
 
@@ -206,13 +278,25 @@ export default function CategorySection() {
                 </div>
 
                 <div>
-                  <Link
-                    href="/trader-signup"
-                    className="inline-flex items-center gap-1.5 bg-[#BA1515] hover:bg-[#991111] text-white text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-3.5 rounded-[6px] uppercase tracking-wider text-center shadow-sm whitespace-nowrap animate-action-pulse cursor-pointer [animation-delay:1s]"
-                  >
-                    <FiUserPlus size={15} />
-                    <span>Join as a Tradesperson</span>
-                  </Link>
+                  {isTrader ? (
+                    <button
+                      type="button"
+                      disabled
+                      title="You are already registered as a tradesperson"
+                      className="inline-flex items-center gap-1.5 bg-[#BA1515]/40 text-white/70 text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-3.5 rounded-[6px] uppercase tracking-wider text-center shadow-none whitespace-nowrap cursor-not-allowed"
+                    >
+                      <FiUserPlus size={15} />
+                      <span>Join as a Tradesperson</span>
+                    </button>
+                  ) : (
+                    <Link
+                      href="/trader-signup"
+                      className="inline-flex items-center gap-1.5 bg-[#BA1515] hover:bg-[#991111] text-white text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-3.5 rounded-[6px] uppercase tracking-wider text-center shadow-sm whitespace-nowrap animate-action-pulse cursor-pointer [animation-delay:1s]"
+                    >
+                      <FiUserPlus size={15} />
+                      <span>Join as a Tradesperson</span>
+                    </Link>
+                  )}
                 </div>
               </div>
 

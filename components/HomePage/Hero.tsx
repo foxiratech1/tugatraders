@@ -118,6 +118,7 @@ export default function Hero() {
 
   const handleSearch = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    if (isTrader) return;
     const params = new URLSearchParams();
     if (selectedCategory) params.append("categoryId", selectedCategory);
     if (selectedSkill) params.append("skillService", selectedSkill);
@@ -159,27 +160,48 @@ export default function Hero() {
             </h1>
 
             {/* SUBTITLE */}
-            <p className={`text-[14.5px] sm:text-[15.5px] text-gray-700 font-medium leading-relaxed ${isTrader ? "mb-5" : "mb-4 sm:mb-5"} max-w-[460px]`}>
+            <p className="text-[14.5px] sm:text-[15.5px] text-gray-700 font-medium leading-relaxed mb-4 sm:mb-5 max-w-[460px]">
               Post your job, receive responses and choose the professional that&apos;s right for you.
             </p>
 
             {/* CTA BUTTONS */}
-            {!isTrader && (
-              <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-4 sm:mb-5">
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 mb-4 sm:mb-5">
+              {isTrader ? (
+                <button
+                  type="button"
+                  disabled
+                  title="Disabled for tradespeople"
+                  className="inline-flex items-center justify-center rounded-[10px] bg-[#14341B]/40 px-6 sm:px-7 py-2.5 sm:py-3 text-[12.5px] sm:text-[13.5px] font-bold text-white/70 uppercase tracking-wider cursor-not-allowed shadow-none"
+                >
+                  FIND A TRADESPERSON
+                </button>
+              ) : (
                 <Link
                   href="/directory-listing/search"
                   className="inline-flex items-center justify-center rounded-[10px] bg-[#14341B] hover:bg-[#0E2613] px-6 sm:px-7 py-2.5 sm:py-3 text-[12.5px] sm:text-[13.5px] font-bold text-white uppercase tracking-wider transition-all shadow-xs hover:shadow cursor-pointer"
                 >
                   FIND A TRADESPERSON
                 </Link>
+              )}
+
+              {isTrader ? (
+                <button
+                  type="button"
+                  disabled
+                  title="Disabled for tradespeople"
+                  className="inline-flex items-center justify-center rounded-[10px] bg-[#789E2D]/40 px-6 sm:px-7 py-2.5 sm:py-3 text-[12.5px] sm:text-[13.5px] font-bold text-white/70 uppercase tracking-wider cursor-not-allowed shadow-none"
+                >
+                  POST YOUR JOB - FREE
+                </button>
+              ) : (
                 <Link
                   href="/post-job"
                   className="inline-flex items-center justify-center rounded-[10px] bg-[#789E2D] hover:bg-[#668824] px-6 sm:px-7 py-2.5 sm:py-3 text-[12.5px] sm:text-[13.5px] font-bold text-white uppercase tracking-wider transition-all shadow-xs hover:shadow cursor-pointer"
                 >
                   POST YOUR JOB - FREE
                 </Link>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* TRUST BADGES */}
             <div className="flex flex-row items-center gap-3.5 sm:gap-5 whitespace-nowrap overflow-x-auto no-scrollbar mb-2 lg:mb-4 py-0.5">
@@ -249,215 +271,248 @@ export default function Hero() {
       </div>
 
       {/* BOTTOM: SEARCH SECTION WITH VERY LIGHT GREEN BG */}
-      {!isTrader && (
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="w-full bg-gradient-to-b from-[#F5F9F2] via-[#F5F9F2] to-white pt-4 sm:pt-5 lg:pt-5 pb-6 sm:pb-8 relative z-30 -mt-6 sm:-mt-8 lg:-mt-16 xl:-mt-20"
-        >
-          {/* Subtle blurred feather gradient at the top boundary */}
-          <div className="absolute -top-4 inset-x-0 h-5 bg-gradient-to-t from-[#F5F9F2] to-transparent pointer-events-none filter blur-[2px]" />
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.2 }}
+        className="w-full bg-gradient-to-b from-[#F5F9F2] via-[#F5F9F2] to-white pt-4 sm:pt-5 lg:pt-5 pb-6 sm:pb-8 relative z-30 -mt-6 sm:-mt-8 lg:-mt-16 xl:-mt-20"
+      >
+        {/* Subtle blurred feather gradient at the top boundary */}
+        <div className="absolute -top-4 inset-x-0 h-5 bg-gradient-to-t from-[#F5F9F2] to-transparent pointer-events-none filter blur-[2px]" />
 
-          <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
-            {/* SEARCH HEADING */}
-            <h2
-              className="text-[18px] sm:text-[20px] lg:text-[21px] font-extrabold text-[#183B22] mb-2 sm:mb-2.5 text-left"
-              style={{ fontFamily: "var(--font-bricolage)" }}
-            >
-              What do you need help with?
-            </h2>
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
+          {/* SEARCH HEADING */}
+          <h2
+            className="text-[18px] sm:text-[20px] lg:text-[21px] font-extrabold text-[#183B22] mb-2 sm:mb-2.5 text-left"
+            style={{ fontFamily: "var(--font-bricolage)" }}
+          >
+            What do you need help with?
+          </h2>
 
-            {/* SEARCH BAR CONTAINER */}
-            <form
-              onSubmit={handleSearch}
-              className="w-full bg-white rounded-[20px] sm:rounded-[24px] border border-[#183B22] p-2 sm:p-2.5 transition-all relative z-30"
-            >
-              <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 lg:gap-0 relative">
+          {/* SEARCH BAR CONTAINER */}
+          <form
+            onSubmit={handleSearch}
+            className={`w-full bg-white rounded-[20px] sm:rounded-[24px] border border-[#183B22] p-2 sm:p-2.5 transition-all relative z-30 ${
+              isTrader ? "opacity-70 cursor-not-allowed" : ""
+            }`}
+          >
+            <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 lg:gap-0 relative">
 
-                {/* CATEGORY DROPDOWN */}
-                <div
-                  ref={categoryRef}
-                  className={`relative flex-1 flex items-center justify-start gap-3.5 px-4 lg:px-5 py-3 lg:py-3.5 cursor-pointer rounded-[14px] hover:bg-[#F9FAF8] transition-colors ${isCategoryOpen ? "z-50" : "z-20"
-                    }`}
-                  onClick={() => {
-                    setIsCategoryOpen(!isCategoryOpen);
-                    setIsServiceOpen(false);
-                  }}
-                >
-                  <Hammer className="text-gray-600 shrink-0 w-5 h-5" />
-                  <div className="text-left min-w-0 flex-1">
-                    <span className="block text-[10px] lg:text-[11px] text-[#9CA3AF] uppercase font-bold tracking-wider mb-0.5">
-                      CATEGORY
+              {/* CATEGORY DROPDOWN */}
+              <div
+                ref={categoryRef}
+                className={`relative flex-1 flex items-center justify-start gap-3.5 px-4 lg:px-5 py-3 lg:py-3.5 rounded-[14px] transition-colors ${
+                  isCategoryOpen ? "z-50" : "z-20"
+                } ${
+                  isTrader
+                    ? "cursor-not-allowed opacity-80"
+                    : "cursor-pointer hover:bg-[#F9FAF8]"
+                }`}
+                onClick={() => {
+                  if (isTrader) return;
+                  setIsCategoryOpen(!isCategoryOpen);
+                  setIsServiceOpen(false);
+                }}
+              >
+                <Hammer className="text-gray-600 shrink-0 w-5 h-5" />
+                <div className="text-left min-w-0 flex-1">
+                  <span className="block text-[10px] lg:text-[11px] text-[#9CA3AF] uppercase font-bold tracking-wider mb-0.5">
+                    CATEGORY
+                  </span>
+                  <div className="flex items-center justify-between gap-1.5">
+                    <span className="block w-full text-[14px] lg:text-[15px] font-bold text-[#183B22] truncate">
+                      {selectedCategoryObj ? selectedCategoryObj.name : "All Trades"}
                     </span>
-                    <div className="flex items-center justify-between gap-1.5">
-                      <span className="block w-full text-[14px] lg:text-[15px] font-bold text-[#183B22] truncate">
-                        {selectedCategoryObj ? selectedCategoryObj.name : "All Trades"}
-                      </span>
-                      <ChevronDown
-                        size={15}
-                        className={`text-gray-400 transition-transform ${isCategoryOpen ? "rotate-180" : ""}`}
-                      />
-                    </div>
-                  </div>
-
-                  {/* CATEGORY POPUP */}
-                  {isCategoryOpen && (
-                    <div className="absolute top-[calc(100%+8px)] left-0 right-0 lg:left-0 lg:right-auto lg:w-[320px] bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.18)] border border-gray-200 z-50 max-h-[340px] overflow-y-auto py-2 text-left [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
-                      <div
-                        className={`px-5 py-3 hover:bg-[#F4F7F1] text-[14px] cursor-pointer transition-colors ${!selectedCategory ? "bg-[#F4F7F1] text-[#708A42] font-bold" : "text-gray-700 font-medium"
-                          }`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedCategory("");
-                          setIsCategoryOpen(false);
-                        }}
-                      >
-                        All Trades
-                      </div>
-                      {categories.map((cat: any) => {
-                        const id = cat.id || cat._id;
-                        const isSelected = selectedCategory === id;
-                        return (
-                          <div
-                            key={id}
-                            className={`px-5 py-3 hover:bg-[#F4F7F1] text-[14px] cursor-pointer transition-colors flex items-center justify-between ${isSelected ? "bg-[#F4F7F1] text-[#708A42] font-bold" : "text-gray-700 font-medium"
-                              }`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedCategory(id);
-                              setIsCategoryOpen(false);
-                            }}
-                          >
-                            <span className="truncate">{cat.name}</span>
-                            {isSelected && <div className="w-2 h-2 rounded-full bg-[#708A42] shrink-0" />}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-                </div>
-
-                {/* VERTICAL DIVIDER */}
-                <div className="hidden lg:block w-[1px] h-9 bg-gray-200" />
-
-                {/* SERVICE DROPDOWN */}
-                <div
-                  ref={serviceRef}
-                  className={`relative flex-1 flex items-center justify-start gap-3.5 px-4 lg:px-5 py-3 lg:py-3.5 cursor-pointer rounded-[14px] hover:bg-[#F9FAF8] transition-colors ${isServiceOpen ? "z-50" : "z-10"
-                    }`}
-                  onClick={() => {
-                    setIsServiceOpen(!isServiceOpen);
-                    setIsCategoryOpen(false);
-                  }}
-                >
-                  <FaScrewdriverWrench className="text-gray-400 shrink-0 w-5 h-5" />
-                  <div className="text-left min-w-0 flex-1">
-                    <span className="block text-[10px] lg:text-[11px] text-[#9CA3AF] uppercase font-bold tracking-wider mb-0.5">
-                      SERVICE
-                    </span>
-                    <div className="flex items-center justify-between gap-1.5">
-                      <span
-                        className={`block w-full text-[14px] lg:text-[15px] font-bold truncate ${selectedSkillObj ? "text-[#183B22]" : "text-gray-400"
-                          }`}
-                      >
-                        {selectedSkillObj ? selectedSkillObj.name : "Select Service"}
-                      </span>
-                      <ChevronDown
-                        size={15}
-                        className={`text-gray-400 transition-transform ${isServiceOpen ? "rotate-180" : ""}`}
-                      />
-                    </div>
-                  </div>
-
-                  {/* SERVICE POPUP */}
-                  {isServiceOpen && (
-                    <div className="absolute top-[calc(100%+8px)] left-0 right-0 lg:left-0 lg:right-auto lg:w-[320px] bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.18)] border border-gray-200 z-50 max-h-[340px] overflow-y-auto py-2 text-left [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
-                      <div
-                        className={`px-5 py-3 hover:bg-[#F4F7F1] text-[14px] cursor-pointer transition-colors ${!selectedSkill ? "bg-[#F4F7F1] text-[#708A42] font-bold" : "text-gray-700 font-medium"
-                          }`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedSkill("");
-                          setIsServiceOpen(false);
-                        }}
-                      >
-                        Select Service (All)
-                      </div>
-                      {skillServices.length > 0 ? (
-                        skillServices.map((svc: any) => {
-                          const id = svc.id || svc._id;
-                          const isSelected = selectedSkill === id;
-                          return (
-                            <div
-                              key={id}
-                              className={`px-5 py-3 hover:bg-[#F4F7F1] text-[14px] cursor-pointer transition-colors flex items-center justify-between ${isSelected ? "bg-[#F4F7F1] text-[#708A42] font-bold" : "text-gray-700 font-medium"
-                                }`}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedSkill(id);
-                                setIsServiceOpen(false);
-                              }}
-                            >
-                              <span className="truncate">{svc.name}</span>
-                              {isSelected && <div className="w-2 h-2 rounded-full bg-[#708A42] shrink-0" />}
-                            </div>
-                          );
-                        })
-                      ) : (
-                        <div className="px-5 py-4 text-xs text-gray-500 font-medium text-center">
-                          {selectedCategory
-                            ? "No specific sub-services found"
-                            : "Select a Category first to view services"}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* VERTICAL DIVIDER */}
-                <div className="hidden lg:block w-[1px] h-9 bg-gray-200" />
-
-                {/* LOCATION INPUT */}
-                <div className="flex-1 flex items-center justify-start gap-3.5 px-4 lg:px-5 py-3 lg:py-3.5 min-w-0">
-                  <FaLocationDot className="text-gray-700 shrink-0 w-5 h-5" />
-                  <div className="text-left min-w-0 flex-1">
-                    <label
-                      htmlFor="hero-location-input"
-                      className="block text-[10px] lg:text-[11px] text-[#9CA3AF] uppercase font-bold tracking-wider mb-0.5 cursor-pointer"
-                    >
-                      LOCATION
-                    </label>
-                    <PlacesAutocompleteInput
-                      id="hero-location-input"
-                      placeholder="Postcode/City"
-                      value={location}
-                      onChange={setLocation}
-                      onPlaceSelect={(place) => {
-                        if (place?.formattedAddress) {
-                          setLocation(place.formattedAddress);
-                        }
-                      }}
-                      className="w-full"
-                      inputClassName="block w-full text-[14px] lg:text-[15px] font-bold text-[#183B22] placeholder:text-gray-400 placeholder:font-bold bg-transparent outline-none truncate"
+                    <ChevronDown
+                      size={15}
+                      className={`text-gray-400 transition-transform ${isCategoryOpen ? "rotate-180" : ""}`}
                     />
                   </div>
                 </div>
 
-                {/* SEARCH TRADER BUTTON */}
-                <button
-                  type="submit"
-                  className="bg-[#183B22] hover:bg-[#112918] text-white px-7 sm:px-9 py-3.5 sm:py-4 rounded-[16px] sm:rounded-[18px] flex items-center justify-center gap-2.5 font-bold text-[14px] sm:text-[15px] transition-all cursor-pointer shrink-0 shadow-sm hover:shadow mt-2 lg:mt-0"
-                >
-                  <Search className="w-4.5 h-4.5 shrink-0 text-white" />
-                  <span className="truncate">Search Trader</span>
-                </button>
-
+                {/* CATEGORY POPUP */}
+                {isCategoryOpen && !isTrader && (
+                  <div className="absolute top-[calc(100%+8px)] left-0 right-0 lg:left-0 lg:right-auto lg:w-[320px] bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.18)] border border-gray-200 z-50 max-h-[340px] overflow-y-auto py-2 text-left [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
+                    <div
+                      className={`px-5 py-3 hover:bg-[#F4F7F1] text-[14px] cursor-pointer transition-colors ${
+                        !selectedCategory ? "bg-[#F4F7F1] text-[#708A42] font-bold" : "text-gray-700 font-medium"
+                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedCategory("");
+                        setIsCategoryOpen(false);
+                      }}
+                    >
+                      All Trades
+                    </div>
+                    {categories.map((cat: any) => {
+                      const id = cat.id || cat._id;
+                      const isSelected = selectedCategory === id;
+                      return (
+                        <div
+                          key={id}
+                          className={`px-5 py-3 hover:bg-[#F4F7F1] text-[14px] cursor-pointer transition-colors flex items-center justify-between ${
+                            isSelected ? "bg-[#F4F7F1] text-[#708A42] font-bold" : "text-gray-700 font-medium"
+                          }`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedCategory(id);
+                            setIsCategoryOpen(false);
+                          }}
+                        >
+                          <span className="truncate">{cat.name}</span>
+                          {isSelected && <div className="w-2 h-2 rounded-full bg-[#708A42] shrink-0" />}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            </form>
-          </div>
-        </motion.div>
-      )}
+
+              {/* VERTICAL DIVIDER */}
+              <div className="hidden lg:block w-[1px] h-9 bg-gray-200" />
+
+              {/* SERVICE DROPDOWN */}
+              <div
+                ref={serviceRef}
+                className={`relative flex-1 flex items-center justify-start gap-3.5 px-4 lg:px-5 py-3 lg:py-3.5 rounded-[14px] transition-colors ${
+                  isServiceOpen ? "z-50" : "z-10"
+                } ${
+                  isTrader
+                    ? "cursor-not-allowed opacity-80"
+                    : "cursor-pointer hover:bg-[#F9FAF8]"
+                }`}
+                onClick={() => {
+                  if (isTrader) return;
+                  setIsServiceOpen(!isServiceOpen);
+                  setIsCategoryOpen(false);
+                }}
+              >
+                <FaScrewdriverWrench className="text-gray-400 shrink-0 w-5 h-5" />
+                <div className="text-left min-w-0 flex-1">
+                  <span className="block text-[10px] lg:text-[11px] text-[#9CA3AF] uppercase font-bold tracking-wider mb-0.5">
+                    SERVICE
+                  </span>
+                  <div className="flex items-center justify-between gap-1.5">
+                    <span
+                      className={`block w-full text-[14px] lg:text-[15px] font-bold truncate ${
+                        selectedSkillObj ? "text-[#183B22]" : "text-gray-400"
+                      }`}
+                    >
+                      {selectedSkillObj ? selectedSkillObj.name : "Select Service"}
+                    </span>
+                    <ChevronDown
+                      size={15}
+                      className={`text-gray-400 transition-transform ${isServiceOpen ? "rotate-180" : ""}`}
+                    />
+                  </div>
+                </div>
+
+                {/* SERVICE POPUP */}
+                {isServiceOpen && !isTrader && (
+                  <div className="absolute top-[calc(100%+8px)] left-0 right-0 lg:left-0 lg:right-auto lg:w-[320px] bg-white rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.18)] border border-gray-200 z-50 max-h-[340px] overflow-y-auto py-2 text-left [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-gray-300 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-track]:bg-transparent">
+                    <div
+                      className={`px-5 py-3 hover:bg-[#F4F7F1] text-[14px] cursor-pointer transition-colors ${
+                        !selectedSkill ? "bg-[#F4F7F1] text-[#708A42] font-bold" : "text-gray-700 font-medium"
+                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedSkill("");
+                        setIsServiceOpen(false);
+                      }}
+                    >
+                      Select Service (All)
+                    </div>
+                    {skillServices.length > 0 ? (
+                      skillServices.map((svc: any) => {
+                        const id = svc.id || svc._id;
+                        const isSelected = selectedSkill === id;
+                        return (
+                          <div
+                            key={id}
+                            className={`px-5 py-3 hover:bg-[#F4F7F1] text-[14px] cursor-pointer transition-colors flex items-center justify-between ${
+                              isSelected ? "bg-[#F4F7F1] text-[#708A42] font-bold" : "text-gray-700 font-medium"
+                            }`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedSkill(id);
+                              setIsServiceOpen(false);
+                            }}
+                          >
+                            <span className="truncate">{svc.name}</span>
+                            {isSelected && <div className="w-2 h-2 rounded-full bg-[#708A42] shrink-0" />}
+                          </div>
+                        );
+                      })
+                    ) : (
+                      <div className="px-5 py-4 text-xs text-gray-500 font-medium text-center">
+                        {selectedCategory
+                          ? "No specific sub-services found"
+                          : "Select a Category first to view services"}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* VERTICAL DIVIDER */}
+              <div className="hidden lg:block w-[1px] h-9 bg-gray-200" />
+
+              {/* LOCATION INPUT */}
+              <div
+                className={`flex-1 flex items-center justify-start gap-3.5 px-4 lg:px-5 py-3 lg:py-3.5 min-w-0 ${
+                  isTrader ? "cursor-not-allowed opacity-80" : ""
+                }`}
+              >
+                <FaLocationDot className="text-gray-700 shrink-0 w-5 h-5" />
+                <div className="text-left min-w-0 flex-1">
+                  <label
+                    htmlFor="hero-location-input"
+                    className={`block text-[10px] lg:text-[11px] text-[#9CA3AF] uppercase font-bold tracking-wider mb-0.5 ${
+                      isTrader ? "cursor-not-allowed" : "cursor-pointer"
+                    }`}
+                  >
+                    LOCATION
+                  </label>
+                  <PlacesAutocompleteInput
+                    id="hero-location-input"
+                    placeholder="Postcode/City"
+                    value={location}
+                    onChange={setLocation}
+                    disabled={isTrader}
+                    onPlaceSelect={(place) => {
+                      if (isTrader) return;
+                      if (place?.formattedAddress) {
+                        setLocation(place.formattedAddress);
+                      }
+                    }}
+                    className="w-full"
+                    inputClassName={`block w-full text-[14px] lg:text-[15px] font-bold text-[#183B22] placeholder:text-gray-400 placeholder:font-bold bg-transparent outline-none truncate ${
+                      isTrader ? "cursor-not-allowed" : ""
+                    }`}
+                  />
+                </div>
+              </div>
+
+              {/* SEARCH TRADER BUTTON */}
+              <button
+                type="submit"
+                disabled={isTrader}
+                title={isTrader ? "Disabled for tradespeople" : undefined}
+                className={`bg-[#183B22] text-white px-7 sm:px-9 py-3.5 sm:py-4 rounded-[16px] sm:rounded-[18px] flex items-center justify-center gap-2.5 font-bold text-[14px] sm:text-[15px] transition-all shrink-0 mt-2 lg:mt-0 ${
+                  isTrader
+                    ? "opacity-50 cursor-not-allowed shadow-none"
+                    : "hover:bg-[#112918] cursor-pointer shadow-sm hover:shadow"
+                }`}
+              >
+                <Search className="w-4.5 h-4.5 shrink-0 text-white" />
+                <span className="truncate">Search Trader</span>
+              </button>
+
+            </div>
+          </form>
+        </div>
+      </motion.div>
     </section>
   );
 }
