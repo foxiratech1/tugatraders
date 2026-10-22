@@ -1564,32 +1564,32 @@ export default function CustomerJobDashboard() {
         {/* ── TOP BAR: Welcome + Stats on Left, Actions on Right (Single Unified Row) ─────────── */}
         <div className="flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4 mb-6 sm:mb-8">
           {/* Left: Combined Greeting & 3 Stat Counters */}
-          <div className="w-fit max-w-full bg-white rounded-[18px] sm:rounded-[20px] border border-[#DFEBDD] overflow-hidden flex flex-col sm:flex-row items-stretch shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+          <div className="w-fit max-w-full bg-white rounded-[20px] sm:rounded-[22px] border border-[#DFEBDD] overflow-hidden flex flex-col sm:flex-row items-stretch shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
             {/* Left: Greeting (compact green section) */}
-            <div className="bg-[#EFF5EB] py-2.5 sm:py-3 px-5 sm:px-7 flex items-center gap-3 sm:gap-3.5 shrink-0 border-b sm:border-b-0 sm:border-r border-[#DFEBDD]">
-              <span className="text-[20px] sm:text-[22px] leading-none select-none">👋</span>
+            <div className="bg-[#EFF5EB] py-3 sm:py-3.5 md:py-4 px-5 sm:px-6 flex items-center gap-3 sm:gap-3.5 shrink-0 border-b sm:border-b-0 sm:border-r border-[#DFEBDD]">
+              <span className="text-[22px] sm:text-[24px] leading-none select-none">👋</span>
               <div>
-                <h1 className="text-[16px] sm:text-[18px] font-black text-[#143118] leading-tight whitespace-nowrap">
+                <h1 className="text-[17px] sm:text-[19px] font-black text-[#143118] leading-tight whitespace-nowrap">
                   Hello, {customerName}
                 </h1>
               </div>
             </div>
 
-            {/* Right: 3 Stat Counters inside white box (comfortably spaced) */}
-            <div className="bg-white px-5 sm:px-7 lg:px-9 py-2.5 sm:py-3 flex items-center gap-7 sm:gap-9 lg:gap-11 overflow-x-auto flex-wrap sm:flex-nowrap shrink-0">
+            {/* Right: 3 Stat Counters inside white box (comfortably spaced with ample right padding) */}
+            <div className="bg-white pl-5 sm:pl-6 lg:pl-7 pr-8 sm:pr-10 lg:pr-12 py-3 sm:py-3.5 md:py-4 flex items-center gap-5 sm:gap-7 lg:gap-8 overflow-x-auto flex-wrap sm:flex-nowrap shrink-0">
               {/* Stat 1: Jobs Posted */}
               <div
                 onClick={() => router.push('/customer-dashboard/job-history?tab=JOB_POSTED')}
                 className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group shrink-0 transition-opacity hover:opacity-80"
               >
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#FEF9C3] text-[#CA8A04] flex items-center justify-center shrink-0">
-                  <Briefcase size={16} strokeWidth={2.2} />
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#FEF9C3] text-[#CA8A04] flex items-center justify-center shrink-0">
+                  <Briefcase size={17} strokeWidth={2.2} />
                 </div>
                 <div>
-                  <span className="text-[16px] sm:text-[17px] font-black text-[#143118] leading-tight block">
+                  <span className="text-[17px] sm:text-[19px] font-black text-[#143118] leading-tight block">
                     {jobsPostedCount}
                   </span>
-                  <span className="text-[11px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
+                  <span className="text-[11.5px] sm:text-[12.5px] text-[#768779] font-semibold whitespace-nowrap block mt-0.5">
                     Jobs Posted
                   </span>
                 </div>
@@ -1600,14 +1600,14 @@ export default function CustomerJobDashboard() {
                 onClick={() => router.push('/customer-dashboard/job-history?tab=QUOTE_RECEIVED')}
                 className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group shrink-0 transition-opacity hover:opacity-80"
               >
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0">
-                  <MessageSquare size={16} strokeWidth={2.2} />
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0">
+                  <MessageSquare size={17} strokeWidth={2.2} />
                 </div>
                 <div>
-                  <span className="text-[16px] sm:text-[17px] font-black text-[#143118] leading-tight block">
+                  <span className="text-[17px] sm:text-[19px] font-black text-[#143118] leading-tight block">
                     {quotesReceivedCount}
                   </span>
-                  <span className="text-[11px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
+                  <span className="text-[11.5px] sm:text-[12.5px] text-[#768779] font-semibold whitespace-nowrap block mt-0.5">
                     {quotesReceivedCount === 1 ? "Quote Received" : "Quotes Received"}
                   </span>
                 </div>
@@ -1618,14 +1618,14 @@ export default function CustomerJobDashboard() {
                 onClick={handleActionRequiredLeaveReview}
                 className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group shrink-0 transition-opacity hover:opacity-80"
               >
-                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#EBF4E7] text-[#2E7D32] flex items-center justify-center shrink-0">
-                  <Star size={16} strokeWidth={2.2} />
+                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#EBF4E7] text-[#2E7D32] flex items-center justify-center shrink-0">
+                  <Star size={17} strokeWidth={2.2} />
                 </div>
                 <div>
-                  <span className="text-[16px] sm:text-[17px] font-black text-[#143118] leading-tight block">
+                  <span className="text-[17px] sm:text-[19px] font-black text-[#143118] leading-tight block">
                     {reviewsOutstandingCount}
                   </span>
-                  <span className="text-[11px] text-[#768779] font-medium whitespace-nowrap block mt-0.5">
+                  <span className="text-[11.5px] sm:text-[12.5px] text-[#768779] font-semibold whitespace-nowrap block mt-0.5">
                     Reviews Outstanding
                   </span>
                 </div>
@@ -1634,10 +1634,10 @@ export default function CustomerJobDashboard() {
           </div>
 
           {/* Right: Action Buttons on the exact same row */}
-          <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap shrink-0">
+          <div className="flex items-center gap-3 sm:gap-3.5 flex-wrap shrink-0">
             <Link href="/directory-listing/search">
-              <button className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 rounded-xl border border-gray-200 cursor-pointer bg-white text-[13px] font-bold text-[#1C2C1C] hover:bg-gray-50 hover:border-gray-300 transition-all shadow-xs">
-                <Users size={16} />
+              <button className="flex items-center justify-center gap-2.5 px-5 sm:px-5.5 py-2.5 sm:py-3 rounded-[14px] border border-gray-200 cursor-pointer bg-white text-[14px] sm:text-[14.5px] font-bold text-[#1C2C1C] hover:bg-gray-50 hover:border-gray-300 transition-all shadow-xs">
+                <Users size={18} />
                 Find a Trader
               </button>
             </Link>
@@ -1649,14 +1649,14 @@ export default function CustomerJobDashboard() {
                   handleActionRequiredLeaveReview();
                 }
               }}
-              className="flex items-center justify-center gap-2 px-4 py-2 sm:py-2.5 rounded-xl border border-gray-200 bg-white cursor-pointer text-[13px] font-bold text-[#1C2C1C] hover:bg-gray-50 hover:border-gray-300 transition-all shadow-xs"
+              className="flex items-center justify-center gap-2.5 px-5 sm:px-5.5 py-2.5 sm:py-3 rounded-[14px] border border-gray-200 bg-white cursor-pointer text-[14px] sm:text-[14.5px] font-bold text-[#1C2C1C] hover:bg-gray-50 hover:border-gray-300 transition-all shadow-xs"
             >
-              <Star size={16} className={selectedJob?.status === "COMPLETED" ? "text-[#6E9625] fill-[#6E9625]" : ""} />
+              <Star size={18} className={selectedJob?.status === "COMPLETED" ? "text-[#6E9625] fill-[#6E9625]" : ""} />
               Leave Review
             </button>
             <Link href="/customer-dashboard/post-job">
-              <button className="flex items-center justify-center gap-2 px-4.5 py-2 sm:py-2.5 rounded-xl bg-[#6E9625] text-white text-[13px] cursor-pointer font-bold hover:bg-[#58791C] transition-all shadow-xs">
-                <PlusCircle size={16} strokeWidth={2.2} />
+              <button className="flex items-center justify-center gap-2.5 px-5.5 sm:px-6 py-2.5 sm:py-3 rounded-[14px] bg-[#6E9625] text-white text-[14px] sm:text-[14.5px] cursor-pointer font-bold hover:bg-[#58791C] transition-all shadow-xs">
+                <PlusCircle size={18} strokeWidth={2.2} />
                 Post a Job
               </button>
             </Link>

@@ -5,7 +5,7 @@ import Image from 'next/image';
 
 export default function BuiltForPortugal() {
   return (
-    <section className="bg-white py-3 sm:py-4 lg:py-6 px-4 sm:px-6 lg:px-12 overflow-hidden">
+    <section className="bg-white -mt-6 sm:-mt-8 lg:-mt-10 -mb-4 sm:-mb-6 lg:-mb-8 py-2 sm:py-3 px-4 sm:px-6 lg:px-12 overflow-hidden">
       <div className="max-w-[1100px] mx-auto w-full grid grid-cols-1 lg:grid-cols-[1.15fr_0.85fr] gap-4 sm:gap-6 lg:gap-8 items-center">
         {/* LEFT TEXT CONTENT */}
         <div className="flex flex-col items-start w-full max-w-[620px]">
@@ -33,14 +33,14 @@ export default function BuiltForPortugal() {
 
         {/* RIGHT MAP IMAGE */}
         <div className="relative flex justify-center lg:justify-start items-center w-full">
-          <div className="relative w-full max-w-[380px] sm:max-w-[420px] lg:max-w-[450px] h-[480px] sm:h-[520px] lg:h-[560px] transition-transform duration-300 hover:scale-[1.03] cursor-pointer">
+          <div className="relative w-full max-w-[320px] sm:max-w-[350px] lg:max-w-[380px] h-[360px] sm:h-[400px] lg:h-[435px] transition-transform duration-300 hover:scale-[1.03] cursor-pointer">
             <Image
               src="/newMap.jpg"
               alt="Built for Portugal Map"
               fill
-              className="object-contain"
+              className="object-contain mix-blend-multiply"
               priority
-              sizes="(max-width: 768px) 100vw, 450px"
+              sizes="(max-width: 768px) 100vw, 380px"
             />
           </div>
         </div>

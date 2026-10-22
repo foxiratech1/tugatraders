@@ -103,12 +103,7 @@ export default function Navbar() {
   const showSolidNavbar = isScrolled || isOpen;
 
   return (
-    <nav
-      className={`fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 ease-in-out border-b ${showSolidNavbar
-        ? "bg-white/95 backdrop-blur-md border-[#E5E7EB] shadow-xs"
-        : "bg-transparent border-transparent shadow-none"
-        }`}
-    >
+    <nav className="fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 ease-in-out border-b bg-white/95 backdrop-blur-md border-[#E5E7EB] shadow-xs">
       <div className="w-full flex h-[68px] sm:h-[72px] items-center justify-between px-4 sm:px-6 lg:px-8 xl:px-12">
         {/* LOGO */}
         <Link

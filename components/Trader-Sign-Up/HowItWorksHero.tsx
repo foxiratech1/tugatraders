@@ -373,7 +373,7 @@ const HowItWorksHero = () => {
         </div>
 
         {/* MAIN GRID: FORM (LEFT) + STEPPER TIMELINE (RIGHT) */}
-        <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 xl:gap-12 items-start justify-start">
+        <div className="flex flex-col lg:flex-row gap-8 lg:gap-10 xl:gap-12 items-center justify-center">
 
           {/* LEFT: FORM CARD */}
           <div className="w-full lg:w-[460px] shrink-0">

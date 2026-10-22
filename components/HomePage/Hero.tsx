@@ -131,26 +131,26 @@ export default function Hero() {
   const selectedSkillObj = skillServices.find((s) => (s.id || s._id) === selectedSkill);
 
   return (
-    <section className="relative z-20 w-full min-h-screen bg-white flex flex-col justify-between pt-16 sm:pt-20 lg:pt-[76px] pb-0 overflow-x-clip">
+    <section className="relative z-20 w-full bg-white flex flex-col pt-2 sm:pt-3 lg:pt-4 pb-0 overflow-x-clip">
       {/* TOP ROW: Content on Left & Image on Right */}
-      <div className="w-full flex-1 flex items-start px-4 sm:px-6 lg:px-8 xl:px-12 pt-1 sm:pt-2 lg:pt-3 pb-1">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-6 items-center w-full relative">
+      <div className="w-full flex items-start px-4 sm:px-6 lg:px-8 xl:px-12 pt-0 sm:pt-1 pb-1">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-6 items-start w-full relative">
 
           {/* LEFT CONTENT */}
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
-            className="lg:col-span-5 xl:col-span-5 flex flex-col items-start text-left z-20 relative pt-1 sm:pt-2"
+            className="lg:col-span-5 xl:col-span-5 flex flex-col items-start text-left z-20 relative pt-16 sm:pt-18 lg:pt-20 xl:pt-22"
           >
             {/* HEADLINE */}
             <h1
-              className="text-[32px] sm:text-[38px] md:text-[44px] lg:text-[46px] xl:text-[48px] 2xl:text-[54px] font-black text-[#143118] tracking-tight leading-[1.12] mb-2.5 sm:mb-3"
+              className="text-[36px] sm:text-[44px] md:text-[50px] lg:text-[52px] xl:text-[58px] 2xl:text-[64px] font-black text-[#143118] tracking-tight leading-[1.08] mb-3 sm:mb-3.5"
               style={{ fontFamily: "var(--font-bricolage)" }}
             >
               <span className="inline-block sm:whitespace-nowrap">
                 Find Trusted{" "}
-                <span className="relative inline-block text-[#6E9625] px-2 py-0.5 rounded-lg bg-[#F0F5E6]">
+                <span className="text-[#6E9625]">
                   Tradespeople
                 </span>
               </span>
@@ -160,8 +160,7 @@ export default function Hero() {
 
             {/* SUBTITLE */}
             <p className={`text-[14.5px] sm:text-[15.5px] text-gray-700 font-medium leading-relaxed ${isTrader ? "mb-5" : "mb-4 sm:mb-5"} max-w-[460px]`}>
-              Post your job, receive{" "}
-              <span className="font-semibold">responses </span> and choose the professional that&apos;s right for you.
+              Post your job, receive responses and choose the professional that&apos;s right for you.
             </p>
 
             {/* CTA BUTTONS */}
@@ -210,7 +209,7 @@ export default function Hero() {
             initial={{ opacity: 0, scale: 0.98 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 0.1 }}
-            className="lg:col-span-7 xl:col-span-7 relative w-full h-[240px] xs:h-[280px] sm:h-[340px] md:h-[400px] lg:h-[480px] xl:h-[520px] 2xl:h-[600px] max-h-[calc(100vh-230px)] z-10 flex items-start justify-center"
+            className="lg:col-span-7 xl:col-span-7 relative w-full lg:-mr-6 xl:-mr-10 lg:w-[calc(100%+2.5rem)] xl:w-[calc(100%+4rem)] h-[300px] xs:h-[360px] sm:h-[420px] md:h-[480px] lg:h-[580px] xl:h-[650px] 2xl:h-[720px] -mt-4 sm:-mt-6 lg:-mt-8 xl:-mt-10 z-10 flex items-start justify-center"
           >
             {/* Ambient soft blur feather glow around image matching the light green background color */}
             <div className="absolute -inset-4 sm:-inset-6 lg:-inset-8 -z-10 rounded-[40px] bg-[#F5F9F2] filter blur-xl sm:blur-2xl pointer-events-none opacity-90" />
@@ -221,9 +220,9 @@ export default function Hero() {
               className="relative w-full h-full overflow-hidden"
               style={{
                 WebkitMaskImage:
-                  "radial-gradient(ellipse 94% 90% at 55% 50%, black 55%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.3) 90%, transparent 100%)",
+                  "radial-gradient(ellipse 96% 94% at 55% 48%, black 65%, rgba(0,0,0,0.85) 82%, rgba(0,0,0,0.3) 94%, transparent 100%)",
                 maskImage:
-                  "radial-gradient(ellipse 94% 90% at 55% 50%, black 55%, rgba(0,0,0,0.85) 75%, rgba(0,0,0,0.3) 90%, transparent 100%)",
+                  "radial-gradient(ellipse 96% 94% at 55% 48%, black 65%, rgba(0,0,0,0.85) 82%, rgba(0,0,0,0.3) 94%, transparent 100%)",
               }}
             >
               <Image
@@ -232,16 +231,16 @@ export default function Hero() {
                 fill
                 priority
                 unoptimized
-                className="object-cover object-[center_20%] sm:object-[center_top]"
+                className="object-cover object-[center_top]"
               />
 
               {/* All-side ambient blending gradients */}
               {/* Left edge blur fade */}
-              <div className="absolute inset-y-0 left-0 w-16 sm:w-24 md:w-32 lg:w-44 bg-gradient-to-r from-white via-white/80 to-transparent pointer-events-none z-20" />
+              <div className="absolute inset-y-0 left-0 w-16 sm:w-24 md:w-32 lg:w-40 bg-gradient-to-r from-white via-white/80 to-transparent pointer-events-none z-20" />
               {/* Right edge blur fade */}
-              <div className="absolute inset-y-0 right-0 w-10 sm:w-16 md:w-24 lg:w-32 bg-gradient-to-l from-white via-white/80 to-transparent pointer-events-none z-20" />
-              {/* Top edge blur fade */}
-              <div className="absolute inset-x-0 top-0 h-8 sm:h-12 md:h-16 lg:h-20 bg-gradient-to-b from-white via-white/80 to-transparent pointer-events-none z-20" />
+              <div className="absolute inset-y-0 right-0 w-6 sm:w-10 md:w-14 lg:w-18 bg-gradient-to-l from-white via-white/70 to-transparent pointer-events-none z-20" />
+              {/* Top edge blur fade (subtle to allow image to go higher into menu area) */}
+              <div className="absolute inset-x-0 top-0 h-4 sm:h-6 md:h-8 bg-gradient-to-b from-white/60 to-transparent pointer-events-none z-20" />
               {/* Bottom edge blur fade into the light green background */}
               <div className="absolute inset-x-0 bottom-0 h-10 sm:h-16 md:h-20 lg:h-28 bg-gradient-to-t from-[#F5F9F2] via-[#F5F9F2]/70 to-transparent pointer-events-none z-20" />
             </div>
@@ -255,12 +254,12 @@ export default function Hero() {
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          className="w-full bg-[#F5F9F2] pt-4 sm:pt-5 lg:pt-5 pb-5 sm:pb-6 lg:pb-6 px-4 sm:px-6 lg:px-8 xl:px-12 relative z-30 shadow-[0_-10px_24px_rgba(245,249,242,0.9)]"
+          className="w-full bg-gradient-to-b from-[#F5F9F2] via-[#F5F9F2] to-white pt-4 sm:pt-5 lg:pt-5 pb-6 sm:pb-8 relative z-30 -mt-6 sm:-mt-8 lg:-mt-16 xl:-mt-20"
         >
           {/* Subtle blurred feather gradient at the top boundary */}
           <div className="absolute -top-4 inset-x-0 h-5 bg-gradient-to-t from-[#F5F9F2] to-transparent pointer-events-none filter blur-[2px]" />
 
-          <div className="w-full">
+          <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
             {/* SEARCH HEADING */}
             <h2
               className="text-[18px] sm:text-[20px] lg:text-[21px] font-extrabold text-[#183B22] mb-2 sm:mb-2.5 text-left"
@@ -272,7 +271,7 @@ export default function Hero() {
             {/* SEARCH BAR CONTAINER */}
             <form
               onSubmit={handleSearch}
-              className="w-full bg-white rounded-[20px] sm:rounded-[24px] border border-gray-200/90 shadow-[0_12px_40px_rgba(0,0,0,0.08)] p-2 sm:p-2.5 transition-all relative z-30"
+              className="w-full bg-white rounded-[20px] sm:rounded-[24px] border border-[#183B22] p-2 sm:p-2.5 transition-all relative z-30"
             >
               <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 lg:gap-0 relative">
 
