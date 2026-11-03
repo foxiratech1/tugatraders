@@ -1,14 +1,17 @@
+
 "use client";
 
 import { useEffect, useState, Suspense } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { authApi } from "@/app/api/authApi";
 import { Bell, MessageSquare, AlertCircle, MoreVertical } from "lucide-react";
 import { useSocket } from "@/hooks/useSocket";
+import { getUser } from "@/utils/auth";
 
 function NotificationsCenterContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const pathname = usePathname();
   const highlightId = searchParams.get("id");
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -16,22 +19,128 @@ function NotificationsCenterContent() {
   const handleNotificationClick = (n: any, isUnread: boolean) => {
     if (isUnread) {
       toggleReadStatus(n.id, true);
+      authApi.markNotificationRead(n.id).catch(() => { });
     }
 
-    // Explicit URLs from the backend
-    if (n.link || n.actionUrl || n.url) {
-      router.push(n.link || n.actionUrl || n.url);
+    const isTrader = pathname?.startsWith("/trader") || getUser()?.role === "TRADER";
+    const rawUrl = (n.link || n.actionUrl || n.url || "").trim();
+    const t = (n.title || "").toLowerCase();
+    const typeStr = (n.type || "").toLowerCase();
+    const msg = (n.message || n.content || n.body || "").toLowerCase();
+
+    // Try to extract any job ID associated with this notification
+    let extractedJobId: string | null =
+      n.jobId ||
+      n.job?.id ||
+      n.job?._id ||
+      n.data?.jobId ||
+      n.data?.job?.id ||
+      n.metadata?.jobId ||
+      n.metadata?.job?.id ||
+      (String(n.entityType || "").toLowerCase() === "job" ? n.entityId : null) ||
+      n.relatedId ||
+      null;
+
+    if (!extractedJobId && rawUrl) {
+      try {
+        const dummyBase = "http://localhost";
+        const parsed = new URL(rawUrl.startsWith("/") ? `${dummyBase}${rawUrl}` : rawUrl);
+        extractedJobId = parsed.searchParams.get("jobId") || parsed.searchParams.get("id");
+      } catch {
+        const match = rawUrl.match(/[?&](?:jobId|id)=([^&]+)/i);
+        if (match) extractedJobId = decodeURIComponent(match[1]);
+      }
+    }
+
+    const isJobRelated =
+      Boolean(extractedJobId) ||
+      t.includes("job") ||
+      t.includes("quote") ||
+      t.includes("lead") ||
+      typeStr.includes("job") ||
+      typeStr.includes("quote") ||
+      typeStr.includes("lead") ||
+      msg.includes("job") ||
+      msg.includes("quote") ||
+      rawUrl.includes("/jobs");
+
+    if (isTrader) {
+      if (isJobRelated) {
+        // If a specific job ID is known, link directly to that job so it gets selected and focused
+        if (extractedJobId) {
+          router.push(`/trader/jobs?jobId=${extractedJobId}`);
+          return;
+        }
+
+        // If backend provided a URL, ensure it doesn't force 'tab=In Progress' when the job lead isn't started yet
+        if (rawUrl) {
+          try {
+            const dummyBase = "http://localhost";
+            const parsed = new URL(rawUrl.startsWith("/") ? `${dummyBase}${rawUrl}` : rawUrl);
+            const tab = parsed.searchParams.get("tab");
+            if (tab && (tab.toLowerCase() === "in progress" || tab.toLowerCase() === "in_progress")) {
+              parsed.searchParams.delete("tab");
+              const remainingJobId = parsed.searchParams.get("jobId");
+              if (!remainingJobId) {
+                parsed.searchParams.set("tab", "All");
+              }
+            }
+            const cleanPath = parsed.pathname.replace("/customer-dashboard/jobs", "/trader/jobs");
+            const cleanSearch = parsed.searchParams.toString();
+            router.push(cleanSearch ? `${cleanPath}?${cleanSearch}` : cleanPath);
+            return;
+          } catch {
+            const cleaned = rawUrl
+              .replace(/([?&])tab=(?:In%20Progress|In\+Progress|In%2BProgress|In\sProgress|IN_PROGRESS)(&|$)/gi, "$1tab=All$2")
+              .replace("/customer-dashboard/jobs", "/trader/jobs");
+            router.push(cleaned);
+            return;
+          }
+        }
+
+        // Default to All leads so all available jobs are displayed instead of an empty In Progress tab
+        router.push("/trader/jobs?tab=All");
+        return;
+      }
+
+      if (t.includes("review") || typeStr.includes("review")) {
+        router.push("/trader/reviews");
+        return;
+      }
+
+      if (t.includes("message") || typeStr.includes("message") || rawUrl.includes("/inbox")) {
+        router.push("/trader/inbox");
+        return;
+      }
+
+      if (t.includes("billing") || t.includes("subscription") || t.includes("plan") || rawUrl.includes("/billing")) {
+        router.push("/trader/billing");
+        return;
+      }
+
+      if (rawUrl) {
+        router.push(rawUrl);
+        return;
+      }
+
+      router.push("/trader");
       return;
     }
 
-    const t = (n.title || "").toLowerCase();
-    const typeStr = (n.type || "").toLowerCase();
+    // Customer navigation
+    if (rawUrl) {
+      router.push(rawUrl);
+      return;
+    }
 
-    // Heuristics based on title/type
     if (t.includes("review") || typeStr.includes("review")) {
       router.push("/customer-dashboard/reviews");
-    } else if (t.includes("quote") || typeStr.includes("quote") || t.includes("job") || typeStr.includes("job")) {
-      router.push("/customer-dashboard/jobs");
+    } else if (isJobRelated) {
+      if (extractedJobId) {
+        router.push(`/customer-dashboard/jobs?jobId=${extractedJobId}`);
+      } else {
+        router.push("/customer-dashboard/jobs");
+      }
     } else if (t.includes("message") || typeStr.includes("message")) {
       router.push("/customer-dashboard/inbox");
     }
@@ -76,6 +185,7 @@ function NotificationsCenterContent() {
         setCurrentPage(page);
 
         // Also mark it as read automatically if it's highlighted
+
         if (!notifications[index].isRead && !notifications[index].read) {
           toggleReadStatus(notifications[index].id, true);
         }

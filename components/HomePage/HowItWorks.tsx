@@ -2,7 +2,12 @@
 
 import React, { useEffect } from "react";
 import { FiSearch, FiLink, FiStar, FiArrowRight } from "react-icons/fi";
-import { LuFileText, LuMessageSquare, LuUserCheck, LuSlidersHorizontal } from "react-icons/lu";
+import {
+  LuFileText,
+  LuMessageSquare,
+  LuUserCheck,
+  LuSlidersHorizontal,
+} from "react-icons/lu";
 import { FaHandshake } from "react-icons/fa6";
 
 const postJobSteps = [
@@ -68,12 +73,21 @@ const selfSearchSteps = [
 
 export default function HowItWorks() {
   useEffect(() => {
-    if (typeof window !== "undefined" && window.location.hash === "#how-it-works") {
+    if (
+      typeof window !== "undefined" &&
+      window.location.hash === "#how-it-works"
+    ) {
       setTimeout(() => {
         const el = document.getElementById("how-it-works");
+
         if (el) {
-          const y = el.getBoundingClientRect().top + window.scrollY - 80;
-          window.scrollTo({ top: y, behavior: "smooth" });
+          const y =
+            el.getBoundingClientRect().top + window.scrollY - 80;
+
+          window.scrollTo({
+            top: y,
+            behavior: "smooth",
+          });
         }
       }, 300);
     }
@@ -82,9 +96,11 @@ export default function HowItWorks() {
   return (
     <section
       id="how-it-works"
-      className="w-full pt-6 pb-12 sm:pt-8 sm:pb-16 md:pt-10 md:pb-20 bg-white px-4 sm:px-6 lg:px-8"
+      className="w-full pt-6 pb-12 sm:pt-8 sm:pb-16 md:pt-10 md:pb-20 bg-white px-4 sm:px-6 lg:px-8 overflow-x-clip"
     >
-      <div className="max-w-[1200px] mx-auto w-full">
+      {/* MAIN CONTAINER - SLIGHTLY SHIFTED RIGHT */}
+      <div className="max-w-[1200px] mx-auto w-full lg:translate-x-8 xl:translate-x-12">
+
         {/* TITLE */}
         <div className="text-center mb-10 md:mb-12">
           <h2 className="text-[34px] sm:text-[42px] md:text-[48px] font-extrabold leading-tight">
@@ -97,14 +113,20 @@ export default function HowItWorks() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-6 items-start">
           {postJobSteps.map((step) => {
             const Icon = step.icon;
+
             return (
               <div key={step.num} className="flex flex-col">
+
                 {/* Badge & Icon */}
                 <div className="flex items-center gap-2.5 mb-4 sm:mb-5">
                   <div className="w-[22px] h-[22px] sm:w-[24px] sm:h-[24px] rounded-[5px] bg-[#6E9625] text-white font-extrabold text-[11px] sm:text-[12px] flex items-center justify-center shrink-0">
                     {step.num}
                   </div>
-                  <Icon className="text-[#1E3A2B] w-8 h-8 sm:w-9 sm:h-9" strokeWidth={1.8} />
+
+                  <Icon
+                    className="text-[#1E3A2B] w-8 h-8 sm:w-9 sm:h-9"
+                    strokeWidth={1.8}
+                  />
                 </div>
 
                 {/* Title */}
@@ -121,39 +143,61 @@ export default function HowItWorks() {
           })}
         </div>
 
-        {/* BOTTOM SECTION: Or find a trader yourself */}
+        {/* BOTTOM SECTION: FIND A TRADER YOURSELF */}
         <div className="mt-14 md:mt-16">
+
           <h3 className="text-[20px] sm:text-[22px] font-extrabold text-[#1E3A2B] mb-8 text-left">
-            Or <span className="underline underline-offset-4 decoration-2">find</span> a trader yourself
+            Or{" "}
+            <span className="underline underline-offset-4 decoration-2">
+              find
+            </span>{" "}
+            a trader yourself
           </h3>
 
-          {/* 5-step horizontal flow aligned identically with 5 columns above */}
+          {/* 5-STEP HORIZONTAL FLOW */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-6 items-start">
             {selfSearchSteps.map((step, index) => {
               const Icon = step.icon;
+
               return (
-                <div key={step.num} className="relative flex flex-col items-start">
+                <div
+                  key={step.num}
+                  className="relative flex flex-col items-start"
+                >
+
+                  {/* Badge & Icon */}
                   <div className="flex items-center gap-2.5">
                     <div className="w-[22px] h-[22px] sm:w-[24px] sm:h-[24px] rounded-[5px] bg-[#1A3326] text-white text-[11px] sm:text-[12px] font-extrabold flex items-center justify-center shrink-0 shadow-xs">
                       {step.num}
                     </div>
-                    <Icon className="text-[#1A3326] w-8 h-8 sm:w-9 sm:h-9" strokeWidth={1.9} />
+
+                    <Icon
+                      className="text-[#1A3326] w-8 h-8 sm:w-9 sm:h-9"
+                      strokeWidth={1.9}
+                    />
                   </div>
+
+                  {/* Step Label */}
                   <span className="text-[15px] sm:text-[16px] font-extrabold text-[#1A3326] mt-4 sm:mt-5">
                     {step.label}
                   </span>
 
-                  {/* Connecting arrow for desktop, neatly centered in the gap between columns */}
+                  {/* CONNECTING ARROW */}
                   {index < selfSearchSteps.length - 1 && (
                     <div className="hidden lg:flex absolute -right-3 xl:-right-3.5 top-1.5 text-gray-400 items-center justify-center pointer-events-none">
-                      <FiArrowRight size={20} className="text-gray-400" />
+                      <FiArrowRight
+                        size={20}
+                        className="text-gray-400"
+                      />
                     </div>
                   )}
+
                 </div>
               );
             })}
           </div>
         </div>
+
       </div>
     </section>
   );

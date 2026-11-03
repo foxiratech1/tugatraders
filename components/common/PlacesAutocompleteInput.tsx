@@ -155,7 +155,7 @@ export default function PlacesAutocompleteInput({
           await places.AutocompleteSuggestion.fetchAutocompleteSuggestions(request);
         if (requestId !== requestIdRef.current) return; // stale response
 
-        const mapped: Suggestion[] = raw
+        const rawMapped: Suggestion[] = raw
           .map((s) => s.placePrediction)
           .filter((p): p is google.maps.places.PlacePrediction => !!p)
           .map((p) => {
@@ -172,6 +172,17 @@ export default function PlacesAutocompleteInput({
               area: details.area,
             };
           });
+
+        // Deduplicate: keep only the first suggestion per unique display label
+        // (same city + postalCode combinations appear when Google returns multiple
+        // place types for the same location, e.g. locality vs. postal_code).
+        const seen = new Set<string>();
+        const mapped = rawMapped.filter((s) => {
+          const key = `${(s.city || s.mainText).toLowerCase()}|${(s.postalCode || "").toLowerCase()}|${(s.area || s.secondaryText || "").toLowerCase()}`;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        });
 
         setSuggestions(mapped);
         setActiveIndex(-1);
@@ -370,9 +381,8 @@ export default function PlacesAutocompleteInput({
                   onMouseDown={(e) => e.preventDefault()}
                   onClick={() => selectSuggestion(s)}
                   onMouseEnter={() => setActiveIndex(i)}
-                  className={`flex cursor-pointer items-start gap-3 px-4 py-2.5 transition-colors border-b border-[#F3F4F6] last:border-b-0 ${
-                    i === activeIndex ? "bg-[#F1F7E8]" : "hover:bg-[#F9FAF8]"
-                  }`}
+                  className={`flex cursor-pointer items-start gap-3 px-4 py-2.5 transition-colors border-b border-[#F3F4F6] last:border-b-0 ${i === activeIndex ? "bg-[#F1F7E8]" : "hover:bg-[#F9FAF8]"
+                    }`}
                 >
                   <div className="mt-0.5 flex-shrink-0 w-6 h-6 rounded-full bg-[#6E9625]/10 flex items-center justify-center text-[#6E9625]">
                     <MapPin size={13} />

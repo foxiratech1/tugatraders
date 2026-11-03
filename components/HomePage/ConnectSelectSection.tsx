@@ -13,7 +13,7 @@ export default function ConnectSelectSection() {
     <section className="w-full py-6 md:py-10 bg-white px-4 sm:px-6 overflow-hidden">
       <div className="max-w-[1340px] mx-auto flex flex-col md:flex-row items-center justify-center gap-8 md:gap-14">
 
-        {/* LEFT: Tradespeople Image with soft feathered vignette (Bigger image) */}
+        {/* LEFT: TRADESPEOPLE IMAGE WITH SOFT FEATHERED VIGNETTE */}
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           whileInView={{ opacity: 1, x: 0 }}
@@ -30,18 +30,21 @@ export default function ConnectSelectSection() {
               priority
             />
 
-            {/* Inset shadow vignette for smooth feathered edges */}
+            {/* ORIGINAL INSET BLUR VIGNETTE - PRESERVED */}
             <div className="absolute inset-0 pointer-events-none shadow-[inset_0_0_35px_15px_#ffffff]" />
 
-            {/* Edge fades to eliminate any hard line boundary */}
+            {/* EDGE FADES - PRESERVED */}
             <div className="absolute inset-x-0 top-0 h-8 bg-gradient-to-b from-white via-white/80 to-transparent pointer-events-none" />
+
             <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none" />
+
             <div className="absolute inset-y-0 left-0 w-8 bg-gradient-to-r from-white via-white/80 to-transparent pointer-events-none" />
+
             <div className="absolute inset-y-0 right-0 w-8 bg-gradient-to-l from-white via-white/80 to-transparent pointer-events-none" />
           </div>
         </motion.div>
 
-        {/* RIGHT: Text & Button */}
+        {/* RIGHT: TEXT & BUTTON */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           whileInView={{ opacity: 1, x: 0 }}
@@ -49,24 +52,37 @@ export default function ConnectSelectSection() {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="flex flex-col items-center text-center justify-center max-w-[460px] w-full"
         >
-          {/* Heading - All on one line */}
+
+          {/* UPDATED HEADING - TWO LINES */}
           <div className="mb-3 text-center w-full">
-            <h2 className="text-[28px] sm:text-[34px] md:text-[38px] lg:text-[40px] font-extrabold text-[#1E3A2B] leading-tight tracking-tight whitespace-nowrap">
-              We Connect. <span className="text-[#729B27]">You</span> Select.
+            <h2 className="text-[30px] sm:text-[36px] md:text-[40px] lg:text-[44px] font-extrabold text-[#1E3A2B] leading-[1.15] tracking-tight">
+
+              {/* FIRST LINE */}
+              <span className="block">
+                We Connect.
+              </span>
+
+              {/* SECOND LINE */}
+              <span className="block">
+                <span className="text-[#729B27]">You</span>{" "}
+                Select.
+              </span>
+
             </h2>
           </div>
 
-          {/* Subtext */}
+          {/* SUBTEXT */}
           <div className="flex flex-col items-center text-center mb-6 w-full">
             <p className="text-[16px] sm:text-[18px] font-semibold text-[#1E293B] mb-1 leading-snug">
               Do you need a tradesperson?
             </p>
+
             <p className="text-[14px] sm:text-[15px] font-medium text-[#64748B] leading-normal">
               Post a job for free
             </p>
           </div>
 
-          {/* Button */}
+          {/* BUTTON */}
           {isTrader ? (
             <button
               type="button"
@@ -84,8 +100,8 @@ export default function ConnectSelectSection() {
               POST YOUR JOB
             </Link>
           )}
-        </motion.div>
 
+        </motion.div>
       </div>
     </section>
   );

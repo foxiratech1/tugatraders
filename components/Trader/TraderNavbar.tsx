@@ -70,10 +70,14 @@ export default function TraderNavbar() {
   const [unreadCount, setUnreadCount] = useState(0);
 
   const [inboxUnread, setInboxUnread] = useState(0);
+  const [jobsBadgeCount, setJobsBadgeCount] = useState(0);
 
   const fetchBadges = async () => {
     try {
-      const convRes = await authApi.getConversations().catch(() => null);
+      const [convRes, matchedJobsRes] = await Promise.all([
+        authApi.getConversations().catch(() => null),
+        authApi.getMatchedJobs().catch(() => null),
+      ]);
       const convos = convRes?.data || convRes || [];
       if (Array.isArray(convos)) {
         let unreadMsgs = 0;
@@ -82,10 +86,66 @@ export default function TraderNavbar() {
         });
         setInboxUnread(unreadMsgs);
       }
+
+      const mJobs = Array.isArray(matchedJobsRes?.data)
+        ? matchedJobsRes.data
+        : Array.isArray(matchedJobsRes)
+          ? matchedJobsRes
+          : [];
+
+      let acceptedStartedIds: string[] = [];
+      try {
+        acceptedStartedIds = JSON.parse(localStorage.getItem("trader_accepted_jobs") || "[]");
+      } catch { }
+
+      const acceptedCount = mJobs.filter((item: any) => {
+        const matchStatus = (
+          item.matchStatus ||
+          item.match?.status ||
+          item.myQuote?.status
+        )?.toUpperCase();
+        const rawStatus = (item.rawStatus || item.status || "").toUpperCase();
+        const isDone = rawStatus === "COMPLETED" || rawStatus === "CLOSED" || rawStatus === "CANCELLED" || rawStatus === "EXPIRED";
+        if (isDone) return false;
+
+        const isAccepted = Boolean(
+          item.isQuoteAccepted ||
+          matchStatus === "ACCEPTED" ||
+          (Array.isArray(item.quotes) &&
+            item.quotes.some(
+              (q: any) =>
+                q.status?.toUpperCase() === "ACCEPTED" &&
+                (q.traderId === item.traderId || q.isMyQuote)
+            ))
+        );
+
+        const isStarted = Boolean(
+          item.traderStarted ||
+          item.traderAccepted ||
+          item.startedByTrader ||
+          item.isStarted ||
+          item.startedAt ||
+          item.status === "STARTED" ||
+          acceptedStartedIds.includes(String(item.id))
+        );
+
+        return isAccepted && !isStarted;
+      }).length;
+
+      setJobsBadgeCount(acceptedCount);
     } catch (err) {
       console.error("Failed to fetch badges", err);
     }
   };
+
+  // Listen for badge updates from dashboard or other components
+  useEffect(() => {
+    const handleBadgeUpdate = () => {
+      fetchBadges();
+    };
+    window.addEventListener("trader:badgeUpdate", handleBadgeUpdate);
+    return () => window.removeEventListener("trader:badgeUpdate", handleBadgeUpdate);
+  }, []);
 
   // Hook up socket for new notifications
   useSocket({
@@ -95,8 +155,18 @@ export default function TraderNavbar() {
         return [notif, ...prev];
       });
       setUnreadCount((prev) => prev + 1);
+      fetchBadges();
     },
     onNewMessage: () => {
+      fetchBadges();
+    },
+    onQuoteUpdated: () => {
+      fetchBadges();
+    },
+    onJobUpdated: () => {
+      fetchBadges();
+    },
+    onTraderDashboardUpdate: () => {
       fetchBadges();
     },
   });
@@ -191,9 +261,31 @@ export default function TraderNavbar() {
 
     authApi.markNotificationRead(n.id).catch(() => { });
 
-    const targetUrl = n.actionUrl || n.link || n.url;
+    let targetUrl = (n.actionUrl || n.link || n.url || "").trim();
+
+    const extractedJobId =
+      n.jobId ||
+      n.job?.id ||
+      n.job?._id ||
+      n.data?.jobId ||
+      n.data?.job?.id ||
+      n.metadata?.jobId ||
+      n.metadata?.job?.id ||
+      (String(n.entityType || "").toLowerCase() === "job" ? n.entityId : null) ||
+      n.relatedId ||
+      null;
+
     if (targetUrl) {
+      if (extractedJobId) {
+        targetUrl = `/trader/jobs?jobId=${extractedJobId}`;
+      } else if (targetUrl.includes("/jobs")) {
+        targetUrl = targetUrl
+          .replace(/([?&])tab=(?:In%20Progress|In\+Progress|In%2BProgress|In\sProgress|IN_PROGRESS)(&|$)/gi, "$1tab=All$2")
+          .replace(/[?&]$/, "");
+      }
       router.push(targetUrl);
+    } else if (extractedJobId) {
+      router.push(`/trader/jobs?jobId=${extractedJobId}`);
     } else {
       router.push(`/trader/notifications?id=${n.id}`);
     }
@@ -264,7 +356,7 @@ export default function TraderNavbar() {
               setUserAvatar(localUrl);
               setAvatarError(false);
             }
-          } catch (e) {}
+          } catch (e) { }
         }
       } catch (err) {
         console.error("Failed to fetch profile", err);
@@ -360,6 +452,9 @@ export default function TraderNavbar() {
     if (label === "Inbox") {
       setInboxUnread(0);
     }
+    if (label === "Jobs & Leads") {
+      setJobsBadgeCount(0);
+    }
   };
 
   return (
@@ -404,6 +499,11 @@ export default function TraderNavbar() {
                     {label === "Inbox" && inboxUnread > 0 && !active && (
                       <span className="flex items-center justify-center min-w-[16px] h-[16px] px-1 bg-[#E53935] rounded-full text-[10px] font-bold text-white shadow-sm">
                         {inboxUnread > 99 ? "99+" : inboxUnread}
+                      </span>
+                    )}
+                    {label === "Jobs & Leads" && jobsBadgeCount > 0 && !active && (
+                      <span className="flex items-center justify-center min-w-[16px] h-[16px] px-1 bg-[#E53935] rounded-full text-[10px] font-bold text-white shadow-sm animate-pulse">
+                        {jobsBadgeCount > 99 ? "99+" : jobsBadgeCount}
                       </span>
                     )}
                   </div>
@@ -683,6 +783,18 @@ export default function TraderNavbar() {
                       />
                       <span>{label}</span>
                     </div>
+
+                    {label === "Inbox" && inboxUnread > 0 && (
+                      <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-[#E53935] rounded-full text-[10px] font-bold text-white shadow-sm">
+                        {inboxUnread > 99 ? "99+" : inboxUnread}
+                      </span>
+                    )}
+
+                    {label === "Jobs & Leads" && jobsBadgeCount > 0 && (
+                      <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 bg-[#E53935] rounded-full text-[10px] font-bold text-white shadow-sm">
+                        {jobsBadgeCount > 99 ? "99+" : jobsBadgeCount}
+                      </span>
+                    )}
 
                     {restricted && (
                       <span className="text-[10px] font-semibold px-2 py-0.5 bg-gray-100 text-gray-500 rounded-md">

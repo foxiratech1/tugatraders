@@ -106,28 +106,15 @@ const FaqContent: React.FC<FaqContentProps> = ({ role: propRole }) => {
     <section className="bg-[#FAFAF9] pb-16 px-6 lg:px-20 relative">
       <div className="max-w-[1200px] mx-auto w-full">
 
-        {/* Floating Search Bar */}
-        <div className="max-w-[720px] mx-auto w-full mb-16 -translate-y-8 relative z-20">
-          <div className="relative shadow-[0_8px_30px_rgba(36,58,36,0.06)] rounded-[24px] bg-[#FFFFFF] border border-[#243A241F]/10">
-            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
-              <Search size={20} className="text-[#555555]" />
-            </div>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search questions, topics, or help articles..."
-                className="w-full pl-12 pr-5 py-4 rounded-[16px] text-[13px] sm:text-[15px] text-[#55555566] placeholder-[#55555566] outline-none font-medium"
-            />
-          </div>
-        </div>
-
-        {/* Tab Toggle */}
+        {/* Tab Toggle - Previous Search Bar Position */}
         {!derivedRole && (
-          <div className="flex justify-center mb-10">
+          <div className="flex justify-center mb-10 -translate-y-8 relative z-20">
             <div className="inline-flex items-center bg-white border border-[#243A241F] rounded-full p-1 shadow-sm">
               <button
-                onClick={() => { setActiveTab('customers'); setSearchQuery(''); }}
+                onClick={() => {
+                  setActiveTab('customers');
+                  setSearchQuery('');
+                }}
                 className={`px-6 py-2.5 rounded-full text-[14px] font-semibold transition-all duration-200 ${activeTab === 'customers'
                   ? 'bg-[#243A24] text-white shadow-sm'
                   : 'text-[#243A24] hover:text-[#243A24]/70'
@@ -135,8 +122,12 @@ const FaqContent: React.FC<FaqContentProps> = ({ role: propRole }) => {
               >
                 Customers
               </button>
+
               <button
-                onClick={() => { setActiveTab('traders'); setSearchQuery(''); }}
+                onClick={() => {
+                  setActiveTab('traders');
+                  setSearchQuery('');
+                }}
                 className={`px-6 py-2.5 rounded-full text-[14px] font-semibold transition-all duration-200 ${activeTab === 'traders'
                   ? 'bg-[#243A24] text-white shadow-sm'
                   : 'text-[#243A24] hover:text-[#243A24]/70'
@@ -147,6 +138,23 @@ const FaqContent: React.FC<FaqContentProps> = ({ role: propRole }) => {
             </div>
           </div>
         )}
+
+        {/* Search Bar - Previous Tab Position */}
+        <div className="max-w-[720px] mx-auto w-full mb-8 relative z-20">
+          <div className="relative shadow-[0_8px_30px_rgba(36,58,36,0.06)] rounded-[24px] bg-[#FFFFFF] border border-[#243A241F]/10">
+            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none">
+              <Search size={20} className="text-[#555555]" />
+            </div>
+
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search questions, topics, or help articles..."
+              className="w-full pl-12 pr-5 py-4 rounded-[16px] text-[13px] sm:text-[15px] text-[#55555566] placeholder-[#55555566] outline-none font-medium"
+            />
+          </div>
+        </div>
 
         {/* Section Heading */}
         <div className="mb-8 max-w-[540px]">
@@ -174,11 +182,13 @@ const FaqContent: React.FC<FaqContentProps> = ({ role: propRole }) => {
           </div>
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
+
             {/* Left Column */}
             <div className="flex flex-col gap-4">
               {leftColumn.map((faq, index) => {
                 const actualIndex = index;
                 const isOpen = expandedIndices.includes(actualIndex);
+
                 return (
                   <div
                     key={actualIndex}
@@ -188,9 +198,13 @@ const FaqContent: React.FC<FaqContentProps> = ({ role: propRole }) => {
                       onClick={() => toggleAccordion(actualIndex)}
                       className="w-full flex items-center justify-between gap-4 text-left cursor-pointer"
                     >
-                      <span className="text-[16px] md:text-[18px] font-bold text-[#243A24]" style={{ fontFamily: 'var(--font-bricolage)' }}>
+                      <span
+                        className="text-[16px] md:text-[18px] font-bold text-[#243A24]"
+                        style={{ fontFamily: 'var(--font-bricolage)' }}
+                      >
                         {faq.question}
                       </span>
+
                       <span className="shrink-0 w-6 h-6 flex items-center justify-center">
                         {isOpen ? (
                           <Minus size={16} className="text-[#6E9625]" />
@@ -199,10 +213,13 @@ const FaqContent: React.FC<FaqContentProps> = ({ role: propRole }) => {
                         )}
                       </span>
                     </button>
+
                     {isOpen && (
                       <div
                         className="text-[14px] md:text-[16px] text-[#555555] mt-4 font-medium leading-relaxed animate-fade-in"
-                        dangerouslySetInnerHTML={{ __html: faq.answer.replace(/&nbsp;/g, ' ') }}
+                        dangerouslySetInnerHTML={{
+                          __html: faq.answer.replace(/&nbsp;/g, ' ')
+                        }}
                       />
                     )}
                   </div>
@@ -215,6 +232,7 @@ const FaqContent: React.FC<FaqContentProps> = ({ role: propRole }) => {
               {rightColumn.map((faq, index) => {
                 const actualIndex = half + index;
                 const isOpen = expandedIndices.includes(actualIndex);
+
                 return (
                   <div
                     key={actualIndex}
@@ -224,9 +242,13 @@ const FaqContent: React.FC<FaqContentProps> = ({ role: propRole }) => {
                       onClick={() => toggleAccordion(actualIndex)}
                       className="w-full flex items-center justify-between gap-4 text-left cursor-pointer"
                     >
-                      <span className="text-[16px] md:text-[18px] font-bold text-[#243A24]" style={{ fontFamily: 'var(--font-bricolage)' }}>
+                      <span
+                        className="text-[16px] md:text-[18px] font-bold text-[#243A24]"
+                        style={{ fontFamily: 'var(--font-bricolage)' }}
+                      >
                         {faq.question}
                       </span>
+
                       <span className="shrink-0 w-6 h-6 flex items-center justify-center">
                         {isOpen ? (
                           <Minus size={16} className="text-[#6E9625]" />
@@ -235,16 +257,20 @@ const FaqContent: React.FC<FaqContentProps> = ({ role: propRole }) => {
                         )}
                       </span>
                     </button>
+
                     {isOpen && (
                       <div
                         className="text-[14px] md:text-[16px] text-[#555555] mt-4 font-medium leading-relaxed animate-fade-in"
-                        dangerouslySetInnerHTML={{ __html: faq.answer.replace(/&nbsp;/g, ' ') }}
+                        dangerouslySetInnerHTML={{
+                          __html: faq.answer.replace(/&nbsp;/g, ' ')
+                        }}
                       />
                     )}
                   </div>
                 );
               })}
             </div>
+
           </div>
         )}
 
@@ -252,13 +278,18 @@ const FaqContent: React.FC<FaqContentProps> = ({ role: propRole }) => {
         {!loading && (
           <div className="bg-[#6E96250D] border border-[#6E962533] rounded-[16px] p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 mt-10">
             <div>
-              <h4 className="text-[18px] font-bold text-[#6E9625] mb-1" style={{ fontFamily: 'var(--font-bricolage)' }}>
+              <h4
+                className="text-[18px] font-bold text-[#6E9625] mb-1"
+                style={{ fontFamily: 'var(--font-bricolage)' }}
+              >
                 Need more help?
               </h4>
+
               <p className="text-[14px] text-[#6E9625CC] font-medium">
                 Can't find what you're looking for?
               </p>
             </div>
+
             <Link
               href="/contact"
               className="bg-[#243A24] hover:bg-[#1a2b1a] text-white text-[13px] font-bold py-2.5 px-6 rounded-[8px] transition-all whitespace-nowrap text-center w-full sm:w-auto"

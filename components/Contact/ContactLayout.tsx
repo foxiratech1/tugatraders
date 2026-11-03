@@ -16,13 +16,13 @@ import { authApi } from "@/app/api/authApi";
 
 const ContactLayout = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [emailText, setEmailText] = useState(
-    "contact@tugatrades.com"
-  );
+  const [emailText, setEmailText] = useState("contact@tugatrades.com");
+
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
+
   const [loading, setLoading] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
@@ -37,31 +37,42 @@ const ContactLayout = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setLoading(true);
     setErrorMsg("");
     setSuccessMsg("");
 
     try {
       const formData = new FormData();
+
       formData.append("name", fullName);
       formData.append("email", email);
       formData.append("subject", subject);
       formData.append("message", message);
       formData.append("isAnonymous", "false");
+
       if (selectedFile) {
         formData.append("attachments", selectedFile);
       }
 
       const response = await authApi.submitContactForm(formData);
 
-      setSuccessMsg(response?.message || "We've received your messgae and will get back to you as soon as possible.");
+      setSuccessMsg(
+        response?.message ||
+        "We've received your message and will get back to you as soon as possible."
+      );
+
       setFullName("");
       setEmail("");
       setSubject("");
       setMessage("");
       setSelectedFile(null);
+
     } catch (err: any) {
-      setErrorMsg(err?.response?.data?.message || "Something went wrong. Please try again later.");
+      setErrorMsg(
+        err?.response?.data?.message ||
+        "Something went wrong. Please try again later."
+      );
     } finally {
       setLoading(false);
     }
@@ -71,53 +82,55 @@ const ContactLayout = () => {
     <main className="min-h-screen bg-[#F8F9F5] pt-[90px] sm:pt-[100px] overflow-hidden">
 
       {/* HERO SECTION */}
-      <div className="pt-16 sm:pt-20 md:pt-24 xl:pt-28 pb-32 sm:pb-40 xl:pb-48 px-4 sm:px-6 xl:px-20 relative overflow-hidden">
+      <section className="relative w-full overflow-hidden">
 
         {/* Background Image */}
-        <Image
-          src="/contact.png"
-          alt="Contact Background"
-          fill
-          className="object-cover object-right"
-          unoptimized
-        />
+        <div className="relative pt-8 sm:pt-10 md:pt-12 xl:pt-14 pb-24 sm:pb-28 xl:pb-32 px-4 sm:px-6 xl:px-20">
 
-        {/* Overlay */}
-        <div
-          className="absolute inset-0 z-0"
-          style={{
-            background:
-              "linear-gradient(to right, rgba(36, 58, 36, 0.92) 20%, rgba(36, 58, 36, 0.65) 60%, rgba(36, 58, 36, 0.25) 100%)",
-          }}
-        />
+          <Image
+            src="/contact.png"
+            alt="Contact Background"
+            fill
+            className="object-cover object-right"
+            unoptimized
+          />
 
-        {/* Content */}
-        <div className="max-w-[1200px] mx-auto relative z-10">
-          <div className="animate-fade-in">
+          {/* Green Overlay */}
+          <div
+            className="absolute inset-0 z-0"
+            style={{
+              background:
+                "linear-gradient(to right, rgba(36, 58, 36, 0.92) 20%, rgba(36, 58, 36, 0.65) 60%, rgba(36, 58, 36, 0.25) 100%)",
+            }}
+          />
 
-            <span className="inline-block bg-[#FFFFFF1A] border border-[#FFFFFF33]/40 text-white rounded-full px-3 py-1 text-[10px] sm:text-[11px] mb-5 sm:mb-6 font-semibold tracking-wider">
-              SUPPORT CENTER
-            </span>
+          {/* Hero Content */}
+          <div className="max-w-[1200px] mx-auto relative z-10">
+            <div className="animate-fade-in">
 
-            <h1
-              className="text-white text-[34px] sm:text-[42px] md:text-[52px] xl:text-[60px] font-bold mb-5 sm:mb-6 leading-[1.05] tracking-tight"
-              style={{
-                fontFamily: "var(--font-bricolage)",
-              }}
-            >
-              Contact & Support
-            </h1>
+              {/* Heading */}
+              <h1
+                className="text-white text-[34px] sm:text-[42px] md:text-[52px] xl:text-[60px] font-bold mb-3 sm:mb-4 leading-[1.05] tracking-tight"
+                style={{
+                  fontFamily: "var(--font-bricolage)",
+                }}
+              >
+                Contact & Support
+              </h1>
 
-            <p className="text-[#FFFFFFCC]/80 text-[14px] sm:text-[15px] md:text-[18px] leading-relaxed max-w-[576px]">
-              Need help or have a question? Get in touch
-              with our team.
-            </p>
+              {/* Subtitle */}
+              <p className="text-[#FFFFFFCC]/80 text-[14px] sm:text-[15px] md:text-[18px] leading-relaxed max-w-[576px]">
+                Need help or have a question? Get in touch
+                with our team.
+              </p>
+
+            </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* OVERLAPPING CONTENT */}
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 xl:px-20 -mt-16 sm:-mt-20 relative z-10 pb-16 sm:pb-24">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 xl:px-20 -mt-20 sm:-mt-24 xl:-mt-28 relative z-10 pb-16 sm:pb-24">
 
         <div className="grid grid-cols-1 xl:grid-cols-12 gap-8 lg:gap-10 xl:gap-14 items-start">
 
@@ -157,18 +170,23 @@ const ContactLayout = () => {
                 <input
                   type="text"
                   value={emailText}
-                  onChange={(e) =>
-                    setEmailText(e.target.value)
-                  }
+                  onChange={(e) => setEmailText(e.target.value)}
                   className="text-[13px] sm:text-[14px] text-[#111111] font-medium bg-transparent outline-none w-full min-w-0"
                 />
 
-                <button className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-200 transition-colors shrink-0">
+                <button
+                  type="button"
+                  onClick={() =>
+                    navigator.clipboard.writeText(emailText)
+                  }
+                  className="w-8 h-8 flex items-center justify-center rounded-md hover:bg-gray-200 transition-colors shrink-0"
+                >
                   <Copy
                     size={16}
                     className="text-[#555555]"
                   />
                 </button>
+
               </div>
             </div>
 
@@ -198,6 +216,7 @@ const ContactLayout = () => {
                 behavior, please report them immediately
                 to our Trust & Safety team.
               </p>
+
             </div>
 
             {/* LEGAL CARD */}
@@ -215,7 +234,7 @@ const ContactLayout = () => {
               <div className="flex items-start gap-4 mb-6 sm:mb-8">
                 <Building2
                   size={18}
-                  className="text-[#243A241F] mt-1 shrink-0"
+                  className="text-[#243A24] mt-1 shrink-0"
                 />
 
                 <p className="text-[13px] text-[#555555] leading-relaxed font-medium">
@@ -229,22 +248,24 @@ const ContactLayout = () => {
 
                 <Link
                   href="/terms"
-                  className="hover:text-[#243A24] transition-colors"
+                  className="hover:text-[#6E9625] transition-colors"
                 >
                   Terms of Service
                 </Link>
 
                 <Link
                   href="/terms?tab=cookies"
-                  className="hover:text-[#243A24] transition-colors"
+                  className="hover:text-[#6E9625] transition-colors"
                 >
                   Privacy Policy
                 </Link>
+
               </div>
             </div>
+
           </div>
 
-          {/* RIGHT SIDE */}
+          {/* RIGHT SIDE - CONTACT FORM */}
           <div
             className="xl:col-span-7 animate-fade-in w-full"
             style={{ animationDelay: "0.2s" }}
@@ -269,12 +290,14 @@ const ContactLayout = () => {
                 answer in our FAQs
               </p>
 
+              {/* ERROR MESSAGE */}
               {errorMsg && (
                 <div className="mb-6 p-4 rounded-xl bg-[#FEF2F2] border border-[#FEE2E2] text-[#991B1B] text-[14px] font-medium">
                   {errorMsg}
                 </div>
               )}
 
+              {/* CONTACT FORM */}
               <form
                 className="flex flex-col gap-5 sm:gap-6"
                 onSubmit={handleSubmit}
@@ -300,6 +323,7 @@ const ContactLayout = () => {
                     required
                     className="w-full border border-[#243A241F] rounded-xl px-5 py-4 text-[14px] text-[#555555] font-medium outline-none bg-white"
                   />
+
                 </div>
 
                 {/* SELECT */}
@@ -335,12 +359,14 @@ const ContactLayout = () => {
                     <option value="OTHER">
                       Other
                     </option>
+
                   </select>
 
                   <ChevronDown
                     size={18}
                     className="absolute right-5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"
                   />
+
                 </div>
 
                 {/* TEXTAREA */}
@@ -376,6 +402,7 @@ const ContactLayout = () => {
                       ? "File selected"
                       : "SVG, PNG, JPG or PDF (max. 10MB)"}
                   </span>
+
                 </label>
 
                 {/* FOOTER */}
@@ -395,6 +422,7 @@ const ContactLayout = () => {
                       Policy and consent to us using your
                       data to respond to your enquiry.
                     </p>
+
                   </div>
 
                   <button
@@ -403,41 +431,71 @@ const ContactLayout = () => {
                     className="bg-[#243A24] text-white px-8 py-3.5 rounded-[14px] font-bold text-[14px] flex items-center justify-center gap-2 whitespace-nowrap hover:bg-[#1a2a1a] transition-all hover:scale-[1.02] shadow-sm w-full lg:w-auto cursor-pointer disabled:opacity-70 disabled:hover:scale-100 disabled:cursor-not-allowed"
                   >
                     {loading ? "Sending..." : "Send Message"}
+
                     {!loading && <ArrowRight size={16} />}
                   </button>
+
                 </div>
+
               </form>
+
             </div>
           </div>
+
         </div>
       </div>
 
       {/* SUCCESS MODAL */}
       {successMsg && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-fade-in">
+
           <div className="bg-white rounded-[20px] p-8 max-w-sm w-full shadow-2xl flex flex-col items-center text-center">
+
             <div className="w-16 h-16 bg-[#F0FDF4] rounded-full flex items-center justify-center mb-5">
+
               <div className="w-10 h-10 bg-[#22C55E] rounded-full flex items-center justify-center text-white shadow-md">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
+
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="3"
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
+
               </div>
             </div>
-            <h3 className="text-[22px] font-bold text-[#111111] mb-2" style={{ fontFamily: "var(--font-bricolage)" }}>
+
+            <h3
+              className="text-[22px] font-bold text-[#111111] mb-2"
+              style={{
+                fontFamily: "var(--font-bricolage)",
+              }}
+            >
               Thanks for contacting us!
             </h3>
+
             <p className="text-[14px] text-[#555555] font-medium leading-relaxed mb-8">
               {successMsg}
             </p>
+
             <button
               onClick={() => setSuccessMsg("")}
               className="w-full bg-[#243A24] text-white py-3.5 rounded-[14px] font-bold text-[14px] hover:bg-[#1a2a1a] transition-all hover:scale-[1.02]"
             >
               Close
             </button>
+
           </div>
         </div>
       )}
+
     </main>
   );
 };

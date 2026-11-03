@@ -42,6 +42,10 @@ interface ReviewSummary {
   ratingBreakdown?: {
     [key: number]: number;
   };
+  // computed client-side from the actual reviews list
+  computedBreakdown?: {
+    [key: number]: number;
+  };
 }
 
 function StarRating({ rating }: { rating: number }) {
@@ -230,8 +234,19 @@ export default function TraderReviews() {
         }
 
         // 4. Set the summary state
+        // The API summary endpoint does not return a per-star breakdown,
+        // so we compute one from the reviews we already loaded.
+        const computedBreakdown: { [key: number]: number } = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+        reviewsList.forEach((rev: any) => {
+          const r = Math.round(rev.rating);
+          if (r >= 1 && r <= 5) computedBreakdown[r]++;
+        });
         if (finalSummary) {
-          setSummary(finalSummary);
+          setSummary({ ...finalSummary, computedBreakdown });
+        } else if (reviewsList.length > 0) {
+          // No summary from API but we have reviews - derive what we can
+          const avg = reviewsList.reduce((a: number, rev: any) => a + rev.rating, 0) / reviewsList.length;
+          setSummary({ averageRating: avg, totalReviews: reviewsList.length, computedBreakdown });
         }
 
       } catch (err: any) {
@@ -339,15 +354,12 @@ export default function TraderReviews() {
               <h2 className="text-[12px] font-medium text-gray-500 text-center mb-6">Rating Breakdown</h2>
               <div className="flex flex-col gap-4">
                 {[5, 4, 3, 2, 1].map((star) => {
-                  const breakdownObj = summary?.ratingBreakdown || summary?.breakdown || {};
-                  const count = breakdownObj[star] || 0;
-                  const total = summary?.totalReviews || reviews.length || 1;
-                  const percentage = Math.round((count / total) * 100) || 0;
-
-                  // Visual fallback for 0 total reviews
-                  const width = summary?.totalReviews === 0 && reviews.length === 0
-                    ? '0%'
-                    : (count > 0 ? `${percentage}%` : `${[80, 60, 40, 20, 10][5 - star]}%`); // mock pattern if no data
+                  // Priority: computed from real reviews > API-provided breakdown > zero
+                  const breakdownObj = summary?.computedBreakdown || summary?.ratingBreakdown || summary?.breakdown || {};
+                  const count = (breakdownObj as Record<number, number>)[star] || 0;
+                  const total = summary?.totalReviews || reviews.length || 0;
+                  const percentage = total > 0 ? Math.round((count / total) * 100) : 0;
+                  const width = `${percentage}%`;
 
                   return (
                     <div key={star} className="flex items-center gap-3">
@@ -357,6 +369,7 @@ export default function TraderReviews() {
                       <div className="flex-1 h-1.5 bg-gray-100 rounded-full overflow-hidden">
                         <div className="h-full bg-[#6E9625] rounded-full transition-all duration-500" style={{ width }} />
                       </div>
+                      <span className="text-[11px] text-gray-400 w-5 text-right">{count}</span>
                     </div>
                   )
                 })}

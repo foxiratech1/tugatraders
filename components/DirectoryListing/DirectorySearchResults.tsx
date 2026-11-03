@@ -704,7 +704,7 @@ const DirectorySearchResults = () => {
       <section className="bg-[#F8F9F7] pt-3 sm:pt-5 pb-14 px-4 sm:px-6 lg:px-8 xl:px-12">
         <div className="max-w-[1400px] mx-auto">
           {/* Post a Job Banner Card - tighter width and compact layout */}
-          <div className="w-full max-w-[1020px] mx-auto bg-[#F4F8F3] border border-[#DFE8DE] rounded-xl overflow-hidden mb-5 sm:mb-6 flex flex-col md:flex-row items-stretch shadow-[0_2px_12px_rgba(0,0,0,0.03)] relative">
+          <div className="w-full max-w-[1020px] mx-auto bg-[#F4F8F3] border border-[#DFE8DE] rounded-sm overflow-hidden mb-5 sm:mb-6 flex flex-col md:flex-row items-stretch shadow-[0_2px_12px_rgba(0,0,0,0.03)] relative">
 
             {/* Left Video - Compact & Object Cover */}
             <div className="hidden md:block w-[200px] lg:w-[230px] xl:w-[250px] relative shrink-0 bg-[#E8EFE8] overflow-hidden">
@@ -719,64 +719,89 @@ const DirectorySearchResults = () => {
             </div>
 
             {/* Middle and Right Content Wrapper */}
-            <div className="flex-1 flex flex-col md:flex-row items-center justify-between p-3 sm:py-3 sm:px-4 lg:px-5 lg:py-2.5 gap-3 lg:gap-4">
+            <div className="flex-1 flex flex-col md:flex-row items-center justify-between p-4 sm:py-4 sm:px-5 lg:px-6 lg:py-4 gap-4 lg:gap-5 bg-[#1E3A2B] rounded-sm">
+
               {/* Text Content */}
               <div className="flex-1 max-w-[480px] text-left">
-                <h2 className="text-[15px] sm:text-[17px] lg:text-[18px] font-extrabold text-[#19331E] tracking-tight leading-snug mb-1">
+                <h2 className="text-[16px] sm:text-[18px] lg:text-[19px] font-extrabold text-white tracking-tight leading-snug mb-1.5">
                   Need a trader? Post a job instead.
                 </h2>
-                <p className="text-[#4E6252] text-[12px] sm:text-[12.5px] leading-snug mb-2 font-medium">
+
+                <p className="text-white/90 text-[12.5px] sm:text-[13px] leading-relaxed mb-3 font-medium">
                   Add photos, more details and get tailored responses from trusted tradespeople in your area &mdash; or browse the directory below.
                 </p>
+
                 <div className="flex items-center gap-3 flex-wrap">
                   <Link
                     href="/post-job"
-                    className="inline-flex items-center gap-1.5 bg-[#6E9625] hover:bg-[#5E821F] text-white font-bold text-[11px] sm:text-[11.5px] uppercase tracking-wider px-3.5 py-1.5 rounded-md transition-all shadow-xs hover:shadow active:scale-[0.98] cursor-pointer"
+                    className="inline-flex items-center justify-center bg-[#6E9625] hover:bg-[#5E821F] text-white font-bold text-[11px] sm:text-[12px] uppercase tracking-wider px-4 py-2 rounded-md transition-all shadow-sm hover:shadow-md active:scale-[0.98] cursor-pointer"
                   >
-                    <span>POST A JOB</span>
+                    POST A JOB
                   </Link>
                 </div>
               </div>
 
-              {/* Right Side: Photo preview + annotations */}
-              <div className="relative shrink-0 flex flex-col items-center select-none pt-0.5 pb-0.5 pr-1 sm:pr-2">
-                {/* Radiating accent lines at top right of image */}
-                <div className="absolute -top-1 -right-0 sm:right-1 text-[#6E9625] pointer-events-none">
-                  <svg width="18" height="18" viewBox="0 0 28 28" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
+              {/* Right Side: Photo Preview */}
+              <div className="relative shrink-0 flex flex-col items-center justify-center select-none w-full md:w-auto">
+
+                {/* Decorative Accent */}
+                <div className="absolute top-0 right-2 sm:right-3 text-[#A5C957] pointer-events-none z-10">
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 28 28"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2.2"
+                    strokeLinecap="round"
+                  >
                     <line x1="5" y1="17" x2="18" y2="6" />
                     <line x1="7" y1="21" x2="24" y2="20" />
                     <line x1="8" y1="25" x2="21" y2="31" />
                   </svg>
                 </div>
 
-                {/* Photo Collage Preview */}
-                <div className="relative w-[120px] sm:w-[140px] md:w-[155px] lg:w-[165px]">
+                {/* Photo Collage - Original Colours */}
+                <div className="relative w-[150px] sm:w-[165px] md:w-[175px] lg:w-[190px] rounded-xl bg-[#F4F6EF] p-2 shadow-md border border-white/20">
+
                   <Image
                     src="/before.jfif"
                     alt="Post a job preview"
                     width={600}
                     height={400}
-                    className="w-full h-auto object-contain mix-blend-multiply pointer-events-none"
+                    className="w-full h-auto object-contain rounded-lg pointer-events-none"
                     priority
                   />
+
                 </div>
 
-                {/* Annotation: Arrow + "Add photos and details" */}
-                <div className="flex items-center gap-1.5 -mt-1 self-center sm:self-end pr-1 sm:pr-2">
-                  {/* Curved Arrow pointing towards photos */}
-                  <div className="text-[#6E9625] -mt-1.5">
-                    <svg width="24" height="28" viewBox="0 0 38 44" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                {/* Annotation */}
+                <div className="flex items-center gap-1.5 mt-1 self-center sm:self-end pr-2 sm:pr-3">
+
+                  {/* Curved Arrow */}
+                  <div className="text-[#A5C957] -mt-2">
+                    <svg
+                      width="25"
+                      height="30"
+                      viewBox="0 0 38 44"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
                       <path d="M 6 40 C 4 24 13 12 30 8" />
                       <path d="M 21 4 L 32 8 L 24 16" />
                     </svg>
                   </div>
 
-                  {/* Handwritten script text */}
-                  <div className="font-[family-name:var(--font-caveat)] text-[#4F701B] text-[14px] sm:text-[16px] font-bold leading-[1.05] tracking-wide -rotate-2">
+                  {/* Handwritten Text */}
+                  <div className="font-[family-name:var(--font-caveat)] text-[#B5D66B] text-[15px] sm:text-[17px] font-bold leading-[1.05] tracking-wide -rotate-2">
                     <span>Add photos</span>
                     <br />
                     <span>and details</span>
                   </div>
+
                 </div>
               </div>
             </div>
@@ -1230,7 +1255,7 @@ const DirectorySearchResults = () => {
                         <div className="flex items-center gap-1.5 text-[12px] font-medium text-[#4B5563] mt-auto">
                           <span className="flex items-center gap-0.5 text-[11px] font-medium text-gray-500"><CheckCircle size={12} className="text-[#6E9625]" /> ID Check</span>
                           <span className="flex items-center gap-0.5 text-[11px] font-medium text-gray-500"><CheckCircle size={12} className="text-[#6E9625]" /> Trade Check</span>
-                          <span className="flex items-center gap-0.5 text-[11px] font-medium text-gray-500"><CheckCircle size={12} className="text-[#6E9625]" /> Insurance Verified</span>
+                          <span className="flex items-center gap-0.5 text-[11px] font-medium text-gray-500"><CheckCircle size={12} className="text-[#6E9625]" /> Insurance Documents</span>
                         </div>
 
                         {/* <div className="mt-auto">

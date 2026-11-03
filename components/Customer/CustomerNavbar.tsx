@@ -298,7 +298,7 @@ export default function CustomerNavbar() {
     if (linkName === "Inbox") {
       setInboxUnread(0);
     }
-    if (linkName === "Jobs") {
+    if (linkName === "Jobs" || linkName === "Dashboard") {
       setJobsUnread(0);
       if (actionRequiredData && typeof window !== "undefined") {
         try {
@@ -436,13 +436,13 @@ export default function CustomerNavbar() {
                   href={link.href}
                   onClick={() => handleNavClick(link.name)}
                   className={`
-                  relative flex items-center gap-1.5 px-3.5 text-[13px] font-semibold
+                  relative flex items-center gap-1.5 px-3.5 text-[14.5px] font-semibold
                   transition-all duration-200 whitespace-nowrap h-full group
                   ${active ? "text-[#1C2C1C]" : "text-[#1C2C1C]/60 hover:text-[#1C2C1C] hover:scale-[1.02]"}
                 `}
                 >
                   <Icon
-                    size={14}
+                    size={16}
                     className={`transition-all duration-200 ${active ? "text-[#6E9625] scale-110" : "text-current group-hover:text-[#6E9625]"}`}
                   />
                   <div className="flex items-center gap-1.5 relative">
@@ -452,7 +452,7 @@ export default function CustomerNavbar() {
                         {inboxUnread > 99 ? "99+" : inboxUnread}
                       </span>
                     )}
-                    {link.name === "Jobs" && jobsUnread > 0 && !active && (
+                    {link.name === "Dashboard" && jobsUnread > 0 && !active && (
                       <span className="flex items-center justify-center min-w-[15px] h-[15px] px-1 bg-[#E53935] rounded-full text-[9px] font-bold text-white shadow-sm">
                         {jobsUnread > 99 ? "99+" : jobsUnread}
                       </span>
@@ -719,7 +719,7 @@ export default function CustomerNavbar() {
                           {inboxUnread > 99 ? "99+" : inboxUnread}
                         </span>
                       )}
-                      {link.name === "Jobs" && jobsUnread > 0 && (
+                      {link.name === "Dashboard" && jobsUnread > 0 && (
                         <span className="flex items-center justify-center min-w-[20px] h-5 px-1.5 bg-[#E53935] rounded-full text-[11px] font-bold text-white shadow-xs">
                           {jobsUnread > 99 ? "99+" : jobsUnread}
                         </span>

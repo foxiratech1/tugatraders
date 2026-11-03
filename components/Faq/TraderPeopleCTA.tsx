@@ -56,7 +56,7 @@ const TraderPeopleCTA = () => {
               </Link>
 
               <Link
-                href="/directory-listing"
+                href="/directory-listing/search"
                 className="bg-[#FFFFFF1A] hover:bg-[#FFFFFF24] text-white border border-white/20 font-bold py-3.5 px-6 sm:px-8 rounded-[8px] text-[14px] sm:text-[15px] transition-all hover:scale-[1.02] whitespace-nowrap cursor-pointer animate-fade-in text-center"
               >
                 Browse Traders

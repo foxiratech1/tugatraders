@@ -71,7 +71,7 @@ export default function CustomerChatSidebar({ jobId, traderId }: SidebarProps) {
   };
 
   const getAvatar = () => {
-    const raw = trader?.traderProfile?.logo || trader?.logo || trader?.avatar || trader?.profileImage;
+    const raw = trader?.profile?.logo || trader?.traderProfile?.logo || trader?.logo || trader?.avatar || trader?.profileImage;
     return getImageUrl(raw) || "/avt.png";
   };
 
@@ -98,14 +98,14 @@ export default function CustomerChatSidebar({ jobId, traderId }: SidebarProps) {
                     <Image src={getAvatar()} alt={trader?.fullName} width={56} height={56} className="object-cover w-full h-full" />
                   </div>
                   <div className="flex flex-col items-start">
-                    <h4 className="text-[16px] font-bold text-[#1C2C1C]">{trader?.fullName || trader?.companyName}</h4>
+                    <h4 className="text-[16px] font-bold text-[#1C2C1C]">{trader?.profile?.companyName || trader?.traderProfile?.companyName || trader?.fullName}</h4>
                     <div className="flex items-center gap-1.5 mt-1">
                       <Star size={14} className="text-[#F59E0B] fill-[#F59E0B]" />
                       <span className="text-[13px] font-bold text-[#1C2C1C]">
-                        {trader?.traderMetrics?.averageRating || trader?.ratingAvg || "0.0"}
+                        {trader?.metrics?.averageRating ?? trader?.traderMetrics?.averageRating ?? trader?.ratingAvg ?? "0.0"}
                       </span>
                       <span className="text-[12px] text-gray-400">
-                        ({trader?.traderMetrics?.totalReviews || trader?.reviewCount || 0} reviews)
+                        ({trader?.metrics?.totalReviews ?? trader?.traderMetrics?.totalReviews ?? trader?.reviewCount ?? 0} reviews)
                       </span>
                     </div>
                     <Link href={`/customer-dashboard/trader-profile/${trader?.id}`} className="mt-3 bg-[#1C2C1C] text-white text-[11px] font-bold px-4 py-1.5 rounded-lg hover:bg-[#2c3e2c] transition-colors">

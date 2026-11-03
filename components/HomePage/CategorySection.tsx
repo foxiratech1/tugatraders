@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useEffect, useState } from "react";
@@ -30,6 +31,7 @@ const defaultCategories = [
 
 const getCategoryIcon = (name: string) => {
   const upper = name?.toUpperCase() || "";
+
   if (upper.includes("PLUMB") || upper.includes("WATER") || upper.includes("PIPE")) return FaFaucetDrip;
   if (upper.includes("ELECTRIC") || upper.includes("WIRE") || upper.includes("POWER")) return FaPlug;
   if (upper.includes("BUILD") || upper.includes("BRICK") || upper.includes("MASON")) return FaTrowelBricks;
@@ -37,16 +39,24 @@ const getCategoryIcon = (name: string) => {
   if (upper.includes("PAINT")) return FaPaintRoller;
   if (upper.includes("HVAC") || upper.includes("AIR") || upper.includes("HEAT")) return FaWind;
   if (upper.includes("ROOF")) return FaHammer;
+
   return FaWrench;
 };
 
-const CategoryCard = ({ cat, isTrader }: { cat: any; isTrader?: boolean }) => {
+const CategoryCard = ({
+  cat,
+  isTrader,
+}: {
+  cat: any;
+  isTrader?: boolean;
+}) => {
   const Icon = getCategoryIcon(cat.name || "");
   const name = cat.name || "Trade Service";
 
-  const targetUrl = cat.id || cat._id
-    ? `/directory-listing/search?categoryId=${cat.id || cat._id}`
-    : `/directory-listing/search?categoryName=${encodeURIComponent(name)}`;
+  const targetUrl =
+    cat.id || cat._id
+      ? `/ directory - listing / search ? categoryId = ${cat.id || cat._id} `
+      : `/ directory - listing / search ? categoryName = ${encodeURIComponent(name)} `;
 
   if (isTrader) {
     return (
@@ -61,7 +71,7 @@ const CategoryCard = ({ cat, isTrader }: { cat: any; isTrader?: boolean }) => {
                 src={
                   cat.image.startsWith("http")
                     ? cat.image
-                    : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "")}${cat.image.startsWith("/") ? cat.image : `/${cat.image}`}`
+                    : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "")}${cat.image.startsWith("/") ? cat.image : `/${cat.image}`} `
                 }
                 alt={name}
                 className="w-5 h-5 object-contain"
@@ -71,10 +81,12 @@ const CategoryCard = ({ cat, isTrader }: { cat: any; isTrader?: boolean }) => {
               <Icon className="w-5 h-5" />
             )}
           </div>
+
           <span className="text-[13px] md:text-[14px] font-bold tracking-[1.5px] text-[#1E3A2B]/70 uppercase">
             {name}
           </span>
         </div>
+
         <div className="text-gray-300">
           <FiArrowRight size={15} />
         </div>
@@ -87,7 +99,6 @@ const CategoryCard = ({ cat, isTrader }: { cat: any; isTrader?: boolean }) => {
       href={targetUrl}
       className="group flex items-center justify-between rounded-[10px] bg-white px-5 py-3.5 sm:py-4 shadow-[0_3px_10px_rgba(0,0,0,0.05)] border-2 border-gray-100/90 hover:border-[#6F9824]/40 hover:shadow-md transition-all duration-300 w-[220px] md:w-[240px] shrink-0"
     >
-      {/* Icon & Name */}
       <div className="flex items-center gap-3">
         <div className="text-[#1E3A2B] flex items-center justify-center shrink-0">
           {cat.image ? (
@@ -95,7 +106,7 @@ const CategoryCard = ({ cat, isTrader }: { cat: any; isTrader?: boolean }) => {
               src={
                 cat.image.startsWith("http")
                   ? cat.image
-                  : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "")}${cat.image.startsWith("/") ? cat.image : `/${cat.image}`}`
+                  : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "")}${cat.image.startsWith("/") ? cat.image : `/${cat.image}`} `
               }
               alt={name}
               className="w-5 h-5 object-contain"
@@ -105,12 +116,12 @@ const CategoryCard = ({ cat, isTrader }: { cat: any; isTrader?: boolean }) => {
             <Icon className="w-5 h-5" />
           )}
         </div>
+
         <span className="text-[13px] md:text-[14px] font-bold tracking-[1.5px] text-[#1E3A2B] uppercase">
           {name}
         </span>
       </div>
 
-      {/* Simple Arrow */}
       <div className="text-gray-400 group-hover:text-[#1E3A2B] group-hover:translate-x-0.5 transition-all">
         <FiArrowRight size={15} />
       </div>
@@ -121,6 +132,7 @@ const CategoryCard = ({ cat, isTrader }: { cat: any; isTrader?: boolean }) => {
 export default function CategorySection() {
   const { role } = useAuth();
   const isTrader = role === "trader";
+
   const [categoriesList, setCategoriesList] = useState<any[]>([]);
 
   useEffect(() => {
@@ -128,30 +140,41 @@ export default function CategorySection() {
       try {
         const res = await authApi.getCategories();
         const list = Array.isArray(res) ? res : res?.data || [];
+
         if (list.length > 0) {
-          const existingNames = new Set(list.map((c: any) => c.name?.toUpperCase()));
-          const extra = defaultCategories.filter((c) => !existingNames.has(c.name));
+          const existingNames = new Set(
+            list.map((c: any) => c.name?.toUpperCase())
+          );
+
+          const extra = defaultCategories.filter(
+            (c) => !existingNames.has(c.name)
+          );
+
           setCategoriesList([...list, ...extra]);
         }
       } catch (err) {
         console.error("Failed to fetch categories", err);
       }
     };
+
     fetchCats();
   }, []);
 
-  const activeCats = categoriesList.length > 0 ? categoriesList : defaultCategories;
+  const activeCats =
+    categoriesList.length > 0 ? categoriesList : defaultCategories;
 
   return (
     <section className="w-full bg-white overflow-hidden pt-6 sm:pt-8">
-      {/* LIGHT GREEN BACKGROUND CONTAINER - CENTRALLY SITTING */}
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
-        <div className="w-full bg-[#EDF3E6] rounded-[24px] sm:rounded-[28px] border border-[#E0EBD4] p-6 sm:p-8 lg:p-10 shadow-xs">
+
+      {/* FULL-WIDTH LIGHT GREEN STRIP */}
+      <div className="w-full bg-[#EDF3E6] border-y border-[#E0EBD4]">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 sm:py-8 lg:py-10">
 
           {/* HEADER */}
           <div className="flex items-center justify-between mb-5 sm:mb-6">
             <h2 className="text-2xl sm:text-3xl md:text-[32px] font-bold text-[#1E3A2B] tracking-tight">
-              Explore Our <span className="text-[#6F9824]">Trades</span>
+              Explore Our{" "}
+              <span className="text-[#6F9824]">Trades</span>
             </h2>
 
             {isTrader ? (
@@ -179,11 +202,19 @@ export default function CategorySection() {
           <div className="w-full overflow-hidden relative py-1">
             <motion.div
               animate={{ x: ["0%", "-50%"] }}
-              transition={{ repeat: Infinity, ease: "linear", duration: 32 }}
+              transition={{
+                repeat: Infinity,
+                ease: "linear",
+                duration: 32,
+              }}
               className="flex gap-4 pr-4 w-max shrink-0"
             >
               {[...activeCats, ...activeCats].map((cat, index) => (
-                <CategoryCard key={`cat-${index}`} cat={cat} isTrader={isTrader} />
+                <CategoryCard
+                  key={`cat - ${index} `}
+                  cat={cat}
+                  isTrader={isTrader}
+                />
               ))}
             </motion.div>
           </div>
@@ -191,13 +222,14 @@ export default function CategorySection() {
         </div>
       </div>
 
-      {/* PROMO BANNER CARDS - CENTERED BETWEEN SECTIONS */}
+      {/* PROMO BANNER CARDS - MOVED SLIGHTLY DOWN */}
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-14 sm:pt-18 lg:pt-20 pb-10 sm:pb-12 lg:pb-14">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-16 sm:pt-20 lg:pt-24 pb-10 sm:pb-12 lg:pb-14">
 
-          {/* CARD 1: Need work done? */}
+          {/* CARD 1: NEED WORK DONE? */}
           <div className="relative overflow-hidden rounded-[18px] bg-white border border-gray-100 shadow-sm h-[265px]">
-            {/* Full height image on left */}
+
+            {/* IMAGE LEFT */}
             <div className="absolute left-0 top-0 bottom-0 w-[47%]">
               <Image
                 src="/Need work done.jpg"
@@ -206,22 +238,26 @@ export default function CategorySection() {
                 className="object-cover object-left"
                 priority
               />
-              {/* Narrow fade gradient on right edge of image (less soft edge) */}
+
               <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-r from-transparent to-white" />
             </div>
 
-            {/* Text on upper right - moved slightly to the right */}
+            {/* TEXT RIGHT */}
             <div className="absolute top-5 right-5 left-[52%] sm:left-[54%] flex flex-col justify-start z-10">
-              <p className="text-[#1E3A2B] font-bold text-[14px] leading-tight mb-1">Need work done?</p>
+              <p className="text-[#1E3A2B] font-bold text-[14px] leading-tight mb-1">
+                Need work done?
+              </p>
+
               <h3 className="text-[#1E3A2B] font-extrabold text-[24px] sm:text-[26px] leading-tight mb-2">
                 Find a <br /> Tradesperson
               </h3>
+
               <p className="text-[#4A5548] font-medium text-[12.5px] leading-snug max-w-[230px]">
                 Post your job for free or browse local professionals.
               </p>
             </div>
 
-            {/* Bottom Buttons Row: Left button sits over photo, right button under text */}
+            {/* BUTTONS */}
             <div className="absolute bottom-4 left-4 right-4 flex gap-2.5 z-20">
               {isTrader ? (
                 <>
@@ -233,6 +269,7 @@ export default function CategorySection() {
                   >
                     Find a Tradesperson
                   </button>
+
                   <button
                     type="button"
                     disabled
@@ -250,6 +287,7 @@ export default function CategorySection() {
                   >
                     Find a Tradesperson
                   </Link>
+
                   <Link
                     href="/post-job"
                     className="flex-1 bg-[#6F9824] hover:bg-[#5f831e] text-white text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-2 rounded-[6px] uppercase tracking-wider text-center shadow-sm flex items-center justify-center whitespace-nowrap animate-action-pulse cursor-pointer [animation-delay:0.5s]"
@@ -261,17 +299,21 @@ export default function CategorySection() {
             </div>
           </div>
 
-          {/* CARD 2: Want more work? */}
+          {/* CARD 2: WANT MORE WORK? */}
           <div className="flex flex-col">
             <div className="relative overflow-hidden rounded-[18px] bg-white border border-gray-100 shadow-sm h-[265px]">
 
-              {/* Content Left */}
+              {/* CONTENT LEFT */}
               <div className="absolute top-5 left-5 bottom-4 w-[48%] flex flex-col justify-between z-20">
                 <div>
-                  <p className="text-[#1E3A2B] font-bold text-[14px] leading-tight mb-1">Want more work?</p>
+                  <p className="text-[#1E3A2B] font-bold text-[14px] leading-tight mb-1">
+                    Want more work?
+                  </p>
+
                   <h3 className="text-[#1E3A2B] font-extrabold text-[24px] sm:text-[26px] leading-tight mb-2">
                     Join TugaTrades
                   </h3>
+
                   <p className="text-[#4A5548] font-medium text-[12.5px] leading-snug max-w-[220px]">
                     Create your personal profile, get discovered by local customers and grow your business.
                   </p>
@@ -300,7 +342,7 @@ export default function CategorySection() {
                 </div>
               </div>
 
-              {/* Image Right: Phone mockup + Plumber with slight soft edge on left handside */}
+              {/* IMAGE RIGHT */}
               <div className="absolute right-0 top-0 bottom-0 w-[54%] z-10 pointer-events-none">
                 <Image
                   src="/Want more work.png"
@@ -309,12 +351,12 @@ export default function CategorySection() {
                   className="object-cover object-left"
                   priority
                 />
-                {/* Slight soft edge on left handside of image */}
+
                 <div className="absolute inset-y-0 left-0 w-14 bg-gradient-to-r from-white via-white/80 to-transparent pointer-events-none z-10" />
               </div>
             </div>
 
-            {/* Sub-text: FIRST 3 MONTHS FREE!* */}
+            {/* FIRST 3 MONTHS FREE */}
             <div className="text-right mt-1.5 pr-1">
               <span className="text-[#6F9824] font-extrabold text-[11px] uppercase tracking-wider">
                 FIRST 3 MONTHS FREE!*

@@ -79,14 +79,14 @@ export default function JobDetailsModal({
     switch (status) {
       case "COMPLETED":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[12px] font-bold bg-[#EAF7EC] text-[#16A34A] border border-[#C6ECCB]">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[12px] font-bold bg-[#D9F2D0] text-[#1C6D26] border border-[#BDE8B0]">
             <CheckCircle size={13} />
             Completed
           </span>
         );
       case "AWAITING_CONFIRMATION":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[12px] font-bold bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]">
+          <span className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-[12px] font-bold bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]">
             <Clock size={13} className="text-[#3B82F6]" />
             Awaiting Confirmation
           </span>
@@ -95,14 +95,13 @@ export default function JobDetailsModal({
       case "STARTED":
       case "ASSIGNED":
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[12px] font-bold bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]">
-            <Clock size={13} />
+          <span className="inline-flex items-center px-3.5 py-1.5 rounded-xl text-[12px] font-bold bg-[#DF9B52] text-[#7A3E06] border border-[#D58C40]">
             In Progress
           </span>
         );
       default:
         return (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[12px] font-bold bg-[#EFDB4B]/20 text-[#8A5C05] border border-[#E0CC3B]/40">
+          <span className="inline-flex items-center px-3.5 py-1.5 rounded-xl text-[12px] font-bold bg-[#EFF5EA] text-[#4E761E] border border-[#DCE8D5]">
             {status === "OPEN" || status === "POSTED" ? "Job Posted" : status}
           </span>
         );
@@ -110,7 +109,7 @@ export default function JobDetailsModal({
   };
 
   const formatDate = (dateStr: any) => {
-    if (!dateStr) return "15 Oct 2026";
+    if (!dateStr) return "22 Oct 2026";
     try {
       const d = new Date(dateStr);
       return d.toLocaleDateString("en-GB", {
@@ -129,44 +128,41 @@ export default function JobDetailsModal({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-3xl w-full max-w-[550px] shadow-2xl p-6 sm:p-7 border border-gray-150 flex flex-col gap-5 text-left"
+        className="bg-white rounded-[26px] w-full max-w-[560px] shadow-2xl p-6 sm:p-7 border border-gray-100 flex flex-col gap-5 text-left"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-[#EFF5EA] text-[#588022] flex items-center justify-center shrink-0">
-              <Briefcase size={22} className="text-[#588022]" />
+        {/* Header: Briefcase Icon + Job Title Label/Heading (Replaces 'Job Details') + Status Badge & Close */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-12 h-12 rounded-2xl bg-[#EFF5EA] border border-[#DCE8D5] flex items-center justify-center shrink-0 text-[#4E761E]">
+              <Briefcase size={22} className="text-[#4E761E]" />
             </div>
-            <div className="flex items-center gap-3 flex-wrap">
-              <h3 className="text-[21px] font-bold text-[#111827]">Job Details</h3>
-              {getStatusBadge()}
+            <div className="min-w-0">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-gray-400 leading-none mb-1">
+                JOB TITLE
+              </p>
+              <h3 className="text-[19px] sm:text-[21px] font-bold text-[#1C2C1C] leading-snug truncate">
+                {title}
+              </h3>
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors p-1 cursor-pointer"
-            aria-label="Close"
-          >
-            <X size={20} />
-          </button>
+          <div className="flex items-center gap-3 shrink-0">
+            {getStatusBadge()}
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors p-1 cursor-pointer"
+              aria-label="Close"
+            >
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
-        {/* Job Title */}
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">
-            JOB TITLE
-          </p>
-          <h4 className="text-[19px] sm:text-[20px] font-bold text-[#1C2C1C] leading-snug">
-            {title}
-          </h4>
-        </div>
-
-        {/* 3-Col Quick Metrics */}
-        <div className="grid grid-cols-3 gap-2.5">
-          {/* Tradesperson Card */}
-          <div className="bg-[#F9FAFB] rounded-xl p-3 flex items-center gap-2.5 min-w-0">
+        {/* Single-row Metrics Card: Tradesperson | Agreed Price | Started Date */}
+        <div className="bg-[#F9FAFB] rounded-2xl p-3.5 sm:p-4 flex items-center gap-0">
+          {/* Tradesperson */}
+          <div className="flex items-center gap-2.5 min-w-0 flex-1">
             <div className="w-9 h-9 rounded-full overflow-hidden bg-gray-200 border border-gray-200 shrink-0 flex items-center justify-center">
               {traderImage ? (
                 <img
@@ -181,37 +177,43 @@ export default function JobDetailsModal({
                 <User size={16} className="text-gray-500" />
               )}
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] text-gray-400 font-medium leading-none mb-1">
+            <div className="min-w-0">
+              <p className="text-[11px] text-gray-400 font-medium leading-none mb-1">
                 Tradesperson
               </p>
-              <p className="text-[13px] font-bold text-[#1C2C1C] leading-tight whitespace-nowrap">
+              <p className="text-[13px] sm:text-[14px] font-bold text-[#1C2C1C] leading-tight truncate">
                 {traderName}
               </p>
             </div>
           </div>
 
-          {/* Agreed Price Card */}
-          <div className="bg-[#F9FAFB] rounded-xl p-3 flex flex-col justify-center min-w-0">
-            <p className="text-[10px] text-gray-400 font-medium leading-none mb-1">
+          {/* Divider */}
+          <div className="h-10 w-px bg-gray-200 mx-3 shrink-0" />
+
+          {/* Agreed Price */}
+          <div className="min-w-0 shrink-0">
+            <p className="text-[11px] text-gray-400 font-medium leading-none mb-1">
               Agreed Price
             </p>
-            <p className="text-[15px] font-bold text-[#1C2C1C] leading-tight whitespace-nowrap">
-              €{price !== null && price !== undefined ? Number(price).toLocaleString() : "350"}
+            <p className="text-[14px] sm:text-[15px] font-bold text-[#1C2C1C] leading-tight whitespace-nowrap">
+              €{price !== null && price !== undefined ? Number(price).toLocaleString() : "280"}
             </p>
           </div>
 
-          {/* Started Date Card */}
-          <div className="bg-[#F9FAFB] rounded-xl p-3 flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-[#EFF6FF] text-[#3B82F6] flex items-center justify-center shrink-0">
+          {/* Divider */}
+          <div className="h-10 w-px bg-gray-200 mx-3 shrink-0" />
+
+          {/* Started Date */}
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-[#EFF6FF] text-[#3B82F6] flex items-center justify-center shrink-0">
               <Calendar size={15} />
             </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[10px] text-gray-400 font-medium leading-none mb-1">
+            <div className="min-w-0">
+              <p className="text-[11px] text-gray-400 font-medium leading-none mb-1">
                 Started Date
               </p>
-              <p className="text-[13px] font-bold text-[#1C2C1C] leading-tight whitespace-nowrap">
-                {startedAt ? formatDate(startedAt) : (completedAt ? formatDate(completedAt) : "15 Oct 2026")}
+              <p className="text-[13px] sm:text-[14px] font-bold text-[#1C2C1C] leading-tight whitespace-nowrap">
+                {startedAt ? formatDate(startedAt) : "22 Oct 2026"}
               </p>
             </div>
           </div>
@@ -219,38 +221,38 @@ export default function JobDetailsModal({
 
         {/* Notes / Scope of Work */}
         <div>
-          <label className="block text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1.5 flex items-center gap-1.5">
-            <FileText size={13} className="text-[#6E9625]" />
+          <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-400 mb-2 flex items-center gap-1.5">
+            <FileText size={14} className="text-[#6E9625]" />
             NOTES / SCOPE OF WORK
           </label>
-          <div className="border border-gray-200 rounded-2xl p-3.5 bg-white">
-            <div className="bg-[#F9FAFB] rounded-xl p-3 text-[13px] text-gray-600 leading-relaxed font-normal whitespace-pre-wrap">
-              {description}
-            </div>
+          <div className="bg-[#F9FAFB] border border-gray-200 rounded-2xl p-3 sm:p-3.5 text-[13px] text-gray-500 font-normal leading-relaxed min-h-[52px] whitespace-pre-wrap">
+            {description || "materials not included"}
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex items-center justify-center gap-3 pt-1">
+        {/* Action Buttons: Close + Confirm Completion (Disabled if job is completed) */}
+        <div className="flex items-center justify-center gap-3 pt-2">
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-700 font-bold text-[13px] hover:bg-gray-50 shadow-2xs transition-colors cursor-pointer"
+            className="px-7 py-2.5 rounded-xl border border-gray-200 bg-white text-[#1C2C1C] font-bold text-[13px] hover:bg-gray-50 shadow-2xs transition-colors cursor-pointer"
           >
             Close
           </button>
 
-          {(status === "AWAITING_CONFIRMATION" || Boolean(onConfirmCompletion)) && (
-            <button
-              type="button"
-              disabled={isConfirming}
-              onClick={onConfirmCompletion || onClose}
-              className="px-6 py-2.5 rounded-xl bg-[#1B431D] hover:bg-[#153617] text-white font-bold text-[13px] flex items-center gap-2 shadow-sm transition-colors cursor-pointer disabled:opacity-50"
-            >
-              <Check size={16} strokeWidth={3} className="text-white" />
-              <span>{isConfirming ? "Confirming..." : "Confirm Completion"}</span>
-            </button>
-          )}
+          <button
+            type="button"
+            disabled={isConfirming || status === "COMPLETED"}
+            onClick={status === "COMPLETED" ? undefined : (onConfirmCompletion || onClose)}
+            className={`px-6 py-2.5 rounded-xl font-bold text-[13px] flex items-center gap-2 shadow-sm transition-colors ${
+              status === "COMPLETED"
+                ? "bg-[#1B431D]/40 text-white/70 cursor-not-allowed"
+                : "bg-[#1B431D] hover:bg-[#153617] text-white cursor-pointer"
+            } disabled:opacity-50 disabled:cursor-not-allowed`}
+          >
+            <Check size={16} strokeWidth={3} className="text-white" />
+            <span>{isConfirming ? "Confirming..." : "Confirm Completion"}</span>
+          </button>
         </div>
       </div>
     </div>

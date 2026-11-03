@@ -175,14 +175,45 @@ const isJobPostedStatus = (status: string) => {
   return s === "OPEN" || s === "POSTED" || s === "ACTIVE" || s === "ASSIGNED" || s === "JOB_POSTED";
 };
 
+const isInProgressStatus = (status: string) => {
+  const s = (status || "").toUpperCase().trim().replace(/[-_ ]+/g, "_");
+  return (
+    s === "IN_PROGRESS" ||
+    s === "STARTED" ||
+    s === "INPROGRESS" ||
+    s.includes("PROGRESS")
+  );
+};
+
 const isClosedStatus = (status: string) => {
   const s = status?.toUpperCase();
   return s === "CLOSED" || s === "CANCELLED" || s === "EXPIRED";
 };
 
+const isJobPostedOnly = (j: Job) => {
+  const norm = (j.status || "").toUpperCase();
+  if (norm === "COMPLETED" || isClosedStatus(norm) || isInProgressStatus(norm)) return false;
+  if (Boolean(j.selectedTrader)) return false;
+  const hasAcceptedQuote = Array.isArray(j.quotes) && j.quotes.some((q: any) => q.status?.toUpperCase() === "ACCEPTED");
+  if (hasAcceptedQuote) return false;
+  const qCount = j.quotesReceived ?? j.quotesCount ?? (j as any)._count?.quotes ?? (Array.isArray(j.quotes) ? j.quotes.length : 0);
+  if (qCount > 0) return false;
+  if (norm === "QUOTE_RECEIVED" || norm === "QUOTES_RECEIVED" || norm === "QUOTED" || norm === "QUOTE_SENT") return false;
+  return true;
+};
+
+const isQuoteReceivedOnly = (j: Job) => {
+  const norm = (j.status || "").toUpperCase();
+  if (norm === "COMPLETED" || isClosedStatus(norm) || isInProgressStatus(norm)) return false;
+  const qCount = j.quotesReceived ?? j.quotesCount ?? (j as any)._count?.quotes ?? (Array.isArray(j.quotes) ? j.quotes.length : 0);
+  return qCount > 0 || norm === "QUOTE_RECEIVED" || norm === "QUOTED" || norm === "QUOTES_RECEIVED" || norm === "QUOTE_SENT";
+};
+
 const FILTER_TABS = [
+  { key: "ALL", label: "All" },
   { key: "JOB_POSTED", label: "Jobs Posted" },
   { key: "QUOTE_RECEIVED", label: "Quotes Received" },
+  { key: "IN_PROGRESS", label: "In Progress" },
   { key: "COMPLETED", label: "Completed" },
   { key: "CLOSED", label: "Closed" },
 ];
@@ -194,16 +225,25 @@ function StatusBadge({ status, job, hasReviewed }: { status: string; job?: Job; 
   const isReviewed = hasReviewed ?? ((job as any)?.hasReviewed || false);
   if (s === "COMPLETED" && !isReviewed) {
     s = "PENDING_REVIEW";
-  }
-  const quotes = job ? (job.quotesReceived ?? job.quotesCount ?? (job as any)._count?.quotes ?? (Array.isArray(job.quotes) ? job.quotes.length : 0)) : 0;
-  if (
-    s === "QUOTE_RECEIVED" ||
-    s === "QUOTES_RECEIVED" ||
-    s === "QUOTED" ||
-    s === "QUOTE_SENT" ||
-    ((s === "OPEN" || s === "POSTED" || s === "ACTIVE") && quotes > 0)
-  ) {
-    s = "QUOTE_RECEIVED";
+  } else if (s === "COMPLETED") {
+    s = "COMPLETED";
+  } else if (isClosedStatus(s)) {
+    s = "CLOSED";
+  } else if (isInProgressStatus(s)) {
+    s = "IN_PROGRESS";
+  } else if (Boolean(job?.selectedTrader) || (job && Array.isArray(job.quotes) && job.quotes.some((q: any) => q.status?.toUpperCase() === "ACCEPTED"))) {
+    s = "CONTACTED";
+  } else {
+    const quotes = job ? (job.quotesReceived ?? job.quotesCount ?? (job as any)._count?.quotes ?? (Array.isArray(job.quotes) ? job.quotes.length : 0)) : 0;
+    if (
+      s === "QUOTE_RECEIVED" ||
+      s === "QUOTES_RECEIVED" ||
+      s === "QUOTED" ||
+      s === "QUOTE_SENT" ||
+      ((s === "OPEN" || s === "POSTED" || s === "ACTIVE") && quotes > 0)
+    ) {
+      s = "QUOTE_RECEIVED";
+    }
   }
 
   const cfg = statusConfig[s] ?? {
@@ -411,11 +451,13 @@ export default function CustomerJobHistory() {
   const [reviewedJobIds, setReviewedJobIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [expandedJobId, setExpandedJobId] = useState<string | null>(null);
-  const [activeFilter, setActiveFilter] = useState("JOB_POSTED");
+  const [activeFilter, setActiveFilter] = useState("ALL");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState<"date" | "title" | "status">("date");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [mobileView, setMobileView] = useState<"table" | "card">("card");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 8;
 
   useSocket({
     onJobUpdated: (updatedJob) => {
@@ -430,7 +472,7 @@ export default function CustomerJobHistory() {
     async function fetchJobs() {
       try {
         const [jobsRes, reviewsRes] = await Promise.all([
-          authApi.getMyJobs().catch(() => []),
+          authApi.getMyJobs(1, 100).catch(() => []),
           authApi.getMyReviews().catch(() => []),
         ]);
         const arr: Job[] = Array.isArray(jobsRes)
@@ -438,7 +480,33 @@ export default function CustomerJobHistory() {
           : Array.isArray(jobsRes?.data)
             ? jobsRes.data
             : [];
-        setJobs(arr);
+
+        // Enhance jobs with quotes count & quotes list
+        const enhancedJobs = await Promise.all(
+          arr.map(async (job) => {
+            const rawCount =
+              job.quotesReceived ??
+              job.quotesCount ??
+              (job as any)._count?.quotes ??
+              (Array.isArray(job.quotes) ? job.quotes.length : 0);
+            if (rawCount > 0 && Array.isArray(job.quotes) && job.quotes.length > 0) {
+              return job;
+            }
+            try {
+              const qRes = await authApi.getJobQuotes(job.id);
+              const qArr = Array.isArray(qRes) ? qRes : Array.isArray(qRes?.data) ? qRes.data : [];
+              return {
+                ...job,
+                quotes: qArr,
+                quotesReceived: Math.max(rawCount, qArr.length),
+                quotesCount: Math.max(rawCount, qArr.length),
+              };
+            } catch {
+              return job;
+            }
+          })
+        );
+        setJobs(enhancedJobs);
 
         const revArr = Array.isArray(reviewsRes) ? reviewsRes : Array.isArray(reviewsRes?.data) ? reviewsRes.data : [];
         const rIds = new Set<string>();
@@ -462,14 +530,18 @@ export default function CustomerJobHistory() {
       const params = new URLSearchParams(window.location.search);
       const tab = params.get("tab");
       if (tab) {
-        const upper = tab.toUpperCase();
-        if (upper === "JOB_POSTED" || upper === "JOB POSTED" || upper === "POSTED" || upper === "ASSIGNED" || upper === "ALL") {
+        const upper = tab.toUpperCase().trim().replace(/[-_ ]+/g, "_");
+        if (upper === "ALL") {
+          setActiveFilter("ALL");
+        } else if (upper === "JOB_POSTED" || upper === "POSTED" || upper === "OPEN") {
           setActiveFilter("JOB_POSTED");
-        } else if (upper === "QUOTE_RECEIVED" || upper === "QUOTES RECEIVED" || upper === "QUOTES_RECEIVED") {
+        } else if (upper === "QUOTE_RECEIVED" || upper === "QUOTES_RECEIVED" || upper === "QUOTED") {
           setActiveFilter("QUOTE_RECEIVED");
+        } else if (upper === "IN_PROGRESS" || upper === "STARTED" || upper.includes("PROGRESS")) {
+          setActiveFilter("IN_PROGRESS");
         } else if (upper === "COMPLETED") {
           setActiveFilter("COMPLETED");
-        } else if (upper === "CLOSED") {
+        } else if (upper === "CLOSED" || upper === "CANCELLED" || upper === "EXPIRED") {
           setActiveFilter("CLOSED");
         }
       }
@@ -479,18 +551,23 @@ export default function CustomerJobHistory() {
   // Filter + search
   const filteredJobs = jobs
     .filter((j) => {
-      if (activeFilter === "JOB_POSTED" || activeFilter === "ALL") return true;
+      if (activeFilter === "ALL") return true;
+      if (activeFilter === "JOB_POSTED") {
+        return isJobPostedOnly(j);
+      }
       if (activeFilter === "QUOTE_RECEIVED") {
-        const qCount = j.quotesReceived ?? j.quotesCount ?? (j as any)._count?.quotes ?? (Array.isArray(j.quotes) ? j.quotes.length : 0);
-        return qCount > 0 || j.status?.toUpperCase() === "QUOTE_RECEIVED" || j.status?.toUpperCase() === "QUOTED";
+        return isQuoteReceivedOnly(j);
+      }
+      if (activeFilter === "IN_PROGRESS") {
+        return isInProgressStatus(j.status);
       }
       if (activeFilter === "COMPLETED") {
-        return j.status?.toUpperCase() === "COMPLETED";
+        return (j.status || "").toUpperCase() === "COMPLETED";
       }
       if (activeFilter === "CLOSED") {
         return isClosedStatus(j.status);
       }
-      return j.status === activeFilter;
+      return true;
     })
     .filter(
       (j) =>
@@ -510,6 +587,16 @@ export default function CustomerJobHistory() {
       }
       return sortDir === "asc" ? cmp : -cmp;
     });
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeFilter, searchQuery, sortField, sortDir]);
+
+  const totalPages = Math.ceil(filteredJobs.length / ITEMS_PER_PAGE) || 1;
+  const paginatedJobs = filteredJobs.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   // Count per status
   const statusCounts = jobs.reduce<Record<string, number>>((acc, j) => {
@@ -587,7 +674,7 @@ export default function CustomerJobHistory() {
             </p>
             <p className="text-[24px] sm:text-[28px] font-extrabold text-[#6E9625] sm:mt-1 leading-none">
               {jobs.reduce(
-                (sum, j) => sum + (j.quotesReceived ?? j.quotesCount ?? 0),
+                (sum, j) => sum + (j.quotesReceived ?? j.quotesCount ?? (Array.isArray(j.quotes) ? j.quotes.length : 0)),
                 0
               )}
             </p>
@@ -601,13 +688,19 @@ export default function CustomerJobHistory() {
             <div className="flex items-center justify-between sm:justify-start bg-white rounded-full p-1 border border-gray-200 shadow-xs">
               {FILTER_TABS.map((tab) => {
                 const count =
-                  tab.key === "JOB_POSTED" || tab.key === "ALL"
+                  tab.key === "ALL"
                     ? jobs.length
-                    : tab.key === "COMPLETED"
-                      ? jobs.filter((j) => j.status?.toUpperCase() === "COMPLETED").length
-                      : tab.key === "CLOSED"
-                        ? jobs.filter((j) => isClosedStatus(j.status)).length
-                        : statusCounts[tab.key] || 0;
+                    : tab.key === "JOB_POSTED"
+                      ? jobs.filter((j) => isJobPostedOnly(j)).length
+                      : tab.key === "QUOTE_RECEIVED"
+                        ? jobs.filter((j) => isQuoteReceivedOnly(j)).length
+                        : tab.key === "IN_PROGRESS"
+                          ? jobs.filter((j) => isInProgressStatus(j.status)).length
+                          : tab.key === "COMPLETED"
+                            ? jobs.filter((j) => (j.status || "").toUpperCase() === "COMPLETED").length
+                            : tab.key === "CLOSED"
+                              ? jobs.filter((j) => isClosedStatus(j.status)).length
+                              : 0;
                 return (
                   <button
                     key={tab.key}
@@ -741,7 +834,7 @@ export default function CustomerJobHistory() {
               {/* Mobile Structured Card List (shown when mobileView === "card" on mobile) */}
               {mobileView === "card" && (
                 <div className="block md:hidden divide-y divide-gray-100">
-                  {filteredJobs.map((job) => {
+                  {paginatedJobs.map((job) => {
                     const isExpanded = expandedJobId === job.id;
                     const quotesCount =
                       job.quotesReceived ?? job.quotesCount ?? 0;
@@ -905,7 +998,7 @@ export default function CustomerJobHistory() {
 
                   {/* Table Body */}
                   <tbody>
-                    {filteredJobs.map((job, idx) => {
+                    {paginatedJobs.map((job, idx) => {
                       const isExpanded = expandedJobId === job.id;
                       const quotesCount =
                         job.quotesReceived ?? job.quotesCount ?? 0;
@@ -1041,12 +1134,76 @@ export default function CustomerJobHistory() {
                   </tbody>
                 </table>
               </div>
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 sm:px-6 py-4 bg-white border-t border-gray-100">
+                  <span className="text-[12px] font-medium text-gray-500">
+                    Showing <span className="font-bold text-[#1C2C1C]">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</span> to{" "}
+                    <span className="font-bold text-[#1C2C1C]">
+                      {Math.min(currentPage * ITEMS_PER_PAGE, filteredJobs.length)}
+                    </span>{" "}
+                    of <span className="font-bold text-[#1C2C1C]">{filteredJobs.length}</span> jobs
+                  </span>
+
+                  <div className="flex items-center gap-1.5 flex-wrap justify-center">
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+                      disabled={currentPage === 1}
+                      className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                    >
+                      Previous
+                    </button>
+
+                    {Array.from({ length: totalPages }, (_, index) => {
+                      const page = index + 1;
+                      if (
+                        totalPages <= 7 ||
+                        page === 1 ||
+                        page === totalPages ||
+                        (page >= currentPage - 1 && page <= currentPage + 1)
+                      ) {
+                        return (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentPage(page)}
+                            className={`w-8 h-8 rounded-lg text-xs font-semibold transition-colors ${currentPage === page
+                                ? "bg-[#1C2C1C] text-white shadow-xs"
+                                : "bg-white border border-gray-200 text-gray-600 hover:bg-gray-50"
+                              }`}
+                          >
+                            {page}
+                          </button>
+                        );
+                      } else if (
+                        page === currentPage - 2 ||
+                        page === currentPage + 2
+                      ) {
+                        return (
+                          <span key={page} className="px-1 text-gray-400 text-xs select-none">
+                            ...
+                          </span>
+                        );
+                      }
+                      return null;
+                    })}
+
+                    <button
+                      onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
+                      disabled={currentPage === totalPages}
+                      className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-xs font-semibold text-gray-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                    >
+                      Next
+                    </button>
+                  </div>
+                </div>
+              )}
             </>
           )}
         </div>
 
         {/* Results count */}
-        {!loading && filteredJobs.length > 0 && (
+        {!loading && filteredJobs.length > 0 && totalPages <= 1 && (
           <p className="text-center text-[12px] text-gray-400 mt-4 sm:mt-5">
             Showing {filteredJobs.length} of {jobs.length} jobs
           </p>

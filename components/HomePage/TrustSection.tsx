@@ -25,8 +25,10 @@ const transparencyFeatures = [
 
 export default function TrustSection() {
   return (
-    <section className="w-full py-8 md:py-12 bg-white px-6">
-      <div className="max-w-[1340px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+    <section className="w-full py-8 md:py-12 bg-white px-6 overflow-x-clip">
+
+      {/* MAIN CONTAINER - SLIGHTLY MOVED TO THE RIGHT */}
+      <div className="max-w-[1340px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center lg:translate-x-8 xl:translate-x-12">
 
         {/* LEFT SPEECH BUBBLE CARD */}
         <motion.div
@@ -37,10 +39,11 @@ export default function TrustSection() {
           className="lg:col-span-6 relative group flex justify-center lg:justify-start"
         >
           <div className="relative bg-[#162D1A] rounded-[48px] rounded-bl-none p-8 sm:p-10 md:p-11 text-white shadow-2xl shadow-[#162D1A]/20 transition-transform hover:-translate-y-1 duration-500 z-10 w-full max-w-[540px]">
-            {/* THE "TAIL" OF THE BUBBLE */}
+
+            {/* THE TAIL OF THE BUBBLE */}
             <div className="absolute -bottom-6 left-0 w-0 h-0 border-t-[24px] border-t-[#162D1A] border-r-[24px] border-r-transparent" />
 
-            {/* TITLE - CENTERED ON ONE LINE */}
+            {/* TITLE */}
             <h3 className="text-[24px] sm:text-[28px] md:text-[30px] font-extrabold text-white text-center leading-tight mb-5 whitespace-nowrap">
               Hire with confidence
             </h3>
@@ -62,7 +65,7 @@ export default function TrustSection() {
             </p>
           </div>
 
-          {/* Subtle accent shadow */}
+          {/* ORIGINAL BLUR ACCENT - PRESERVED */}
           <div className="absolute -inset-1 bg-gradient-to-r from-[#84cc16]/20 to-transparent rounded-[60px] rounded-bl-none -z-10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
         </motion.div>
 
@@ -74,7 +77,8 @@ export default function TrustSection() {
           transition={{ duration: 0.6, delay: 0.2 }}
           className="lg:col-span-6 flex flex-col justify-center"
         >
-          {/* HEADING - ON ONE LINE */}
+
+          {/* HEADING */}
           <h2 className="text-[26px] sm:text-[32px] md:text-[36px] lg:text-[40px] font-extrabold text-[#1E3A2B] leading-tight mb-6 whitespace-nowrap">
             Built Around Transparency.
           </h2>
@@ -83,17 +87,23 @@ export default function TrustSection() {
           <div className="space-y-4 sm:space-y-5">
             {transparencyFeatures.map((item, idx) => (
               <div key={idx} className="flex items-start gap-3.5">
+
+                {/* CHECK ICON */}
                 <div className="w-5 h-5 rounded-full bg-[#6E9625] text-white flex items-center justify-center shrink-0 mt-0.5 shadow-sm">
                   <FiCheck size={12} strokeWidth={3} />
                 </div>
+
+                {/* FEATURE CONTENT */}
                 <div>
                   <h4 className="text-[15px] sm:text-[16px] font-bold text-[#1E3A2B] leading-tight">
                     {item.title}
                   </h4>
+
                   <p className="text-[13px] sm:text-[13.5px] text-[#4A5548] leading-relaxed mt-0.5">
                     {item.desc}
                   </p>
                 </div>
+
               </div>
             ))}
           </div>

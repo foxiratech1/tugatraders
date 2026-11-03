@@ -276,7 +276,9 @@ function SidebarStatusBadge({ status, job }: { status: string; job?: Job }) {
       </div>
     );
   }
-  const hasAcceptedQuote = job && Array.isArray(job.quotes) && job.quotes.some((q: any) => q.status?.toUpperCase() === "ACCEPTED");
+  const hasAcceptedQuote =
+    Boolean(job?.selectedTrader) ||
+    (job && Array.isArray(job.quotes) && job.quotes.some((q: any) => q.status?.toUpperCase() === "ACCEPTED"));
   if (hasAcceptedQuote) {
     return (
       <div className="inline-flex items-center px-3 py-1 rounded-[4px] bg-[#7DB0E3] border border-[#679FD8] text-[#103270] text-[11px] font-bold">
@@ -335,7 +337,9 @@ function StatusBadge({ status, job, quotesCount }: { status: string; job?: Job; 
       </div>
     );
   }
-  const hasAcceptedQuote = job && Array.isArray(job.quotes) && job.quotes.some((q: any) => q.status?.toUpperCase() === "ACCEPTED");
+  const hasAcceptedQuote =
+    Boolean(job?.selectedTrader) ||
+    (job && Array.isArray(job.quotes) && job.quotes.some((q: any) => q.status?.toUpperCase() === "ACCEPTED"));
   if (hasAcceptedQuote) {
     return (
       <div className="inline-flex items-center px-3 py-1 rounded-[4px] bg-[#7DB0E3] border border-[#679FD8] text-[#103270] text-[11px] font-bold">
@@ -539,8 +543,8 @@ function QuotesModal({
 
                       {/* Status badge */}
                       {isThisAccepted ? (
-                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-semibold border border-emerald-100 flex-shrink-0">
-                          <CheckCircle size={11} />
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#E4F2CC] text-[#4E7519] text-[11px] font-bold whitespace-nowrap flex-shrink-0">
+                          <CheckCircle size={12} />
                           Accepted
                         </span>
                       ) : effectiveStatus?.toUpperCase() === "REJECTED" || effectiveStatus?.toUpperCase() === "DECLINED" ? (
@@ -617,8 +621,8 @@ function QuotesModal({
 
                     {/* Actions */}
                     {isThisAccepted ? (
-                      <div className="flex items-center gap-1.5 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100">
-                        <CheckCircle size={12} />
+                      <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#E4F2CC] text-[#4E7519] text-[12px] font-bold whitespace-nowrap">
+                        <CheckCircle size={14} />
                         Quote Accepted
                       </div>
                     ) : effectiveStatus?.toUpperCase() === "REJECTED" || effectiveStatus?.toUpperCase() === "DECLINED" ? (
@@ -860,8 +864,8 @@ function TraderQuoteCard({
 
           {/* Badges */}
           {effectiveQuoteStatus?.toUpperCase() === "ACCEPTED" ? (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#E8F5E9] text-[#2E7D32] text-[11px] font-bold border border-[#C8E6C9]">
-              <CheckCircle size={11} />
+            <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#E4F2CC] text-[#4E7519] text-[12px] font-bold whitespace-nowrap">
+              <CheckCircle size={14} />
               Quote Accepted
             </span>
           ) : effectiveQuoteStatus?.toUpperCase() === "REJECTED" || effectiveQuoteStatus?.toUpperCase() === "DECLINED" ? (
@@ -1058,7 +1062,8 @@ export default function CustomerJobDashboard() {
     },
     onCustomerDashboardUpdate: (data) => {
       if (data) {
-        setDashboardDetails(data);
+        const dashData = data?.data?.actionRequired ? data.data : (data?.actionRequired ? data : (data?.data || data));
+        setDashboardDetails(dashData);
       }
     },
   });
@@ -1185,13 +1190,18 @@ export default function CustomerJobDashboard() {
 
   const handleCompleteJob = async () => {
     if (!selectedJob) return;
-    if (selectedJob.status === "COMPLETED") {
+    const norm = normalizeStatus(selectedJob.status);
+    if (norm === "COMPLETED") {
       toast.success("Job is already completed!");
       if (!reviewedJobIds.has(selectedJob.id) && !selectedJob.hasReviewed) {
         setShareReviewModalJob(selectedJob);
         setShareReviewTrader(selectedJob.selectedTrader || null);
         setIsShareReviewModalOpen(true);
       }
+      return;
+    }
+    if (norm === "CLOSED" || norm === "CANCELLED" || norm === "EXPIRED") {
+      toast.error("Cannot complete a closed job");
       return;
     }
     try {
@@ -1234,6 +1244,11 @@ export default function CustomerJobDashboard() {
 
   const handleCloseJobSubmit = async (data: { isWorkCarriedOut: boolean; cancelReason?: string } = { isWorkCarriedOut: true }) => {
     if (!selectedJob) return;
+    const norm = normalizeStatus(selectedJob.status);
+    if (norm === "COMPLETED" || norm === "CLOSED" || norm === "CANCELLED" || norm === "EXPIRED") {
+      toast.error("Job is already completed or closed");
+      return;
+    }
     try {
       await authApi.closeJob(selectedJob.id, data);
       toast.success("Job closed successfully!");
@@ -1263,7 +1278,12 @@ export default function CustomerJobDashboard() {
         ]);
 
         if (dashRes) {
-          setDashboardDetails(dashRes.data || dashRes);
+          const dashData = dashRes?.data?.actionRequired
+            ? dashRes.data
+            : dashRes?.actionRequired
+              ? dashRes
+              : (dashRes?.data || dashRes);
+          setDashboardDetails(dashData);
         }
 
         const arr: Job[] = Array.isArray(jobsRes)
@@ -1433,20 +1453,64 @@ export default function CustomerJobDashboard() {
 
   const quotesCount = Math.max(quotes.length, selectedJob?.quotesReceived ?? 0, selectedJob?.quotesCount ?? 0);
 
-  // ── Stat calculations corresponding with actual jobs & quotes ──
-  const jobsPostedCount = totalJobs || (jobs.length > 0 ? jobs.length : (dashboardDetails?.actionRequired?.activeJobsCount ?? 0));
+  const selectedJobStatus = selectedJob ? normalizeStatus(selectedJob.status) : "";
+  const isSelectedJobClosed =
+    selectedJobStatus === "CLOSED" ||
+    selectedJobStatus === "CANCELLED" ||
+    selectedJobStatus === "EXPIRED";
+  const isSelectedJobCompleted = selectedJobStatus === "COMPLETED";
+  const isSelectedJobCompletedOrClosed = isSelectedJobCompleted || isSelectedJobClosed;
 
-  const totalQuotesReceived = jobs.reduce((sum, j) => {
-    const qCount = j.quotesReceived ?? j.quotesCount ?? (j as any)._count?.quotes ?? (Array.isArray(j.quotes) ? j.quotes.length : 0);
+  // ── Stat calculations corresponding with actual jobs & quotes ──
+  const actionRequired =
+    dashboardDetails?.actionRequired ||
+    dashboardDetails?.data?.actionRequired ||
+    dashboardDetails?.data?.data?.actionRequired;
+
+  const pendingQuotesFallback = jobs.reduce((sum, j) => {
+    const norm = normalizeStatus(j.status);
+    // If the job is completed, closed, cancelled, or expired, don't count its quotes
+    if (norm === "COMPLETED" || norm === "CLOSED" || norm === "CANCELLED" || norm === "EXPIRED") {
+      return sum;
+    }
+    // If the job already has an accepted quote or trader assigned, quotes are no longer awaiting response
+    const hasAcceptedQuote =
+      Boolean(j.selectedTrader) ||
+      (Array.isArray(j.quotes) && j.quotes.some((q: any) => q.status?.toUpperCase() === "ACCEPTED"));
+    if (hasAcceptedQuote) {
+      return sum;
+    }
+    // If quotes array is present, count only PENDING / unaccepted / undeclined quotes
+    if (Array.isArray(j.quotes) && j.quotes.length > 0) {
+      const pendingInJob = j.quotes.filter((q: any) => {
+        const s = (q.status || "").toUpperCase();
+        return s === "PENDING" || s === "QUOTE_RECEIVED" || s === "QUOTE_SENT";
+      }).length;
+      return sum + pendingInJob;
+    }
+    const qCount = j.quotesReceived ?? j.quotesCount ?? (j as any)._count?.quotes ?? 0;
     return sum + qCount;
   }, 0);
-  const quotesReceivedCount = jobs.length > 0 ? totalQuotesReceived : (dashboardDetails?.actionRequired?.quotesAwaitingResponseCount ?? 0);
 
   const unreviewedCompletedJobsCount = jobs.filter((j) => {
     const norm = normalizeStatus(j.status);
     return norm === "COMPLETED" && !reviewedJobIds.has(j.id) && !j.hasReviewed;
   }).length;
-  const reviewsOutstandingCount = dashboardDetails?.actionRequired?.unreviewedJobsCount ?? unreviewedCompletedJobsCount;
+
+  const jobsPostedCount =
+    actionRequired?.activeJobsCount !== undefined
+      ? actionRequired.activeJobsCount
+      : (totalJobs || (jobs.length > 0 ? jobs.length : 0));
+
+  const quotesReceivedCount =
+    actionRequired?.quotesAwaitingResponseCount !== undefined
+      ? actionRequired.quotesAwaitingResponseCount
+      : pendingQuotesFallback;
+
+  const reviewsOutstandingCount =
+    actionRequired?.unreviewedJobsCount !== undefined
+      ? actionRequired.unreviewedJobsCount
+      : unreviewedCompletedJobsCount;
 
   const renderJobHistory = () => (
     <div
@@ -1567,10 +1631,10 @@ export default function CustomerJobDashboard() {
           <div className="w-fit max-w-full bg-white rounded-[20px] sm:rounded-[22px] border border-[#DFEBDD] overflow-hidden flex flex-col sm:flex-row items-stretch shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
             {/* Left: Greeting (compact green section) */}
             <div className="bg-[#EFF5EB] py-3 sm:py-3.5 md:py-4 px-5 sm:px-6 flex items-center gap-3 sm:gap-3.5 shrink-0 border-b sm:border-b-0 sm:border-r border-[#DFEBDD]">
-              <span className="text-[22px] sm:text-[24px] leading-none select-none">👋</span>
+              <span className="text-[24px] sm:text-[26px] leading-none select-none">👋</span>
               <div>
-                <h1 className="text-[17px] sm:text-[19px] font-black text-[#143118] leading-tight whitespace-nowrap">
-                  Hello, {customerName}
+                <h1 className="text-[19px] sm:text-[21px] font-black text-[#143118] leading-tight whitespace-nowrap">
+                  Hello {customerName}
                 </h1>
               </div>
             </div>
@@ -1582,14 +1646,14 @@ export default function CustomerJobDashboard() {
                 onClick={() => router.push('/customer-dashboard/job-history?tab=JOB_POSTED')}
                 className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group shrink-0 transition-opacity hover:opacity-80"
               >
-                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#FEF9C3] text-[#CA8A04] flex items-center justify-center shrink-0">
-                  <Briefcase size={17} strokeWidth={2.2} />
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#FEF9C3] text-[#CA8A04] flex items-center justify-center shrink-0">
+                  <Briefcase size={15} strokeWidth={2.2} />
                 </div>
                 <div>
-                  <span className="text-[17px] sm:text-[19px] font-black text-[#143118] leading-tight block">
+                  <span className="text-[15px] sm:text-[16px] font-black text-[#143118] leading-tight block">
                     {jobsPostedCount}
                   </span>
-                  <span className="text-[11.5px] sm:text-[12.5px] text-[#768779] font-semibold whitespace-nowrap block mt-0.5">
+                  <span className="text-[11px] sm:text-[12px] text-[#768779] font-semibold whitespace-nowrap block mt-0.5">
                     Jobs Posted
                   </span>
                 </div>
@@ -1600,14 +1664,14 @@ export default function CustomerJobDashboard() {
                 onClick={() => router.push('/customer-dashboard/job-history?tab=QUOTE_RECEIVED')}
                 className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group shrink-0 transition-opacity hover:opacity-80"
               >
-                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0">
-                  <MessageSquare size={17} strokeWidth={2.2} />
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center shrink-0">
+                  <MessageSquare size={15} strokeWidth={2.2} />
                 </div>
                 <div>
-                  <span className="text-[17px] sm:text-[19px] font-black text-[#143118] leading-tight block">
+                  <span className="text-[15px] sm:text-[16px] font-black text-[#143118] leading-tight block">
                     {quotesReceivedCount}
                   </span>
-                  <span className="text-[11.5px] sm:text-[12.5px] text-[#768779] font-semibold whitespace-nowrap block mt-0.5">
+                  <span className="text-[11px] sm:text-[12px] text-[#768779] font-semibold whitespace-nowrap block mt-0.5">
                     {quotesReceivedCount === 1 ? "Quote Received" : "Quotes Received"}
                   </span>
                 </div>
@@ -1618,14 +1682,14 @@ export default function CustomerJobDashboard() {
                 onClick={handleActionRequiredLeaveReview}
                 className="flex items-center gap-2.5 sm:gap-3 cursor-pointer group shrink-0 transition-opacity hover:opacity-80"
               >
-                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-[#EBF4E7] text-[#2E7D32] flex items-center justify-center shrink-0">
-                  <Star size={17} strokeWidth={2.2} />
+                <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#EBF4E7] text-[#2E7D32] flex items-center justify-center shrink-0">
+                  <Star size={15} strokeWidth={2.2} />
                 </div>
                 <div>
-                  <span className="text-[17px] sm:text-[19px] font-black text-[#143118] leading-tight block">
+                  <span className="text-[15px] sm:text-[16px] font-black text-[#143118] leading-tight block">
                     {reviewsOutstandingCount}
                   </span>
-                  <span className="text-[11.5px] sm:text-[12.5px] text-[#768779] font-semibold whitespace-nowrap block mt-0.5">
+                  <span className="text-[11px] sm:text-[12px] text-[#768779] font-semibold whitespace-nowrap block mt-0.5">
                     Reviews Outstanding
                   </span>
                 </div>
@@ -1633,11 +1697,11 @@ export default function CustomerJobDashboard() {
             </div>
           </div>
 
-          {/* Right: Action Buttons on the exact same row */}
-          <div className="flex items-center gap-3 sm:gap-3.5 flex-wrap shrink-0">
+          {/* Right: Action Buttons on the exact same row (slightly smaller boxes & text one size smaller) */}
+          <div className="flex items-center gap-2.5 sm:gap-3 flex-wrap shrink-0">
             <Link href="/directory-listing/search">
-              <button className="flex items-center justify-center gap-2.5 px-5 sm:px-5.5 py-2.5 sm:py-3 rounded-[14px] border border-gray-200 cursor-pointer bg-white text-[14px] sm:text-[14.5px] font-bold text-[#1C2C1C] hover:bg-gray-50 hover:border-gray-300 transition-all shadow-xs">
-                <Users size={18} />
+              <button className="flex items-center justify-center gap-2 px-4 sm:px-4.5 py-2 sm:py-2.5 rounded-[12px] border border-gray-200 cursor-pointer bg-white text-[12.5px] sm:text-[13px] font-bold text-[#1C2C1C] hover:bg-gray-50 hover:border-gray-300 transition-all shadow-xs">
+                <Users size={16} />
                 Find a Trader
               </button>
             </Link>
@@ -1649,14 +1713,14 @@ export default function CustomerJobDashboard() {
                   handleActionRequiredLeaveReview();
                 }
               }}
-              className="flex items-center justify-center gap-2.5 px-5 sm:px-5.5 py-2.5 sm:py-3 rounded-[14px] border border-gray-200 bg-white cursor-pointer text-[14px] sm:text-[14.5px] font-bold text-[#1C2C1C] hover:bg-gray-50 hover:border-gray-300 transition-all shadow-xs"
+              className="flex items-center justify-center gap-2 px-4 sm:px-4.5 py-2 sm:py-2.5 rounded-[12px] border border-gray-200 bg-white cursor-pointer text-[12.5px] sm:text-[13px] font-bold text-[#1C2C1C] hover:bg-gray-50 hover:border-gray-300 transition-all shadow-xs"
             >
-              <Star size={18} className={selectedJob?.status === "COMPLETED" ? "text-[#6E9625] fill-[#6E9625]" : ""} />
+              <Star size={16} className={selectedJob?.status === "COMPLETED" ? "text-[#6E9625] fill-[#6E9625]" : ""} />
               Leave Review
             </button>
             <Link href="/customer-dashboard/post-job">
-              <button className="flex items-center justify-center gap-2.5 px-5.5 sm:px-6 py-2.5 sm:py-3 rounded-[14px] bg-[#6E9625] text-white text-[14px] sm:text-[14.5px] cursor-pointer font-bold hover:bg-[#58791C] transition-all shadow-xs">
-                <PlusCircle size={18} strokeWidth={2.2} />
+              <button className="flex items-center justify-center gap-2 px-4.5 sm:px-5 py-2 sm:py-2.5 rounded-[12px] bg-[#6E9625] text-white text-[12.5px] sm:text-[13px] cursor-pointer font-bold hover:bg-[#58791C] transition-all shadow-xs">
+                <PlusCircle size={16} strokeWidth={2.2} />
                 Post a Job
               </button>
             </Link>
@@ -1755,7 +1819,7 @@ export default function CustomerJobDashboard() {
 
                   {/* Actions: Edit, Job complete, Close Job */}
                   <div className="flex items-center gap-2 flex-wrap shrink-0">
-                    {selectedJob.status !== "CLOSED" && selectedJob.status !== "CANCELLED" && (
+                    {!isSelectedJobCompletedOrClosed && (
                       <button
                         onClick={() => {
                           sessionStorage.setItem('editJobData', JSON.stringify(selectedJob));
@@ -1768,7 +1832,7 @@ export default function CustomerJobDashboard() {
                       </button>
                     )}
 
-                    {selectedJob.status !== "CLOSED" && selectedJob.status !== "CANCELLED" && (
+                    {!isSelectedJobCompletedOrClosed && (
                       <div className="flex items-center gap-2">
                         <button
                           onClick={handleCompleteJob}
@@ -1823,8 +1887,8 @@ export default function CustomerJobDashboard() {
                     <span className="text-[9.5px] sm:text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-0.5 sm:mb-1 truncate">
                       BUDGET
                     </span>
-                    <div className={`flex items-center gap-1 text-[12px] sm:text-[13px] font-bold truncate ${["CLOSED", "COMPLETED", "CANCELLED", "EXPIRED"].includes(selectedJob.status) ? "text-gray-400" : "text-[#1C2C1C]"}`}>
-                      <Euro size={13} className={`shrink-0 ${["CLOSED", "COMPLETED", "CANCELLED", "EXPIRED"].includes(selectedJob.status) ? "text-gray-400" : "text-[#6E9625]"}`} />
+                    <div className={`flex items-center gap-1 text-[12px] sm:text-[13px] font-bold truncate ${isSelectedJobCompletedOrClosed ? "text-gray-400" : "text-[#1C2C1C]"}`}>
+                      <Euro size={13} className={`shrink-0 ${isSelectedJobCompletedOrClosed ? "text-gray-400" : "text-[#6E9625]"}`} />
                       <span className="truncate uppercase">{formatBudget(selectedJob.budgetRange)}</span>
                     </div>
                   </div>

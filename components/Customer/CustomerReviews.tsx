@@ -276,6 +276,14 @@ export default function CustomerReviews() {
     router.push(`/customer-dashboard/leave-review?${params.toString()}`);
   };
 
+  const handleLeaveReviewTopClick = () => {
+    if (unreviewedJobs && unreviewedJobs.length > 0) {
+      handleGiveReview(unreviewedJobs[0]);
+    } else {
+      router.push("/customer-dashboard/leave-review");
+    }
+  };
+
   const formatDate = (iso?: string) => {
     if (!iso) return "—";
     try {
@@ -457,11 +465,22 @@ export default function CustomerReviews() {
     <div className="min-h-screen bg-[#F8F9F5]">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-8">
         {/* Header */}
-        <div className="mb-5 sm:mb-6">
-          <h1 className="text-2xl sm:text-[28px] font-bold text-[#1C2C1C]">Job Reviews</h1>
-          <p className="text-gray-500 text-[13px] sm:text-[14px] mt-1">
-            Manage your submitted reviews and complete pending reviews for your completed jobs.
-          </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5 sm:mb-6">
+          <div>
+            <h1 className="text-2xl sm:text-[28px] font-bold text-[#1C2C1C]">Job Reviews</h1>
+            <p className="text-gray-500 text-[13px] sm:text-[14px] mt-1">
+              Manage your submitted reviews and complete pending reviews for your completed jobs.
+            </p>
+          </div>
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            <button
+              onClick={handleLeaveReviewTopClick}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#6E9625] text-white text-[13px] sm:text-[14px] font-bold hover:bg-[#58791C] shadow-sm hover:shadow transition-all cursor-pointer"
+            >
+              <Star size={15} className="fill-current" />
+              <span>Leave a Review</span>
+            </button>
+          </div>
         </div>
 
         {/* Tab Navigation */}

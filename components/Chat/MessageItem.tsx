@@ -74,6 +74,13 @@ export default function MessageItem({
   const isJobCompleteNotice = /(?:✅\s*)?.*?marked this job as complete/i.test(rawText);
   const isJobRelatedSystemMessage = isJobStarted || isJobCompleteNotice;
 
+  // Detect "Customer confirmed job completion on …" backend system message
+  const confirmedMatch = rawText.match(
+    /Customer confirmed job completion on (.+?)\.\s*You can now leave a review[!.]?/i
+  );
+  const isCustomerConfirmedCompletion = !!confirmedMatch;
+  const confirmedDateStr = confirmedMatch ? confirmedMatch[1].trim() : "";
+
   // Format message text to dynamically include the job title if it's a job started message
   let displayText = rawText;
   if (isJobStarted && jobTitle && jobTitle.trim()) {
@@ -94,6 +101,19 @@ export default function MessageItem({
   return (
     <div className={`flex flex-col mb-4 ${isSender ? "items-end" : "items-start"}`}>
       {/* Bubble Container */}
+      {isCustomerConfirmedCompletion ? (
+        // Special full-width banner for customer-confirmed completion
+        <div className="w-full max-w-[85%] rounded-2xl bg-[#1C2C1C] text-white px-4 py-3.5 shadow-xs">
+          {/* Line 1: Job complete on <date> */}
+          <p className="text-[14px] font-semibold leading-snug">
+            🎉 Job Complete on {confirmedDateStr}.&nbsp; You can now leave a review!
+          </p>
+          {/* Line 2: Proof of work notice */}
+          <p className="text-[12.5px] mt-1.5 leading-relaxed text-white/75">
+            Please upload proof of completed work (e.g. invoice, receipt or photo) to help us prevent fake reviews and keep reviews trustworthy.
+          </p>
+        </div>
+      ) : (
       <div
         onClick={() => {
           if (isJobRelatedSystemMessage && onViewJobDetails) {
@@ -194,6 +214,7 @@ export default function MessageItem({
           </div>
         )}
       </div>
+      )} {/* end isCustomerConfirmedCompletion ternary */}
 
       {/* Message Metadata */}
       <div className="flex items-center justify-end gap-1 mt-1 px-1">

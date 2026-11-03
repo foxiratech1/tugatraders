@@ -33,7 +33,7 @@ export default function BuiltForPortugal() {
 
         {/* RIGHT MAP IMAGE */}
         <div className="relative flex justify-center lg:justify-start items-center w-full">
-          <div className="relative w-full max-w-[320px] sm:max-w-[350px] lg:max-w-[380px] h-[360px] sm:h-[400px] lg:h-[435px] transition-transform duration-300 hover:scale-[1.03] cursor-pointer">
+          <div className="relative w-full max-w-[320px] sm:max-w-[350px] lg:max-w-[380px] h-[360px] sm:h-[400px] lg:h-[435px] cursor-pointer">
             <Image
               src="/newMap.jpg"
               alt="Built for Portugal Map"

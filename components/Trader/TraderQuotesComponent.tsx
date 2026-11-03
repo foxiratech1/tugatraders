@@ -190,7 +190,17 @@ function QuoteCard({
 
   const normalizedStatus = (quote.status || "").toUpperCase().replace(/[\s_-]/g, "");
   const normalizedJobStatus = ((quote.job as any)?.status || (quote as any).jobStatus || "").toUpperCase().replace(/[\s_-]/g, "");
-  const isInProgress = normalizedStatus === "INPROGRESS" || normalizedJobStatus === "INPROGRESS";
+  // The job is actively in progress only when the trader has started it (job status = IN_PROGRESS/STARTED)
+
+  const isJobStarted = normalizedJobStatus === "INPROGRESS" || normalizedJobStatus === "STARTED";
+
+  // Quote accepted but trader has not yet clicked Start Job -- delete/withdraw is still allowed
+
+  const isAcceptedNotStarted = normalizedStatus === "ACCEPTED" && !isJobStarted;
+
+  // Hide delete only once the job is actively running (trader has started it)
+
+  const isInProgress = isJobStarted && !isAcceptedNotStarted;
 
   return (
     <div
@@ -1115,9 +1125,13 @@ export default function TraderQuotesComponent() {
               {(() => {
                 const currentStatus = (viewQuoteDetails?.status || viewingQuote.status || "").toUpperCase().replace(/[\s_-]/g, "");
                 const currentJobStatus = ((viewQuoteDetails?.job as any)?.status || (viewingQuote.job as any)?.status || "").toUpperCase().replace(/[\s_-]/g, "");
-                const isViewingInProgress = currentStatus === "INPROGRESS" || currentJobStatus === "INPROGRESS";
+                const isViewJobStarted = currentJobStatus === "INPROGRESS" || currentJobStatus === "STARTED";
+                // Allow withdraw when PENDING, or ACCEPTED but trader has not yet started the job
+                const canWithdraw =
+                  (currentStatus === "PENDING" || (currentStatus === "ACCEPTED" && !isViewJobStarted)) &&
+                  currentStatus !== "WITHDRAWN" && currentStatus !== "REJECTED" && currentStatus !== "DECLINED";
 
-                return viewingQuote.status?.toUpperCase() === "PENDING" && !isViewingInProgress ? (
+                return canWithdraw ? (
                   <button
                     onClick={() => handleWithdrawClick(viewingQuote)}
                     className="flex-1 h-[46px] rounded-xl border border-red-200 bg-red-50 hover:bg-red-100 text-red-600 text-[14px] font-bold transition-colors cursor-pointer flex items-center justify-center gap-2"

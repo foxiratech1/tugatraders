@@ -771,9 +771,9 @@ export default function TraderDashboard() {
         {/* ── LEFT COLUMN ───────────────────────────────────── */}
         <div className="flex flex-col gap-7 min-w-0 ">
           {/* ── TOP WELCOME BAR ───────────────────────────────── */}
-          <div className="w-fit min-w-0 sm:min-w-[720px] xl:min-w-[800px] max-w-full bg-white rounded-[18px] sm:rounded-[20px] border border-[#DFEBDD] overflow-hidden flex flex-col sm:flex-row items-stretch shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
-            {/* Left: Greeting (compact green section) */}
-            <div className="bg-[#EFF5EB] py-2.5 sm:py-3 px-5 sm:px-7 flex items-center gap-3 sm:gap-3.5 shrink-0 border-b sm:border-b-0 sm:border-r border-[#DFEBDD]">
+          <div className="w-full bg-white rounded-[18px] sm:rounded-[20px] border border-[#DFEBDD] overflow-hidden flex flex-col sm:flex-row items-stretch shadow-[0_2px_8px_rgba(0,0,0,0.02)]">
+            {/* Left: Greeting (green section, slightly longer) */}
+            <div className="bg-[#EFF5EB] py-2.5 sm:py-3 px-8 sm:px-14 md:px-16 lg:px-20 xl:px-24 flex items-center gap-3 sm:gap-3.5 shrink-0 border-b sm:border-b-0 sm:border-r border-[#DFEBDD]">
               <span className="text-[20px] sm:text-[22px] leading-none select-none">👋</span>
               <div>
                 <h1 className="text-[16px] sm:text-[18px] font-black text-[#143118] leading-tight whitespace-nowrap">
@@ -782,8 +782,8 @@ export default function TraderDashboard() {
               </div>
             </div>
 
-            {/* Right: Quick stat mini-cards inside white box (comfortably spaced) */}
-            <div className="bg-white flex-1 px-6 sm:px-8 lg:px-10 py-2.5 sm:py-3 flex items-center gap-7 sm:gap-9 lg:gap-11 overflow-x-auto flex-wrap sm:flex-nowrap">
+            {/* Right: Quick stat mini-cards inside white box (fills remaining space) */}
+            <div className="bg-white flex-1 px-5 sm:px-7 lg:px-9 py-2.5 sm:py-3 flex items-center justify-between sm:justify-around gap-6 sm:gap-8 lg:gap-9 overflow-x-auto flex-wrap sm:flex-nowrap">
               {/* Card 1: In progress jobs */}
               <div
                 onClick={() => router.push("/trader/jobs?tab=In Progress")}
@@ -792,6 +792,7 @@ export default function TraderDashboard() {
                 <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#FFF4E6] text-[#EA580C] flex items-center justify-center shrink-0">
                   <Luggage size={16} strokeWidth={2.2} />
                 </div>
+
                 <div>
                   <span className="text-[16px] sm:text-[17px] font-black text-[#143118] leading-tight block">
                     {actionRequired?.inProgressJobsCount ?? rawWorkingOn.length}
@@ -1375,7 +1376,7 @@ export default function TraderDashboard() {
               onClick={() => router.push(nextStepUrl)}
               className="w-full py-2.5 rounded-xl border border-[#D8E6D6] bg-[#EFF5EB] text-[#2B5921] text-[12.5px] font-bold flex items-center justify-center gap-1.5 hover:bg-[#E4EFE2] transition-colors cursor-pointer"
             >
-              <span>Complete your profile</span>
+              <span>{displayPercentage >= 100 ? "Edit Profile" : "Complete your profile"}</span>
               <ArrowRight size={13} />
             </button>
           </div>
@@ -1446,6 +1447,7 @@ export default function TraderDashboard() {
                 <div className="w-7 h-7 rounded-lg bg-[#EFF5EB] flex items-center justify-center text-[#2B5921]">
                   <Eye size={15} />
                 </div>
+
                 <div>
                   <span className="text-[18px] font-black text-[#1B311E] leading-none block">
                     {performance?.profileViews?.value ?? 12}
@@ -1466,6 +1468,7 @@ export default function TraderDashboard() {
                   <Star size={15} />
                 </div>
                 <div>
+
                   <span className="text-[18px] font-black text-[#1B311E] leading-none block">
                     {performance?.averageRating?.value ?? 4}
                   </span>
@@ -1757,6 +1760,7 @@ export default function TraderDashboard() {
                   ) : (
                     <span>Send Quote</span>
                   )}
+
                 </button>
               </div>
             </form>
@@ -1766,3 +1770,4 @@ export default function TraderDashboard() {
     </div>
   );
 }
+

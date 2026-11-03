@@ -1332,7 +1332,7 @@ export default function TraderProfilePage() {
                       {/* Work Radius */}
                       <div>
                         <label className="block text-[12px] font-medium text-gray-500 mb-1">
-                          Work Radius (miles)
+                          Work Radius (Kilometers )
                         </label>
                         <input
                           id="tp-workRadius"

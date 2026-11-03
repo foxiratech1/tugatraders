@@ -12,14 +12,20 @@ import { useAuth } from "@/hooks/useAuth";
 function getImageUrl(path: string | null | undefined): string | null {
   if (!path || path === "null" || path === "undefined") return null;
   if (path.startsWith("http")) return path;
-  const baseUrl = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000").replace(/\/+$/, "");
+
+  const baseUrl = (
+    process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"
+  ).replace(/\/+$/, "");
+
   const cleanPath = path.replace(/^\/+/, "");
+
   return `${baseUrl}/${cleanPath}`;
 }
 
 export default function ReviewSection() {
   const { role } = useAuth();
   const isTrader = role === "trader";
+
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -27,7 +33,9 @@ export default function ReviewSection() {
     const fetchReviews = async () => {
       try {
         setLoading(true);
+
         const res = await authApi.getPublicReviews(1, 10);
+
         const rawList =
           res?.data?.reviews ||
           res?.reviews ||
@@ -36,7 +44,10 @@ export default function ReviewSection() {
 
         if (Array.isArray(rawList) && rawList.length > 0) {
           const formatted = rawList.map((item: any, idx: number) => {
-            const rating = Number(item.rating || item.stars || item.score || 5);
+            const rating = Number(
+              item.rating || item.stars || item.score || 5
+            );
+
             const name =
               item.customer?.fullName ||
               item.customer?.name ||
@@ -66,8 +77,14 @@ export default function ReviewSection() {
               id: item.id || item._id || String(idx),
               name,
               stars: rating,
-              text: rawText ? (rawText.startsWith('"') ? rawText : `"${rawText}"`) : '""',
-              avatar: getImageUrl(rawAvatar) || (idx % 2 === 0 ? "/avt.png" : "/combo.png"),
+              text: rawText
+                ? rawText.startsWith('"')
+                  ? rawText
+                  : `"${rawText}"`
+                : '""',
+              avatar:
+                getImageUrl(rawAvatar) ||
+                (idx % 2 === 0 ? "/avt.png" : "/combo.png"),
             };
           });
 
@@ -86,11 +103,15 @@ export default function ReviewSection() {
     fetchReviews();
   }, []);
 
+  // REVIEW CARD
   const ReviewCard = ({ review }: { review: any }) => (
     <div className="bg-white rounded-[18px] p-3.5 sm:p-4 shadow-[0_8px_30px_rgba(0,0,0,0.06)] border border-[#E6EDE2] w-full max-w-[250px] sm:max-w-[265px] transition-transform duration-300 hover:-translate-y-1 hover:shadow-xl">
-      {/* Top Header Row */}
+
+      {/* TOP HEADER ROW */}
       <div className="flex items-start justify-between gap-2.5 mb-2">
         <div className="flex items-center gap-2.5">
+
+          {/* AVATAR */}
           <div className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-full overflow-hidden bg-gray-100 flex-shrink-0 border border-gray-200">
             <Image
               src={review.avatar || "/avt.png"}
@@ -100,8 +121,9 @@ export default function ReviewSection() {
               unoptimized
             />
           </div>
+
           <div>
-            {/* Stars */}
+            {/* STARS */}
             <div className="flex items-center gap-0.5 mb-0.5">
               {[...Array(5)].map((_, i) => (
                 <FiStar
@@ -115,18 +137,19 @@ export default function ReviewSection() {
                 />
               ))}
             </div>
-            {/* Name */}
+
+            {/* NAME */}
             <p className="text-[12px] font-bold text-[#1E3A2B] leading-tight">
               {review.name}
             </p>
           </div>
         </div>
 
-        {/* Quote mark icon */}
+        {/* QUOTE MARK ICON */}
         <FaQuoteRight className="text-[#6E9625]/20 text-[13px] shrink-0 mt-0.5" />
       </div>
 
-      {/* Review Text */}
+      {/* REVIEW TEXT */}
       <p className="text-[12px] text-[#555E52] leading-relaxed line-clamp-3 italic">
         {review.text}
       </p>
@@ -135,10 +158,13 @@ export default function ReviewSection() {
 
   return (
     <section className="w-full py-16 md:py-24 bg-white px-4 sm:px-6 overflow-hidden">
-      <div className="max-w-[1340px] mx-auto">
+
+      {/* MAIN CONTAINER - SLIGHTLY MOVED TO THE RIGHT */}
+      <div className="max-w-[1340px] mx-auto lg:translate-x-8 xl:translate-x-12">
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
 
-          {/* LEFT: Heading, Description & Button */}
+          {/* LEFT: HEADING, DESCRIPTION & BUTTON */}
           <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -146,17 +172,23 @@ export default function ReviewSection() {
             transition={{ duration: 0.6 }}
             className="lg:col-span-5 flex flex-col items-start justify-center"
           >
+            {/* HEADING */}
             <h2 className="text-[30px] sm:text-[36px] md:text-[40px] font-bold text-[#1E3A2B] leading-[1.15] mb-3.5 tracking-tight">
               Your <span className="text-[#6E9625]">Review</span> Matters
             </h2>
 
+            {/* DESCRIPTION */}
             <p className="text-[#4A5548] text-[14px] sm:text-[15px] leading-[1.55] font-normal mb-6 max-w-[480px]">
-              Your feedback plays an important role in helping us uphold the high<br className="hidden sm:inline" />
-              standards of our traders. It also supports their reputation and helps<br className="hidden sm:inline" />
-              other potential customers make informed decisions based on your<br className="hidden sm:inline" />
+              Your feedback plays an important role in helping us uphold the high
+              <br className="hidden sm:inline" />
+              standards of our traders. It also supports their reputation and helps
+              <br className="hidden sm:inline" />
+              other potential customers make informed decisions based on your
+              <br className="hidden sm:inline" />
               experience.
             </p>
 
+            {/* LEAVE A REVIEW BUTTON */}
             {isTrader ? (
               <button
                 type="button"
@@ -176,7 +208,7 @@ export default function ReviewSection() {
             )}
           </motion.div>
 
-          {/* RIGHT: Overlapping Review Cluster or Empty State */}
+          {/* RIGHT: OVERLAPPING REVIEW CLUSTER OR EMPTY STATE */}
           <motion.div
             initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -189,67 +221,76 @@ export default function ReviewSection() {
                 Loading approved reviews...
               </div>
             ) : reviews.length === 0 ? (
+              /* EMPTY STATE */
               <div className="flex flex-col items-center justify-center py-16 px-8 text-center bg-[#F9FAF8] rounded-[24px] border border-dashed border-[#D2D8CF] w-full max-w-[440px]">
+
                 <div className="w-12 h-12 rounded-full bg-[#6E9625]/10 flex items-center justify-center text-[#6E9625] mb-3">
                   <FiStar size={22} className="fill-[#6E9625]" />
                 </div>
+
                 <p className="text-[17px] font-bold text-[#1E3A2B] mb-1">
                   No review found
                 </p>
+
                 <p className="text-[13px] text-[#6F736C]">
                   There are currently no public approved reviews to display.
                 </p>
               </div>
             ) : (
-              /* Overlapping diamond/hexagon review cards cluster */
+              /* OVERLAPPING DIAMOND/HEXAGON REVIEW CARDS CLUSTER */
               <div className="grid grid-cols-2 gap-3 sm:gap-3.5 w-full max-w-[540px]">
-                {/* Row 1: Top Card (Centered) */}
+
+                {/* ROW 1: TOP CARD (CENTERED) */}
                 {reviews[0] && (
                   <div className="col-span-2 flex justify-center z-20 -mb-4 sm:-mb-6">
                     <ReviewCard review={reviews[0]} />
                   </div>
                 )}
 
-                {/* Row 2: Upper-Left & Upper-Right Cards */}
+                {/* ROW 2: UPPER-LEFT & UPPER-RIGHT CARDS */}
                 {reviews[1] && (
                   <div className="flex justify-end z-10">
                     <ReviewCard review={reviews[1]} />
                   </div>
                 )}
+
                 {reviews[2] && (
                   <div className="flex justify-start z-10">
                     <ReviewCard review={reviews[2]} />
                   </div>
                 )}
 
-                {/* Row 3: Lower-Left & Lower-Right Cards */}
+                {/* ROW 3: LOWER-LEFT & LOWER-RIGHT CARDS */}
                 {reviews[3] && (
                   <div className="flex justify-end z-10 -mt-2">
                     <ReviewCard review={reviews[3]} />
                   </div>
                 )}
+
                 {reviews[4] && (
                   <div className="flex justify-start z-10 -mt-2">
                     <ReviewCard review={reviews[4]} />
                   </div>
                 )}
 
-                {/* Row 4: Bottom Card (Centered) */}
+                {/* ROW 4: BOTTOM CARD (CENTERED) */}
                 {reviews[5] && (
                   <div className="col-span-2 flex justify-center z-20 -mt-4 sm:-mt-6">
                     <ReviewCard review={reviews[5]} />
                   </div>
                 )}
+
               </div>
             )}
           </motion.div>
 
         </div>
 
-        {/* Bottom Disclaimer */}
+        {/* BOTTOM DISCLAIMER */}
         <p className="text-[12px] sm:text-[13px] text-[#717A6E] mt-14 sm:mt-18 text-center italic">
           *Vetted - based on submitted documents and does not guarantee quality or reliability.
         </p>
+
       </div>
     </section>
   );

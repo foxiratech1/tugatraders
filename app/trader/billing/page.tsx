@@ -618,6 +618,13 @@ export default function BillingPage() {
                       <div className="mt-2 inline-flex items-center gap-1.5 bg-amber-400/20 border border-amber-300/30 text-amber-200 px-3 py-1 rounded-lg text-xs font-medium">
                         <AlertCircle size={13} className="text-amber-300" />
                         <span>Downgrade to <strong>{subscriptionData.pendingPlan.name}</strong> scheduled for next cycle.</span>
+                        <button
+                          type="button"
+                          onClick={() => setShowCancelDowngradeModal(true)}
+                          className="ml-1.5 underline text-amber-100 hover:text-white font-semibold cursor-pointer"
+                        >
+                          Cancel
+                        </button>
                       </div>
                     )}
                   </div>
@@ -736,298 +743,252 @@ export default function BillingPage() {
                 </button>
               </div>
 
-              {/* Upgrade Card */}
-              <div className="bg-[#2A3B2A] rounded-2xl p-6 text-white relative overflow-hidden">
-                <h3 className="text-lg font-bold mb-2">Upgrade to Yearly</h3>
-                <p className="text-sm text-white/70 mb-6 leading-relaxed">
-                  Save 20% on your membership by switching to annual billing.
-                </p>
-
-                <div className="bg-black/20 rounded-xl p-4 mb-6">
-                  <div className="text-[10px] font-bold tracking-wider uppercase text-white/70 mb-1">Annual Deal</div>
-                  <div className="text-2xl font-bold flex items-baseline gap-1">
-                    €288 <span className="text-sm font-normal text-white/70">/year</span>
+              {/* Upgrade Card — compact layout matching design */}
+              <div className="bg-[#2A3B2A] rounded-2xl p-5 sm:p-6 text-white relative overflow-hidden">
+                <div className="flex items-stretch justify-between gap-4">
+                  {/* Left: title + description */}
+                  <div className="flex-1 flex flex-col justify-between py-0.5">
+                    <h3 className="text-[17px] sm:text-[18px] font-bold text-white tracking-tight">Upgrade to Yearly</h3>
+                    <p className="text-[12px] sm:text-[13px] text-white/75 leading-relaxed max-w-[190px]">
+                      Save 20% on your membership by switching to annual billing.
+                    </p>
                   </div>
-                  <div className="text-xs text-white/70 mt-1">Equivalent to €24/mo</div>
-                </div>
 
-                <button
-                  onClick={() => {
-                    setIsSwitchPlanModalOpen(true);
-                    setModalPhase("PLAN");
-                    fetchPlans();
-                  }}
-                  className="w-full block text-center bg-white text-[#1C2C1C] font-bold py-3 px-4 rounded-xl hover:bg-gray-100 transition-colors"
-                >
-                  Switch Plan
-                </button>
+                  {/* Right: price box + button */}
+                  <div className="flex flex-col shrink-0 w-[145px] sm:w-[155px]">
+                    <div className="bg-black/25 rounded-xl px-4 py-3 text-left">
+                      <div className="text-[10px] font-bold tracking-wider uppercase text-white/75 mb-1">
+                        ANNUAL DEAL
+                      </div>
+                      <div className="flex items-baseline leading-none">
+                        <span className="text-[22px] sm:text-[24px] font-extrabold text-white">€288</span>
+                        <span className="text-[12px] font-normal text-white/70 ml-1">/year</span>
+                      </div>
+                      <div className="text-[10px] sm:text-[11px] text-white/60 mt-1.5 whitespace-nowrap">
+                        Equivalent to €24/mo
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsSwitchPlanModalOpen(true);
+                        setModalPhase("PLAN");
+                        fetchPlans();
+                      }}
+                      className="mt-3 w-full bg-white text-[#1C2C1C] font-bold py-2 px-4 rounded-xl hover:bg-gray-100 transition-colors text-[13px] text-center shadow-sm"
+                    >
+                      Switch Plan
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              {/* Pending Plan Card (Below Upgrade Card) */}
-              {subscriptionData?.pendingPlan && (
-                <div className="bg-white rounded-2xl p-6 shadow-sm border border-amber-200 relative overflow-hidden">
-                  <div className="flex items-center justify-between mb-3">
-                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
-                      <AlertCircle size={13} className="text-amber-600" />
-                      Pending Downgrade
-                    </span>
-                    {pendingEffectiveDate && (
-                      <span className="text-xs text-gray-500 font-medium">
-                        Effective {new Date(pendingEffectiveDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                      </span>
-                    )}
-                  </div>
-
-                  <h3 className="text-lg font-bold text-[#1C2C1C] mb-1">
-                    {subscriptionData.pendingPlan.name} Plan
-                  </h3>
-                  <p className="text-xs text-gray-500 mb-4 leading-relaxed">
-                    {subscriptionData.pendingPlan.description || "Your subscription will downgrade to this plan at the end of the current billing cycle."}
-                  </p>
-
-                  <div className="bg-amber-50/60 rounded-xl p-3.5 mb-5 border border-amber-100/80 space-y-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-600">Max Trade Categories</span>
-                      <span className="font-bold text-[#1C2C1C]">
-                        {subscriptionData.pendingPlan.unlimitedTrades
-                          ? "Unlimited"
-                          : subscriptionData.pendingPlan.maxTrades || 1}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-600">Quotes Per Day</span>
-                      <span className="font-bold text-[#1C2C1C]">
-                        {subscriptionData.pendingPlan.maxQuotesPerDay || 3}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-gray-600">Portfolio Uploads</span>
-                      <span className="font-bold text-[#1C2C1C]">
-                        {subscriptionData.pendingPlan.maxPortfolioUploads || 5}
-                      </span>
-                    </div>
-                  </div>
-
-                  <p className="text-xs text-gray-400 mb-4 leading-relaxed">
-                    You can cancel this downgrade anytime before the effective date to stay on your <strong>{subscriptionData?.currentPlan?.name || "current"}</strong> plan.
-                  </p>
-
-                  <button
-                    type="button"
-                    onClick={() => setShowCancelDowngradeModal(true)}
-                    disabled={isCancellingPendingDowngrade}
-                    className="w-full py-2.5 px-4 rounded-xl text-xs sm:text-sm font-bold border border-red-200 text-red-600 bg-red-50/50 hover:bg-red-50 hover:border-red-300 transition-colors flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 shadow-sm"
-                  >
-                    <span>Cancel Downgrade</span>
-                  </button>
-                </div>
-              )}
-
-            </div>
-          </div>
+            </div >
+          </div >
         )}
-      </div>
+      </div >
 
       {/* Switch Plan Modal */}
-      {isSwitchPlanModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1C2C1C]/40 backdrop-blur-sm overflow-y-auto">
-          <div className="relative w-full max-w-[900px] bg-white rounded-[24px] shadow-2xl p-6 sm:p-10 my-8">
-            <button
-              onClick={() => { setIsSwitchPlanModalOpen(false); setModalPhase("PLAN"); }}
-              className="absolute top-6 right-6 text-gray-400 hover:text-gray-800 transition-colors"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
-            </button>
+      {
+        isSwitchPlanModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#1C2C1C]/40 backdrop-blur-sm overflow-y-auto">
+            <div className="relative w-full max-w-[900px] bg-white rounded-[24px] shadow-2xl p-6 sm:p-10 my-8">
+              <button
+                onClick={() => { setIsSwitchPlanModalOpen(false); setModalPhase("PLAN"); }}
+                className="absolute top-6 right-6 text-gray-400 hover:text-gray-800 transition-colors"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>
+              </button>
 
-            {/* ── Phase 1: Plan Selection ── */}
-            {modalPhase === "PLAN" && (
-              <>
-                <h2 className="text-2xl font-bold text-[#1C2C1C] mb-2 text-center">Change Subscription Plan</h2>
-                <p className="text-gray-500 text-sm text-center mb-8">Select a new plan to upgrade or downgrade your account.</p>
+              {/* ── Phase 1: Plan Selection ── */}
+              {modalPhase === "PLAN" && (
+                <>
+                  <h2 className="text-2xl font-bold text-[#1C2C1C] mb-2 text-center">Change Subscription Plan</h2>
+                  <p className="text-gray-500 text-sm text-center mb-8">Select a new plan to upgrade or downgrade your account.</p>
 
-                <div className="flex items-center justify-center p-1.5 bg-[#F5F5F5] rounded-full mb-8 max-w-[280px] mx-auto">
-                  <button
-                    onClick={() => setBillingCycle("MONTHLY")}
-                    className={`py-2 px-6 rounded-full text-[13px] font-bold transition-all w-1/2 ${billingCycle === "MONTHLY"
-                      ? "bg-white text-[#1C2C1C] shadow-sm"
-                      : "text-[#1C2C1C]/50 hover:text-[#1C2C1C]"
-                      }`}
-                  >
-                    Monthly
-                  </button>
-                  <button
-                    onClick={() => setBillingCycle("YEARLY")}
-                    className={`py-2 px-6 rounded-full text-[13px] font-bold transition-all w-1/2 ${billingCycle === "YEARLY"
-                      ? "bg-white text-[#1C2C1C] shadow-sm"
-                      : "text-[#1C2C1C]/50 hover:text-[#1C2C1C]"
-                      }`}
-                  >
-                    Annual
-                  </button>
-                </div>
-
-                {plansLoading ? (
-                  <div className="flex justify-center py-12">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1C2C1C]" />
+                  <div className="flex items-center justify-center p-1.5 bg-[#F5F5F5] rounded-full mb-8 max-w-[280px] mx-auto">
+                    <button
+                      onClick={() => setBillingCycle("MONTHLY")}
+                      className={`py-2 px-6 rounded-full text-[13px] font-bold transition-all w-1/2 ${billingCycle === "MONTHLY"
+                        ? "bg-white text-[#1C2C1C] shadow-sm"
+                        : "text-[#1C2C1C]/50 hover:text-[#1C2C1C]"
+                        }`}
+                    >
+                      Monthly
+                    </button>
+                    <button
+                      onClick={() => setBillingCycle("YEARLY")}
+                      className={`py-2 px-6 rounded-full text-[13px] font-bold transition-all w-1/2 ${billingCycle === "YEARLY"
+                        ? "bg-white text-[#1C2C1C] shadow-sm"
+                        : "text-[#1C2C1C]/50 hover:text-[#1C2C1C]"
+                        }`}
+                    >
+                      Annual
+                    </button>
                   </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
-                    {plans.map((plan) => {
-                      const isSelected = selectedPlanId === plan.id;
-                      const isCurrent = (subscriptionData?.currentPlan?.id || subscriptionData?.planId) === plan.id;
-                      const currentPrice = plan.prices?.find((p: any) => p.billingCycle === billingCycle);
-                      if (!currentPrice) return null;
+
+                  {plansLoading ? (
+                    <div className="flex justify-center py-12">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1C2C1C]" />
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+                      {plans.map((plan) => {
+                        const isSelected = selectedPlanId === plan.id;
+                        const isCurrent = (subscriptionData?.currentPlan?.id || subscriptionData?.planId) === plan.id;
+                        const currentPrice = plan.prices?.find((p: any) => p.billingCycle === billingCycle);
+                        if (!currentPrice) return null;
+
+                        return (
+                          <div
+                            key={plan.id}
+                            onClick={() => setSelectedPlanId(plan.id)}
+                            className={`rounded-[20px] border-2 p-6 relative cursor-pointer transition-all ${isSelected ? "border-[#6E9625] bg-[#FAFAFA]" : "border-[#E5E5E5] hover:border-[#1C2C1C]/30 bg-white"
+                              }`}
+                          >
+                            {isCurrent && (
+                              <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#1C2C1C] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full whitespace-nowrap shadow-sm">
+                                Current Plan
+                              </div>
+                            )}
+                            <h3 className={`text-[18px] font-bold mb-1 mt-2 text-[#1C2C1C]`}>{plan.name}</h3>
+                            <p className={`text-[12px] font-medium mb-4 text-[#1C2C1C]/50`}>{plan.description}</p>
+                            <div className="flex items-end gap-1 mb-6">
+                              <span className={`text-[32px] font-black leading-none text-[#1C2C1C]`}>€{currentPrice.amount}</span>
+                              <span className={`text-[12px] font-medium pb-1 text-[#1C2C1C]/50`}>/{billingCycle === 'YEARLY' ? 'year' : 'month'}</span>
+                            </div>
+                            <ul className="flex flex-col gap-3 mb-6">
+                              <li className={`flex items-start gap-2 text-[13px] font-medium text-[#1C2C1C]/70`}>
+                                <CheckCircle2 size={16} className="text-[#6E9625] flex-shrink-0" />
+                                {plan.unlimitedTrades ? "Unlimited" : `Up to ${plan.maxTrades}`} Categories
+                              </li>
+                              <li className={`flex items-start gap-2 text-[13px] font-medium text-[#1C2C1C]/70`}>
+                                <CheckCircle2 size={16} className="text-[#6E9625] flex-shrink-0" />
+                                {plan.maxPortfolioUploads} Portfolio Uploads
+                              </li>
+                              <li className={`flex items-start gap-2 text-[13px] font-medium text-[#1C2C1C]/70`}>
+                                <CheckCircle2 size={16} className="text-[#6E9625] flex-shrink-0" />
+                                {plan.maxQuotesPerDay === 9999 ? "Unlimited" : `${plan.maxQuotesPerDay}`} Quotes per Day
+                              </li>
+                            </ul>
+                            <div className="mt-auto">
+                              <div className={`w-full py-3 rounded-xl text-[13px] font-bold transition-all text-center ${isSelected
+                                ? "bg-[#6E9625] text-white"
+                                : "bg-[#F5F5F5] text-[#1C2C1C]"
+                                }`}
+                              >
+                                {isSelected ? 'Selected' : 'Select'}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  <div className="flex justify-end gap-4 border-t border-gray-100 pt-6">
+                    <button
+                      onClick={() => setIsSwitchPlanModalOpen(false)}
+                      className="px-6 py-3 rounded-xl text-[14px] font-bold text-gray-500 hover:bg-gray-50 transition-colors"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleChangePlan}
+                      disabled={isChangingPlan || !selectedPlanId || ((subscriptionData?.currentPlan?.id || subscriptionData?.planId) === selectedPlanId && subscriptionData?.billingCycle === billingCycle)}
+                      className="bg-[#1C2C1C] text-white px-8 py-3 rounded-xl text-[14px] font-bold hover:bg-[#2C4A2C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {isChangingPlan ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                          Processing...
+                        </>
+                      ) : "Change Plan"}
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {/* ── Phase 2: Category Selection ── */}
+              {modalPhase === "CATEGORIES" && (
+                <>
+                  <h2 className="text-2xl font-bold text-[#1C2C1C] mb-2 text-center">Select Your Categories</h2>
+                  <p className="text-gray-500 text-sm text-center mb-2">
+                    Your plan allows up to <span className="font-bold text-[#1C2C1C]">{maxCats === 9999 ? 'Unlimited' : maxCats}</span> {maxCats === 1 ? 'category' : 'categories'}.
+                  </p>
+                  <p className="text-gray-400 text-xs text-center mb-8">Select categories and skill services for your profile.</p>
+
+                  <div className="space-y-6 mb-8 max-h-[50vh] overflow-y-auto pr-2">
+                    {/* Category Multi-Select */}
+                    <div>
+                      <label className="block text-[13px] font-bold text-[#1C2C1C] mb-2">Trade Categories</label>
+                      <MultiSelect
+                        options={allCategories}
+                        selectedIds={categoryGroups.map(g => g.categoryId).filter(Boolean)}
+                        onChange={(ids) => {
+                          if (ids.length > maxCats) {
+                            toast.error(`Your plan allows a maximum of ${maxCats === 9999 ? 'Unlimited' : maxCats} Categories.`, { id: "max-cats-error" });
+                            return;
+                          }
+
+                          setCategoryGroups(prev => {
+                            const next = prev.filter(g => ids.includes(g.categoryId));
+                            ids.forEach(id => {
+                              if (!next.find(g => g.categoryId === id)) {
+                                next.push({
+                                  id: Date.now().toString() + Math.random().toString(),
+                                  categoryId: id,
+                                  selectedSkillServices: [],
+                                  selectedSubCategories: [],
+                                });
+                                // Fetch skill services for this category
+                                if (!skillServicesMap[id]) {
+                                  authApi.getSkillServices(id).then(res => {
+                                    const skillsArray = Array.isArray(res) ? res : res?.data || res?.services || [];
+                                    setSkillServicesMap(prevMap => ({ ...prevMap, [id]: skillsArray }));
+                                  }).catch(err => console.error(err));
+                                }
+                              }
+                            });
+                            return next;
+                          });
+                        }}
+                        placeholder="Select trade categories..."
+                      />
+                    </div>
+
+                    {/* Per-category skill services & sub-categories */}
+                    {categoryGroups.filter(g => g.categoryId).map((group) => {
+                      const catName = allCategories.find(c => c.id === group.categoryId)?.name || "Category";
+                      const skills = skillServicesMap[group.categoryId] || [];
+                      const allSubCats = group.selectedSkillServices.flatMap(skillId => subCategoriesMap[skillId] || []);
 
                       return (
-                        <div
-                          key={plan.id}
-                          onClick={() => setSelectedPlanId(plan.id)}
-                          className={`rounded-[20px] border-2 p-6 relative cursor-pointer transition-all ${isSelected ? "border-[#6E9625] bg-[#FAFAFA]" : "border-[#E5E5E5] hover:border-[#1C2C1C]/30 bg-white"
-                            }`}
-                        >
-                          {isCurrent && (
-                            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#1C2C1C] text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full whitespace-nowrap shadow-sm">
-                              Current Plan
+                        <div key={group.id} className="bg-[#F9FAFB] rounded-2xl p-5 border border-gray-100 space-y-4">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-[14px] font-bold text-[#1C2C1C]">{catName}</h4>
+                            <button
+                              onClick={() => setCategoryGroups(prev => prev.filter(g => g.id !== group.id))}
+                              className="text-gray-400 hover:text-red-500 transition-colors"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+
+                          {skills.length > 0 && (
+                            <div>
+                              <label className="block text-[12px] font-semibold text-[#1C2C1C]/60 mb-1.5">Skill Services</label>
+                              <MultiSelect
+                                options={skills}
+                                selectedIds={group.selectedSkillServices}
+                                onChange={(ids) => handleCategoryGroupChange(group.id, 'selectedSkillServices', ids)}
+                                placeholder="Select skill services..."
+                              />
                             </div>
                           )}
-                          <h3 className={`text-[18px] font-bold mb-1 mt-2 text-[#1C2C1C]`}>{plan.name}</h3>
-                          <p className={`text-[12px] font-medium mb-4 text-[#1C2C1C]/50`}>{plan.description}</p>
-                          <div className="flex items-end gap-1 mb-6">
-                            <span className={`text-[32px] font-black leading-none text-[#1C2C1C]`}>€{currentPrice.amount}</span>
-                            <span className={`text-[12px] font-medium pb-1 text-[#1C2C1C]/50`}>/{billingCycle === 'YEARLY' ? 'year' : 'month'}</span>
-                          </div>
-                          <ul className="flex flex-col gap-3 mb-6">
-                            <li className={`flex items-start gap-2 text-[13px] font-medium text-[#1C2C1C]/70`}>
-                              <CheckCircle2 size={16} className="text-[#6E9625] flex-shrink-0" />
-                              {plan.unlimitedTrades ? "Unlimited" : `Up to ${plan.maxTrades}`} Categories
-                            </li>
-                            <li className={`flex items-start gap-2 text-[13px] font-medium text-[#1C2C1C]/70`}>
-                              <CheckCircle2 size={16} className="text-[#6E9625] flex-shrink-0" />
-                              {plan.maxPortfolioUploads} Portfolio Uploads
-                            </li>
-                            <li className={`flex items-start gap-2 text-[13px] font-medium text-[#1C2C1C]/70`}>
-                              <CheckCircle2 size={16} className="text-[#6E9625] flex-shrink-0" />
-                              {plan.maxQuotesPerDay === 9999 ? "Unlimited" : `${plan.maxQuotesPerDay}`} Quotes per Day
-                            </li>
-                          </ul>
-                          <div className="mt-auto">
-                            <div className={`w-full py-3 rounded-xl text-[13px] font-bold transition-all text-center ${isSelected
-                              ? "bg-[#6E9625] text-white"
-                              : "bg-[#F5F5F5] text-[#1C2C1C]"
-                              }`}
-                            >
-                              {isSelected ? 'Selected' : 'Select'}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
 
-                <div className="flex justify-end gap-4 border-t border-gray-100 pt-6">
-                  <button
-                    onClick={() => setIsSwitchPlanModalOpen(false)}
-                    className="px-6 py-3 rounded-xl text-[14px] font-bold text-gray-500 hover:bg-gray-50 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleChangePlan}
-                    disabled={isChangingPlan || !selectedPlanId || ((subscriptionData?.currentPlan?.id || subscriptionData?.planId) === selectedPlanId && subscriptionData?.billingCycle === billingCycle)}
-                    className="bg-[#1C2C1C] text-white px-8 py-3 rounded-xl text-[14px] font-bold hover:bg-[#2C4A2C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                  >
-                    {isChangingPlan ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                        Processing...
-                      </>
-                    ) : "Change Plan"}
-                  </button>
-                </div>
-              </>
-            )}
-
-            {/* ── Phase 2: Category Selection ── */}
-            {modalPhase === "CATEGORIES" && (
-              <>
-                <h2 className="text-2xl font-bold text-[#1C2C1C] mb-2 text-center">Select Your Categories</h2>
-                <p className="text-gray-500 text-sm text-center mb-2">
-                  Your plan allows up to <span className="font-bold text-[#1C2C1C]">{maxCats === 9999 ? 'Unlimited' : maxCats}</span> {maxCats === 1 ? 'category' : 'categories'}.
-                </p>
-                <p className="text-gray-400 text-xs text-center mb-8">Select categories and skill services for your profile.</p>
-
-                <div className="space-y-6 mb-8 max-h-[50vh] overflow-y-auto pr-2">
-                  {/* Category Multi-Select */}
-                  <div>
-                    <label className="block text-[13px] font-bold text-[#1C2C1C] mb-2">Trade Categories</label>
-                    <MultiSelect
-                      options={allCategories}
-                      selectedIds={categoryGroups.map(g => g.categoryId).filter(Boolean)}
-                      onChange={(ids) => {
-                        if (ids.length > maxCats) {
-                          toast.error(`Your plan allows a maximum of ${maxCats === 9999 ? 'Unlimited' : maxCats} Categories.`, { id: "max-cats-error" });
-                          return;
-                        }
-
-                        setCategoryGroups(prev => {
-                          const next = prev.filter(g => ids.includes(g.categoryId));
-                          ids.forEach(id => {
-                            if (!next.find(g => g.categoryId === id)) {
-                              next.push({
-                                id: Date.now().toString() + Math.random().toString(),
-                                categoryId: id,
-                                selectedSkillServices: [],
-                                selectedSubCategories: [],
-                              });
-                              // Fetch skill services for this category
-                              if (!skillServicesMap[id]) {
-                                authApi.getSkillServices(id).then(res => {
-                                  const skillsArray = Array.isArray(res) ? res : res?.data || res?.services || [];
-                                  setSkillServicesMap(prevMap => ({ ...prevMap, [id]: skillsArray }));
-                                }).catch(err => console.error(err));
-                              }
-                            }
-                          });
-                          return next;
-                        });
-                      }}
-                      placeholder="Select trade categories..."
-                    />
-                  </div>
-
-                  {/* Per-category skill services & sub-categories */}
-                  {categoryGroups.filter(g => g.categoryId).map((group) => {
-                    const catName = allCategories.find(c => c.id === group.categoryId)?.name || "Category";
-                    const skills = skillServicesMap[group.categoryId] || [];
-                    const allSubCats = group.selectedSkillServices.flatMap(skillId => subCategoriesMap[skillId] || []);
-
-                    return (
-                      <div key={group.id} className="bg-[#F9FAFB] rounded-2xl p-5 border border-gray-100 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-[14px] font-bold text-[#1C2C1C]">{catName}</h4>
-                          <button
-                            onClick={() => setCategoryGroups(prev => prev.filter(g => g.id !== group.id))}
-                            className="text-gray-400 hover:text-red-500 transition-colors"
-                          >
-                            <X size={16} />
-                          </button>
-                        </div>
-
-                        {skills.length > 0 && (
-                          <div>
-                            <label className="block text-[12px] font-semibold text-[#1C2C1C]/60 mb-1.5">Skill Services</label>
-                            <MultiSelect
-                              options={skills}
-                              selectedIds={group.selectedSkillServices}
-                              onChange={(ids) => handleCategoryGroupChange(group.id, 'selectedSkillServices', ids)}
-                              placeholder="Select skill services..."
-                            />
-                          </div>
-                        )}
-
-                        {/* Sub Categories commented out - automatically counted and selected in the background */}
-                        {/* {allSubCats.length > 0 && (
+                          {/* Sub Categories commented out - automatically counted and selected in the background */}
+                          {/* {allSubCats.length > 0 && (
                           <div>
                             <label className="block text-[12px] font-semibold text-[#1C2C1C]/60 mb-1.5">Sub Categories</label>
                             <MultiSelect
@@ -1038,100 +999,105 @@ export default function BillingPage() {
                             />
                           </div>
                         )} */}
+                        </div>
+                      );
+                    })}
+
+                    {categoryGroups.length === 0 && (
+                      <div className="text-center py-10 text-gray-400">
+                        <p className="text-[14px] font-medium">No categories selected yet.</p>
+                        <p className="text-[12px] mt-1">Use the dropdown above to add categories.</p>
                       </div>
-                    );
-                  })}
+                    )}
+                  </div>
 
-                  {categoryGroups.length === 0 && (
-                    <div className="text-center py-10 text-gray-400">
-                      <p className="text-[14px] font-medium">No categories selected yet.</p>
-                      <p className="text-[12px] mt-1">Use the dropdown above to add categories.</p>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex justify-end gap-4 border-t border-gray-100 pt-6">
-                  <button
-                    onClick={() => {
-                      setIsSwitchPlanModalOpen(false);
-                      setModalPhase("PLAN");
-                      toast("You can choose your trade categories anytime from the billing page.", {
-                        icon: "ℹ️",
-                        duration: 5000,
-                      });
-                    }}
-                    className="px-6 py-3 rounded-xl text-[14px] font-bold text-gray-500 hover:bg-gray-50 transition-colors"
-                  >
-                    Skip for Now
-                  </button>
-                  <button
-                    onClick={handleSaveCategories}
-                    disabled={isSavingCategories || categoryGroups.filter(g => g.categoryId).length === 0}
-                    className="bg-[#1C2C1C] text-white px-8 py-3 rounded-xl text-[14px] font-bold hover:bg-[#2C4A2C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-                  >
-                    {isSavingCategories ? (
-                      <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                        Saving...
-                      </>
-                    ) : "Confirm Categories"}
-                  </button>
-                </div>
-              </>
-            )}
+                  <div className="flex justify-end gap-4 border-t border-gray-100 pt-6">
+                    <button
+                      onClick={() => {
+                        setIsSwitchPlanModalOpen(false);
+                        setModalPhase("PLAN");
+                        toast("You can choose your trade categories anytime from the billing page.", {
+                          icon: "ℹ️",
+                          duration: 5000,
+                        });
+                      }}
+                      className="px-6 py-3 rounded-xl text-[14px] font-bold text-gray-500 hover:bg-gray-50 transition-colors"
+                    >
+                      Skip for Now
+                    </button>
+                    <button
+                      onClick={handleSaveCategories}
+                      disabled={isSavingCategories || categoryGroups.filter(g => g.categoryId).length === 0}
+                      className="bg-[#1C2C1C] text-white px-8 py-3 rounded-xl text-[14px] font-bold hover:bg-[#2C4A2C] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                      {isSavingCategories ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
+                          Saving...
+                        </>
+                      ) : "Confirm Categories"}
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
-        </div>
-      )}
+        )
+      }
       {/* Stripe Subscription Checkout Modal */}
-      {stripeCheckoutData && (
-        <SubscriptionCheckout
-          planId={stripeCheckoutData.planId}
-          priceId={stripeCheckoutData.priceId}
-          planName={stripeCheckoutData.planName}
-          amount={stripeCheckoutData.amount}
-          currency={stripeCheckoutData.currency}
-          isUpgrade={stripeCheckoutData.isUpgrade}
-          isOpen={isStripeModalOpen}
-          onClose={() => setIsStripeModalOpen(false)}
-          onPaymentSuccess={handlePaymentSuccess}
-        />
-      )}
+      {
+        stripeCheckoutData && (
+          <SubscriptionCheckout
+            planId={stripeCheckoutData.planId}
+            priceId={stripeCheckoutData.priceId}
+            planName={stripeCheckoutData.planName}
+            amount={stripeCheckoutData.amount}
+            currency={stripeCheckoutData.currency}
+            isUpgrade={stripeCheckoutData.isUpgrade}
+            isOpen={isStripeModalOpen}
+            onClose={() => setIsStripeModalOpen(false)}
+            onPaymentSuccess={handlePaymentSuccess}
+          />
+        )
+      }
 
       {/* Cancel Pending Downgrade Confirmation Modal */}
-      {showCancelDowngradeModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
-          <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-7 w-full max-w-md shadow-2xl border border-gray-100">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0 text-amber-600">
-                <AlertCircle size={20} />
+      {
+        showCancelDowngradeModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+            <div className="bg-white rounded-2xl sm:rounded-3xl p-6 sm:p-7 w-full max-w-md shadow-2xl border border-gray-100">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center flex-shrink-0 text-amber-600">
+                  <AlertCircle size={20} />
+                </div>
+                <h3 className="text-lg sm:text-xl font-bold text-[#1C2C1C]">Cancel Scheduled Downgrade?</h3>
               </div>
-              <h3 className="text-lg sm:text-xl font-bold text-[#1C2C1C]">Cancel Scheduled Downgrade?</h3>
-            </div>
-            <p className="text-gray-500 text-sm mb-6 leading-relaxed">
-              Are you sure you want to cancel the scheduled downgrade to <strong>{subscriptionData?.pendingPlan?.name}</strong>? You will keep your current <strong>{subscriptionData?.currentPlan?.name}</strong> plan and its benefits.
-            </p>
+              <p className="text-gray-500 text-sm mb-6 leading-relaxed">
+                Are you sure you want to cancel the scheduled downgrade to <strong>{subscriptionData?.pendingPlan?.name}</strong>? You will keep your current <strong>{subscriptionData?.currentPlan?.name}</strong> plan and its benefits.
+              </p>
 
-            <div className="flex gap-3 justify-end">
-              <button
-                type="button"
-                onClick={() => setShowCancelDowngradeModal(false)}
-                disabled={isCancellingPendingDowngrade}
-                className="px-5 py-2.5 rounded-xl font-bold text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer disabled:opacity-50"
-              >
-                Keep Downgrade
-              </button>
-              <button
-                type="button"
-                onClick={handleCancelPendingDowngrade}
-                disabled={isCancellingPendingDowngrade}
-                className="px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-red-600 hover:bg-red-700 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
-              >
-                {isCancellingPendingDowngrade ? "Cancelling..." : "Confirm & Cancel"}
-              </button>
+              <div className="flex gap-3 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setShowCancelDowngradeModal(false)}
+                  disabled={isCancellingPendingDowngrade}
+                  className="px-5 py-2.5 rounded-xl font-bold text-sm text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  Keep Downgrade
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCancelPendingDowngrade}
+                  disabled={isCancellingPendingDowngrade}
+                  className="px-5 py-2.5 rounded-xl font-bold text-sm text-white bg-red-600 hover:bg-red-700 transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-2"
+                >
+                  {isCancellingPendingDowngrade ? "Cancelling..." : "Confirm & Cancel"}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 }

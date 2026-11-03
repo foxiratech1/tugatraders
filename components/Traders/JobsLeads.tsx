@@ -120,7 +120,7 @@ const markJobInLocalStorage = (jobId?: string) => {
   } catch { }
 };
 
-function getUIStatus(item: any): "New" | "Posted" | "Quote Sent" | "Contacted" | "In Progress" | "Completed" | "Closed" {
+function getUIStatus(item: any): "New" | "Quote Sent" | "In Progress" | "Completed" | "Closed" {
   const rawStatus = (item.rawStatus || item.status || "").toUpperCase();
 
   if (rawStatus === "COMPLETED") return "Completed";
@@ -133,7 +133,11 @@ function getUIStatus(item: any): "New" | "Posted" | "Quote Sent" | "Contacted" |
     return "Closed";
   }
 
-  if (rawStatus === "IN_PROGRESS" || rawStatus === "STARTED" || item.status === "In Progress") {
+  // NOTE: Do NOT short-circuit on "IN_PROGRESS" here — when the customer accepts a quote the
+  // backend sets rawStatus to IN_PROGRESS, but the trader's UI status should remain "Quote Sent"
+  // until the trader explicitly clicks "Start Job". Only STARTED (trader-triggered) bypasses the
+  // full check below. item.status === "In Progress" is allowed through only if traderStarted is set.
+  if (rawStatus === "STARTED") {
     return "In Progress";
   }
 
@@ -873,6 +877,7 @@ export default function JobsLeads() {
         setJobs(mappedJobs);
 
         const targetJobId = searchParams?.get("jobId");
+        const tabParam = searchParams?.get("tab");
         if (targetJobId) {
           const match = mappedJobs.find(
             (j) =>
@@ -882,8 +887,12 @@ export default function JobsLeads() {
           );
           if (match) {
             setSelectedJob(match);
-            if (match.status) {
+            if (tabParam && (tabParam === "All" || tabParam === match.status)) {
+              setActiveTab(tabParam);
+            } else if (match.status) {
               setActiveTab(match.status);
+            } else {
+              setActiveTab("All");
             }
           } else {
             try {
@@ -900,7 +909,7 @@ export default function JobsLeads() {
                 });
                 setJobs((prev) => [directMapped, ...prev.filter((p) => p.id !== directMapped.id)]);
                 setSelectedJob(directMapped);
-                setActiveTab(directMapped.status || "In Progress");
+                setActiveTab(directMapped.status || "All");
               } else {
                 setSelectedJob(mappedJobs[0]);
               }
@@ -908,6 +917,8 @@ export default function JobsLeads() {
               setSelectedJob(mappedJobs[0]);
             }
           }
+        } else if (tabParam) {
+          setActiveTab(tabParam);
         } else {
           setSelectedJob(mappedJobs[0]);
         }
@@ -926,10 +937,8 @@ export default function JobsLeads() {
   // Update tab and selected job if URL changes
   useEffect(() => {
     const tabParam = searchParams?.get("tab");
-    if (tabParam) {
-      setActiveTab(tabParam);
-    }
     const targetJobId = searchParams?.get("jobId");
+
     if (targetJobId && jobs.length > 0) {
       const match = jobs.find(
         (j) =>
@@ -939,10 +948,13 @@ export default function JobsLeads() {
       );
       if (match) {
         setSelectedJob(match);
-        if (tabParam) {
+        // Prioritize the actual job status over a conflicting tabParam (e.g. 'In Progress' when job is 'Quote Sent')
+        if (tabParam && (tabParam === "All" || tabParam === match.status)) {
           setActiveTab(tabParam);
         } else if (match.status) {
           setActiveTab(match.status);
+        } else {
+          setActiveTab("All");
         }
       } else {
         authApi.getCustomerJobById(targetJobId).then((res) => {
@@ -958,12 +970,16 @@ export default function JobsLeads() {
             });
             setJobs((prev) => [directMapped, ...prev.filter((p) => p.id !== directMapped.id)]);
             setSelectedJob(directMapped);
-            if (tabParam) {
+            if (tabParam && (tabParam === "All" || tabParam === directMapped.status)) {
               setActiveTab(tabParam);
+            } else {
+              setActiveTab(directMapped.status || "All");
             }
           }
-        }).catch(() => {});
+        }).catch(() => { });
       }
+    } else if (tabParam) {
+      setActiveTab(tabParam);
     }
   }, [searchParams, jobs.length]);
 

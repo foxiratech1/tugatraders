@@ -540,8 +540,8 @@ export default function LeaveReview({ jobId: propJobId, reviewTypeProp }: { jobI
                 >
                   <option value="">Select source</option>
                   <option value="JOB_CHAT">Post a Job</option>
-                  <option value="DIRECTORY_CHAT">Directory</option>
-                  <option value="PHONE">Phone</option>
+                  <option value="DIRECTORY_CHAT">Online Chat</option>
+                  <option value="PHONE">Phone/Directory</option>
                   <option value="WHATSAPP">WhatsApp</option>
 
                   {/* <option value="MANUAL">Manual</option> */}

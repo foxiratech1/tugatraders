@@ -189,6 +189,9 @@ export default function ChatWindow({
   const hasDirectJob = Boolean(directJob && directJob.status && directJob.status !== "CANCELLED");
   const hasRegularJob = !isDirectOrNoJob && Boolean(conversation.jobId || job?.id || job?._id);
   const hasCreatedJob = hasDirectJob || hasRegularJob;
+  const isJobCompleted = hasDirectJob
+    ? directJob?.status === "COMPLETED"
+    : (jobStatus?.toUpperCase() === "COMPLETED" || (conversation.job as any)?.status?.toUpperCase() === "COMPLETED");
 
   const currentActiveJob = hasDirectJob
     ? directJob
@@ -737,11 +740,16 @@ export default function ChatWindow({
                 <button
                   type="button"
                   onClick={() => setShowJobDetailsModal(true)}
-                  className="px-3 py-1.5 rounded-xl text-[12px] font-bold border border-[#E0CC3B] bg-[#FEFCE8] text-[#8A5C05] hover:bg-[#EFDB4B]/20 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
-                  title="View Job Details"
+                  className={`px-3 py-1.5 rounded-xl text-[12px] font-bold border transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs ${isJobCompleted
+                    ? "border-[#A7E298] bg-[#F0FDF4] text-[#166534] hover:bg-[#EAF7EC]"
+                    : "border-[#E0CC3B] bg-[#FEFCE8] text-[#8A5C05] hover:bg-[#EFDB4B]/20"
+                    }`}
+                  title={currentJobTitle || directJob?.title || conversation.job?.title || "Job Details"}
                 >
-                  <FileText size={14} className="text-[#8A5C05]" />
-                  <span className="hidden sm:inline">Job Details</span>
+                  <FileText size={14} className={isJobCompleted ? "text-[#166534]" : "text-[#8A5C05]"} />
+                  <span className="hidden sm:inline truncate max-w-[150px] md:max-w-[200px]">
+                    {currentJobTitle || directJob?.title || conversation.job?.title || "Job Details"}
+                  </span>
                 </button>
               )}
 
@@ -834,65 +842,83 @@ export default function ChatWindow({
           </div>
 
           {/* Job Details Banner Strip — only show when job has been created */}
-          {hasCreatedJob && !loadingDirectJob && (
-            <div className="p-3.5 sm:p-4 bg-[#FEFCE8] border-b border-[#FDE047] flex flex-col md:flex-row md:items-center justify-between gap-3 flex-shrink-0 transition-colors">
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-10 h-10 rounded-xl bg-[#EFDB4B]/30 border border-[#E0CC3B]/60 flex items-center justify-center flex-shrink-0 text-[#8A5C05]">
-                  {hasDirectJob ? (
-                    directJob?.status === 'COMPLETED' ? (
-                      <CheckCircle size={20} className="text-[#8A5C05]" />
-                    ) : (
-                      <Clock size={20} className="text-[#8A5C05]" />
-                    )
-                  ) : (
-                    <Briefcase size={20} className="text-[#8A5C05]" />
-                  )}
-                </div>
+          {hasCreatedJob && !loadingDirectJob && (() => {
+            const isJobCompleted = hasDirectJob
+              ? directJob?.status === 'COMPLETED'
+              : (jobStatus?.toUpperCase() === 'COMPLETED' || (conversation.job as any)?.status?.toUpperCase() === 'COMPLETED');
 
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-[14px] font-bold text-[#1C2C1C] truncate">
-                      {hasDirectJob
-                        ? (directJob?.title || (directJob?.status === 'COMPLETED' ? 'Job Completed' : directJob?.status === 'AWAITING_CONFIRMATION' ? 'Job is Completed' : 'Job in Progress'))
-                        : (currentJobTitle || 'Job Details')}
-                    </p>
-                    <span className="px-2.5 py-0.5 rounded-[6px] bg-[#EFDB4B] border border-[#E0CC3B] text-[#8A5C05] text-[11px] font-bold">
-                      {hasDirectJob
-                        ? (directJob?.status === 'COMPLETED'
-                          ? 'Completed'
-                          : directJob?.status === 'AWAITING_CONFIRMATION'
-                            ? 'Awaiting Confirmation'
-                            : 'In Progress')
-                        : (jobStatus?.toUpperCase() === 'COMPLETED'
-                          ? 'Completed'
-                          : jobStatus?.toUpperCase() === 'IN_PROGRESS'
-                            ? 'In Progress'
-                            : 'Job Posted')}
-                    </span>
-                  </div>
-
-                  <p className="text-[11px] text-[#7A3E06] mt-0.5 truncate">
+            return (
+              <div className={`p-3.5 sm:p-4 border-b flex flex-col md:flex-row md:items-center justify-between gap-3 flex-shrink-0 transition-colors ${isJobCompleted
+                ? "bg-[#F0FDF4] border-[#BBF7D0]"
+                : "bg-[#FEFCE8] border-[#FDE047]"
+                }`}>
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${isJobCompleted
+                    ? "bg-[#16A34A]/15 border border-[#16A34A]/30 text-[#15803D]"
+                    : "bg-[#EFDB4B]/30 border border-[#E0CC3B]/60 text-[#8A5C05]"
+                    }`}>
                     {hasDirectJob ? (
                       directJob?.status === 'COMPLETED' ? (
-                        `Completed on ${new Date(directJob.confirmedAt || directJob.completedAt).toLocaleDateString()}`
-                      ) : directJob?.status === 'AWAITING_CONFIRMATION' ? (
-                        'Trader marked this job as complete. Awaiting customer confirmation.'
+                        <CheckCircle size={20} className={isJobCompleted ? "text-[#15803D]" : "text-[#8A5C05]"} />
                       ) : (
-                        `Started on ${new Date(directJob.startedAt).toLocaleDateString()}`
+                        <Clock size={20} className="text-[#8A5C05]" />
                       )
                     ) : (
-                      (conversation.job?.location || (conversation.job as any)?.budget) ? (
-                        `${conversation.job?.location ? `Location: ${conversation.job.location}` : ''}${conversation.job?.location && (conversation.job as any)?.budget ? ' • ' : ''}${(conversation.job as any)?.budget ? `Budget: ${(conversation.job as any).budget}` : ''}`
+                      isJobCompleted ? (
+                        <CheckCircle size={20} className="text-[#15803D]" />
                       ) : (
-                        'Active job linked to this conversation.'
+                        <Briefcase size={20} className="text-[#8A5C05]" />
                       )
                     )}
-                  </p>
-                </div>
-              </div>
+                  </div>
 
-              {hasDirectJob && (
-                <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <p className="text-[14px] font-bold text-[#1C2C1C] truncate">
+                        {hasDirectJob
+                          ? (directJob?.title || (directJob?.status === 'COMPLETED' ? 'Job Completed' : directJob?.status === 'AWAITING_CONFIRMATION' ? 'Job is Completed' : 'Job in Progress'))
+                          : (currentJobTitle || 'Job Details')}
+                      </p>
+                      <span className={`px-2.5 py-0.5 rounded-[6px] text-[11px] font-bold ${isJobCompleted
+                        ? "bg-[#D9F2D0] border border-[#BDE8B0] text-[#1C6D26]"
+                        : "bg-[#EFDB4B] border border-[#E0CC3B] text-[#8A5C05]"
+                        }`}>
+                        {hasDirectJob
+                          ? (directJob?.status === 'COMPLETED'
+                            ? 'Completed'
+                            : directJob?.status === 'AWAITING_CONFIRMATION'
+                              ? 'Awaiting Confirmation'
+                              : 'In Progress')
+                          : (jobStatus?.toUpperCase() === 'COMPLETED'
+                            ? 'Completed'
+                            : jobStatus?.toUpperCase() === 'IN_PROGRESS'
+                              ? 'In Progress'
+                              : 'Job Posted')}
+                      </span>
+                    </div>
+
+                    <p className={`text-[11px] mt-0.5 truncate ${isJobCompleted ? "text-[#166534]" : "text-[#7A3E06]"}`}>
+                      {hasDirectJob ? (
+                        directJob?.status === 'COMPLETED' ? (
+                          `Completed on ${new Date(directJob.confirmedAt || directJob.completedAt).toLocaleDateString()}`
+                        ) : directJob?.status === 'AWAITING_CONFIRMATION' ? (
+                          'Trader marked this job as complete. Awaiting customer confirmation.'
+                        ) : (
+                          `Started on ${new Date(directJob.startedAt).toLocaleDateString()}`
+                        )
+                      ) : (
+                        (conversation.job?.location || (conversation.job as any)?.budget) ? (
+                          `${conversation.job?.location ? `Location: ${conversation.job.location}` : ''}${conversation.job?.location && (conversation.job as any)?.budget ? ' • ' : ''}${(conversation.job as any)?.budget ? `Budget: ${(conversation.job as any).budget}` : ''}`
+                        ) : (
+                          isJobCompleted ? 'Job successfully completed.' : 'Active job linked to this conversation.'
+                        )
+                      )}
+                    </p>
+                  </div>
+                </div>
+
+                {hasDirectJob && (
+                  <div className="flex items-center gap-2 flex-shrink-0 flex-wrap">
                     {directJob?.status === 'IN_PROGRESS' && isActualTrader && (
                       <button
                         onClick={handleDirectJobClose}
@@ -930,7 +956,7 @@ export default function ChatWindow({
                       (!directJob.reviews || directJob.reviews.length === 0) ? (
                         !isActualTrader ? (
                           <div className="flex items-center gap-2 flex-wrap">
-                            <span className="px-2.5 py-1 bg-[#EFDB4B] border border-[#E0CC3B] text-[#8A5C05] rounded-lg text-[11px] font-bold">
+                            <span className="px-2.5 py-1 bg-[#D9F2D0] border border-[#BDE8B0] text-[#1C6D26] rounded-lg text-[11px] font-bold">
                               Pending Review
                             </span>
                             <button
@@ -953,21 +979,22 @@ export default function ChatWindow({
                             </button>
                           </div>
                         ) : (
-                          <span className="px-3 py-1 bg-[#EFDB4B] text-[#8A5C05] border border-[#E0CC3B] rounded-xl text-[12px] font-bold">
+                          <span className="px-3 py-1 bg-[#D9F2D0] text-[#1C6D26] border border-[#BDE8B0] rounded-xl text-[12px] font-bold">
                             Pending Customer Review
                           </span>
                         )
                       ) : (
-                        <span className="px-4 py-1.5 bg-white border border-[#E0CC3B] text-[#8A5C05] rounded-xl text-[12px] font-bold flex items-center gap-1.5">
-                          <Star size={14} fill="currentColor" />
+                        <span className="px-4 py-1.5 bg-white border border-[#A7E298] text-[#166534] rounded-xl text-[12px] font-bold flex items-center gap-1.5 shadow-2xs">
+                          <Star size={14} fill="currentColor" className="text-[#6E9625]" />
                           Reviewed
                         </span>
                       )
                     )}
-                </div>
-              )}
-            </div>
-          )}
+                  </div>
+                )}
+              </div>
+            );
+          })()}
 
           {/* Message feed */}
           {loadingMessages ? (
