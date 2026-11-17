@@ -120,6 +120,7 @@ interface Job {
   createdAt: string;
   attachments: Attachment[];
   category?: Category;
+  categories?: Category[];
   skillService?: SkillService;
   subCategory?: SubCategory;
   selectedTrader?: SelectedTrader;
@@ -1566,10 +1567,16 @@ export default function CustomerJobDashboard() {
                 <p className="text-[13px] font-bold text-[#1C2C1C] leading-snug line-clamp-2">
                   {job.title}
                 </p>
-                {(job.category?.name || job.location || job.postcode) && (
-                  <div className="flex items-center gap-1 text-[11px] text-gray-500 font-medium">
+                {(job.categories?.length || job.category?.name || job.location || job.postcode) && (
+                  <div className="flex items-center gap-1 text-[11px] text-gray-500 font-medium flex-wrap">
                     <MapPin size={12} className="text-gray-400 shrink-0" />
-                    <span className="truncate">{job.category?.name || job.location || job.postcode}</span>
+                    {job.categories && job.categories.length > 0 ? (
+                      <span className="truncate">
+                        {job.categories.map((c: any) => c.name).join(", ")}
+                      </span>
+                    ) : (
+                      <span className="truncate">{job.category?.name || job.location || job.postcode}</span>
+                    )}
                   </div>
                 )}
                 <div className="flex items-center justify-between text-[11px] text-gray-400 font-medium pt-1">
@@ -1865,11 +1872,16 @@ export default function CustomerJobDashboard() {
 
                   <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-[#F8F9FA] border border-gray-100 min-w-0">
                     <span className="text-[9.5px] sm:text-[10px] font-extrabold text-gray-400 uppercase tracking-wider block mb-0.5 sm:mb-1 truncate">
-                      CATEGORY
+                      {(selectedJob.categories?.length ?? 0) > 1 ? "CATEGORIES" : "CATEGORY"}
                     </span>
-                    <div className="flex items-center gap-1 text-[12px] sm:text-[13px] font-bold text-[#1C2C1C] truncate">
+                    <div className="flex items-center gap-1 text-[12px] sm:text-[13px] font-bold text-[#1C2C1C]">
                       <Tag size={13} className="text-[#6E9625] shrink-0" />
-                      <span className="truncate">{selectedJob.category?.name || "General"}</span>
+                      <span className="truncate">
+                        {(selectedJob.categories && selectedJob.categories.length > 0
+                          ? selectedJob.categories.map((c: any) => c.name).join(", ")
+                          : selectedJob.category?.name || "General"
+                        )}
+                      </span>
                     </div>
                   </div>
 

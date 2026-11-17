@@ -2126,16 +2126,16 @@ export default function JobsLeads() {
 
                           {/* Not Interested Button — hidden once a quote has been sent */}
                           {!hasQuoted && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setSkipReason("Outside my service area or schedule is full");
-                              setIsNotInterestedModalOpen(true);
-                            }}
-                            className="w-full h-[46px] rounded-xl bg-[#9A9A9A] hover:bg-[#858585] text-white text-[14px] font-bold flex items-center justify-center transition-all shadow-xs cursor-pointer active:scale-[0.99]"
-                          >
-                            Not Interested
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSkipReason("Outside my service area or schedule is full");
+                                setIsNotInterestedModalOpen(true);
+                              }}
+                              className="w-full h-[46px] rounded-xl bg-[#9A9A9A] hover:bg-[#858585] text-white text-[14px] font-bold flex items-center justify-center transition-all shadow-xs cursor-pointer active:scale-[0.99]"
+                            >
+                              Not Interested
+                            </button>
                           )}
                         </div>
                       </div>
@@ -2214,8 +2214,8 @@ export default function JobsLeads() {
                       key={preset}
                       onClick={() => setSkipReason(preset)}
                       className={`flex items-start gap-2.5 p-2.5 rounded-xl border text-[12px] cursor-pointer transition-all ${skipReason === preset
-                          ? "border-[#2B5921] bg-[#EFF5EB] text-[#1B311E] font-medium"
-                          : "border-gray-200 hover:bg-gray-50 text-[#5A6E5E]"
+                        ? "border-[#2B5921] bg-[#EFF5EB] text-[#1B311E] font-medium"
+                        : "border-gray-200 hover:bg-gray-50 text-[#5A6E5E]"
                         }`}
                     >
                       <input
