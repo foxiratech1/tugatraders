@@ -259,6 +259,11 @@ export default function JobsLeads() {
   const [customerProfileData, setCustomerProfileData] = useState<any>(null);
   const [isLoadingCustomerProfile, setIsLoadingCustomerProfile] = useState(false);
 
+  // Not Interested Modal state
+  const [isNotInterestedModalOpen, setIsNotInterestedModalOpen] = useState(false);
+  const [skipReason, setSkipReason] = useState("Outside my service area or schedule is full");
+  const [isSubmittingSkip, setIsSubmittingSkip] = useState(false);
+
   const mapJobLeadItem = (item: any): JobLead => {
     const extractedMatchStatus = (
       item.matchStatus ||
@@ -551,6 +556,40 @@ export default function JobsLeads() {
       document.body.style.overflow = "unset";
     };
   }, [isDetailsModalOpen, isQuoteModalOpen, showSuccessModal]);
+
+  const handleConfirmSkip = async () => {
+    if (!selectedJob) return;
+    const targetJobId = selectedJob.id || selectedJob.jobId;
+    if (!targetJobId) return;
+
+    try {
+      setIsSubmittingSkip(true);
+      await authApi.skipJob(targetJobId, skipReason);
+      toast.success("Job marked as not interested");
+      setIsNotInterestedModalOpen(false);
+
+      // Remove from jobs list
+      setJobs((prevJobs) => {
+        const nextJobs = prevJobs.filter((j) => j.id !== targetJobId && j.jobId !== targetJobId);
+        setSelectedJob((curr) => {
+          if (curr && (curr.id === targetJobId || curr.jobId === targetJobId)) {
+            return nextJobs[0] || null;
+          }
+          return curr;
+        });
+        return nextJobs;
+      });
+    } catch (err: any) {
+      console.error("Failed to skip job", err);
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to skip job. Please try again.";
+      toast.error(msg);
+    } finally {
+      setIsSubmittingSkip(false);
+    }
+  };
 
   const openQuoteModal = async () => {
     if (!selectedJob) return;
@@ -2016,7 +2055,7 @@ export default function JobsLeads() {
                     /* ─── DEFAULT: Send Quote / Quote Sent / Closed / Completed ─── */
                     return (
                       <div className="p-4 sm:px-6 pb-5">
-                        <div className={`grid gap-3 ${showStartJob ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2"}`}>
+                        <div className={`grid gap-3 grid-cols-1 ${hasQuoted ? "sm:grid-cols-2" : "sm:grid-cols-3"}`}>
                           {/* Send / Status Quote Button */}
                           <button
                             onClick={isManualDecline ? openRevokeQuoteModal : openQuoteModal}
@@ -2084,6 +2123,20 @@ export default function JobsLeads() {
                             <MessageCircle size={16} className="text-grey-400" />
                             Contact Customer
                           </button>
+
+                          {/* Not Interested Button — hidden once a quote has been sent */}
+                          {!hasQuoted && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSkipReason("Outside my service area or schedule is full");
+                              setIsNotInterestedModalOpen(true);
+                            }}
+                            className="w-full h-[46px] rounded-xl bg-[#9A9A9A] hover:bg-[#858585] text-white text-[14px] font-bold flex items-center justify-center transition-all shadow-xs cursor-pointer active:scale-[0.99]"
+                          >
+                            Not Interested
+                          </button>
+                          )}
                         </div>
                       </div>
                     );
@@ -2099,6 +2152,126 @@ export default function JobsLeads() {
 
         </div>
       </div>
+
+      {/* ── Not Interested Modal ── */}
+      {isNotInterestedModalOpen && selectedJob && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity"
+            onClick={() => !isSubmittingSkip && setIsNotInterestedModalOpen(false)}
+          />
+
+          {/* Modal Content */}
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 z-10 max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-[18px] font-bold text-[#1C2C1C]">Not Interested</h2>
+                <p className="text-[12px] text-gray-500 mt-0.5 truncate max-w-[280px]">
+                  {selectedJob.title}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsNotInterestedModalOpen(false)}
+                disabled={isSubmittingSkip}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Quick summary */}
+            <div className="bg-[#F8FAF7] border border-[#E2EAE1] rounded-xl p-3 mb-4">
+              <p className="text-[12.5px] font-semibold text-[#1B311E] line-clamp-1">
+                {selectedJob.title}
+              </p>
+              <p className="text-[11.5px] text-[#5A6E5E] mt-0.5">
+                {selectedJob.location || "Albufeira"} • {selectedJob.tag || "General"}
+              </p>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleConfirmSkip();
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-[12.5px] font-bold text-[#1B311E] mb-2">
+                  Select a reason or write below:
+                </label>
+                <div className="space-y-2 mb-3">
+                  {[
+                    "Outside my service area or schedule is full",
+                    "Budget or price is too low for this work",
+                    "Not my area of expertise",
+                    "Requested timescale cannot be accommodated",
+                  ].map((preset) => (
+                    <label
+                      key={preset}
+                      onClick={() => setSkipReason(preset)}
+                      className={`flex items-start gap-2.5 p-2.5 rounded-xl border text-[12px] cursor-pointer transition-all ${skipReason === preset
+                          ? "border-[#2B5921] bg-[#EFF5EB] text-[#1B311E] font-medium"
+                          : "border-gray-200 hover:bg-gray-50 text-[#5A6E5E]"
+                        }`}
+                    >
+                      <input
+                        type="radio"
+                        name="skipReasonPresetLead"
+                        checked={skipReason === preset}
+                        onChange={() => setSkipReason(preset)}
+                        className="mt-0.5 accent-[#2B5921]"
+                      />
+                      <span>{preset}</span>
+                    </label>
+                  ))}
+                </div>
+
+                <label className="block text-[12px] font-semibold text-[#1B311E] mb-1">
+                  Reason:
+                </label>
+                <textarea
+                  value={skipReason}
+                  onChange={(e) => setSkipReason(e.target.value)}
+                  placeholder="Tell us why you are not interested in this job..."
+                  rows={3}
+                  required
+                  className="w-full text-[12.5px] px-3.5 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:border-[#2B5921] focus:ring-1 focus:ring-[#2B5921] text-[#1B311E] bg-white resize-none"
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={isSubmittingSkip}
+                  onClick={() => setIsNotInterestedModalOpen(false)}
+                  className="flex-1 py-2.5 px-4 rounded-xl border border-gray-200 text-[#1C2C1C] text-[13px] font-bold hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingSkip || !skipReason.trim()}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-[#9A9A9A] hover:bg-[#858585] text-white text-[13px] font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 active:scale-98"
+                >
+                  {isSubmittingSkip ? (
+                    <>
+                      <Loader2 size={15} className="animate-spin" />
+                      <span>Submitting...</span>
+                    </>
+                  ) : (
+                    <span>Confirm Skip</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ── Send Quote Modal ──────────────────────────────────────── */}
       {isQuoteModalOpen && (

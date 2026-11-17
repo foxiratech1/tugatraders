@@ -173,6 +173,11 @@ export default function TraderDashboard() {
   });
   const [quoteAttachments, setQuoteAttachments] = useState<File[]>([]);
   const [isSubmittingQuote, setIsSubmittingQuote] = useState(false);
+  // Not Interested Modal state
+  const [isNotInterestedModalOpen, setIsNotInterestedModalOpen] = useState(false);
+  const [jobToSkip, setJobToSkip] = useState<JobItem | null>(null);
+  const [skipReason, setSkipReason] = useState("");
+  const [isSubmittingSkip, setIsSubmittingSkip] = useState(false);
   const quoteFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -208,15 +213,16 @@ export default function TraderDashboard() {
   }, []);
 
   useEffect(() => {
-    if (!isQuoteModalOpen) return;
+    if (!isQuoteModalOpen && !isNotInterestedModalOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !isSubmittingQuote) {
-        setIsQuoteModalOpen(false);
+      if (e.key === "Escape") {
+        if (isQuoteModalOpen && !isSubmittingQuote) setIsQuoteModalOpen(false);
+        if (isNotInterestedModalOpen && !isSubmittingSkip) setIsNotInterestedModalOpen(false);
       }
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isQuoteModalOpen, isSubmittingQuote]);
+  }, [isQuoteModalOpen, isSubmittingQuote, isNotInterestedModalOpen, isSubmittingSkip]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -764,6 +770,70 @@ export default function TraderDashboard() {
     }
   };
 
+  const handleOpenNotInterestedModal = (job: JobItem) => {
+    setJobToSkip(job);
+    setSkipReason("Outside my service area or schedule is full");
+    setIsNotInterestedModalOpen(true);
+  };
+
+  const handleConfirmSkip = async () => {
+    if (!jobToSkip) return;
+    const targetJobId = jobToSkip.id || jobToSkip.jobId || "";
+    if (!targetJobId) return;
+
+    try {
+      setIsSubmittingSkip(true);
+      await authApi.skipJob(targetJobId, skipReason);
+      toast.success("Job marked as not interested");
+      setIsNotInterestedModalOpen(false);
+
+      // Optimistically remove from dashboard newJobs
+      setDashboardDetails((prev: any) => {
+        if (!prev) return prev;
+        const currentNewJobs = prev.data?.newJobs || prev.newJobs;
+        const updatedNewJobs = Array.isArray(currentNewJobs)
+          ? currentNewJobs.filter((j: any) => (j.id || j.jobId) !== targetJobId)
+          : [];
+
+        if (prev.data) {
+          return {
+            ...prev,
+            data: {
+              ...prev.data,
+              newJobs: updatedNewJobs,
+              actionRequired: {
+                ...prev.data.actionRequired,
+                newJobsCount: Math.max(0, (prev.data.actionRequired?.newJobsCount ?? 1) - 1),
+              },
+            },
+          };
+        }
+        return {
+          ...prev,
+          newJobs: updatedNewJobs,
+          actionRequired: {
+            ...prev.actionRequired,
+            newJobsCount: Math.max(0, (prev.actionRequired?.newJobsCount ?? 1) - 1),
+          },
+        };
+      });
+
+      // Also remove from matchedJobs
+      setMatchedJobs((prev) =>
+        prev.filter((j: any) => (j.id || j.jobId) !== targetJobId)
+      );
+    } catch (err: any) {
+      console.error("Failed to skip job", err);
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to skip job. Please try again.";
+      toast.error(msg);
+    } finally {
+      setIsSubmittingSkip(false);
+    }
+  };
+
   return (
     <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 bg-[#F7F9F5] min-h-screen font-sans">
       {/* ── MAIN 2-COLUMN LAYOUT ────────────────────────────── */}
@@ -1162,6 +1232,13 @@ export default function TraderDashboard() {
                           <span>Send Quote</span>
                           <ArrowRight size={13} />
                         </button>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenNotInterestedModal(job)}
+                          className="w-full py-2.5 px-4 rounded-xl bg-[#9A9A9A] hover:bg-[#858585] text-white text-[12.5px] font-bold flex items-center justify-center gap-1.5 transition-colors shadow-xs cursor-pointer active:scale-98"
+                        >
+                          <span>Not Interested</span>
+                        </button>
                       </div>
                     </div>
                   );
@@ -1533,6 +1610,127 @@ export default function TraderDashboard() {
           </div>
         </div>
       </div>
+
+      {/* ── NOT INTERESTED MODAL ────────────────────────────── */}
+      {isNotInterestedModalOpen && jobToSkip && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity"
+            onClick={() => !isSubmittingSkip && setIsNotInterestedModalOpen(false)}
+          />
+
+          {/* Modal Content */}
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 z-10 max-h-[90vh] overflow-y-auto">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-[18px] font-bold text-[#1C2C1C]">Not Interested</h2>
+                <p className="text-[12px] text-gray-500 mt-0.5 truncate max-w-[280px]">
+                  {jobToSkip.title}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsNotInterestedModalOpen(false)}
+                disabled={isSubmittingSkip}
+                className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Quick summary */}
+            <div className="bg-[#F8FAF7] border border-[#E2EAE1] rounded-xl p-3 mb-4">
+              <p className="text-[12.5px] font-semibold text-[#1B311E] line-clamp-1">
+                {jobToSkip.title}
+              </p>
+              <p className="text-[11.5px] text-[#5A6E5E] mt-0.5">
+                {jobToSkip.location || "Albufeira"} • {jobToSkip.category?.name || jobToSkip.categoryName || "General"}
+              </p>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleConfirmSkip();
+              }}
+              className="space-y-4"
+            >
+              <div>
+                <label className="block text-[12.5px] font-bold text-[#1B311E] mb-2">
+                  Select a reason or write below:
+                </label>
+                <div className="space-y-2 mb-3">
+                  {[
+                    "Outside my service area or schedule is full",
+                    "Budget or price is too low for this work",
+                    "Not my area of expertise",
+                    "Requested timescale cannot be accommodated",
+                  ].map((preset) => (
+                    <label
+                      key={preset}
+                      onClick={() => setSkipReason(preset)}
+                      className={`flex items-start gap-2.5 p-2.5 rounded-xl border text-[12px] cursor-pointer transition-all ${
+                        skipReason === preset
+                          ? "border-[#2B5921] bg-[#EFF5EB] text-[#1B311E] font-medium"
+                          : "border-gray-200 hover:bg-gray-50 text-[#5A6E5E]"
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="skipReasonPreset"
+                        checked={skipReason === preset}
+                        onChange={() => setSkipReason(preset)}
+                        className="mt-0.5 accent-[#2B5921]"
+                      />
+                      <span>{preset}</span>
+                    </label>
+                  ))}
+                </div>
+
+                <label className="block text-[12px] font-semibold text-[#1B311E] mb-1">
+                  Reason:
+                </label>
+                <textarea
+                  value={skipReason}
+                  onChange={(e) => setSkipReason(e.target.value)}
+                  placeholder="Tell us why you are not interested in this job..."
+                  rows={3}
+                  required
+                  className="w-full text-[12.5px] px-3.5 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:border-[#2B5921] focus:ring-1 focus:ring-[#2B5921] text-[#1B311E] bg-white resize-none"
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center gap-3 pt-2">
+                <button
+                  type="button"
+                  disabled={isSubmittingSkip}
+                  onClick={() => setIsNotInterestedModalOpen(false)}
+                  className="flex-1 py-2.5 px-4 rounded-xl border border-gray-200 text-[#1C2C1C] text-[13px] font-bold hover:bg-gray-50 transition-colors cursor-pointer disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmittingSkip || !skipReason.trim()}
+                  className="flex-1 py-2.5 px-4 rounded-xl bg-[#9A9A9A] hover:bg-[#858585] text-white text-[13px] font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 active:scale-98"
+                >
+                  {isSubmittingSkip ? (
+                    <>
+                      <Loader2 size={15} className="animate-spin" />
+                      <span>Submitting...</span>
+                    </>
+                  ) : (
+                    <span>Confirm Skip</span>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* ── SEND QUOTE MODAL (like TraderQuotesComponent / JobsLeads) ── */}
       {isQuoteModalOpen && selectedQuoteJob && (

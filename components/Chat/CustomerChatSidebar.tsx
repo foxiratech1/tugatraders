@@ -95,7 +95,7 @@ export default function CustomerChatSidebar({ jobId, traderId }: SidebarProps) {
               <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
                 <div className="flex items-center gap-4 mb-5">
                   <div className="w-14 h-14 rounded-full overflow-hidden bg-gray-100 flex-shrink-0">
-                    <Image src={getAvatar()} alt={trader?.fullName} width={56} height={56} className="object-cover w-full h-full" />
+                    <Image src={getAvatar()} alt={trader?.fullName} width={56} height={56} className="object-cover w-full h-full" unoptimized />
                   </div>
                   <div className="flex flex-col items-start">
                     <h4 className="text-[16px] font-bold text-[#1C2C1C]">{trader?.profile?.companyName || trader?.traderProfile?.companyName || trader?.fullName}</h4>

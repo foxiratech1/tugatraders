@@ -3,6 +3,14 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
+      { protocol: "https", hostname: "cdn.tugatrades.com" },
+      { protocol: "http", hostname: "cdn.tugatrades.com" },
+      { protocol: "https", hostname: "*.tugatrades.com" },
+      { protocol: "http", hostname: "*.tugatrades.com" },
+      { protocol: "https", hostname: "tugatrades.com" },
+      { protocol: "https", hostname: "*.tugatraders.com" },
+      { protocol: "http", hostname: "*.tugatraders.com" },
+      { protocol: "https", hostname: "tugatraders.com" },
       { protocol: "https", hostname: "api.tugatraders.server24.in" },
       { protocol: "http", hostname: "api.tugatraders.server24.in" },
       { protocol: "https", hostname: "*.ngrok-free.dev" },

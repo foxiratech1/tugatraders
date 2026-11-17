@@ -71,6 +71,8 @@ function ChatDashboardContent() {
   const [searchQuery, setSearchQuery] = useState("");
   const [currentUserId, setCurrentUserId] = useState<string>("");
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
+  // Cache of traderId -> { profileImage } fetched from full trader profile API
+  const [traderImages, setTraderImages] = useState<Record<string, string>>({});
 
   // Load conversations and profile
   const loadData = async (targetConvId?: string) => {
@@ -125,10 +127,36 @@ function ChatDashboardContent() {
       const list = convsRes?.data || convsRes || [];
       let mappedList: any[] = [];
       if (Array.isArray(list)) {
-        mappedList = list.map((c: any) => ({
-          ...c,
-          id: c.id || c._id,
-        }));
+        mappedList = list.map((c: any) => {
+          // Normalise trader image: search all known field paths in the API response
+          const rawTrader = c.trader || c.traderInfo || c.traderData || {};
+          const traderProfile = rawTrader.traderProfile || rawTrader.profile || rawTrader.profileData || {};
+          const profileImage =
+            rawTrader.profileImage ||
+            rawTrader.avatar ||
+            rawTrader.logo ||
+            rawTrader.photo ||
+            rawTrader.picture ||
+            traderProfile.logo ||
+            traderProfile.profileImage ||
+            traderProfile.avatar ||
+            traderProfile.photo ||
+            traderProfile.picture ||
+            traderProfile.document ||
+            traderProfile.companyLogo ||
+            null;
+          if (profileImage) {
+            console.log("[Inbox] trader image found:", profileImage, "for", rawTrader.fullName);
+          }
+          return {
+            ...c,
+            id: c.id || c._id,
+            trader: {
+              ...rawTrader,
+              profileImage: profileImage,
+            },
+          };
+        });
       }
 
       // Ensure initialNewConv is present in mappedList
@@ -181,6 +209,27 @@ function ChatDashboardContent() {
           c.id === activeId ? { ...c, unreadCount: 0 } : c
         );
         setConversations(finalConvs);
+        // Background-enrich trader logos from full profile API
+        finalConvs.forEach(async (conv) => {
+          const tid = conv.trader?.id || conv.trader?._id || conv.traderId;
+          if (!tid) return;
+          try {
+            const tRes = await authApi.getTraderProfileById(tid).catch(() => null);
+            const t = tRes?.data || tRes;
+            if (!t) return;
+            const logoUrl =
+              t?.profile?.logo ||
+              t?.traderProfile?.logo ||
+              t?.logo ||
+              t?.avatar ||
+              t?.profileImage ||
+              t?.profile?.profileImage ||
+              null;
+            if (logoUrl) {
+              setTraderImages((prev) => ({ ...prev, [tid]: logoUrl }));
+            }
+          } catch (_) {}
+        });
         const totalUnread = finalConvs.reduce((acc, c) => acc + (c.unreadCount || 0), 0);
         if (typeof window !== "undefined") {
           window.dispatchEvent(new CustomEvent("inbox_unread_updated", { detail: totalUnread }));
@@ -365,7 +414,17 @@ function ChatDashboardContent() {
                       {/* Avatar */}
                       <div className="relative w-11 h-11 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center font-bold text-emerald-800 text-[14px] overflow-hidden flex-shrink-0">
                         {(() => {
-                          const imgPath = c.trader?.profileImage || (c.trader as any)?.avatar || (c.trader as any)?.logo || (c.trader as any)?.traderProfile?.logo || (c.trader as any)?.traderProfile?.profileImage || (c.trader as any)?.traderProfile?.document || null;
+                          const tid = c.trader?.id || (c.trader as any)?._id || c.traderId;
+                          // Use enriched profile image fetched separately; fallback to conversation-level fields
+                          const imgPath =
+                            (tid ? traderImages[tid] : null) ||
+                            c.trader?.profileImage ||
+                            (c.trader as any)?.avatar ||
+                            (c.trader as any)?.logo ||
+                            (c.trader as any)?.traderProfile?.logo ||
+                            (c.trader as any)?.traderProfile?.profileImage ||
+                            (c.trader as any)?.traderProfile?.document ||
+                            null;
                           const finalImgUrl = getImageUrl(imgPath);
                           return finalImgUrl ? (
                             <img

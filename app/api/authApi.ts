@@ -401,6 +401,12 @@ export const authApi = {
 
 
   // Job actions
+  skipJob: async (jobId: string, reason?: string) => {
+    const { data } = await api.post(`/api/jobs/${jobId}/skip`, {
+      reason: reason?.trim() || "Outside my service area or schedule is full",
+    });
+    return data;
+  },
   startJob: async (jobId: string) => {
     const { data } = await api.patch(`/api/jobs/${jobId}/start`);
     return data;
