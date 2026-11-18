@@ -55,317 +55,300 @@ const CategoryCard = ({
 
   const targetUrl =
     cat.id || cat._id
-      ? `/ directory - listing / search ? categoryId = ${cat.id || cat._id} `
-      : `/ directory - listing / search ? categoryName = ${encodeURIComponent(name)} `;
+      ?`/directory-listing/search?categoryId=${cat.id || cat._id}`
+      : `/directory-listing/search?categoryName=${encodeURIComponent(name)}`;
 
-  if (isTrader) {
-    return (
-      <div
-        title="Disabled for tradespeople"
-        className="flex items-center justify-between rounded-[10px] bg-white px-5 py-3.5 sm:py-4 shadow-xs border-2 border-gray-100/90 opacity-70 cursor-not-allowed w-[220px] md:w-[240px] shrink-0"
-      >
-        <div className="flex items-center gap-3">
-          <div className="text-[#1E3A2B]/70 flex items-center justify-center shrink-0">
-            {cat.image ? (
-              <img
-                src={
-                  cat.image.startsWith("http")
-                    ? cat.image
-                    : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "")}${cat.image.startsWith("/") ? cat.image : `/${cat.image}`} `
-                }
-                alt={name}
-                className="w-5 h-5 object-contain"
-                crossOrigin="anonymous"
-              />
-            ) : (
-              <Icon className="w-5 h-5" />
-            )}
+const imgSrc = cat.image
+  ? cat.image.startsWith("http")
+    ? cat.image
+    : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "")}/${cat.image.replace(/^\//, "")}`
+  : null;
+
+/* shared icon slot — fixed 28×28, same size for both img and svg */
+const IconSlot = ({ muted }: { muted?: boolean }) => (
+  <div className={`w-7 h-7 flex items-center justify-center shrink-0 ${muted ? "opacity-60" : ""}`}>
+    {imgSrc ? (
+      <img src={imgSrc} alt={name} className="w-7 h-7 object-contain" />
+    ) : (
+      <Icon className="w-5 h-5" />
+    )}
+  </div>
+);
+
+if (isTrader) {
+  return (
+    <div
+      title="Disabled for tradespeople"
+      className="flex items-center gap-3 justify-between rounded-[10px] bg-white px-4 py-3.5 sm:py-4 shadow-xs border-2 border-gray-100/90 opacity-70 cursor-not-allowed w-[220px] md:w-[240px] shrink-0"
+    >
+          <div className="flex items-center gap-2.5 min-w-0">
+            <IconSlot muted />
+            <span className="text-[12px] md:text-[13px] font-bold tracking-[1px] text-[#1E3A2B]/70 uppercase leading-tight line-clamp-2">
+              {name}
+            </span>
           </div>
-
-          <span className="text-[13px] md:text-[14px] font-bold tracking-[1.5px] text-[#1E3A2B]/70 uppercase">
-            {name}
-          </span>
-        </div>
-
-        <div className="text-gray-300">
-          <FiArrowRight size={15} />
-        </div>
-      </div>
-    );
+            <div className="text-gray-300 shrink-0">
+              <FiArrowRight size={14} />
+            </div>
+          </div>
+          );
   }
 
-  return (
-    <Link
-      href={targetUrl}
-      className="group flex items-center justify-between rounded-[10px] bg-white px-5 py-3.5 sm:py-4 shadow-[0_3px_10px_rgba(0,0,0,0.05)] border-2 border-gray-100/90 hover:border-[#6F9824]/40 hover:shadow-md transition-all duration-300 w-[220px] md:w-[240px] shrink-0"
-    >
-      <div className="flex items-center gap-3">
-        <div className="text-[#1E3A2B] flex items-center justify-center shrink-0">
-          {cat.image ? (
-            <img
-              src={
-                cat.image.startsWith("http")
-                  ? cat.image
-                  : `${(process.env.NEXT_PUBLIC_API_URL || "").replace(/\/$/, "")}${cat.image.startsWith("/") ? cat.image : `/${cat.image}`} `
-              }
-              alt={name}
-              className="w-5 h-5 object-contain"
-              crossOrigin="anonymous"
-            />
-          ) : (
-            <Icon className="w-5 h-5" />
-          )}
-        </div>
-
-        <span className="text-[13px] md:text-[14px] font-bold tracking-[1.5px] text-[#1E3A2B] uppercase">
-          {name}
-        </span>
-      </div>
-
-      <div className="text-gray-400 group-hover:text-[#1E3A2B] group-hover:translate-x-0.5 transition-all">
-        <FiArrowRight size={15} />
-      </div>
-    </Link>
-  );
+          return (
+          <Link
+            href={targetUrl}
+            className="group flex items-center gap-3 justify-between rounded-[10px] bg-white px-4 py-3.5 sm:py-4 shadow-[0_3px_10px_rgba(0,0,0,0.05)] border-2 border-gray-100/90 hover:border-[#6F9824]/40 hover:shadow-md transition-all duration-300 w-[220px] md:w-[240px] shrink-0"
+          >
+                <div className="flex items-center gap-2.5 min-w-0">
+                  <IconSlot />
+                  <span className="text-[12px] md:text-[13px] font-bold tracking-[1px] text-[#1E3A2B] uppercase leading-tight line-clamp-2">
+                    {name}
+                  </span>
+                </div>
+                  <div className="text-gray-400 group-hover:text-[#1E3A2B] group-hover:translate-x-0.5 transition-all shrink-0">
+                    <FiArrowRight size={14} />
+                  </div>
+                </Link>
+                );
 };
 
-export default function CategorySection() {
-  const { role } = useAuth();
-  const isTrader = role === "trader";
+                export default function CategorySection() {
+  const {role} = useAuth();
+                const isTrader = role === "trader";
 
-  const [categoriesList, setCategoriesList] = useState<any[]>([]);
+                const [categoriesList, setCategoriesList] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchCats = async () => {
       try {
         const res = await authApi.getCategories();
-        const list = Array.isArray(res) ? res : res?.data || [];
+                const list = Array.isArray(res) ? res : res?.data || [];
 
         if (list.length > 0) {
           const existingNames = new Set(
             list.map((c: any) => c.name?.toUpperCase())
-          );
+                );
 
-          const extra = defaultCategories.filter(
+                const extra = defaultCategories.filter(
             (c) => !existingNames.has(c.name)
-          );
+                );
 
-          setCategoriesList([...list, ...extra]);
+                setCategoriesList([...list, ...extra]);
         }
       } catch (err) {
-        console.error("Failed to fetch categories", err);
+                  console.error("Failed to fetch categories", err);
       }
     };
 
-    fetchCats();
+                fetchCats();
   }, []);
 
-  const activeCats =
+                const activeCats =
     categoriesList.length > 0 ? categoriesList : defaultCategories;
 
-  return (
-    <section className="w-full bg-white overflow-hidden pt-6 sm:pt-8">
+                return (
+                <section className="w-full bg-white overflow-hidden pt-6 sm:pt-8">
 
-      {/* FULL-WIDTH LIGHT GREEN STRIP */}
-      <div className="w-full bg-[#EDF3E6] border-y border-[#E0EBD4]">
-        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 sm:py-8 lg:py-10">
+                  {/* FULL-WIDTH LIGHT GREEN STRIP */}
+                  <div className="w-full bg-[#EDF3E6] border-y border-[#E0EBD4]">
+                    <div className="max-w-[1200px] mx-auto px-4 sm:px-6 py-6 sm:py-8 lg:py-10">
 
-          {/* HEADER */}
-          <div className="flex items-center justify-between mb-5 sm:mb-6">
-            <h2 className="text-2xl sm:text-3xl md:text-[32px] font-bold text-[#1E3A2B] tracking-tight">
-              Explore Our{" "}
-              <span className="text-[#6F9824]">Trades</span>
-            </h2>
+                      {/* HEADER */}
+                      <div className="flex items-center justify-between mb-5 sm:mb-6">
+                        <h2 className="text-2xl sm:text-3xl md:text-[32px] font-bold text-[#1E3A2B] tracking-tight">
+                          Explore Our{" "}
+                          <span className="text-[#6F9824]">Trades</span>
+                        </h2>
 
-            {isTrader ? (
-              <button
-                type="button"
-                disabled
-                title="Disabled for tradespeople"
-                className="inline-flex items-center gap-1.5 rounded-full border border-gray-200/90 bg-white px-4 py-1.5 text-[12px] sm:text-[13px] font-semibold text-[#1E3A2B]/50 opacity-60 cursor-not-allowed shadow-none"
-              >
-                <span>View all</span>
-                <FiChevronRight size={14} className="text-gray-400" />
-              </button>
-            ) : (
-              <Link
-                href="/directory-listing/search"
-                className="inline-flex items-center gap-1.5 rounded-full border border-gray-200/90 bg-white px-4 py-1.5 text-[12px] sm:text-[13px] font-semibold text-[#1E3A2B] hover:bg-gray-50 transition-all shadow-sm"
-              >
-                <span>View all</span>
-                <FiChevronRight size={14} className="text-gray-500" />
-              </Link>
-            )}
-          </div>
+                        {isTrader ? (
+                          <button
+                            type="button"
+                            disabled
+                            title="Disabled for tradespeople"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-gray-200/90 bg-white px-4 py-1.5 text-[12px] sm:text-[13px] font-semibold text-[#1E3A2B]/50 opacity-60 cursor-not-allowed shadow-none"
+                          >
+                            <span>View all</span>
+                            <FiChevronRight size={14} className="text-gray-400" />
+                          </button>
+                        ) : (
+                          <Link
+                            href="/directory-listing/search"
+                            className="inline-flex items-center gap-1.5 rounded-full border border-gray-200/90 bg-white px-4 py-1.5 text-[12px] sm:text-[13px] font-semibold text-[#1E3A2B] hover:bg-gray-50 transition-all shadow-sm"
+                          >
+                            <span>View all</span>
+                            <FiChevronRight size={14} className="text-gray-500" />
+                          </Link>
+                        )}
+                      </div>
 
-          {/* SINGLE ROW SMOOTH MARQUEE */}
-          <div className="w-full overflow-hidden relative py-1">
-            <motion.div
-              animate={{ x: ["0%", "-50%"] }}
-              transition={{
-                repeat: Infinity,
-                ease: "linear",
-                duration: 32,
-              }}
-              className="flex gap-4 pr-4 w-max shrink-0"
-            >
-              {[...activeCats, ...activeCats].map((cat, index) => (
-                <CategoryCard
-                  key={`cat - ${index} `}
-                  cat={cat}
-                  isTrader={isTrader}
-                />
-              ))}
-            </motion.div>
-          </div>
+                      {/* SINGLE ROW SMOOTH MARQUEE */}
+                      <div className="w-full overflow-hidden relative py-1">
+                        <motion.div
+                          animate={{ x: ["0%", "-50%"] }}
+                          transition={{
+                            repeat: Infinity,
+                            ease: "linear",
+                            duration: 32,
+                          }}
+                          className="flex gap-4 pr-4 w-max shrink-0"
+                        >
+                          {[...activeCats, ...activeCats].map((cat, index) => (
+                            <CategoryCard
+                              key={`cat - ${index} `}
+                              cat={cat}
+                              isTrader={isTrader}
+                            />
+                          ))}
+                        </motion.div>
+                      </div>
 
-        </div>
-      </div>
+                    </div>
+                  </div>
 
-      {/* PROMO BANNER CARDS - MOVED SLIGHTLY DOWN */}
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-16 sm:pt-20 lg:pt-24 pb-10 sm:pb-12 lg:pb-14">
+                  {/* PROMO BANNER CARDS - MOVED SLIGHTLY DOWN */}
+                  <div className="max-w-[1200px] mx-auto px-4 sm:px-6">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-16 sm:pt-20 lg:pt-24 pb-10 sm:pb-12 lg:pb-14">
 
-          {/* CARD 1: NEED WORK DONE? */}
-          <div className="relative overflow-hidden rounded-[18px] bg-white border border-gray-100 shadow-sm h-[265px]">
+                      {/* CARD 1: NEED WORK DONE? */}
+                      <div className="relative overflow-hidden rounded-[18px] bg-white border border-gray-100 shadow-sm h-[265px]">
 
-            {/* IMAGE LEFT */}
-            <div className="absolute left-0 top-0 bottom-0 w-[47%]">
-              <Image
-                src="/Need work done.jpg"
-                alt="Need work done"
-                fill
-                className="object-cover object-left"
-                priority
-              />
+                        {/* IMAGE LEFT */}
+                        <div className="absolute left-0 top-0 bottom-0 w-[47%]">
+                          <Image
+                            src="/Need work done.jpg"
+                            alt="Need work done"
+                            fill
+                            className="object-cover object-left"
+                            priority
+                          />
 
-              <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-r from-transparent to-white" />
-            </div>
+                          <div className="absolute inset-y-0 right-0 w-16 bg-gradient-to-r from-transparent to-white" />
+                        </div>
 
-            {/* TEXT RIGHT */}
-            <div className="absolute top-5 right-5 left-[52%] sm:left-[54%] flex flex-col justify-start z-10">
-              <p className="text-[#1E3A2B] font-bold text-[14px] leading-tight mb-1">
-                Need work done?
-              </p>
+                        {/* TEXT RIGHT */}
+                        <div className="absolute top-5 right-5 left-[52%] sm:left-[54%] flex flex-col justify-start z-10">
+                          <p className="text-[#1E3A2B] font-bold text-[14px] leading-tight mb-1">
+                            Need work done?
+                          </p>
 
-              <h3 className="text-[#1E3A2B] font-extrabold text-[24px] sm:text-[26px] leading-tight mb-2">
-                Find a <br /> Tradesperson
-              </h3>
+                          <h3 className="text-[#1E3A2B] font-extrabold text-[24px] sm:text-[26px] leading-tight mb-2">
+                            Find a <br /> Tradesperson
+                          </h3>
 
-              <p className="text-[#4A5548] font-medium text-[12.5px] leading-snug max-w-[230px]">
-                Post your job for free or browse local professionals.
-              </p>
-            </div>
+                          <p className="text-[#4A5548] font-medium text-[12.5px] leading-snug max-w-[230px]">
+                            Post your job for free or browse local professionals.
+                          </p>
+                        </div>
 
-            {/* BUTTONS */}
-            <div className="absolute bottom-4 left-4 right-4 flex gap-2.5 z-20">
-              {isTrader ? (
-                <>
-                  <button
-                    type="button"
-                    disabled
-                    title="Disabled for tradespeople"
-                    className="flex-1 bg-[#122C17]/40 text-white/70 text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-2 rounded-[6px] uppercase tracking-wider text-center shadow-none flex items-center justify-center whitespace-nowrap cursor-not-allowed"
-                  >
-                    Find a Tradesperson
-                  </button>
+                        {/* BUTTONS */}
+                        <div className="absolute bottom-4 left-4 right-4 flex gap-2.5 z-20">
+                          {isTrader ? (
+                            <>
+                              <button
+                                type="button"
+                                disabled
+                                title="Disabled for tradespeople"
+                                className="flex-1 bg-[#122C17]/40 text-white/70 text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-2 rounded-[6px] uppercase tracking-wider text-center shadow-none flex items-center justify-center whitespace-nowrap cursor-not-allowed"
+                              >
+                                Find a Tradesperson
+                              </button>
 
-                  <button
-                    type="button"
-                    disabled
-                    title="Disabled for tradespeople"
-                    className="flex-1 bg-[#6F9824]/40 text-white/70 text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-2 rounded-[6px] uppercase tracking-wider text-center shadow-none flex items-center justify-center whitespace-nowrap cursor-not-allowed"
-                  >
-                    Post your job - Free
-                  </button>
-                </>
-              ) : (
-                <>
-                  <Link
-                    href="/directory-listing/search"
-                    className="flex-1 bg-[#122C17] hover:bg-[#0a1c0d] text-white text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-2 rounded-[6px] uppercase tracking-wider text-center shadow-sm flex items-center justify-center whitespace-nowrap animate-action-pulse cursor-pointer"
-                  >
-                    Find a Tradesperson
-                  </Link>
+                              <button
+                                type="button"
+                                disabled
+                                title="Disabled for tradespeople"
+                                className="flex-1 bg-[#6F9824]/40 text-white/70 text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-2 rounded-[6px] uppercase tracking-wider text-center shadow-none flex items-center justify-center whitespace-nowrap cursor-not-allowed"
+                              >
+                                Post your job - Free
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <Link
+                                href="/directory-listing/search"
+                                className="flex-1 bg-[#122C17] hover:bg-[#0a1c0d] text-white text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-2 rounded-[6px] uppercase tracking-wider text-center shadow-sm flex items-center justify-center whitespace-nowrap animate-action-pulse cursor-pointer"
+                              >
+                                Find a Tradesperson
+                              </Link>
 
-                  <Link
-                    href="/post-job"
-                    className="flex-1 bg-[#6F9824] hover:bg-[#5f831e] text-white text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-2 rounded-[6px] uppercase tracking-wider text-center shadow-sm flex items-center justify-center whitespace-nowrap animate-action-pulse cursor-pointer [animation-delay:0.5s]"
-                  >
-                    Post your job - Free
-                  </Link>
-                </>
-              )}
-            </div>
-          </div>
+                              <Link
+                                href="/post-job"
+                                className="flex-1 bg-[#6F9824] hover:bg-[#5f831e] text-white text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-2 rounded-[6px] uppercase tracking-wider text-center shadow-sm flex items-center justify-center whitespace-nowrap animate-action-pulse cursor-pointer [animation-delay:0.5s]"
+                              >
+                                Post your job - Free
+                              </Link>
+                            </>
+                          )}
+                        </div>
+                      </div>
 
-          {/* CARD 2: WANT MORE WORK? */}
-          <div className="flex flex-col">
-            <div className="relative overflow-hidden rounded-[18px] bg-white border border-gray-100 shadow-sm h-[265px]">
+                      {/* CARD 2: WANT MORE WORK? */}
+                      <div className="flex flex-col">
+                        <div className="relative overflow-hidden rounded-[18px] bg-white border border-gray-100 shadow-sm h-[265px]">
 
-              {/* CONTENT LEFT */}
-              <div className="absolute top-5 left-5 bottom-4 w-[48%] flex flex-col justify-between z-20">
-                <div>
-                  <p className="text-[#1E3A2B] font-bold text-[14px] leading-tight mb-1">
-                    Want more work?
-                  </p>
+                          {/* CONTENT LEFT */}
+                          <div className="absolute top-5 left-5 bottom-4 w-[48%] flex flex-col justify-between z-20">
+                            <div>
+                              <p className="text-[#1E3A2B] font-bold text-[14px] leading-tight mb-1">
+                                Want more work?
+                              </p>
 
-                  <h3 className="text-[#1E3A2B] font-extrabold text-[24px] sm:text-[26px] leading-tight mb-2">
-                    Join TugaTrades
-                  </h3>
+                              <h3 className="text-[#1E3A2B] font-extrabold text-[24px] sm:text-[26px] leading-tight mb-2">
+                                Join TugaTrades
+                              </h3>
 
-                  <p className="text-[#4A5548] font-medium text-[12.5px] leading-snug max-w-[220px]">
-                    Create your personal profile, get discovered by local customers and grow your business.
-                  </p>
-                </div>
+                              <p className="text-[#4A5548] font-medium text-[12.5px] leading-snug max-w-[220px]">
+                                Create your personal profile, get discovered by local customers and grow your business.
+                              </p>
+                            </div>
 
-                <div>
-                  {isTrader ? (
-                    <button
-                      type="button"
-                      disabled
-                      title="You are already registered as a tradesperson"
-                      className="inline-flex items-center gap-1.5 bg-[#BA1515]/40 text-white/70 text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-3.5 rounded-[6px] uppercase tracking-wider text-center shadow-none whitespace-nowrap cursor-not-allowed"
-                    >
-                      <FiUserPlus size={15} />
-                      <span>Join as a Tradesperson</span>
-                    </button>
-                  ) : (
-                    <Link
-                      href="/trader-signup"
-                      className="inline-flex items-center gap-1.5 bg-[#BA1515] hover:bg-[#991111] text-white text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-3.5 rounded-[6px] uppercase tracking-wider text-center shadow-sm whitespace-nowrap animate-action-pulse cursor-pointer [animation-delay:1s]"
-                    >
-                      <FiUserPlus size={15} />
-                      <span>Join as a Tradesperson</span>
-                    </Link>
-                  )}
-                </div>
-              </div>
+                            <div>
+                              {isTrader ? (
+                                <button
+                                  type="button"
+                                  disabled
+                                  title="You are already registered as a tradesperson"
+                                  className="inline-flex items-center gap-1.5 bg-[#BA1515]/40 text-white/70 text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-3.5 rounded-[6px] uppercase tracking-wider text-center shadow-none whitespace-nowrap cursor-not-allowed"
+                                >
+                                  <FiUserPlus size={15} />
+                                  <span>Join as a Tradesperson</span>
+                                </button>
+                              ) : (
+                                <Link
+                                  href="/trader-signup"
+                                  className="inline-flex items-center gap-1.5 bg-[#BA1515] hover:bg-[#991111] text-white text-[11px] sm:text-[11.5px] font-extrabold py-2.5 px-3.5 rounded-[6px] uppercase tracking-wider text-center shadow-sm whitespace-nowrap animate-action-pulse cursor-pointer [animation-delay:1s]"
+                                >
+                                  <FiUserPlus size={15} />
+                                  <span>Join as a Tradesperson</span>
+                                </Link>
+                              )}
+                            </div>
+                          </div>
 
-              {/* IMAGE RIGHT */}
-              <div className="absolute right-0 top-0 bottom-0 w-[54%] z-10 pointer-events-none">
-                <Image
-                  src="/Want more work.png"
-                  alt="Want more work"
-                  fill
-                  className="object-cover object-left"
-                  priority
-                />
+                          {/* IMAGE RIGHT */}
+                          <div className="absolute right-0 top-0 bottom-0 w-[54%] z-10 pointer-events-none">
+                            <Image
+                              src="/Want more work.png"
+                              alt="Want more work"
+                              fill
+                              className="object-cover object-left"
+                              priority
+                            />
 
-                <div className="absolute inset-y-0 left-0 w-14 bg-gradient-to-r from-white via-white/80 to-transparent pointer-events-none z-10" />
-              </div>
-            </div>
+                            <div className="absolute inset-y-0 left-0 w-14 bg-gradient-to-r from-white via-white/80 to-transparent pointer-events-none z-10" />
+                          </div>
+                        </div>
 
-            {/* FIRST 3 MONTHS FREE */}
-            <div className="text-right mt-1.5 pr-1">
-              <span className="text-[#6F9824] font-extrabold text-[11px] uppercase tracking-wider">
-                FIRST 3 MONTHS FREE!*
-              </span>
-            </div>
-          </div>
+                        {/* FIRST 3 MONTHS FREE */}
+                        <div className="text-right mt-1.5 pr-1">
+                          <span className="text-[#6F9824] font-extrabold text-[11px] uppercase tracking-wider">
+                            FIRST 3 MONTHS FREE!*
+                          </span>
+                        </div>
+                      </div>
 
-        </div>
-      </div>
-    </section>
-  );
+                    </div>
+                  </div>
+                </section>
+                );
 }
